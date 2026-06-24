@@ -1,5 +1,5 @@
 // js/pages/monthly_requisition.js
-// 🚀 โมดูลฟอร์มเบิกพัสดุ (100% Excel Replica Print + PERFECT Styled XLSX Download + Grid Layout Fix)
+// 🚀 โมดูลฟอร์มเบิกพัสดุ (100% Excel Replica Print + Fix Double Borders)
 
 const MonthlyRequisitionPage = {
     syncedItems: [],
@@ -26,18 +26,24 @@ const MonthlyRequisitionPage = {
                 .print-only-header { display: block; margin-bottom: 12px; } 
                 .print-title-1 { font-family: Calibri, Tahoma, 'Sarabun', sans-serif; font-size: 16pt; font-weight: bold; text-align: center; margin-bottom: 6px; color: #000; } 
                 .print-title-2 { font-family: Calibri, Tahoma, 'Sarabun', sans-serif; font-size: 14pt; font-weight: bold; text-align: left; margin-bottom: 15px; color: #000; } 
-                .req-table-wrapper { box-shadow: none; border-radius: 0; margin-bottom: 0; overflow: visible !important; } 
-                .req-table-ui { border: 1px solid #000; font-size: 11pt; color: #000; border-collapse: collapse; width: 100%; font-family: Calibri, Tahoma, 'Sarabun', sans-serif; } 
+                
+                .req-table-wrapper { box-shadow: none !important; border: none !important; border-radius: 0 !important; margin: 0 !important; padding: 0 !important; background: transparent !important; overflow: visible !important; } 
+                .req-table-ui { border: 1px solid #000 !important; font-size: 11pt; color: #000; border-collapse: collapse !important; width: 100% !important; font-family: Calibri, Tahoma, 'Sarabun', sans-serif; } 
                 .req-table-ui thead { display: table-header-group; } .req-table-ui tr { page-break-inside: avoid; height: 24px; } 
                 
-                .req-table-ui th { background-color: #fce4d6 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; color: #000; font-weight: bold; border: 1px solid #000; padding: 4px; text-align: center; vertical-align: middle; font-size: 11pt; } 
-                .req-table-ui td { border: 1px solid #000; padding: 2px 5px; color: #000; vertical-align: middle; } 
+                .req-table-ui th { background-color: #fce4d6 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; color: #000; font-weight: bold; border: 1px solid #000 !important; padding: 4px; text-align: center; vertical-align: middle; font-size: 11pt; } 
+                
+                /* 🚨 ปลด Wildcard ออก ใส่กรอบเฉพาะ td เท่านั้น ห้ามลามไปข้างใน 🚨 */
+                .req-table-ui td { border: 1px solid #000 !important; padding: 2px 5px; color: #000 !important; vertical-align: middle; } 
+                
                 .d-print-none { display: none !important; } 
-                .print-val-display { display: block !important; width: 100%; height: 100%; min-height: 18px; text-align: center; font-family: Calibri, Tahoma, 'Sarabun', sans-serif; font-size: 11pt; } 
+                
+                /* 🚨 สั่งล้างกรอบ ล้างเงา ของ Span ข้อความให้สะอาด 100% 🚨 */
+                .print-val-display { display: block !important; width: 100%; height: 100%; min-height: 18px; text-align: center; font-family: Calibri, Tahoma, 'Sarabun', sans-serif; font-size: 11pt; border: none !important; outline: none !important; box-shadow: none !important; background: transparent !important; } 
+                
                 .print-val-left { text-align: left; padding-left: 4px; } .print-val-center { text-align: center; } 
                 .col-no { width: 5%; text-align: center; } .col-code { width: 12%; text-align: center; } .col-name { width: 40%; } .col-unit { width: 10%; text-align: center; } .col-qty { width: 13%; text-align: center; } .col-remark { width: 20%; } 
                 
-                /* 🚨 เคาะลายเซ็นหน้า Print ลงมา และสร้าง Layout ให้เหมือนตาราง Excel 🚨 */
                 .print-signature-section { width: 100%; margin-top: 60px; page-break-inside: avoid; font-family: Calibri, Tahoma, 'Sarabun', sans-serif; } 
                 .sig-table { width: 100%; border: none; border-collapse: collapse; } 
                 .sig-table td { border: none !important; font-size: 11pt; color: #000; } 
@@ -51,7 +57,7 @@ const MonthlyRequisitionPage = {
         <div class="req-header-ui">
             <div>
                 <h3 class="fw-bold mb-1" style="font-family: 'Prompt';"><i class="fa-solid fa-boxes-packing me-2"></i> ฟอร์มใบขอเบิกสินค้าประจำเดือน</h3>
-                <p class="mb-0 opacity-75 small" id="sync-status-text">กรอกรายการพัสดุและสั่งพิมพ์ หรือดาวน์โหลดเป็นตาราง Excel เต็มรูปแบบ</p>
+                <div class="mt-3" id="sync-status-text"></div>
             </div>
             <div class="d-flex align-items-center gap-3 bg-white bg-opacity-25 p-2 rounded-3">
                 <label class="fw-bold small text-white">ประจำเดือน:</label>
@@ -123,12 +129,12 @@ const MonthlyRequisitionPage = {
         if (draft) {
             try {
                 this.syncedItems = JSON.parse(draft);
-                document.getElementById('sync-status-text').innerHTML = '<span class="badge bg-warning text-dark"><i class="fa-solid fa-bolt"></i> โหลดข้อมูลจากหน้าคำนวณยอดเบิก (Smart PO) สำเร็จ!</span>';
+                document.getElementById('sync-status-text').innerHTML = '<span class="badge bg-warning text-dark px-3 py-2 shadow-sm rounded-pill fw-bold" style="font-size: 13px;"><i class="fa-solid fa-bolt me-1"></i> โหลดข้อมูลจากหน้าคำนวณยอดเบิก (Smart PO) สำเร็จ!</span>';
                 localStorage.removeItem('smart_po_sync_data'); 
             } catch(e) { this.syncedItems = []; }
         } else {
             this.syncedItems = [];
-            document.getElementById('sync-status-text').innerHTML = '<span class="text-white-50"><i class="fa-solid fa-circle-info"></i> กรุณาส่งข้อมูลมาจากหน้า "คำนวณยอดเบิก"</span>';
+            document.getElementById('sync-status-text').innerHTML = '<span class="badge bg-white text-danger px-3 py-2 shadow-sm rounded-pill fw-bold" style="font-size: 14px;"><i class="fa-solid fa-circle-exclamation me-1"></i> กรุณาส่งข้อมูลมาจากหน้า "คำนวณยอดเบิก"</span>';
         }
 
         this.renderTable();
@@ -145,10 +151,14 @@ const MonthlyRequisitionPage = {
         }
 
         this.syncedItems.forEach((item, index) => {
+            let orderVal = (item.order !== undefined && item.order !== null && item.order !== "" && item.order !== 999) ? item.order : '-';
+            let itemCodeVal = item.item_code || item.code || '';
+
+            // 🚨 แก้ไขตรงนี้: เปลี่ยนจาก 'fw-bold' เป็น 'fw-normal' เพื่อให้ตัวเลขลำดับไม่เป็นตัวหนา 🚨
             rowsHtml += '<tr>' +
-                '<td class="col-no text-center text-muted fw-bold">' + (index + 1) + '</td>' +
+                '<td class="col-no text-center text-dark fw-normal order-val-cell">' + orderVal + '</td>' +
                 '<td class="col-code">' +
-                    '<input type="text" class="req-input text-center d-print-none print-sync-input code-inp" value="' + (item.code || '') + '">' +
+                    '<input type="text" class="req-input text-center d-print-none print-sync-input code-inp" value="' + itemCodeVal + '">' +
                     '<span class="print-val-display print-val-center"></span>' +
                 '</td>' +
                 '<td class="col-name">' +
@@ -224,35 +234,38 @@ const MonthlyRequisitionPage = {
             let aoa = []; 
             const thaiMonth = this.getThaiMonth();
 
-            // 1. หัวกระดาษ (Row 0 - 2)
+            // 1. หัวกระดาษ
             aoa.push(["ใบขอเบิกสินค้าหน่วยไตเทียม : หน่วยไตเทียม โรงพยาบาลแพร่คริสเตียน", "", "", "", "", ""]);
             aoa.push(["ประจำเดือน " + thaiMonth, "", "", "", "", ""]);
             aoa.push(["", "", "", "", "", ""]);
             
-            // 2. หัวตาราง (Row 3)
+            // 2. หัวตาราง
             aoa.push(["ลำดับ", "รหัสสินค้า", "Consumable", "หน่วย", "จำนวนเบิก", "หมายเหตุ"]);
 
-            // 3. ข้อมูลในตาราง
+            // 3. ข้อมูลตาราง
             const rows = document.querySelectorAll('#req-table-body tr');
-            rows.forEach((tr, idx) => {
+            rows.forEach((tr) => {
+                let orderText = tr.querySelector('.order-val-cell').innerText.trim();
+                let excelOrder = isNaN(Number(orderText)) ? orderText : Number(orderText);
+                
                 let code = tr.querySelector('.code-inp').value || "";
                 let name = tr.querySelector('.name-inp').value || "";
                 let unit = tr.querySelector('.unit-inp').value || "";
                 let qty = tr.querySelector('.qty-inp').value || "";
                 let remark = tr.querySelector('.remark-inp').value || "";
                 
-                aoa.push([idx + 1, code, name, unit, qty ? Number(qty) : "", remark]);
+                aoa.push([excelOrder, code, name, unit, qty ? Number(qty) : "", remark]);
             });
 
-            // 4. ลายเซ็นและ Checkbox (จัดบล็อค 6 แถว)
-            aoa.push(["", "", "", "", "", ""]); // เว้น 1
-            aoa.push(["", "", "", "", "", ""]); // เว้น 2
+            // 4. ลายเซ็น
+            aoa.push(["", "", "", "", "", ""]);
+            aoa.push(["", "", "", "", "", ""]);
 
-            let sigStartRow = aoa.length; // จุดเริ่มต้นบรรทัดแรกของลายเซ็น
+            let sigStartRow = aoa.length;
 
             aoa.push(["ลงชื่อผู้เบิก.......................................................", "", "", "               ☐ อนุมัติ", "", ""]);
             aoa.push(["", "", "", "               ☐ ไม่อนุมัติ", "", ""]);
-            aoa.push(["", "", "", "", "", ""]); // เว้นช่องไฟให้ลายเซ็นโปร่ง
+            aoa.push(["", "", "", "", "", ""]); 
             aoa.push(["(.......................................................)", "", "", "ลงชื่อผู้อนุมัติ...................................................", "", ""]);
             aoa.push(["", "", "", "Operation Executive", "", ""]);
             aoa.push(["วันที่........../........../..........", "", "", "วันที่........................................", "", ""]);
@@ -260,37 +273,24 @@ const MonthlyRequisitionPage = {
             let wb = XLSX.utils.book_new();
             let ws = XLSX.utils.aoa_to_sheet(aoa);
 
-            // --- 🎨 ส่วนของ Excel Styling 🎨 ---
-            
-            // ล็อคความกว้างคอลัมน์
             ws['!cols'] = [ {wch: 8}, {wch: 15}, {wch: 40}, {wch: 10}, {wch: 15}, {wch: 25} ];
 
-            // ล็อคความสูงของแถว
             ws['!rows'] = [];
             ws['!rows'][0] = {hpt: 30}; 
             ws['!rows'][1] = {hpt: 20}; 
             ws['!rows'][3] = {hpt: 25}; 
             
-            // แถวข้อมูลตาราง และ บรรทัดว่าง
-            for(let r = 4; r < sigStartRow; r++) { 
-                ws['!rows'][r] = {hpt: 22};
-            }
-            
-            // แถวลายเซ็น
-            for(let i = 0; i < 6; i++) { 
-                ws['!rows'][sigStartRow + i] = {hpt: 22}; 
-            }
+            for(let r = 4; r < sigStartRow; r++) { ws['!rows'][r] = {hpt: 22}; }
+            for(let i = 0; i < 6; i++) { ws['!rows'][sigStartRow + i] = {hpt: 22}; }
 
-            // ตั้งค่าการผสานเซลล์ (Merge Cells) 
             ws["!merges"] = [
-                { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // ผสานชื่อโรงพยาบาล A1:F1
-                { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } }  // ผสานประจำเดือน A2:F2
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, 
+                { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } }  
             ];
 
-            // ผสานเซลล์ลายเซ็น 6 บรรทัดตามพิกัดเป๊ะๆ (ซ้าย=A-C, ขวา=D-F)
             for(let i = 0; i < 6; i++) {
-                ws["!merges"].push({ s: { r: sigStartRow + i, c: 0 }, e: { r: sigStartRow + i, c: 2 } }); // ฝั่งซ้าย
-                ws["!merges"].push({ s: { r: sigStartRow + i, c: 3 }, e: { r: sigStartRow + i, c: 5 } }); // ฝั่งขวา
+                ws["!merges"].push({ s: { r: sigStartRow + i, c: 0 }, e: { r: sigStartRow + i, c: 2 } }); 
+                ws["!merges"].push({ s: { r: sigStartRow + i, c: 3 }, e: { r: sigStartRow + i, c: 5 } }); 
             }
 
             const borderStyle = { 
@@ -298,47 +298,32 @@ const MonthlyRequisitionPage = {
                 left: {style: "thin", color: {auto: 1}}, right: {style: "thin", color: {auto: 1}} 
             };
 
-            // ลูปใส่สไตล์เซลล์ทั้งหมด
             for (let r = 0; r < aoa.length; r++) {
                 for (let c = 0; c < 6; c++) {
                     let cellRef = XLSX.utils.encode_cell({ r: r, c: c });
                     if (!ws[cellRef]) ws[cellRef] = { v: "", t: "s" };
 
-                    // สไตล์พื้นฐาน 
                     ws[cellRef].s = { font: { name: "Tahoma", sz: 11 }, alignment: { vertical: "center", horizontal: "center" } };
 
-                    // สไตล์หัวกระดาษ
-                    if (r === 0) {
-                        ws[cellRef].s.font = { name: "Tahoma", sz: 16, bold: true };
-                    }
+                    if (r === 0) ws[cellRef].s.font = { name: "Tahoma", sz: 16, bold: true };
                     else if (r === 1) {
                         ws[cellRef].s.font = { name: "Tahoma", sz: 14, bold: true };
                         ws[cellRef].s.alignment.horizontal = "left";
                     }
-                    // สไตล์หัวตาราง (สีส้มอ่อน FCE4D6)
                     else if (r === 3) {
                         ws[cellRef].s.font = { name: "Tahoma", sz: 11, bold: true };
                         ws[cellRef].s.fill = { fgColor: { rgb: "FCE4D6" } }; 
                         ws[cellRef].s.border = borderStyle;
                     }
-                    // สไตล์ข้อมูลในตาราง
                     else if (r > 3 && r < sigStartRow - 2) {
                         ws[cellRef].s.border = borderStyle;
-                        if (c === 2 || c === 5) {
-                            ws[cellRef].s.alignment.horizontal = "left"; // ชื่อและหมายเหตุ ให้ชิดซ้าย
-                        }
+                        if (c === 2 || c === 5) ws[cellRef].s.alignment.horizontal = "left"; 
                     }
-                    // สไตล์ส่วนลายเซ็น (จัดกึ่งกลางและชิดซ้ายอย่างสมบูรณ์)
                     else if (r >= sigStartRow) {
-                        if (c === 0) { // ฝั่งซ้าย (A)
-                            ws[cellRef].s.alignment.horizontal = "center";
-                        }
-                        else if (c === 3) { // ฝั่งขวา (D)
-                            if(r === sigStartRow || r === sigStartRow + 1) { // กล่อง Checkbox อนุมัติ
-                                ws[cellRef].s.alignment.horizontal = "left"; 
-                            } else { // ลงชื่อผู้อนุมัติ
-                                ws[cellRef].s.alignment.horizontal = "center";
-                            }
+                        if (c === 0) ws[cellRef].s.alignment.horizontal = "center";
+                        else if (c === 3) {
+                            if(r === sigStartRow || r === sigStartRow + 1) ws[cellRef].s.alignment.horizontal = "left"; 
+                            else ws[cellRef].s.alignment.horizontal = "center";
                         }
                     }
                 }

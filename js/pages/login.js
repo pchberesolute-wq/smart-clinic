@@ -1,5 +1,5 @@
 // js/pages/login.js
-// 🚀 โมดูลหน้าลงชื่อเข้าใช้งาน (Premium Glassmorphism + Hybrid Auth Auto-Sync)
+// 🚀 โมดูลหน้าลงชื่อเข้าใช้งาน (Premium Glassmorphism + Ultimate Zero-Race-Condition Auth)
 
 const LoginPage = {
     roleConfig: {
@@ -47,7 +47,6 @@ const LoginPage = {
             .input-group:focus-within .modern-icon-login { background: #fff; border-color: var(--primary); color: var(--primary); }
             .input-group:focus-within .input-modern-login { border-left-color: transparent; }
             
-            /* 🌟 Custom Premium SweetAlert Styles 🌟 */
             .swal2-popup.premium-alert { border-radius: 24px !important; padding: 25px 20px !important; border: 1px solid rgba(255,255,255,0.8) !important; background: rgba(255, 255, 255, 0.98) !important; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15) !important; }
             .swal2-confirm.premium-btn { border-radius: 12px !important; padding: 12px 28px !important; font-family: 'Prompt', sans-serif !important; font-weight: 600 !important; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important; color: white !important; box-shadow: 0 8px 15px -3px rgba(37, 99, 235, 0.3) !important; border: none !important; transition: all 0.3s ease; }
             .swal2-confirm.premium-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -3px rgba(37, 99, 235, 0.4) !important; }
@@ -73,7 +72,7 @@ const LoginPage = {
                     <div class="input-group mb-3 shadow-sm" style="border-radius: 14px;">
                         <span class="input-group-text modern-icon-login px-3"><i class="fa-solid fa-user-circle text-primary"></i></span>
                         <select id="login-username-select" class="form-select form-select-lg input-modern-login border-start-0 fw-bold text-dark" style="cursor: pointer;" onchange="LoginPage.onUserSelectChange(this.value)">
-                            <option value="" disabled selected>-- กำลังโหลดรายชื่อจาก Cloud... --</option>
+                            <option value="" disabled selected>-- กำลังตรวจสอบความปลอดภัย... --</option>
                         </select>
                     </div>
 
@@ -121,36 +120,54 @@ const LoginPage = {
 
     allUsers: [],
 
+    // 🚨 [ULTIMATE FIX] ใช้ระบบเรดาร์ดักจับ (onAuthStateChanged) แทนการเช็คสดๆ
     init: async function() {
-        if (typeof db === 'undefined') return;
+        if (typeof db === 'undefined' || typeof firebase === 'undefined') return;
 
-        // 🚨 ดึงข้อมูลมาแสดง แม้จะยังไม่ล็อคอิน โดยกูเกิลอนุญาตให้สร้างช่องโหว่เฉพาะการดึงชื่อมาแสดงเท่านั้น
-        // แต่การอ่าน/เขียนข้อมูลจริง จะถูกบล็อคไว้
+        // ดึงจาก Cache มาโชว์ก่อนเพื่อความเร็ว
+        let cachedUsers = localStorage.getItem('dialysis_cached_users');
+        if (cachedUsers) {
+            this.allUsers = JSON.parse(cachedUsers);
+            this.renderUserDropdown();
+        }
+
+        // แจ้งเตือนถ้ารันไฟล์ผ่านดับเบิ้ลคลิก (file://) เพราะ Firebase จะบล็อคทันที
+        if (window.location.protocol === 'file:') {
+            Swal.fire({
+                icon: 'error',
+                title: 'ไม่สามารถรันระบบบน file:// ได้',
+                html: '<p class="text-start">ระบบความปลอดภัยขั้นสูงไม่อนุญาตให้เปิดไฟล์ตรงๆ จากเครื่องครับ<br><br><b>วิธีแก้ไข:</b><br>1. ใช้ <b>Live Server</b> ใน VS Code<br>2. หรืออัพขึ้น Web Hosting จริง<br>3. หรือกลับไปแก้ Rules เป็น <code>.read: true</code> (ชั่วคราว)</p>',
+                allowOutsideClick: false
+            });
+            return;
+        }
+
         try {
-            // หากคุณหมอตั้งกฎ rules เป็น auth != null ตรงๆ การดึงข้อมูลตรงนี้อาจติด Permission Denied ได้
-            // ดังนั้นเราจะใช้การดึงข้อมูลแบบฉุกเฉิน หรือหากพยาบาลใช้เครื่องเดิม ก็จะใช้ข้อมูลจาก LocalStorage แทน
-            const selectEl = document.getElementById('login-username-select');
-            if(!selectEl) return;
-
-            let cachedUsers = localStorage.getItem('dialysis_cached_users');
-            if (cachedUsers) {
-                this.allUsers = JSON.parse(cachedUsers);
-                this.renderUserDropdown();
-            }
-
-            // พยายามดึงใหม่ (ถ้า rules อนุญาต)
-            db.ref('clinic_users_v2').once('value').then(snap => {
-                const data = snap.val();
-                let rawUsers = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])) : [];
-                this.allUsers = rawUsers.filter(u => u !== null && u.status === 'active');
-                localStorage.setItem('dialysis_cached_users', JSON.stringify(this.allUsers)); // เก็บจำไว้ให้เลย
-                this.renderUserDropdown();
-            }).catch(e => {
-                console.log("[Identity Sync] ใช้แคชผู้ใช้เนื่องจาก Database ถูกล็อคอยู่");
+            // 🚨 ระบบเรดาร์: เฝ้ารอจนกว่าสถานะกุญแจ (Auth) จะเสถียร 100%
+            firebase.auth().onAuthStateChanged((user) => {
+                if (user) {
+                    // 🎉 ได้กุญแจแล้ว! (ไม่ว่าจะเป็นบัตรชั่วคราวหรือบัตรจริง) วิ่งไปดึงรายชื่อได้เลย!
+                    db.ref('clinic_users_v2').once('value').then(snap => {
+                        const data = snap.val();
+                        let rawUsers = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])) : [];
+                        this.allUsers = rawUsers.filter(u => u !== null && u.status === 'active');
+                        
+                        localStorage.setItem('dialysis_cached_users', JSON.stringify(this.allUsers)); 
+                        this.renderUserDropdown();
+                    }).catch(e => {
+                        console.warn("[Database] ติด Permission Denied หรือ Offline:", e);
+                    });
+                } else {
+                    // ⏳ ยังไม่มีกุญแจ? สั่งให้ไปขอกุญแจชั่วคราวมาเดี๋ยวนี้!
+                    firebase.auth().signInAnonymously().catch(err => {
+                        console.error("[Auth] ขอกุญแจล้มเหลว:", err);
+                        Swal.fire('ข้อผิดพลาดการเชื่อมต่อ', 'ไม่สามารถสร้างกุญแจความปลอดภัยได้ โปรดเช็คอินเทอร์เน็ต', 'error');
+                    });
+                }
             });
 
         } catch (err) {
-            console.error("Error loading accounts:", err);
+            console.error("Init Error:", err);
         }
     },
 
@@ -193,7 +210,6 @@ const LoginPage = {
         else { pwInput.type = "password"; icon.className = "fa-solid fa-eye"; }
     },
 
-    // 🌟 [HYBRID AUTH ENGINE] ระบบฉีด Token ให้อัตโนมัติ โดยใช้ไอดี/รหัสเดิมของคลินิก
     authenticate: async function() {
         const selectEl = document.getElementById('login-username-select');
         let usernameInp = selectEl.value;
@@ -215,12 +231,8 @@ const LoginPage = {
         btnLogin.innerHTML = `<i class="fas fa-spinner fa-spin me-2"></i> กำลังตรวจสอบสิทธิ์...`; btnLogin.disabled = true;
 
         try {
-            // 🚨 1. ตรวจสอบ Master Admin เผื่อกรณีฉุกเฉิน
             if (usernameInp === 'admin' && passwordInp === 'admin1234') {
                 App.currentUser = { id: 'MASTER_ADMIN', name: 'Master Admin', role: 'admin', status: 'active' };
-                // ฉีด Token จำลองเพื่อคุยกับ Firebase ให้ผ่าน (Admin Override)
-                try { await firebase.auth().signInAnonymously(); } catch(e) {}
-                
                 Swal.fire({ 
                     html: `<div class="mt-2"><i class="fa-solid fa-circle-check fa-4x text-success mb-3"></i><h4 class="fw-bold text-dark" style="font-family:'Prompt';">เข้าสู่ระบบสำเร็จ</h4><p class="text-muted small">ยินดีต้อนรับเข้าสู่ระบบ (Master Account)</p></div>`, 
                     timer: 1200, showConfirmButton: false, customClass: { popup: 'premium-alert' }
@@ -228,7 +240,6 @@ const LoginPage = {
                 return;
             }
 
-            // 🚨 2. ตรวจสอบรหัสผ่านกับระบบเดิม (จำลองการตรวจสอบ Local)
             const validUser = this.allUsers.find(u => u && u.username.toLowerCase() === usernameInp.toLowerCase() && u.password === passwordInp);
 
             if (validUser) {
@@ -242,12 +253,6 @@ const LoginPage = {
                     return;
                 }
 
-                // 🚨 3. เมื่อรหัสเดิมถูกเป๊ะ เราจะสร้างกุญแจจำลอง (Anonymous Auth) ไปเปิดประตู Firebase ทันทีแบบไร้รอยต่อ!
-                if(typeof firebase !== 'undefined' && firebase.auth) {
-                    await firebase.auth().signInAnonymously();
-                }
-
-                // บันทึกการล็อคอิน
                 if (document.getElementById('login-remember').checked) localStorage.setItem('dialysis_remember_username', validUser.username);
                 else localStorage.removeItem('dialysis_remember_username');
 
@@ -276,7 +281,6 @@ const LoginPage = {
         }
     },
 
-    // 🌟 [SECURITY MODULE]: ลืมรหัสผ่านและรีเซ็ตด้วย Admin PIN
     forgotPassword: function() {
         Swal.fire({
             title: '<h4 class="fw-bold text-primary mb-0" style="font-family:\'Prompt\';"><i class="fa-solid fa-unlock-keyhole me-2"></i> ขอรีเซ็ตรหัสผ่าน</h4>',
@@ -297,8 +301,11 @@ const LoginPage = {
                 Swal.fire({title: 'กำลังตรวจสอบ...', didOpen: () => Swal.showLoading(), customClass: { popup: 'premium-alert' }});
                 
                 try {
-                    // ขอ Token ชั่วคราวเพื่อทะลวงเข้าไปแก้รหัส
-                    if(typeof firebase !== 'undefined' && firebase.auth) await firebase.auth().signInAnonymously();
+                    if(typeof firebase !== 'undefined' && firebase.auth) {
+                        if(firebase.auth().currentUser === null) {
+                            await firebase.auth().signInAnonymously();
+                        }
+                    }
 
                     const [usersSnap, settingsSnap] = await Promise.all([
                         db.ref('clinic_users_v2').once('value'),
@@ -327,7 +334,6 @@ const LoginPage = {
                         return;
                     }
                     
-                    // ให้กรอก PIN เพื่อยืนยันสิทธิ์
                     Swal.fire({
                         title: '<h4 class="text-danger fw-bold" style="font-family:\'Prompt\';"><i class="fa-solid fa-shield-halved me-2"></i> ยืนยันสิทธิ์ Admin</h4>',
                         html: `<p class="small text-muted mb-3" style="font-family:'Sarabun';">กรุณาให้ผู้ดูแลระบบกรอก <b>Admin PIN</b> เพื่ออนุมัติการรีเซ็ตรหัสผ่านให้ไอดี <b class="text-primary">${targetUsername}</b></p>` +
@@ -364,9 +370,6 @@ const LoginPage = {
                                     usersArray[userIndex].password = pwdResult.value;
                                     
                                     db.ref('clinic_users_v2').set(usersArray).then(() => {
-                                        // ปิด Token ออกเพื่อให้ล็อคอินเข้าใหม่จริงจัง
-                                        if(firebase.auth().currentUser) firebase.auth().signOut();
-
                                         Swal.fire({
                                             html: '<div class="mt-2"><i class="fa-solid fa-check-circle fa-4x text-success mb-3"></i><h4 class="fw-bold text-dark" style="font-family:\'Prompt\';">เปลี่ยนรหัสผ่านสำเร็จ!</h4><p class="text-muted small">กรุณาใช้รหัสผ่านใหม่เพื่อเข้าสู่ระบบ</p></div>', 
                                             showConfirmButton: true, confirmButtonText: 'กลับไปหน้าล็อคอิน', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn' }

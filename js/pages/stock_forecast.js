@@ -1,5 +1,5 @@
 // js/pages/stock_forecast.js
-// 🚀 โมดูลระบบคำนวณยอดเบิกพัสดุ (Smart PO - Fix Item Code Undefined & Sync to Monthly Req)
+// 🚀 โมดูลระบบคำนวณยอดเบิกพัสดุ (Smart PO - Fix Sync Order to Monthly Req)
 
 const StockForecastPage = {
     html: `
@@ -247,14 +247,13 @@ const StockForecastPage = {
 
             let orderVal = (item.order !== undefined && item.order !== null && item.order !== "" && item.order !== 999) ? item.order : '-';
 
-            // 🚨 ดึงรหัสสินค้ามาประมวลผลให้ถูกต้อง
             forecastResults.push({
                 id: item.id, 
-                item_code: item.item_code || '', // ดึงรหัสสินค้า
-                barcode: item.barcode || '',     // ดึงบาร์โค้ด
+                item_code: item.item_code || '', 
+                barcode: item.barcode || '',     
                 name: item.name, category: item.category, unit: item.unit, currentStock: currentStock,
                 baseReq: baseReq, safetyStock: safetyStock, totalReq: totalReq, suggestedOrder: suggestedOrder, finalOrderQty: suggestedOrder,
-                order: orderVal
+                order: orderVal // <--- 🚨 แพ็คลำดับติดไปด้วยตรงนี้
             });
         });
 
@@ -386,7 +385,7 @@ const StockForecastPage = {
         if(grandActualEl) grandActualEl.innerText = total;
     },
 
-    // 🚨 นำข้อมูล Array ข้ามมิติไปใส่ในหน้าเบิกของ 🚨
+    // 🚨 แก้ไขการส่งข้อมูลข้ามมิติ ให้แพ็คตัวแปร Order ใส่กล่องไปด้วย 🚨
     syncToMonthlyReq: function() {
         let syncData = [];
         let totalItems = 0;
@@ -396,10 +395,11 @@ const StockForecastPage = {
                 let qty = item.finalOrderQty !== undefined ? item.finalOrderQty : item.suggestedOrder;
                 if (qty > 0) {
                     syncData.push({
-                        code: item.item_code || item.barcode || '-', // ส่งรหัสสินค้า (Item Code) ไปแทนบาร์โค้ด
+                        code: item.item_code || item.barcode || '-',
                         name: item.name,
                         unit: item.unit,
-                        qty: qty
+                        qty: qty,
+                        order: item.order // <--- 🚨 อุดรอยรั่วตรงนี้! หิ้วลำดับไปด้วย
                     });
                     totalItems++;
                 }
@@ -454,7 +454,7 @@ const StockForecastPage = {
                 
                 itemsToOrder.push({
                     name: item.name, unit: item.unit, currentStock: item.currentStock, 
-                    item_code: item.item_code, // 🚨 ใส่รหัสสินค้า
+                    item_code: item.item_code,
                     baseReq: finalBase, totalReq: finalBase + safety,
                     suggestedOrder: (finalBase + safety) - item.currentStock > 0 ? (finalBase + safety) - item.currentStock : 0,
                     finalOrderQty: finalQty, order: item.order 
