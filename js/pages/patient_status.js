@@ -1,5 +1,5 @@
 // js/pages/patient_status.js
-// 🚀 โมดูลทะเบียนผู้ป่วยส่งต่อ/จำหน่าย (Smart Archive & 1-Click Restore System)
+// 🚀 โมดูลทะเบียนผู้ป่วยส่งต่อ/จำหน่าย (Smart Archive + Date Timestamp + 5-Year Auto-Purge)
 
 const PatientStatusPage = {
     currentTab: 'Admit รพ.',
@@ -50,10 +50,10 @@ const PatientStatusPage = {
                 <table class="table table-premium w-100 mb-0">
                     <thead>
                         <tr>
-                            <th style="width: 25%;"><i class="fa-solid fa-id-card-clip text-primary me-2"></i> ผู้ป่วย (HN & ชื่อ)</th>
+                            <th style="width: 30%;"><i class="fa-solid fa-id-card-clip text-primary me-2"></i> ผู้ป่วย (HN & ชื่อ)</th>
                             <th style="width: 25%;"><i class="fa-solid fa-phone text-info me-2"></i> ข้อมูลติดต่อ</th>
                             <th style="width: 15%;"><i class="fa-solid fa-shield-heart text-success me-2"></i> สิทธิรักษา</th>
-                            <th class="text-center" style="width: 15%;"><i class="fa-solid fa-chart-simple text-warning me-2"></i> สถานะ</th>
+                            <th class="text-center" style="width: 10%;"><i class="fa-solid fa-chart-simple text-warning me-2"></i> สถานะ</th>
                             <th class="text-center" style="width: 20%;"><i class="fa-solid fa-gears text-secondary me-2"></i> จัดการ / ดึงกลับ</th>
                         </tr>
                     </thead>
@@ -68,6 +68,7 @@ const PatientStatusPage = {
     init: function() {
         if (typeof db === 'undefined') return;
 
+        // 🚨 รันฟังก์ชันล้างข้อมูล (Auto-Purge) ทันทีที่เปิดหน้า
         if (!this.hasCleanedUp) {
             this.autoCleanUpOldArchives();
         }
@@ -91,9 +92,11 @@ const PatientStatusPage = {
         }, 100);
     },
 
+    // 🧹 ระบบคัดแยกและลบข้อมูลที่อายุเกิน 5 ปี (อิงตาม last_updated)
     autoCleanUpOldArchives: function() {
         this.hasCleanedUp = true; 
         const cutoffDate = new Date();
+        // ถอยหลังไป 5 ปี นับจากวันนี้
         cutoffDate.setFullYear(cutoffDate.getFullYear() - 5); 
 
         db.ref('patients_database_v2/patients').once('value').then(snap => {
@@ -104,9 +107,16 @@ const PatientStatusPage = {
             
             let updatedPatients = rawPatients.filter(p => {
                 if (!p) return false;
+                // ถ้าคนไข้ยัง Active (ปกติ) ไม่ต้องไปยุ่ง (ป้องกันลบผิด)
                 if ((p.status || 'ปกติ') === 'ปกติ') return true;
+                
+                // ถือว่า last_updated คือวันที่ถูกตั้งสถานะให้ "จำหน่ายออก"
                 let recordDate = new Date(p.last_updated || p.register_date || "2000-01-01");
+                
+                // ถ้าวันที่นั้น "เก่ากว่า" 5 ปีที่แล้ว (ลบทิ้ง = false)
                 if (recordDate < cutoffDate) return false; 
+                
+                // นอกนั้นเก็บไว้
                 return true; 
             });
 
@@ -122,7 +132,7 @@ const PatientStatusPage = {
                             toast.style.fontFamily = "'Prompt', sans-serif";
                         }
                     });
-                    Toast.fire({ icon: 'info', title: `♻️ ล้างประวัติเก่าเกิน 5 ปี อัตโนมัติ (${deletedCount} รายการ)` });
+                    Toast.fire({ icon: 'info', title: `♻️ ล้างประวัติ Archive เก่าเกิน 5 ปี สำเร็จ (${deletedCount} รายการ)` });
                 });
             }
         });
@@ -171,7 +181,6 @@ const PatientStatusPage = {
         this.renderTable(document.getElementById('psSearch') ? document.getElementById('psSearch').value.toLowerCase() : "");
     },
 
-    // 🌟 ระบบดึงคนไข้กลับเข้าทะเบียนหลัก (One-Click Restore Engine)
     restorePatient: function(hn, patientName) {
         Swal.fire({
             title: 'ยืนยันการดึงผู้ป่วยกลับ?',
@@ -199,7 +208,6 @@ const PatientStatusPage = {
                         
                         db.ref('patients_database_v2/patients').set(patientsList).then(() => {
                             Swal.fire('ดึงกลับสำเร็จ!', 'ผู้ป่วยกลับไปอยู่ในทะเบียนหลักเรียบร้อยแล้ว', 'success');
-                            // หมายเหตุ: หน้าจอจะรีเฟรชออโต้ทันทีเพราะเราใช้ .on() ในฟังก์ชัน init()
                         }).catch(err => {
                             Swal.fire('ข้อผิดพลาด', err.message, 'error');
                         });
@@ -238,6 +246,18 @@ const PatientStatusPage = {
 
             let imgSrc = p.photo_base64 ? (p.photo_base64.startsWith('data:image') ? p.photo_base64 : 'data:image/jpeg;base64,' + p.photo_base64) : `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name_th||'X')}&background=e2e8f0&color=64748b&bold=true`;
             let fullName = `${p.title || ''}${p.name_th || 'ไม่ระบุชื่อ'}`;
+            
+            // 🚨 THE FIX: ระบบดึงวันที่แบบมี Fallback ป้องกันการโชว์ขีดลบ
+            let formattedDate = 'ไม่ระบุวันที่';
+            // ไล่หาฟิลด์วันที่ ถ้าไม่มีอันแรก ให้หาอันสอง
+            let targetDate = p.last_updated || p.register_date || p.created_at; 
+            
+            if (targetDate) {
+                const d = new Date(targetDate);
+                if (!isNaN(d.getTime())) { // ป้องกัน Error กรณีรูปแบบวันที่ในฐานข้อมูลเพี้ยน
+                    formattedDate = d.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+                }
+            }
 
             html += `
             <tr class="card-hover-float" style="cursor: default;">
@@ -247,6 +267,7 @@ const PatientStatusPage = {
                         <div>
                             <div class="fw-bold text-dark" style="font-size:15.5px; font-family:'Prompt';">${fullName}</div>
                             <div class="text-muted fw-bold mt-1" style="font-size:13px;"><i class="fa-solid fa-id-card me-1"></i> ${p.hn || '-'} <span class="ms-2 fw-normal">| อายุ: ${p.age || '-'}</span></div>
+                            <div class="text-danger fw-bold mt-1" style="font-size:12px;"><i class="fa-solid fa-calendar-xmark me-1"></i> วันที่จำหน่าย: ${formattedDate}</div>
                         </div>
                     </div>
                 </td>
@@ -269,4 +290,4 @@ const PatientStatusPage = {
         });
         tbody.innerHTML = html;
     }
-};
+}; // 🚨 ใส่ปีกกาปิดคืนให้แล้วครับ! 🚨

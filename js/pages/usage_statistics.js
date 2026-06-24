@@ -1,5 +1,5 @@
 // js/pages/usage_statistics.js
-// 🚀 โมดูลสถิติการใช้น้ำยาและยาฉีดประจำหน่วยงาน (Added Item Code/Barcode Display)
+// 🚀 โมดูลสถิติการใช้น้ำยาและยาฉีดประจำหน่วยงาน (Fixed Calendar Icon & 5-Year Auto Purge)
 
 const UsageStatisticsPage = {
     startDate: '', 
@@ -20,14 +20,25 @@ const UsageStatisticsPage = {
             .analytics-icon-bg{position:absolute;top:-20px;right:-20px;opacity:0.04;font-size:130px;pointer-events:none;z-index:0;}
             .table-analytics th{background:#f8fafc;color:#475569;font-weight:700;text-transform:uppercase;font-size:13px;padding:16px;border-bottom:2px solid #e2e8f0;border-top:none;white-space:nowrap;}
             .table-analytics td{padding:14px 16px;vertical-align:middle;border-bottom:1px solid #f1f5f9;font-size:14.5px;}
-            .view-btn-group .btn{font-family:'Prompt';font-weight:600;font-size:14px;padding:8px 20px;border-radius:50px;transition:all 0.2s;border:2px solid #e2e8f0;background:#fff;color:#475569;margin:0 2px;}
-            .view-btn-group .btn.active{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 4px 10px rgba(37,99,235,0.2);}
+            
+            .view-btn-group { display: flex; flex-wrap: wrap; background: #f8fafc; padding: 4px; border-radius: 50px; border: 1px solid #e2e8f0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); gap: 4px; }
+            .view-btn-group .btn{font-family:'Prompt';font-weight:600;font-size:13px;padding:6px 16px;border-radius:50px;transition:all 0.2s;border:none;background:transparent;color:#64748b;}
+            .view-btn-group .btn.active{background:var(--primary);color:#fff;box-shadow:0 4px 10px rgba(37,99,235,0.2);}
+            
             .badge-fluid{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;font-weight:700;border-radius:50px;padding:4px 12px;}
             .badge-med{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;font-weight:700;border-radius:50px;padding:4px 12px;}
-            .native-date-wrapper{position:relative;display:inline-flex;align-items:center;justify-content:center;padding:4px 5px;cursor:pointer;min-width:140px;}
-            .native-date-wrapper input[type="date"]{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0.01;cursor:pointer;z-index:10;border:none;background:transparent;}
-            .native-date-wrapper span,.native-date-wrapper i{position:relative;z-index:1;font-family:'Prompt';font-weight:700;color:var(--primary);font-size:15px;pointer-events:none;}
-            .native-date-wrapper i{margin-right:8px;}
+            
+            .date-filter-container { display: flex; align-items: center; background: #ffffff; padding: 4px 8px; border-radius: 50px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); flex-wrap: wrap; gap: 8px; }
+            
+            /* 🚨 ซ่อน Input Native 100% 🚨 */
+            .native-date-wrapper { position: relative; display: inline-flex; align-items: center; justify-content: center; padding: 6px 14px; cursor: pointer; min-width: 145px; border-radius: 50px; background: #f8fafc; border: 1px solid transparent; transition: 0.2s; overflow: hidden; }
+            .native-date-wrapper:hover { border-color: #cbd5e1; background: #f1f5f9; }
+            .native-date-wrapper input[type="date"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; border: none; background: transparent; color: transparent; }
+            .native-date-wrapper input[type="date"]::-webkit-calendar-picker-indicator { width: 100%; height: 100%; opacity: 0; cursor: pointer; position: absolute; left: 0; top: 0; }
+            
+            /* 🚨 THE FIX: แต่งสีไอคอนให้เป็นสีน้ำเงินสดใส และฟอนต์หนา 🚨 */
+            .native-date-wrapper span { position: relative; z-index: 1; font-family: 'Prompt'; font-weight: 800; color: #2563eb; font-size: 14px; pointer-events: none; }
+            .native-date-wrapper i { position: relative; z-index: 1; margin-right: 8px; font-size: 16px; color: #2563eb; pointer-events: none; }
         </style>
 
         <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
@@ -35,26 +46,29 @@ const UsageStatisticsPage = {
                 <h2 class="page-title text-primary" style="font-size:28px;"><i class="fa-solid fa-chart-line me-2"></i> สถิติการเบิกใช้น้ำยาและยาฉีด</h2>
                 <p class="text-muted mt-1 mb-0" id="stat-date-text">ประมวลผลสรุปปริมาณการใช้พัสดุและแสดงรหัสสินค้าอ้างอิง</p>
             </div>
-            <div class="d-flex gap-2 align-items-center flex-wrap">
-                <div class="view-btn-group d-flex bg-light p-1 border rounded-pill shadow-sm">
+            
+            <div class="d-flex gap-2 align-items-center flex-wrap justify-content-end">
+                <div class="view-btn-group">
                     <button class="btn active" id="btn-v-daily" onclick="UsageStatisticsPage.changeView('daily')">รายวัน</button>
                     <button class="btn" id="btn-v-weekly" onclick="UsageStatisticsPage.changeView('weekly')">รายสัปดาห์</button>
                     <button class="btn" id="btn-v-monthly" onclick="UsageStatisticsPage.changeView('monthly')">รายเดือน</button>
                     <button class="btn" id="btn-v-yearly" onclick="UsageStatisticsPage.changeView('yearly')">รายปี</button>
                 </div>
-                <div class="d-flex align-items-center bg-light p-1 rounded-pill shadow-sm border ms-2">
+                
+                <div class="date-filter-container">
                     <div class="native-date-wrapper" onclick="this.querySelector('input').showPicker ? this.querySelector('input').showPicker() : null">
-                        <i class="fa-solid fa-calendar-day"></i><span id="stat-start-display">กำลังโหลด...</span>
+                        <i class="fa-solid fa-calendar-days"></i><span id="stat-start-display">กำลังโหลด...</span>
                         <input type="date" id="stat-start-date" onchange="UsageStatisticsPage.onDateChange()">
                     </div>
-                    <span class="mx-2 text-muted fw-bold small">ถึง</span>
+                    <span class="text-muted fw-bold small mx-1">ถึง</span>
                     <div class="native-date-wrapper" onclick="this.querySelector('input').showPicker ? this.querySelector('input').showPicker() : null">
-                        <i class="fa-solid fa-calendar-check"></i><span id="stat-end-display">กำลังโหลด...</span>
+                        <i class="fa-solid fa-calendar-days"></i><span id="stat-end-display">กำลังโหลด...</span>
                         <input type="date" id="stat-end-date" onchange="UsageStatisticsPage.onDateChange()">
                     </div>
-                    <button class="btn btn-primary rounded-pill px-3 ms-2 fw-bold shadow-sm" style="z-index:15;" onclick="UsageStatisticsPage.setThisMonth()">เดือนนี้</button>
+                    <button class="btn btn-primary rounded-pill px-3 fw-bold shadow-sm" style="z-index:15; font-size: 13px; margin-left: 4px;" onclick="UsageStatisticsPage.setThisMonth()">เดือนนี้</button>
                 </div>
-                <button class="btn btn-dark fw-bold shadow-sm rounded-pill px-4 ms-2 card-hover-float" onclick="UsageStatisticsPage.printReport()"><i class="fa-solid fa-print me-2 text-warning"></i> พิมพ์เอกสาร</button>
+                
+                <button class="btn btn-dark fw-bold shadow-sm rounded-pill px-4 card-hover-float" onclick="UsageStatisticsPage.printReport()"><i class="fa-solid fa-print me-2 text-warning"></i> พิมพ์เอกสาร</button>
             </div>
         </div>
 
@@ -156,6 +170,8 @@ const UsageStatisticsPage = {
 
     init: function() {
         if (typeof db === 'undefined') return;
+        
+        // 🚨 ทริกเกอร์ 5-Year Auto Purge ทันทีเมื่อเข้าหน้านี้
         if (!this.hasCleanedUp) this.autoPurgeOldRecords();
         
         if(!this.startDate || !this.endDate) {
@@ -197,6 +213,7 @@ const UsageStatisticsPage = {
         });
     },
 
+    // 🚨 ระบบกวาดล้างข้อมูลเก่าเกิน 5 ปี (Auto-Purge 5 Years) 🚨
     autoPurgeOldRecords: function() { 
         this.hasCleanedUp = true; 
         const cutoffDate = new Date(); 
@@ -206,8 +223,14 @@ const UsageStatisticsPage = {
         db.ref('inventory_database_v2/transactions').orderByChild('timestamp').endAt(cutoffStr).once('value').then(snap => { 
             if(snap.exists()) { 
                 let updates = {}; 
-                snap.forEach(child => { updates[child.key] = null; }); 
-                db.ref('inventory_database_v2/transactions').update(updates); 
+                let deletedCount = 0;
+                snap.forEach(child => { 
+                    updates[child.key] = null; 
+                    deletedCount++;
+                }); 
+                db.ref('inventory_database_v2/transactions').update(updates).then(() => {
+                    console.log(`[Auto-Purge] ล้างประวัติสถิติเบิกจ่ายพัสดุที่เก่าเกิน 5 ปี สำเร็จ จำนวน ${deletedCount} รายการ`);
+                }); 
             } 
         }); 
     },
@@ -288,7 +311,6 @@ const UsageStatisticsPage = {
             let item = this.inventoryItems.find(i => i.id === t.itemId);
             let catName = item && item.category ? item.category : 'ทั่วไป';
             let costPrice = item && item.price ? Number(item.price) : 0;
-            // 🚨 ดึงรหัสสินค้าและบาร์โค้ดมาใช้
             let finalItemCode = item && item.item_code ? item.item_code : (t.itemCode || '-');
             let finalBarcode = item && item.barcode ? item.barcode : (t.barcode || '-');
             
@@ -366,7 +388,6 @@ const UsageStatisticsPage = {
                 tableHtml += '<tr class="card-hover-float stat-row">' +
                              '<td><span class="badge bg-dark text-white fw-bold px-3 py-1 rounded-pill small">' + dp + '</span></td>' +
                              '<td class="text-center">' + badge + '</td>' +
-                             /* 🚨 เรนเดอร์คอลัมน์ใหม่ (รหัสสินค้าและบาร์โค้ด) */
                              '<td><span class="badge bg-primary-subtle text-primary border border-primary-subtle me-1">' + d.itemCode + '</span> <span class="badge bg-light text-secondary border"><i class="fa-solid fa-barcode"></i> ' + d.barcode + '</span></td>' +
                              '<td><span class="fw-bold text-dark row-search-name" style="font-family:\'Prompt\';">' + d.name + '</span></td>' +
                              '<td class="text-end fw-bold text-dark" style="font-size:15px;">' + d.qty.toLocaleString() + '</td>' +
@@ -380,7 +401,6 @@ const UsageStatisticsPage = {
         }
         document.getElementById('stat-table-body').innerHTML = tableHtml;
 
-        // 🌟 เตรียมข้อมูลให้กราฟวงกลม Top 5
         let top5Names = []; 
         let top5Qtys = [];
         sortedTopItems.slice(0, 5).forEach(item => { 
@@ -393,7 +413,6 @@ const UsageStatisticsPage = {
         this.renderChart();
     },
 
-    // 🚨 ฟังก์ชันค้นหาในตาราง
     filterTable: function() {
         const term = document.getElementById('stat-search-inp').value.toLowerCase();
         const rows = document.querySelectorAll('.stat-row');
@@ -472,7 +491,6 @@ const UsageStatisticsPage = {
             let doc = iframe.contentWindow.document; 
             doc.open();
 
-            // 🌟 ปรับให้ใบปริ้นท์แสดง รหัสพัสดุ ด้วย
             let htmlContent = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>รายงานสถิติพัสดุ</title><link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">' +
                 '<style>*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important;}body{font-family:"Sarabun",sans-serif;color:#000;padding:20px;font-size:13px;}.header{text-align:center;margin-bottom:25px;border-bottom:2px solid #000;padding-bottom:15px;}.header h2{font-size:24px;font-weight:700;margin:0;}table{width:100%;border-collapse:collapse;margin-top:20px;}th,td{border:1px solid #000;padding:10px 8px;text-align:left;}th{background-color:#f1f5f9!important;font-weight:bold;}.text-end{text-align:right;}.section-title{font-size:15px;font-weight:bold;margin-top:20px;margin-bottom:10px;border-left:4px solid #2563eb;padding-left:8px;}@media print{@page{size:A4 portrait;margin:12mm;}body{padding:0;}}</style>' +
                 '</head><body>' +

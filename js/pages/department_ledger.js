@@ -1,5 +1,5 @@
 // js/pages/department_ledger.js
-// 🚀 โมดูลบัญชีภายในหน่วยงาน (Clean Code Edition + Remark Feature)
+// 🚀 โมดูลบัญชีภายในหน่วยงาน (5-Year Auto Purge + Clean UI Edition)
 
 const DepartmentLedgerPage = {
     startDate: '',
@@ -10,6 +10,7 @@ const DepartmentLedgerPage = {
     categoriesOut: [],
     summaryChartInstance: null,
     _pendingChartData: null,
+    hasCleanedUp: false,
 
     html: `
         <style>
@@ -19,6 +20,7 @@ const DepartmentLedgerPage = {
             .table-ledger th { background: #f8fafc; color: #475569; font-weight: 700; text-transform: uppercase; font-size: 13px; padding: 16px; border-bottom: 2px solid #e2e8f0; border-top: none; white-space: nowrap; }
             .table-ledger td { padding: 14px 16px; vertical-align: middle; border-bottom: 1px solid #f1f5f9; font-size: 14.5px; }
             
+            /* 🚨 ซ่อน Input Native ป้องกันสี่เหลี่ยมซ้อนทับปฏิทิน 100% 🚨 */
             .native-date-wrapper {
                 position: relative; display: inline-flex; align-items: center; background: #ffffff;
                 border: 2px solid #e2e8f0; border-radius: 50px; padding: 6px 18px; cursor: pointer; overflow: hidden;
@@ -26,7 +28,9 @@ const DepartmentLedgerPage = {
             }
             .native-date-wrapper:hover { border-color: #3b82f6; background: #f8fafc; }
             .native-date-wrapper .thai-text { font-family: 'Prompt', sans-serif; font-weight: 700; color: #2563eb; font-size: 15px; pointer-events: none; }
-            .native-date-wrapper input[type="date"] { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; }
+            .native-date-wrapper i { font-size: 16px; pointer-events: none; }
+            .native-date-wrapper input[type="date"] { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; border: none; background: transparent; color: transparent; }
+            .native-date-wrapper input[type="date"]::-webkit-datetime-edit, .native-date-wrapper input[type="date"]::-webkit-datetime-edit-text, .native-date-wrapper input[type="date"]::-webkit-datetime-edit-month-field, .native-date-wrapper input[type="date"]::-webkit-datetime-edit-day-field, .native-date-wrapper input[type="date"]::-webkit-datetime-edit-year-field { color: transparent !important; background: transparent !important; }
             .native-date-wrapper input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; margin: 0; padding: 0; cursor: pointer; opacity: 0; }
 
             .finance-nav-tabs { border-bottom: 2px solid #e2e8f0; gap: 5px; flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; padding-bottom: 2px; }
@@ -53,13 +57,13 @@ const DepartmentLedgerPage = {
                 
                 <div class="d-flex align-items-center bg-light p-1 rounded-pill shadow-sm border ms-2">
                     <div class="native-date-wrapper">
-                        <i class="fa-solid fa-calendar-day text-primary me-2" style="pointer-events:none;"></i>
+                        <i class="fa-solid fa-calendar-days text-primary me-2"></i>
                         <span class="thai-text" id="dl-start-display">กำลังโหลด...</span>
                         <input type="date" id="dl-start-date" onchange="DepartmentLedgerPage.onDateChange()">
                     </div>
                     <span class="mx-2 text-muted fw-bold small">ถึง</span>
                     <div class="native-date-wrapper">
-                        <i class="fa-solid fa-calendar-check text-primary me-2" style="pointer-events:none;"></i>
+                        <i class="fa-solid fa-calendar-days text-primary me-2"></i>
                         <span class="thai-text" id="dl-end-display">กำลังโหลด...</span>
                         <input type="date" id="dl-end-date" onchange="DepartmentLedgerPage.onDateChange()">
                     </div>
@@ -233,6 +237,9 @@ const DepartmentLedgerPage = {
     init: function() {
         if (typeof db === 'undefined') return;
 
+        // 🚨 ทริกเกอร์ 5-Year Auto Purge
+        if (!this.hasCleanedUp) this.autoPurgeOldRecords();
+
         if(!this.startDate || !this.endDate) {
             this.setThisMonth();
         }
@@ -271,6 +278,28 @@ const DepartmentLedgerPage = {
             const data = snap.val();
             this.allTransactions = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
             this.processData();
+        });
+    },
+
+    // 🚨 ฟังก์ชันล้างประวัติบัญชีหน่วยงานที่เก่ากว่า 5 ปี 🚨
+    autoPurgeOldRecords: function() {
+        this.hasCleanedUp = true;
+        const cutoffDate = new Date();
+        cutoffDate.setFullYear(cutoffDate.getFullYear() - 5);
+        const cutoffStr = cutoffDate.toISOString().split('T')[0];
+
+        db.ref('department_ledger_v2').orderByChild('date').endAt(cutoffStr).once('value').then(snap => {
+            if (snap.exists()) {
+                let updates = {};
+                let deletedCount = 0;
+                snap.forEach(child => {
+                    updates[child.key] = null;
+                    deletedCount++;
+                });
+                db.ref('department_ledger_v2').update(updates).then(() => {
+                    console.log(`[Auto-Purge] ลบประวัติบัญชีหน่วยงานที่เก่าเกิน 5 ปี สำเร็จ จำนวน ${deletedCount} รายการ`);
+                });
+            }
         });
     },
 

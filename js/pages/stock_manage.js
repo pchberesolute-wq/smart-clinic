@@ -1,5 +1,5 @@
 // js/pages/stock_manage.js
-// 🚀 โมดูลระบบเบิกจ่าย รับเข้า โอนย้าย (Premium Unified UI Edition - Fixed Item Code & Search)
+// 🚀 โมดูลระบบเบิกจ่าย รับเข้า โอนย้าย (Premium Unified UI + Bulletproof Async Barcode Scanner)
 
 const StockManagePage = {
     html: `
@@ -172,7 +172,6 @@ const StockManagePage = {
         term = term.toLowerCase();
         const list = document.getElementById('swal-manual-list'); if(!list) return;
         
-        // 🚨 อัปเกรดให้ค้นหาด้วย Item Code ได้ด้วย 🚨
         const filtered = this.allItems.filter(i => 
             (i.name || "").toLowerCase().includes(term) || 
             (i.barcode || "").toLowerCase().includes(term) || 
@@ -217,7 +216,6 @@ const StockManagePage = {
 
         const existing = this.cart.find(c => c.id === item.id);
         if(existing) { existing.processQty += 1; } 
-        // 🚨 เก็บค่า item_code ลงตะกร้าด้วย 🚨
         else { this.cart.push({ id: item.id, item_code: item.item_code || '-', barcode: item.barcode, name: item.name, qty_main: qMain, qty_sub: qSub, processQty: 1, order: item.order }); }
         
         try { new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg').play(); } catch(e){}
@@ -280,17 +278,111 @@ const StockManagePage = {
         tbody.innerHTML = html;
     },
 
+    // 🚨 ========================================== 🚨
+    // 🚨 MODULE: SMART CAMERA SCANNER (BULLETPROOF) 🚨
+    // 🚨 ========================================== 🚨
+
+    loadScannerLibrary: function(callback) {
+        if (window.Html5Qrcode) { callback(); return; }
+        const existingScript = document.querySelector('script[src*="html5-qrcode"]');
+        if (existingScript) {
+            existingScript.addEventListener('load', () => callback());
+            return;
+        }
+        Swal.showLoading();
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/html5-qrcode';
+        script.onload = () => { Swal.hideLoading(); callback(); };
+        script.onerror = () => { Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถดาวน์โหลดซอฟต์แวร์สแกนเนอร์ได้ กรุณาตรวจสอบอินเทอร์เน็ต', 'error'); };
+        document.head.appendChild(script);
+    },
+
     openCamera: function() {
         Swal.fire({
             title: '<h5 style="font-family:Prompt; font-weight:700; margin:0;"><i class="fa-solid fa-camera me-2 text-primary"></i>สแกนด้วยกล้องมือถือ</h5>', 
-            html: `<div id="qr-reader-audit" class="shadow-sm mt-3" style="width:100%; border-radius: 12px; overflow: hidden; border: 2px solid var(--primary);"></div><p class="text-muted small mt-3 mb-0"><i class="fa-solid fa-circle-info"></i> อนุญาตให้เว็บเข้าถึงกล้อง แล้วส่องไปที่บาร์โค้ด</p>`,
+            html: `<div id="qr-reader-audit" class="shadow-sm mt-3 bg-dark d-flex align-items-center justify-content-center" style="width:100%; min-height:250px; border-radius: 12px; overflow: hidden; border: 2px solid var(--primary);"><i class="fa-solid fa-camera fa-2x text-secondary"></i></div><p class="text-muted small mt-3 mb-0"><i class="fa-solid fa-circle-info"></i> อนุญาตให้เว็บเข้าถึงกล้อง แล้วส่องไปที่บาร์โค้ดพัสดุ</p>`,
             showCancelButton: true, showConfirmButton: false, cancelButtonText: 'ปิดกล้อง', cancelButtonColor: '#ef4444',
+            allowOutsideClick: false,
             didOpen: () => {
-                this.html5QrcodeScanner = new Html5QrcodeScanner("qr-reader-audit", { fps: 10, qrbox: { width: 250, height: 120 }, aspectRatio: 1.0 }, false);
-                this.html5QrcodeScanner.render((decodedText) => { this.html5QrcodeScanner.clear(); Swal.close(); this.processScan(decodedText); }, (error) => {} );
+                this.startCameraScanner();
             },
-            willClose: () => { if (this.html5QrcodeScanner) this.html5QrcodeScanner.clear().catch(e=>e); }
+            willClose: () => { 
+                this.stopCameraScanner(); 
+            }
         });
+    },
+
+    startCameraScanner: function() {
+        this.loadScannerLibrary(async () => {
+            // 🚨 รับประกันว่ากล้องเก่าถูกฆ่าทิ้งก่อนเริ่มใหม่ (Prevent Race Condition)
+            if (this.html5QrcodeScanner) {
+                try {
+                    if (this.html5QrcodeScanner.getState() === 2) {
+                        await this.html5QrcodeScanner.stop();
+                    }
+                    this.html5QrcodeScanner.clear();
+                } catch(e) { console.error("Scanner release error", e); }
+            }
+            this.initCamera();
+        });
+    },
+
+    initCamera: function() {
+        const reader = document.getElementById('qr-reader-audit');
+        if (!reader) return;
+        
+        reader.innerHTML = '';
+        this.html5QrcodeScanner = new Html5Qrcode("qr-reader-audit");
+        
+        // ขยายขนาดกล่องโฟกัส เพื่อให้อ่านบาร์โค้ดยาวๆ ของยาและน้ำยาไตได้ง่ายขึ้น
+        const config = { 
+            fps: 15, 
+            qrbox: function(viewfinderWidth, viewFinderHeight) {
+                let width = Math.floor(viewfinderWidth * 0.8);
+                let height = Math.floor(viewFinderHeight * 0.4);
+                if (width < 250) width = 250;
+                if (height < 120) height = 120;
+                return { width: width, height: height };
+            },
+            aspectRatio: 1.333334
+        };
+        
+        this.html5QrcodeScanner.start(
+            { facingMode: "environment" }, 
+            config,
+            (decodedText) => {
+                this.stopCameraScanner();
+                Swal.close();
+                let cleanBarcode = decodedText.trim().replace(/\*/g, '');
+                this.processScan(cleanBarcode);
+            }, 
+            (errorMessage) => { /* Silent check frames */ }
+        ).catch(err => {
+            if (document.getElementById('qr-reader-audit')) { 
+                document.getElementById('qr-reader-audit').innerHTML = 
+                    '<div class="p-4 text-center text-white" style="font-family:\'Prompt\';">' +
+                        '<i class="fa-solid fa-camera-slash fa-3x mb-3 text-danger"></i><br>' +
+                        '<b class="fs-5">ไม่สามารถเข้าถึงกล้องถ่ายรูปได้</b><br>' +
+                        '<p class="small text-muted mt-2 mb-0">โปรดตรวจสอบการอนุญาตสิทธิ์กล้องในเบราว์เซอร์ และรันผ่าน HTTPS</p>' +
+                    '</div>'; 
+            }
+        });
+    },
+
+    stopCameraScanner: function() {
+        if (this.html5QrcodeScanner) {
+            try { 
+                if (this.html5QrcodeScanner.getState() === 2) { 
+                    this.html5QrcodeScanner.stop().then(() => { 
+                        this.html5QrcodeScanner.clear(); 
+                        this.html5QrcodeScanner = null; 
+                    }).catch(err => { this.html5QrcodeScanner = null; }); 
+                } else { 
+                    this.html5QrcodeScanner.clear(); 
+                    this.html5QrcodeScanner = null; 
+                } 
+            } catch (err) { this.html5QrcodeScanner = null; }
+        }
     },
 
     confirmTransaction: function() {
@@ -338,7 +430,6 @@ const StockManagePage = {
                         updatedItems[itemIndex].qty = qMain; 
                         updatedItems[itemIndex].last_update = timestamp;
 
-                        // 🚨 บันทึก Item Code ลงใน Log ด้วย 🚨
                         logs.push({ 
                             timestamp: timestamp, mode: mode, itemId: c.id, itemName: c.name, 
                             itemCode: c.item_code || '', barcode: c.barcode || '', 

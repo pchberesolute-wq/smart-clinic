@@ -1,5 +1,5 @@
 // js/pages/visit_detail.js
-// 🚀 โมดูลบันทึกข้อมูลฟอกไตเชิงลึก (3-Columns Ergonomic Scale + 📸 Smart Scanner + 🧹 5-Years EMR Auto-Purge)
+// 🚀 โมดูลบันทึกข้อมูลฟอกไตเชิงลึก (3-Columns + 📸 Smart Scanner + ⚡ Reactive Pricing + 🧹 5-Year Auto-Purge)
 
 const VisitDetailPage = {
     visitId: null, visitData: null, isFormLoaded: false,
@@ -34,7 +34,6 @@ const VisitDetailPage = {
         '.min-w-0{min-width:0;} ' +
         '.compact-panel { border-radius: 20px; background: #ffffff; padding: 20px; } ' +
         '.section-title-compact { font-size: 16px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; } ' +
-        /* CSS สำหรับ Scanner */
         '.upload-dropzone { border: 2px dashed #cbd5e1; background: #f8fafc; border-radius: 12px; padding: 30px 15px; text-align: center; transition: all 0.3s ease; cursor: pointer; position: relative; } ' +
         '.upload-dropzone:hover, .upload-dropzone.dragover { border-color: #3b82f6; background: #eff6ff; } ' +
         '.scan-img-card { position: relative; display: inline-block; width: 100%; height: 100%; } ' +
@@ -42,6 +41,7 @@ const VisitDetailPage = {
         '.scan-img-card .delete-btn { position: absolute; top: -10px; right: -10px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; z-index: 20; display:flex; align-items:center; justify-content:center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: 0.2s; } ' +
         '.scan-img-card .delete-btn:hover { background: #dc2626; transform: scale(1.1); } ' +
         '.cursor-pointer { cursor: pointer; } ' +
+        '.visually-hidden-input { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0,0,0,0) !important; border: 0 !important; }' +
         '</style>' +
 
         '<div id="vd-search-screen" style="display: none; max-width: 1000px; margin: 20px auto;">' +
@@ -142,9 +142,9 @@ const VisitDetailPage = {
                                 '</div>' +
                             '</div>' +
                             '<div class="row g-3 mb-4">' +
-                                '<div class="col-6"><label class="form-label fw-bold text-secondary small mb-1">น้ำยาไต (Dialysate)</label><select id="vd-dialysate-item" class="form-select input-modern mb-2 fw-bold text-dark"></select><div class="solid-input-group"><span class="sig-addon sig-prepend px-2">จำนวน</span><input type="number" id="vd-dialysate-qty" class="text-primary text-center" placeholder="แกลลอน"></div></div>' +
-                                '<div class="col-6"><label class="form-label fw-bold text-secondary small mb-1">น้ำเกลือ (NSS)</label><select id="vd-saline-item" class="form-select input-modern mb-2 fw-bold text-dark"></select><div class="solid-input-group"><span class="sig-addon sig-prepend px-2">จำนวน</span><input type="number" id="vd-saline-qty" class="text-primary text-center" placeholder="ขวด/ถุง"></div></div>' +
-                                '<div class="col-12"><label class="form-label fw-bold text-secondary small mb-1">ยาต้านแข็งตัว (Heparin)</label><div class="row g-2"><div class="col-8"><select id="vd-heparin-item" class="form-select input-modern fw-bold text-dark"></select></div><div class="col-4"><div class="solid-input-group"><span class="sig-addon sig-prepend px-2">จน.</span><input type="number" id="vd-heparin-qty" class="text-primary text-center" placeholder="Vial"></div></div></div></div>' +
+                                '<div class="col-6"><label class="form-label fw-bold text-secondary small mb-1">น้ำยาไต (Dialysate)</label><select id="vd-dialysate-item" class="form-select input-modern mb-2 fw-bold text-dark" onchange="VisitDetailPage.calculateAdditionalFees(true)"></select><div class="solid-input-group"><span class="sig-addon sig-prepend px-2">จำนวน</span><input type="number" id="vd-dialysate-qty" class="text-primary text-center" placeholder="แกลลอน" onkeyup="VisitDetailPage.calculateAdditionalFees(true)" onchange="VisitDetailPage.calculateAdditionalFees(true)"></div></div>' +
+                                '<div class="col-6"><label class="form-label fw-bold text-secondary small mb-1">น้ำเกลือ (NSS)</label><select id="vd-saline-item" class="form-select input-modern mb-2 fw-bold text-dark" onchange="VisitDetailPage.calculateAdditionalFees(true)"></select><div class="solid-input-group"><span class="sig-addon sig-prepend px-2">จำนวน</span><input type="number" id="vd-saline-qty" class="text-primary text-center" placeholder="ขวด/ถุง" onkeyup="VisitDetailPage.calculateAdditionalFees(true)" onchange="VisitDetailPage.calculateAdditionalFees(true)"></div></div>' +
+                                '<div class="col-12"><label class="form-label fw-bold text-secondary small mb-1">ยาต้านแข็งตัว (Heparin)</label><div class="row g-2"><div class="col-8"><select id="vd-heparin-item" class="form-select input-modern fw-bold text-dark" onchange="VisitDetailPage.calculateAdditionalFees(true)"></select></div><div class="col-4"><div class="solid-input-group"><span class="sig-addon sig-prepend px-2">จน.</span><input type="number" id="vd-heparin-qty" class="text-primary text-center" placeholder="Vial" onkeyup="VisitDetailPage.calculateAdditionalFees(true)" onchange="VisitDetailPage.calculateAdditionalFees(true)"></div></div></div></div>' +
                             '</div>' +
                             
                             '<div class="p-3 bg-light rounded-4 border border-secondary-subtle mb-3 shadow-sm">' +
@@ -213,7 +213,6 @@ const VisitDetailPage = {
                                 '</div>' +
                             '</div>' +
 
-                            '' +
                             '<div class="mt-auto border-top pt-4">' +
                                 '<div class="section-title-compact text-primary mb-3">' +
                                     '<span><i class="fa-solid fa-camera me-2"></i> 5. สแกนเอกสารแนบ</span>' +
@@ -224,11 +223,11 @@ const VisitDetailPage = {
                                     '<div class="d-flex justify-content-center gap-2 flex-wrap">' +
                                         '<label class="btn btn-primary fw-bold shadow-sm rounded-pill px-4 m-0 cursor-pointer">' +
                                             '<i class="fa-solid fa-camera me-2"></i> ถ่ายรูป' +
-                                            '<input type="file" id="doc-camera-input" accept="image/*" capture="environment" style="display:none;">' +
+                                            '<input type="file" id="doc-camera-input" accept="image/*" capture="environment" class="visually-hidden-input">' +
                                         '</label>' +
                                         '<label class="btn btn-outline-primary fw-bold shadow-sm rounded-pill px-4 m-0 cursor-pointer bg-white">' +
                                             '<i class="fa-solid fa-folder-open me-2"></i> เลือกไฟล์ / PDF' +
-                                            '<input type="file" id="doc-file-input" accept="image/*,application/pdf" multiple style="display:none;">' +
+                                            '<input type="file" id="doc-file-input" accept="image/*,application/pdf" multiple class="visually-hidden-input">' +
                                         '</label>' +
                                     '</div>' +
                                     '<p class="text-muted small mt-3 mb-0" style="font-size:12px;">รองรับ JPG, PNG และ PDF</p>' +
@@ -247,6 +246,8 @@ const VisitDetailPage = {
         this.isFormLoaded = false;
         const today = new Date();
         this.selectedDate = this.selectedDate || (new Date(Date.now() - (today.getTimezoneOffset() * 60000))).toISOString().split('T')[0];
+        
+        // 🚨 5-Year Auto Purge Rule (รันตอนเข้ามาที่หน้านี้เลย) 🚨
         if (!this.hasCleanedUp) this.autoCleanUpOldRecords();
 
         if (!visitId || typeof visitId !== 'string') { 
@@ -278,12 +279,11 @@ const VisitDetailPage = {
 
     updateDateDisplay: function(dateStr) { const displayEl = document.getElementById('vdSearchDateDisplay'); if (displayEl && dateStr) { const dateObj = new Date(dateStr); displayEl.innerText = dateObj.toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' }); } },
     
-    // 🧹 ล้างทำความสะอาดประวัติย้อนหลังถาวรเมื่อเกิน 5 ปี ( visits และ patients history & labs ย้อนหลัง) 🧹
     autoCleanUpOldRecords: function() {
         this.hasCleanedUp = true;
         const cutoffDate = new Date();
         cutoffDate.setFullYear(cutoffDate.getFullYear() - 5);
-        const cutoffStr = cutoffDate.toISOString().split('T')[0];
+        const cutoffTime = cutoffDate.getTime();
 
         if (typeof db === 'undefined') return;
 
@@ -291,17 +291,25 @@ const VisitDetailPage = {
             db.ref('patients_database_v2/visits').once('value'),
             db.ref('patients_database_v2/patients').once('value')
         ]).then(([vSnap, pSnap]) => {
-            // 1. ล้างตาราง Visits เกิน 5 ปี
+            let deletedVisitsCount = 0;
+            let deletedHistoryCount = 0;
+
             let visitListVal = vSnap.val();
             if (visitListVal) {
                 let visits = Array.isArray(visitListVal) ? visitListVal : Object.keys(visitListVal).map(k => visitListVal[k]);
-                let validVisits = visits.filter(v => v && v.date && v.date >= cutoffStr);
-                if (validVisits.length < visits.length) {
+                let originalVisitsLen = visits.length;
+                let validVisits = visits.filter(v => {
+                    if (!v || !v.date) return false;
+                    let vDate = new Date(v.date).getTime();
+                    return vDate >= cutoffTime;
+                });
+                
+                deletedVisitsCount = originalVisitsLen - validVisits.length;
+                if (deletedVisitsCount > 0) {
                     db.ref('patients_database_v2/visits').set(validVisits);
                 }
             }
 
-            // 2. ล้างประวัติย้อนหลังในทะเบียน Patients ย้อนหลัง 5 ปี (ลบทิ้งทั้งหมด)
             let patientListVal = pSnap.val();
             if (patientListVal) {
                 let patients = Array.isArray(patientListVal) ? patientListVal : Object.keys(patientListVal).map(k => patientListVal[k]);
@@ -311,12 +319,16 @@ const VisitDetailPage = {
                     if (p) {
                         if (Array.isArray(p.history)) {
                             let oldHistLen = p.history.length;
-                            p.history = p.history.filter(h => h && h.date && h.date >= cutoffStr);
-                            if (p.history.length < oldHistLen) isAnyPatientUpdated = true;
+                            p.history = p.history.filter(h => h && h.date && new Date(h.date).getTime() >= cutoffTime);
+                            let diff = oldHistLen - p.history.length;
+                            if (diff > 0) {
+                                isAnyPatientUpdated = true;
+                                deletedHistoryCount += diff;
+                            }
                         }
                         if (Array.isArray(p.labs)) {
                             let oldLabsLen = p.labs.length;
-                            p.labs = p.labs.filter(l => l && l.date && l.date >= cutoffStr);
+                            p.labs = p.labs.filter(l => l && l.date && new Date(l.date).getTime() >= cutoffTime);
                             if (p.labs.length < oldLabsLen) isAnyPatientUpdated = true;
                         }
                     }
@@ -326,6 +338,20 @@ const VisitDetailPage = {
                     db.ref('patients_database_v2/patients').set(patients);
                 }
             }
+
+            if (deletedVisitsCount > 0 || deletedHistoryCount > 0) {
+                const Toast = Swal.mixin({ 
+                    toast: true, position: 'bottom-end', showConfirmButton: false, timer: 6000,
+                    didOpen: (toast) => {
+                        toast.style.background = '#ffffff';
+                        toast.style.border = '2px solid #3b82f6';
+                        toast.style.borderRadius = '16px';
+                        toast.style.fontFamily = "'Prompt', sans-serif";
+                    }
+                });
+                Toast.fire({ icon: 'info', title: `♻️ ล้างคิวฟอกเลือด/ประวัติเก่าเกิน 5 ปี สำเร็จ (${deletedVisitsCount + deletedHistoryCount} รายการ)` });
+            }
+
         }).catch(err => console.error("Error in autoCleanUpOldRecords:", err));
     },
 
@@ -338,9 +364,9 @@ const VisitDetailPage = {
         switch(section) {
             case 'machine': document.getElementById('vd-dialyzer').value = prevVisit.hd_dialyzer || ''; document.getElementById('vd-mode').value = prevVisit.hd_mode || ''; document.getElementById('vd-right').value = prevVisit.right || ''; document.getElementById('vd-dialysis-fee').value = prevVisit.dialysis_fee || ''; document.getElementById('vd-qb').value = prevVisit.hd_qb || ''; document.getElementById('vd-qd').value = prevVisit.hd_qd || ''; document.getElementById('vd-uf').value = prevVisit.hd_uf || ''; break;
             case 'vitals': document.getElementById('vd-pre-wt').value = prevVisit.pre_wt || ''; document.getElementById('vd-post-wt').value = prevVisit.post_wt || ''; document.getElementById('vd-pre-bp').value = prevVisit.pre_bp || ''; document.getElementById('vd-post-bp').value = prevVisit.post_bp || ''; break;
-            case 'main_meds': if(this.isStockDeducted) { Swal.fire({ title: 'ไม่สามารถเขียนทับข้อมูลได้', text: 'มีการตัดเบิกสต๊อกพัสดุไปแล้ว ยกเลิกการตัดเบิก (คืนคลัง) ก่อนดึงข้อมูลใหม่ครับ', icon: 'warning', confirmButtonText: 'ตกลง', confirmButtonColor: '#f59e0b' }); return; } document.getElementById('vd-dialysate-item').value = prevVisit.hd_dialysate_item || ''; document.getElementById('vd-dialysate-qty').value = prevVisit.hd_dialysate_qty || ''; document.getElementById('vd-saline-item').value = prevVisit.hd_saline_item || ''; document.getElementById('vd-saline-qty').value = prevVisit.hd_saline_qty || ''; document.getElementById('vd-heparin-item').value = prevVisit.hd_heparin_item || ''; document.getElementById('vd-heparin-qty').value = prevVisit.hd_heparin_qty || ''; break;
-            case 'other_meds': if(this.isStockDeducted) { Swal.fire({ title: 'ไม่สามารถเขียนทับข้อมูลได้', text: 'มีการตัดเบิกไปแล้ว ยกเลิกเบิกก่อนแก้ไขครับ', icon: 'warning', confirmButtonColor: '#f59e0b' }); return; } this.currentMeds = prevVisit.other_meds ? JSON.parse(JSON.stringify(prevVisit.other_meds)) : []; this.renderOtherMeds(); break;
-            case 'xrays': this.currentXrays = prevVisit.xray_list ? JSON.parse(JSON.stringify(prevVisit.xray_list)) : []; this.renderXrays(); break;
+            case 'main_meds': if(this.isStockDeducted) { Swal.fire({ title: 'ไม่สามารถเขียนทับข้อมูลได้', text: 'มีการตัดเบิกสต๊อกพัสดุไปแล้ว ยกเลิกการตัดเบิก (คืนคลัง) ก่อนดึงข้อมูลใหม่ครับ', icon: 'warning', confirmButtonText: 'ตกลง', confirmButtonColor: '#f59e0b' }); return; } document.getElementById('vd-dialysate-item').value = prevVisit.hd_dialysate_item || ''; document.getElementById('vd-dialysate-qty').value = prevVisit.hd_dialysate_qty || ''; document.getElementById('vd-saline-item').value = prevVisit.hd_saline_item || ''; document.getElementById('vd-saline-qty').value = prevVisit.hd_saline_qty || ''; document.getElementById('vd-heparin-item').value = prevVisit.hd_heparin_item || ''; document.getElementById('vd-heparin-qty').value = prevVisit.hd_heparin_qty || ''; this.calculateAdditionalFees(true); break;
+            case 'other_meds': if(this.isStockDeducted) { Swal.fire({ title: 'ไม่สามารถเขียนทับข้อมูลได้', text: 'มีการตัดเบิกไปแล้ว ยกเลิกเบิกก่อนแก้ไขครับ', icon: 'warning', confirmButtonColor: '#f59e0b' }); return; } this.currentMeds = prevVisit.other_meds ? JSON.parse(JSON.stringify(prevVisit.other_meds)) : []; this.renderOtherMeds(); this.calculateAdditionalFees(true); break;
+            case 'xrays': this.currentXrays = prevVisit.xray_list ? JSON.parse(JSON.stringify(prevVisit.xray_list)) : []; this.renderXrays(); this.calculateAdditionalFees(true); break;
             case 'labs': this.currentLabs = prevVisit.lab_results ? JSON.parse(JSON.stringify(prevVisit.lab_results)) : []; this.renderLabs(); break;
             case 'note': document.getElementById('vd-cc').value = prevVisit.cc || ''; document.getElementById('vd-note').value = prevVisit.note || ''; break;
         }
@@ -360,7 +386,8 @@ const VisitDetailPage = {
             ]);
 
             this.clinicSettings = settingsSnap.val() || {}; this.inventoryItems = toArray(invSnap.val());
-            let _meds = toArray(medSnap.val()); this.medsList = _meds.length > 0 ? _meds : [{ id: 'M1', name: 'Erythropoietin 4000U' }];
+            
+            let _meds = toArray(medSnap.val()); this.medsList = _meds.length > 0 ? _meds : [{ id: 'M1', name: 'Erythropoietin 4000U', price: 450 }];
             let _xrays = toArray(xraySnap.val()); this.xraysList = _xrays.length > 0 ? _xrays : [{ id: 'X1', name: 'Chest X-Ray', price: 350 }];
             let _rights = toArray(rightSnap.val()); this.clinicRights = _rights.length > 0 ? _rights : [{ id: 'R1', name: "ชำระเงินเอง", price: 1500 }];
             let _mods = toArray(modSnap.val()); this.modalities = _mods.length > 0 ? _mods : [{ id: 'MOD1', name: 'HD ปกติ', price: 1500}];
@@ -373,13 +400,8 @@ const VisitDetailPage = {
                 { id: 'NT_PRE3', category: 'pre', title: 'มีความดันโลหิตสูง', text: 'ประเมินก่อนฟอกเลือดพบความดันโลหิตสูง (Hypertension) ผู้ป่วยแจ้งว่าทานยาลดความดันมาแล้ว ไม่มีอาการปวดศีรษะหรือตาพร่ามัว' },
                 { id: 'NT_INTRA1', category: 'intra', title: 'ความดันตก (Hypotension)', text: 'ระหว่างฟอกเลือด ผู้ป่วยมีอาการหน้ามืด ใจสั่น เหงื่อแตก วัดความดันโลหิตพบว่าลดลง (Hypotension)\n- ปรับลด UFR\n- ให้ 0.9% NSS 100 ml IV\n- ปรับท่านอนราบยกขาสูง\nหลังให้การพยาบาล ผู้ป่วยอาการดีขึ้น ความดันโลหิตกลับมาอยู่ในเกณฑ์ที่รับได้' },
                 { id: 'NT_INTRA2', category: 'intra', title: 'ตะคริว (Cramps)', text: 'ผู้ป่วยมีอาการตะคริวที่บริเวณกล้ามเนื้อขา\n- ปรับลด UFR หรือหยุด UFR ชั่วคราว\n- นวดคลึงกล้ามเนื้อ\n- ให้ 0.9% NSS 100 ml IV\nอาการตะคริวทุเลาลง สามารถฟอกเลือดต่อได้จนจบ' },
-                { id: 'NT_INTRA3', category: 'intra', title: 'หนาวสั่น (Chills)', text: 'ผู้ป่วยมีอาการหนาวสั่นระหว่างฟอกเลือด วัดอุณหภูมิร่างกายปกติ ไม่มีไข้ ให้การพยาบาลโดยห่มผ้าให้อบอุ่น และปรับอุณหภูมิน้ำยา (Dialysate Temp) ให้เหมาะสม อาการทุเลาลง' },
-                { id: 'NT_POST1', category: 'post', title: 'สรุปการรักษาปกติ (จบเคส)', text: 'ฟอกเลือดครบตามเวลาที่กำหนด ดึงน้ำได้ตามเป้าหมาย (Target UF) สัญญาณชีพหลังฟอกอยู่ในเกณฑ์ปกติ ไม่มีเลือดออกซึมบริเวณจุดแทงเข็ม ผู้ป่วยรู้สึกตัวดี อนุญาตให้กลับบ้านได้' },
-                { id: 'NT_POST2', category: 'post', title: 'ดึงน้ำไม่ได้ตามเป้า', text: 'จบการฟอกเลือด ดึงน้ำได้ไม่ถึงเป้าหมาย เนื่องจากระหว่างฟอกมีอาการความดันโลหิตตก (Hypotension) สัญญาณชีพหลังฟอกทรงตัว แนะนำผู้ป่วยจำกัดน้ำดื่มอย่างเคร่งครัด' },
-                { id: 'NT_POST3', category: 'post', title: 'เลือดซึมจุดแทงเข็ม', text: 'หลังถอดเข็มพบมีเลือดซึมเล็กน้อยบริเวณ Vascular access ให้การพยาบาลโดยกดห้ามเลือด (Direct pressure) นาน 15 นาที เลือดหยุดไหลดี ไม่มี Hematoma' },
-                { id: 'NT_DOC1', category: 'doctor', title: 'ปรับ Dry Weight ใหม่', text: 'Order: ปรับลด Dry Weight ลง 0.5 Kg เนื่องจากผู้ป่วยไม่มีอาการบวม และความดันโลหิตอยู่ในเกณฑ์ดี' },
-                { id: 'NT_DOC2', category: 'doctor', title: 'ปรับลดยาลดความดัน', text: 'Order: พิจารณา Hold ยาลดความดันโลหิตในวันฟอกเลือด เนื่องจากมีประวัติความดันตก (Intradialytic Hypotension) บ่อยครั้ง' },
-                { id: 'NT_DOC3', category: 'doctor', title: 'สั่งเจาะ Lab เพิ่มเติม', text: 'Order: สั่งเจาะเลือดตรวจ CBC, BUN, Cr, Electrolyte เพิ่มเติมในการฟอกเลือดครั้งถัดไป' }
+                { id: 'NT_INTRA3', category: 'intra', title: 'หนาวสั่น (Chills)', text: 'ผู้ป่วยมีอาการหนาวสั่นระหว่างฟอกเลือด วัดอุณหภูมิร่างกายปกติ ไม่มีไข้ ให้การพยาบาลโดยห่มผ้าให้อบอุ่น และปรับอุณหภูมิน้ำยา (Dialysate Temp) อาการทุเลาลง' },
+                { id: 'NT_POST1', category: 'post', title: 'สรุปการรักษาปกติ (จบเคส)', text: 'ฟอกเลือดครบตามเวลาที่กำหนด ดึงน้ำได้ตามเป้าหมาย สัญญาณชีพหลังฟอกปกติ ไม่มีเลือดออกซึม ผู้ป่วยรู้สึกตัวดี กลับบ้านได้' }
             ];
             this.noteTemplates = _notes.length > 0 ? _notes : defaultNotes;
 
@@ -408,69 +430,71 @@ const VisitDetailPage = {
         const v = this.visitData;
         document.getElementById('vd-pt-name').innerText = v.name || '-'; document.getElementById('vd-pt-hn').innerText = v.hn || '-'; document.getElementById('vd-pt-bed-display').innerText = v.bed || '-'; document.getElementById('vd-pt-time').innerText = v.time || '-';
         document.getElementById('vd-status').value = v.status || 'รอตรวจ'; document.getElementById('vd-dialyzer').value = v.hd_dialyzer || '';
+        
         this.renderModalityDropdown(); this.renderRightDropdown(); this.refreshDropdownsUI(); this.renderLabSetDropdown(); this.renderNoteTemplateDropdown(); this.renderLabs(); this.renderXrays(); this.renderAttachments();
+        
         document.getElementById('vd-mode').value = v.hd_mode || ''; document.getElementById('vd-right').value = v.right || ''; document.getElementById('vd-dialysis-fee').value = v.dialysis_fee !== undefined ? v.dialysis_fee : '';
-        if(document.getElementById('vd-med-fee')) document.getElementById('vd-med-fee').value = v.med_fee !== undefined ? v.med_fee : (this.clinicSettings.med_fee_default || '');
-        if(document.getElementById('vd-lab-fee')) document.getElementById('vd-lab-fee').value = v.lab_fee !== undefined ? v.lab_fee : (this.clinicSettings.lab_fee_default || '');
-        if(document.getElementById('vd-xray-fee')) document.getElementById('vd-xray-fee').value = v.xray_fee !== undefined ? v.xray_fee : (this.clinicSettings.xray_fee_default || '');
+        
+        let defMed = this.clinicSettings.med_fee_default || this.clinicSettings.med_fee || this.clinicSettings.medicine_fee || '';
+        let defLab = this.clinicSettings.lab_fee_default || this.clinicSettings.lab_fee || '';
+        let defXray = this.clinicSettings.xray_fee_default || this.clinicSettings.xray_fee || '';
+
+        if(document.getElementById('vd-med-fee')) { document.getElementById('vd-med-fee').value = (v.med_fee !== undefined && v.med_fee !== "" && Number(v.med_fee) !== 0) ? v.med_fee : defMed; }
+        if(document.getElementById('vd-lab-fee')) { document.getElementById('vd-lab-fee').value = (v.lab_fee !== undefined && v.lab_fee !== "" && Number(v.lab_fee) !== 0) ? v.lab_fee : defLab; }
+        if(document.getElementById('vd-xray-fee')) { document.getElementById('vd-xray-fee').value = (v.xray_fee !== undefined && v.xray_fee !== "" && Number(v.xray_fee) !== 0) ? v.xray_fee : defXray; }
+        
         if (!document.getElementById('vd-dialysis-fee').value && v.right) { this.onRightChange(); }
+        
         document.getElementById('vd-qb').value = v.hd_qb || ''; document.getElementById('vd-qd').value = v.hd_qd || ''; document.getElementById('vd-uf').value = v.hd_uf || '';
         document.getElementById('vd-pre-wt').value = v.pre_wt || ''; document.getElementById('vd-post-wt').value = v.post_wt || ''; document.getElementById('vd-pre-bp').value = v.pre_bp || ''; document.getElementById('vd-post-bp').value = v.post_bp || '';
         document.getElementById('vd-cc').value = v.cc || ''; document.getElementById('vd-note').value = v.note || '';
         document.getElementById('vd-dialysate-qty').value = v.hd_dialysate_qty || ''; document.getElementById('vd-saline-qty').value = v.hd_saline_qty || ''; document.getElementById('vd-heparin-qty').value = v.hd_heparin_qty || '';
+        
         this.updateDeductStateUI();
     },
-
-    // 🚨 ================================== 🚨
-    // 🚨 ส่วนควบคุม HYBRID SCANNER ENGINE 🚨
-    // 🚨 ================================== 🚨
 
     initScannerEvents: function() {
         const dropzone = document.getElementById('doc-dropzone');
         const fileInput = document.getElementById('doc-file-input');
         const cameraInput = document.getElementById('doc-camera-input');
+        
         if(!dropzone) return;
 
-        dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
-        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
-        dropzone.addEventListener('drop', (e) => {
+        dropzone.ondragover = (e) => { e.preventDefault(); dropzone.classList.add('dragover'); };
+        dropzone.ondragleave = () => dropzone.classList.remove('dragover');
+        dropzone.ondrop = (e) => {
             e.preventDefault(); dropzone.classList.remove('dragover');
             if(e.dataTransfer.files.length > 0) this.processScannedFiles(e.dataTransfer.files);
-        });
+        };
 
         if(fileInput) {
-            fileInput.addEventListener('change', (e) => {
+            fileInput.onchange = async (e) => {
                 if(e.target.files.length > 0) {
-                    this.processScannedFiles(e.target.files);
-                    fileInput.value = ''; 
+                    const filesToProcess = Array.from(e.target.files); 
+                    await this.processScannedFiles(filesToProcess);
+                    setTimeout(() => { fileInput.value = ''; }, 1000); 
                 }
-            });
+            };
         }
         
         if(cameraInput) {
-            cameraInput.addEventListener('change', (e) => {
+            cameraInput.onchange = async (e) => {
                 if(e.target.files.length > 0) {
-                    this.processScannedFiles(e.target.files);
-                    cameraInput.value = ''; 
+                    const filesToProcess = Array.from(e.target.files); 
+                    await this.processScannedFiles(filesToProcess);
+                    setTimeout(() => { cameraInput.value = ''; }, 1000); 
                 }
-            });
+            };
         }
     },
 
-    // 🚨 ระบบประมวลผลความเร็วสูง (ป้องกันหน้าจอค้างเด็ดขาด) 🚨
     processScannedFiles: async function(rawFiles) {
         if (!rawFiles || rawFiles.length === 0) return;
 
-        Swal.fire({ 
-            title: 'กำลังประมวลผลไฟล์...', 
-            html: 'กรุณารอสักครู่ ระบบกำลังบีบอัดรูปภาพให้เล็กลงอย่างปลอดภัย...',
-            allowOutsideClick: false, 
-            didOpen: () => Swal.showLoading() 
-        });
+        Swal.fire({ title: 'กำลังประมวลผลไฟล์...', html: 'กรุณารอสักครู่ ระบบกำลังบีบอัดรูปภาพให้เล็กลงอย่างปลอดภัย...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
         const files = Array.from(rawFiles);
-        let newAttachments = [];
-        let errorCount = 0;
+        let newAttachments = []; let errorCount = 0;
 
         const generateFileName = (originalName) => {
             const now = new Date();
@@ -479,12 +503,10 @@ const VisitDetailPage = {
             const hn = this.visitData ? this.visitData.hn : 'UnknownHN';
             const rawName = this.visitData ? this.visitData.name : 'Patient';
             const cleanName = rawName.replace(/[^a-zA-Z0-9\u0E00-\u0E7F]/g, '');
-            const parts = originalName.split('.');
-            const ext = parts.length > 1 ? '.' + parts.pop() : '';
+            const parts = originalName.split('.'); const ext = parts.length > 1 ? '.' + parts.pop() : '';
             return `${dateStr}_${timeStr}_${hn}_${cleanName}${ext}`;
         };
 
-        // ทำงานทีละไฟล์อย่างเป็นระบบผ่าน Async/Await
         for (let i = 0; i < files.length; i++) {
             let file = files[i];
             const newFileName = generateFileName(file.name || `เอกสารแนบ_${i}`);
@@ -492,96 +514,52 @@ const VisitDetailPage = {
             try {
                 if (file.type.match('image.*')) {
                     let dataUrl = await this.compressImageAsync(file);
-                    if (dataUrl) {
-                        newAttachments.push({ id: 'DOC_' + Date.now() + i, type: 'image', dataUrl: dataUrl, name: newFileName });
-                    } else {
-                        errorCount++;
-                    }
+                    if (dataUrl) { newAttachments.push({ id: 'DOC_' + Date.now() + i, type: 'image', dataUrl: dataUrl, name: newFileName }); } else { errorCount++; }
                 } else if (file.type === 'application/pdf') {
-                    if (file.size > 3 * 1024 * 1024) { 
-                        Swal.fire('ไฟล์ใหญ่เกินไป', `ไฟล์ PDF '${file.name}' มีขนาดเกิน 3MB เพื่อความเสถียรของคลาวด์ ขอข้ามไฟล์นี้นะครับ`, 'warning');
-                        errorCount++;
-                        continue;
+                    if (file.size > 2 * 1024 * 1024) { 
+                        Swal.fire('ไฟล์ใหญ่เกินไป', `ไฟล์ PDF '${file.name}' มีขนาดเกิน 2MB เพื่อความเสถียรของคลาวด์ ขอข้ามไฟล์นี้นะครับ`, 'warning');
+                        errorCount++; continue;
                     }
                     let dataUrl = await this.readAsBase64Async(file);
-                    if (dataUrl) {
-                        newAttachments.push({ id: 'DOC_' + Date.now() + i, type: 'pdf', dataUrl: dataUrl, name: newFileName });
-                    } else {
-                        errorCount++;
-                    }
+                    if (dataUrl) { newAttachments.push({ id: 'DOC_' + Date.now() + i, type: 'pdf', dataUrl: dataUrl, name: newFileName }); } else { errorCount++; }
                 }
-            } catch (err) {
-                console.error("Error processing file", err);
-                errorCount++;
-            }
+            } catch (err) { errorCount++; }
         }
 
         this.currentAttachments = [...this.currentAttachments, ...newAttachments];
         this.renderAttachments();
 
-        if (errorCount === 0 && newAttachments.length > 0) {
-            Swal.fire({ title: 'แนบเอกสารสำเร็จ', icon: 'success', timer: 1200, showConfirmButton: false });
-        } else if (newAttachments.length > 0) {
-            Swal.fire('เสร็จสิ้นบางส่วน', `แนบไฟล์สำเร็จ ${newAttachments.length} รายการ (มีไฟล์ขัดข้อง ${errorCount} รายการ)`, 'info');
-        } else {
-            Swal.fire('อัปโหลดล้มเหลว', 'ไม่สามารถประมวลผลไฟล์ได้เนื่องจากไฟล์ใหญ่เกินไปหรือแรมเครื่องเต็ม', 'error');
-        }
+        if (errorCount === 0 && newAttachments.length > 0) { Swal.fire({ title: 'แนบเอกสารสำเร็จ', icon: 'success', timer: 1200, showConfirmButton: false }); } 
+        else if (newAttachments.length > 0) { Swal.fire('เสร็จสิ้นบางส่วน', `แนบไฟล์สำเร็จ ${newAttachments.length} รายการ (มีไฟล์ขัดข้อง ${errorCount} รายการ)`, 'info'); } 
+        else { Swal.fire('อัปโหลดล้มเหลว', 'ไม่สามารถประมวลผลไฟล์ได้เนื่องจากไฟล์ใหญ่เกินไปหรือแรมเครื่องเต็ม', 'error'); }
     },
 
-    // 🚨 ตัวบีบอัดรูปภาพอัจฉริยะ (จำกัด 15 วิหมดเวลา คืนหน่วยความจำทันที) 🚨
     compressImageAsync: function(file) {
         return new Promise((resolve) => {
-            let timeout = setTimeout(() => {
-                console.error("Compression timeout protection activated");
-                resolve(null);
-            }, 15000); 
-
+            let timeout = setTimeout(() => { resolve(null); }, 15000); 
             try {
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     const img = new Image();
                     img.onload = () => {
                         try {
-                            const canvas = document.createElement('canvas');
-                            const MAX_WIDTH = 800; 
-                            let scaleSize = 1;
+                            const canvas = document.createElement('canvas'); const MAX_WIDTH = 800; let scaleSize = 1;
                             if(img.width > MAX_WIDTH) scaleSize = MAX_WIDTH / img.width;
-
-                            canvas.width = img.width * scaleSize;
-                            canvas.height = img.height * scaleSize;
-
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-                            clearTimeout(timeout);
-                            resolve(canvas.toDataURL('image/jpeg', 0.5)); 
-                        } catch (err) {
-                            clearTimeout(timeout);
-                            resolve(null);
-                        }
+                            canvas.width = img.width * scaleSize; canvas.height = img.height * scaleSize;
+                            const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            clearTimeout(timeout); resolve(canvas.toDataURL('image/jpeg', 0.5)); 
+                        } catch (err) { clearTimeout(timeout); resolve(null); }
                     };
-                    img.onerror = () => { clearTimeout(timeout); resolve(null); };
-                    img.src = event.target.result;
+                    img.onerror = () => { clearTimeout(timeout); resolve(null); }; img.src = event.target.result;
                 };
-                reader.onerror = () => { clearTimeout(timeout); resolve(null); };
-                reader.readAsDataURL(file);
-            } catch(e) {
-                clearTimeout(timeout);
-                resolve(null);
-            }
+                reader.onerror = () => { clearTimeout(timeout); resolve(null); }; reader.readAsDataURL(file);
+            } catch(e) { clearTimeout(timeout); resolve(null); }
         });
     },
 
     readAsBase64Async: function(file) {
         return new Promise((resolve) => {
-            try {
-                const reader = new FileReader();
-                reader.onload = (event) => resolve(event.target.result);
-                reader.onerror = () => resolve(null);
-                reader.readAsDataURL(file);
-            } catch (e) {
-                resolve(null);
-            }
+            try { const reader = new FileReader(); reader.onload = (event) => resolve(event.target.result); reader.onerror = () => resolve(null); reader.readAsDataURL(file); } catch (e) { resolve(null); }
         });
     },
 
@@ -591,26 +569,10 @@ const VisitDetailPage = {
         let html = '';
         this.currentAttachments.forEach((doc, idx) => {
             let displayName = doc.name || 'เอกสารแนบ';
-            
             if (doc.type === 'pdf' || (doc.dataUrl && doc.dataUrl.startsWith('data:application/pdf'))) {
-                html += `
-                <div class="col-6 col-md-4 fade-in-up" style="animation-delay: ${idx * 0.1}s;">
-                    <div class="p-3 border rounded-3 bg-white text-center position-relative shadow-sm h-100 d-flex flex-column align-items-center justify-content-center">
-                        <button class="btn btn-sm btn-danger position-absolute shadow-sm delete-btn" style="top:-8px; right:-8px; border-radius:50%; width:30px; height:30px; padding:0; z-index:20;" onclick="VisitDetailPage.deleteAttachment('${doc.id}')" title="ลบไฟล์"><i class="fa-solid fa-times"></i></button>
-                        <i class="fa-solid fa-file-pdf fa-3x text-danger mb-2"></i>
-                        <div class="small fw-bold text-truncate w-100 mb-2" title="${displayName}">${displayName}</div>
-                        <button class="btn btn-sm btn-outline-danger rounded-pill px-3 mt-auto" onclick="VisitDetailPage.viewAttachment('${doc.dataUrl}', 'pdf')"><i class="fa-solid fa-eye me-1"></i> ดูไฟล์</button>
-                    </div>
-                </div>`;
+                html += `<div class="col-6 col-md-4 fade-in-up" style="animation-delay: ${idx * 0.1}s;"><div class="p-3 border rounded-3 bg-white text-center position-relative shadow-sm h-100 d-flex flex-column align-items-center justify-content-center"><button class="btn btn-sm btn-danger position-absolute shadow-sm delete-btn" style="top:-8px; right:-8px; border-radius:50%; width:30px; height:30px; padding:0; z-index:20;" onclick="VisitDetailPage.deleteAttachment('${doc.id}')" title="ลบไฟล์"><i class="fa-solid fa-times"></i></button><i class="fa-solid fa-file-pdf fa-3x text-danger mb-2"></i><div class="small fw-bold text-truncate w-100 mb-2" title="${displayName}">${displayName}</div><button class="btn btn-sm btn-outline-danger rounded-pill px-3 mt-auto" onclick="VisitDetailPage.viewAttachment('${doc.dataUrl}', 'pdf')"><i class="fa-solid fa-eye me-1"></i> ดูไฟล์</button></div></div>`;
             } else {
-                html += `
-                <div class="col-6 col-md-4 fade-in-up" style="animation-delay: ${idx * 0.1}s;">
-                    <div class="scan-img-card h-100 m-0 text-center">
-                        <button class="delete-btn shadow-sm" onclick="VisitDetailPage.deleteAttachment('${doc.id}')" title="ลบภาพ"><i class="fa-solid fa-times"></i></button>
-                        <img src="${doc.dataUrl}" onclick="VisitDetailPage.viewAttachment('${doc.dataUrl}', 'image')" style="cursor:zoom-in; height:100px; object-fit:cover;">
-                        <div class="small text-muted text-truncate w-100 mt-1 fw-bold" style="font-size:11px;" title="${displayName}">${displayName}</div>
-                    </div>
-                </div>`;
+                html += `<div class="col-6 col-md-4 fade-in-up" style="animation-delay: ${idx * 0.1}s;"><div class="scan-img-card h-100 m-0 text-center"><button class="delete-btn shadow-sm" onclick="VisitDetailPage.deleteAttachment('${doc.id}')" title="ลบภาพ"><i class="fa-solid fa-times"></i></button><img src="${doc.dataUrl}" onclick="VisitDetailPage.viewAttachment('${doc.dataUrl}', 'image')" style="cursor:zoom-in; height:100px; object-fit:cover;"><div class="small text-muted text-truncate w-100 mt-1 fw-bold" style="font-size:11px;" title="${displayName}">${displayName}</div></div></div>`;
             }
         });
         area.innerHTML = html;
@@ -618,36 +580,49 @@ const VisitDetailPage = {
 
     deleteAttachment: function(docId) {
         Swal.fire({ title: 'ลบเอกสารนี้?', text:'คุณต้องการลบเอกสารออกจากระบบใช่หรือไม่?', icon: 'warning', showCancelButton: true, confirmButtonText: 'ลบ', confirmButtonColor: '#ef4444' }).then(r => {
-            if(r.isConfirmed) { 
-                this.currentAttachments = this.currentAttachments.filter(doc => doc.id !== docId);
-                this.renderAttachments(); 
-            }
+            if(r.isConfirmed) { this.currentAttachments = this.currentAttachments.filter(doc => doc.id !== docId); this.renderAttachments(); }
         });
     },
 
     viewAttachment: function(dataUrl, type) {
-        if (type === 'pdf' || dataUrl.startsWith('data:application/pdf')) {
-            Swal.fire({
-                html: `<iframe src="${dataUrl}" style="width:100%; height:75vh; border:none; border-radius:8px;"></iframe>`,
-                showConfirmButton: false, width: '90%', padding: '10px', showCloseButton: true
-            });
-        } else {
-            Swal.fire({ imageUrl: dataUrl, imageAlt: 'Scanned Document', showConfirmButton: false, width: '80%', padding: '0', background: 'transparent', showCloseButton: true });
-        }
+        if (type === 'pdf' || dataUrl.startsWith('data:application/pdf')) { Swal.fire({ html: `<iframe src="${dataUrl}" style="width:100%; height:75vh; border:none; border-radius:8px;"></iframe>`, showConfirmButton: false, width: '90%', padding: '10px', showCloseButton: true });
+        } else { Swal.fire({ imageUrl: dataUrl, imageAlt: 'Scanned Document', showConfirmButton: false, width: '80%', padding: '0', background: 'transparent', showCloseButton: true }); }
     },
 
-    // 🚨 ================================== 🚨
-
-    calculateAdditionalFees: function() {
+    calculateAdditionalFees: function(quiet = false) {
         let totalMedFee = 0; let totalXrayFee = 0;
-        const getPrice = (id) => { if(!id) return 0; let m = this.medsList.find(x => String(x.id||x) === String(id)); if(m && m.price) return parseFloat(m.price)||0; let inv = this.inventoryItems.find(x => String(x.id||x) === String(id)); if(inv && inv.price) return parseFloat(inv.price)||0; return 0; };
-        totalMedFee += getPrice(document.getElementById('vd-dialysate-item').value) * (parseFloat(document.getElementById('vd-dialysate-qty').value) || 0);
-        totalMedFee += getPrice(document.getElementById('vd-saline-item').value) * (parseFloat(document.getElementById('vd-saline-qty').value) || 0);
-        totalMedFee += getPrice(document.getElementById('vd-heparin-item').value) * (parseFloat(document.getElementById('vd-heparin-qty').value) || 0);
+        
+        const getPrice = (id) => { 
+            if(!id) return 0; 
+            let m = this.medsList.find(x => String(x.id||x) === String(id)); 
+            if(m && m.price) return parseFloat(m.price)||0; 
+            let inv = this.inventoryItems.find(x => String(x.id||x) === String(id)); 
+            if(inv && inv.price) return parseFloat(inv.price)||0; 
+            return 0; 
+        };
+        
+        let dItem = document.getElementById('vd-dialysate-item'); let dQty = document.getElementById('vd-dialysate-qty');
+        let sItem = document.getElementById('vd-saline-item'); let sQty = document.getElementById('vd-saline-qty');
+        let hItem = document.getElementById('vd-heparin-item'); let hQty = document.getElementById('vd-heparin-qty');
+
+        if(dItem && dQty) totalMedFee += getPrice(dItem.value) * (parseFloat(dQty.value) || 0);
+        if(sItem && sQty) totalMedFee += getPrice(sItem.value) * (parseFloat(sQty.value) || 0);
+        if(hItem && hQty) totalMedFee += getPrice(hItem.value) * (parseFloat(hQty.value) || 0);
+
         this.currentMeds.forEach(m => { if(m.id && parseFloat(m.qty) > 0) totalMedFee += getPrice(m.id) * parseFloat(m.qty); });
         this.currentXrays.forEach(x => { if(x.id && parseFloat(x.qty) > 0) { let xI = this.xraysList.find(i => String(i.id||i) === String(x.id)); if(xI && xI.price) totalXrayFee += parseFloat(xI.price) * parseFloat(x.qty); } });
-        document.getElementById('vd-med-fee').value = totalMedFee || 0; document.getElementById('vd-xray-fee').value = totalXrayFee || 0;
-        this.onModeChange(); this.onRightChange(); Swal.fire({ title: 'คำนวณสำเร็จ', icon: 'success', timer: 1500, showConfirmButton: false });
+        
+        const medInput = document.getElementById('vd-med-fee');
+        const xrayInput = document.getElementById('vd-xray-fee');
+        
+        if (medInput && (totalMedFee > 0 || quiet !== true)) medInput.value = totalMedFee || 0;
+        if (xrayInput && (totalXrayFee > 0 || quiet !== true)) xrayInput.value = totalXrayFee || 0;
+
+        this.onModeChange(); this.onRightChange();
+        
+        if(quiet !== true) {
+            Swal.fire({ title: 'คำนวณสำเร็จ', text: 'ระบบรวมยอดค่ายา และ X-Ray ให้เรียบร้อยแล้ว', icon: 'success', timer: 1500, showConfirmButton: false });
+        }
     },
 
     renderModalityDropdown: function() { const select = document.getElementById('vd-mode'); if(!select) return; let currentVal = select.value || (this.visitData ? this.visitData.hd_mode : ''); let html = '<option value="">-- เลือกโหมด --</option>'; this.modalities.forEach(m => { html += '<option value="' + m.name + '">' + m.name + '</option>'; }); select.innerHTML = html; if(currentVal) select.value = currentVal; },
@@ -675,17 +650,25 @@ const VisitDetailPage = {
     renderOtherMeds: function() {
         let container = document.getElementById('vd-other-meds-container'); if(!container) return;
         if (this.currentMeds.length === 0) { container.innerHTML = '<div class="text-muted small text-center mb-1" style="font-size:13px;">ยังไม่มียาฉีดเพิ่มเติม</div>'; return; }
-        let html = ''; this.currentMeds.forEach((m, idx) => { let dis = this.isStockDeducted ? 'disabled' : ''; html += '<div class="d-flex flex-wrap flex-md-nowrap gap-2 mb-2 align-items-center w-100"><select class="form-select input-modern flex-grow-1 min-w-0 fw-bold text-dark" onchange="VisitDetailPage.updateMed(' + idx + ', \'id\', this.value)" ' + dis + '>' + this.generateMedOptions(m.id) + '</select><input type="number" class="form-control text-center fw-bold text-primary input-modern flex-shrink-0" style="width: 80px;" placeholder="จำนวน" value="' + (m.qty||'') + '" onchange="VisitDetailPage.updateMed(' + idx + ', \'qty\', this.value)" ' + dis + '><button class="btn btn-light border border-danger-subtle text-danger shadow-sm flex-shrink-0" style="width: 40px; height: 40px; border-radius: 10px; padding:0;" onclick="VisitDetailPage.removeMed(' + idx + ')" ' + dis + '><i class="fa-solid fa-trash"></i></button></div>'; }); container.innerHTML = html;
+        let html = ''; this.currentMeds.forEach((m, idx) => { 
+            let dis = this.isStockDeducted ? 'disabled' : ''; 
+            html += '<div class="d-flex flex-wrap flex-md-nowrap gap-2 mb-2 align-items-center w-100"><select class="form-select input-modern flex-grow-1 min-w-0 fw-bold text-dark" onchange="VisitDetailPage.updateMed(' + idx + ', \'id\', this.value)" ' + dis + '>' + this.generateMedOptions(m.id) + '</select><input type="number" class="form-control text-center fw-bold text-primary input-modern flex-shrink-0" style="width: 80px;" placeholder="จำนวน" value="' + (m.qty||'') + '" onkeyup="VisitDetailPage.updateMed(' + idx + ', \'qty\', this.value)" onchange="VisitDetailPage.updateMed(' + idx + ', \'qty\', this.value)" ' + dis + '><button class="btn btn-light border border-danger-subtle text-danger shadow-sm flex-shrink-0" style="width: 40px; height: 40px; border-radius: 10px; padding:0;" onclick="VisitDetailPage.removeMed(' + idx + ')" ' + dis + '><i class="fa-solid fa-trash"></i></button></div>'; 
+        }); 
+        container.innerHTML = html;
     },
-    addOtherMed: function() { if(this.isStockDeducted) return; this.currentMeds.push({ id: '', qty: '' }); this.renderOtherMeds(); }, updateMed: function(idx, k, v) { this.currentMeds[idx][k] = v; }, removeMed: function(idx) { if(this.isStockDeducted) return; this.currentMeds.splice(idx, 1); this.renderOtherMeds(); },
+    addOtherMed: function() { if(this.isStockDeducted) return; this.currentMeds.push({ id: '', qty: '' }); this.renderOtherMeds(); }, 
+    updateMed: function(idx, k, v) { this.currentMeds[idx][k] = v; this.calculateAdditionalFees(true); }, 
+    removeMed: function(idx) { if(this.isStockDeducted) return; this.currentMeds.splice(idx, 1); this.renderOtherMeds(); this.calculateAdditionalFees(true); },
 
     generateXrayOptions: function(selectedId) { let html = '<option value="">-- เลือกรายการเอ็กซเรย์ --</option>'; this.xraysList.forEach(x => { html += '<option value="' + (x.id||x) + '" ' + (String(x.id||x) === String(selectedId) ? 'selected' : '') + '>' + (x.name||x) + '</option>'; }); return html; },
     renderXrays: function() {
         let container = document.getElementById('vd-xrays-container'); if (!container) return;
         if (this.currentXrays.length === 0) { container.innerHTML = '<div class="text-muted small text-center mb-1" style="font-size:13px;">ยังไม่มีรายการเอ็กซเรย์</div>'; return; }
-        let html = ''; this.currentXrays.forEach((x, idx) => { html += '<div class="d-flex flex-wrap flex-md-nowrap gap-2 mb-2 align-items-center w-100"><select class="form-select input-modern flex-grow-1 min-w-0 fw-bold text-dark" onchange="VisitDetailPage.updateXray(' + idx + ', \'id\', this.value)">' + this.generateXrayOptions(x.id) + '</select><input type="number" class="form-control text-center fw-bold text-info input-modern flex-shrink-0" style="width: 80px;" placeholder="รอบ" value="' + (x.qty||'') + '" onchange="VisitDetailPage.updateXray(' + idx + ', \'qty\', this.value)"><button class="btn btn-light border border-danger-subtle text-danger shadow-sm flex-shrink-0" style="width: 40px; height: 40px; border-radius: 10px; padding:0;" onclick="VisitDetailPage.removeXray(' + idx + ')"><i class="fa-solid fa-trash"></i></button></div>'; }); container.innerHTML = html;
+        let html = ''; this.currentXrays.forEach((x, idx) => { html += '<div class="d-flex flex-wrap flex-md-nowrap gap-2 mb-2 align-items-center w-100"><select class="form-select input-modern flex-grow-1 min-w-0 fw-bold text-dark" onchange="VisitDetailPage.updateXray(' + idx + ', \'id\', this.value)">' + this.generateXrayOptions(x.id) + '</select><input type="number" class="form-control text-center fw-bold text-info input-modern flex-shrink-0" style="width: 80px;" placeholder="รอบ" value="' + (x.qty||'') + '" onkeyup="VisitDetailPage.updateXray(' + idx + ', \'qty\', this.value)" onchange="VisitDetailPage.updateXray(' + idx + ', \'qty\', this.value)"><button class="btn btn-light border border-danger-subtle text-danger shadow-sm flex-shrink-0" style="width: 40px; height: 40px; border-radius: 10px; padding:0;" onclick="VisitDetailPage.removeXray(' + idx + ')"><i class="fa-solid fa-trash"></i></button></div>'; }); container.innerHTML = html;
     },
-    addXray: function() { this.currentXrays.push({ id: '', qty: '' }); this.renderXrays(); }, updateXray: function(idx, k, v) { this.currentXrays[idx][k] = v; }, removeXray: function(idx) { this.currentXrays.splice(idx, 1); this.renderXrays(); },
+    addXray: function() { this.currentXrays.push({ id: '', qty: '' }); this.renderXrays(); }, 
+    updateXray: function(idx, k, v) { this.currentXrays[idx][k] = v; this.calculateAdditionalFees(true); }, 
+    removeXray: function(idx) { this.currentXrays.splice(idx, 1); this.renderXrays(); this.calculateAdditionalFees(true); },
 
     renderNoteTemplateDropdown: function() { const select = document.getElementById('vd-note-template'); if(!select) return; let html = '<option value="">-- เลือกเทมเพลต --</option>'; const catMap = { 'pre': 'ก่อนฟอก', 'intra': 'แทรกซ้อน', 'post': 'หลังฟอก', 'doctor': 'คำสั่งแพทย์', 'general': 'ทั่วไป' }; this.noteTemplates.forEach(t => { html += '<option value="' + t.id + '">[' + (catMap[t.category]||t.category||'ทั่วไป') + '] ' + (t.title || t.name) + '</option>'; }); select.innerHTML = html; },
     applyNoteTemplate: function(id) { if(!id) return; const t = this.noteTemplates.find(x => String(x.id) === String(id)); if(t) { const noteEl = document.getElementById('vd-note'); let textToAppend = (t.text || '').replace(/\\n/g, '\n'); noteEl.value = noteEl.value.trim() ? noteEl.value.trim() + '\n\n' + textToAppend : textToAppend; } document.getElementById('vd-note-template').value = ''; },

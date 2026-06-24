@@ -1,26 +1,18 @@
 // js/pages/finance.js
-// 🚀 โมดูลสรุปรายได้และเบิกจ่ายคลินิก (Enterprise Edition: UI Contrast Fix & RCM Integration)
+// 🚀 โมดูลสรุปรายได้และเบิกจ่ายคลินิก (Enterprise RCM Edition: Detailed Breakdown + 5-Year Auto Purge)
 
 const FinancePage = {
     startDate: '',
     endDate: '',
-    
     allVisits: [], allExpenses: [], clinicRights: [], modalities: [], stockTransactions: [], inventoryItems: [], chartInstance: null, hasCleanedUp: false,
+    _summaryData: {}, // 🚨 เก็บตัวแปรสรุปยอดเชิงลึก
 
     html: `
         <style>
-            /* 🌟 [ULTIMATE TYPOGRAPHY FIX] บังคับตัวหนังสือคมชัดระดับ HD และลบรอยหยักฟอนต์ 100% */
-            * {
-                -webkit-font-smoothing: antialiased !important;
-                -moz-osx-font-smoothing: grayscale !important;
-                text-rendering: optimizeLegibility !important;
-            }
+            * { -webkit-font-smoothing: antialiased !important; -moz-osx-font-smoothing: grayscale !important; text-rendering: optimizeLegibility !important; }
             .form-label, .text-secondary, .text-muted { color: #334155 !important; font-weight: 600 !important; letter-spacing: 0.2px; }
             .form-control, .form-select, .input-modern { color: #0f172a !important; font-weight: 700 !important; font-size: 14.5px !important; }
-            .badge { font-weight: 700 !important; letter-spacing: 0.3px; }
-            .modern-panel, .solid-input-group { box-shadow: 0 4px 10px rgba(0,0,0,0.04) !important; }
-
-            /* 🌟 [UI/UX FIX] ล้างอาถรรพ์ White-on-White! บังคับเปลี่ยนสีพื้นหลังทับ bg-white ทันทีเมื่อเอาเมาส์ชี้ */
+            
             .btn-outline-success.bg-white:hover { background-color: #10b981 !important; border-color: #10b981 !important; color: #ffffff !important; }
             .btn-outline-success.bg-white:hover i { color: #ffffff !important; }
             .btn-outline-info.bg-white:hover { background-color: #0ea5e9 !important; border-color: #0ea5e9 !important; color: #ffffff !important; }
@@ -34,12 +26,12 @@ const FinancePage = {
             .finance-nav-tabs .nav-link.active { background: #fff; box-shadow: 0 -4px 10px rgba(0,0,0,0.02); color: var(--primary); }
             .finance-nav-tabs .nav-link.active::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 3px; border-radius: 3px 3px 0 0; background: var(--primary); }
             
-            .stat-card-finance { transition: all 0.3s ease; border: 1px solid #e2e8f0; border-radius: 20px; padding: 24px; position: relative; overflow: hidden; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); height: 100%; }
+            .stat-card-finance { transition: all 0.3s ease; border: 1px solid #e2e8f0; border-radius: 20px; padding: 24px; position: relative; overflow: hidden; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); height: 100%; display: flex; flex-direction: column; }
             .stat-card-finance:hover { transform: translateY(-5px); box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.1); border-color: #cbd5e1; }
             .stat-icon-bg { position: absolute; top: -20px; right: -20px; opacity: 0.04; font-size: 150px; pointer-events: none; z-index: 0; }
             
-            .table-finance th { background: #f8fafc; color: #475569; font-weight: 700; text-transform: uppercase; font-size: 13px; padding: 16px; border-bottom: 2px solid #e2e8f0; border-top: none; white-space: nowrap; }
-            .table-finance td { padding: 16px; vertical-align: middle; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+            .table-finance th { background: #f8fafc; color: #475569; font-weight: 700; text-transform: uppercase; font-size: 13px; padding: 14px 12px; border-bottom: 2px solid #e2e8f0; border-top: none; white-space: nowrap; }
+            .table-finance td { padding: 14px 12px; vertical-align: middle; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
             .table-finance tr:hover td { background: #f8fafc; }
             
             .ledger-in { color: #10b981; font-weight: bold; }
@@ -51,9 +43,18 @@ const FinancePage = {
                 box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.3s;
             }
             .native-date-wrapper:hover { border-color: #3b82f6; background: #f8fafc; }
-            .native-date-wrapper .thai-text { font-family: 'Prompt', sans-serif; font-weight: 700; color: #2563eb; font-size: 15px; pointer-events: none; }
-            .native-date-wrapper input[type="date"] { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; }
+            .native-date-wrapper input[type="date"] { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; border: none; background: transparent; color: transparent; }
+            .native-date-wrapper input[type="date"]::-webkit-datetime-edit, .native-date-wrapper input[type="date"]::-webkit-datetime-edit-text, .native-date-wrapper input[type="date"]::-webkit-datetime-edit-month-field, .native-date-wrapper input[type="date"]::-webkit-datetime-edit-day-field, .native-date-wrapper input[type="date"]::-webkit-datetime-edit-year-field { color: transparent !important; background: transparent !important; }
             .native-date-wrapper input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; margin: 0; padding: 0; cursor: pointer; opacity: 0; }
+            .native-date-wrapper span { position: relative; z-index: 1; font-family: 'Prompt'; font-weight: 800; color: #2563eb; font-size: 14px; pointer-events: none; }
+            .native-date-wrapper i { position: relative; z-index: 1; margin-right: 8px; font-size: 16px; color: #2563eb; pointer-events: none; }
+
+            /* 🚨 ส่วนแสดงรายละเอียดเชิงลึก (Breakdown Box) */
+            .breakdown-box { background: #f8fafc; border-radius: 12px; padding: 12px; margin-top: auto; border: 1px solid #e2e8f0; position: relative; z-index: 1; }
+            .breakdown-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 13px; }
+            .breakdown-row:last-child { margin-bottom: 0; }
+            .breakdown-label { color: #64748b; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+            .breakdown-val { color: #0f172a; font-weight: 700; font-family: 'Prompt'; }
         </style>
 
         <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
@@ -71,14 +72,14 @@ const FinancePage = {
                 
                 <div class="d-flex align-items-center bg-light p-1 rounded-pill shadow-sm border ms-2">
                     <div class="native-date-wrapper">
-                        <i class="fa-solid fa-calendar-day text-primary me-2" style="pointer-events:none;"></i>
-                        <span class="thai-text" id="fin-start-display">กำลังโหลด...</span>
+                        <i class="fa-solid fa-calendar-days"></i>
+                        <span id="fin-start-display">กำลังโหลด...</span>
                         <input type="date" id="fin-start-date" onchange="FinancePage.onDateChange()">
                     </div>
                     <span class="mx-2 text-muted fw-bold small">ถึง</span>
                     <div class="native-date-wrapper">
-                        <i class="fa-solid fa-calendar-check text-primary me-2" style="pointer-events:none;"></i>
-                        <span class="thai-text" id="fin-end-display">กำลังโหลด...</span>
+                        <i class="fa-solid fa-calendar-days"></i>
+                        <span id="fin-end-display">กำลังโหลด...</span>
                         <input type="date" id="fin-end-date" onchange="FinancePage.onDateChange()">
                     </div>
                     <button class="btn btn-primary rounded-pill px-3 ms-2 fw-bold shadow-sm" style="z-index: 15;" onclick="FinancePage.setThisMonth()">เดือนนี้</button>
@@ -94,10 +95,18 @@ const FinancePage = {
                         <div class="text-success-dark fw-bold small text-uppercase">รายรับรวม (Total Income)</div>
                         <div class="badge-soft-success rounded px-2 py-1"><i class="fa-solid fa-plus"></i></div>
                     </div>
-                    <div class="fs-1 fw-bold text-dark position-relative z-1">฿<span id="fin-total-income"><i class="fas fa-spinner fa-spin fs-4"></i></span></div>
-                    <div class="text-muted small fw-bold mt-1 position-relative z-1">จากผู้ป่วย <span id="fin-pt-count" class="text-success">0</span> คิว <span class="text-primary">(รวมค่ายา/แล็บ/X-Ray)</span></div>
+                    <div class="fs-1 fw-bold text-dark position-relative z-1 mb-3">฿<span id="fin-total-income"><i class="fas fa-spinner fa-spin fs-4"></i></span></div>
+                    
+                    <div class="breakdown-box border-success-subtle">
+                        <div class="breakdown-row"><span class="breakdown-label"><i class="fa-solid fa-pump-medical text-success"></i> ค่าฟอกเลือด</span><span class="breakdown-val" id="fin-sum-dialysis">0.00</span></div>
+                        <div class="breakdown-row"><span class="breakdown-label"><i class="fa-solid fa-pills text-warning-dark"></i> ค่ายาและเวชภัณฑ์</span><span class="breakdown-val" id="fin-sum-med">0.00</span></div>
+                        <div class="breakdown-row"><span class="breakdown-label"><i class="fa-solid fa-vial-virus text-danger"></i> ค่าผลตรวจแล็บ</span><span class="breakdown-val" id="fin-sum-lab">0.00</span></div>
+                        <div class="breakdown-row"><span class="breakdown-label"><i class="fa-solid fa-x-ray text-info"></i> ค่าภาพถ่ายรังสี</span><span class="breakdown-val" id="fin-sum-xray">0.00</span></div>
+                        <div class="mt-2 pt-2 border-top border-success-subtle text-success fw-bold small text-center">อ้างอิงจากผู้ป่วย <span id="fin-pt-count">0</span> คิว (สถานะเสร็จสิ้น)</div>
+                    </div>
                 </div>
             </div>
+            
             <div class="col-md-4">
                 <div class="stat-card-finance" style="border-top: 5px solid var(--danger);">
                     <i class="fa-solid fa-arrow-trend-down stat-icon-bg"></i>
@@ -105,10 +114,15 @@ const FinancePage = {
                         <div class="text-danger-dark fw-bold small text-uppercase">รายจ่ายรวม (Total Expense)</div>
                         <div class="badge-soft-danger rounded px-2 py-1"><i class="fa-solid fa-minus"></i></div>
                     </div>
-                    <div class="fs-1 fw-bold text-dark position-relative z-1">฿<span id="fin-total-expense"><i class="fas fa-spinner fa-spin fs-4"></i></span></div>
-                    <div class="text-muted small fw-bold mt-1 position-relative z-1">บิลทั่วไป + ต้นทุนพัสดุฟอกเลือด</div>
+                    <div class="fs-1 fw-bold text-dark position-relative z-1 mb-3">฿<span id="fin-total-expense"><i class="fas fa-spinner fa-spin fs-4"></i></span></div>
+                    
+                    <div class="breakdown-box border-danger-subtle">
+                        <div class="breakdown-row"><span class="breakdown-label"><i class="fa-solid fa-file-invoice text-danger"></i> บิลค่าใช้จ่ายทั่วไป</span><span class="breakdown-val" id="fin-sum-opex">0.00</span></div>
+                        <div class="breakdown-row"><span class="breakdown-label"><i class="fa-solid fa-box-open text-secondary"></i> ต้นทุนตัดเบิกพัสดุ</span><span class="breakdown-val" id="fin-sum-stock">0.00</span></div>
+                    </div>
                 </div>
             </div>
+            
             <div class="col-md-4">
                 <div class="stat-card-finance" style="border-top: 5px solid var(--primary); background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);">
                     <i class="fa-solid fa-scale-balanced stat-icon-bg"></i>
@@ -116,8 +130,12 @@ const FinancePage = {
                         <div class="text-primary fw-bold small text-uppercase">กำไรสุทธิ (Net Cash Flow)</div>
                         <div class="badge-soft-primary rounded px-2 py-1"><i class="fa-solid fa-equals"></i></div>
                     </div>
-                    <div class="fs-1 fw-bold position-relative z-1" id="fin-net-profit"><i class="fas fa-spinner fa-spin fs-4"></i></div>
-                    <div class="text-muted small fw-bold mt-1 position-relative z-1" id="fin-net-status">คำนวณตามช่วงวันที่เลือก</div>
+                    <div class="fs-1 fw-bold position-relative z-1 mb-3" id="fin-net-profit"><i class="fas fa-spinner fa-spin fs-4"></i></div>
+                    
+                    <div class="breakdown-box border-primary-subtle" style="background: rgba(255,255,255,0.6);">
+                        <div class="text-center text-primary fw-bold small"><i class="fa-solid fa-chart-line me-1"></i> ประมวลผลจากข้อมูลในช่วงวันที่เลือก</div>
+                        <div class="text-center text-muted small mt-1">รายรับสุทธิ หักลบ รายจ่ายรวมสุทธิ</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -125,7 +143,7 @@ const FinancePage = {
         <div class="row g-4 mb-4">
             <div class="col-12">
                 <div class="modern-panel shadow-sm p-4 h-100" style="border-radius: 20px;">
-                    <h5 class="fw-bold text-dark mb-4"><i class="fa-solid fa-chart-bar text-primary me-2"></i> กราฟเปรียบเทียบรายได้และรายจ่ายประจำเดือน</h5>
+                    <h5 class="fw-bold text-dark mb-4"><i class="fa-solid fa-chart-bar text-primary me-2"></i> กราฟเปรียบเทียบโครงสร้างรายได้และรายจ่าย</h5>
                     <div style="height: 300px; width: 100%; display: flex; justify-content: center; align-items: center;" id="fin-chart-container">
                         <canvas id="financeChart"></canvas>
                     </div>
@@ -141,7 +159,7 @@ const FinancePage = {
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link text-success" data-bs-toggle="tab" data-bs-target="#income-panel" type="button" role="tab">
-                    <i class="fa-solid fa-hand-holding-dollar me-2"></i> ทะเบียนรายรับ
+                    <i class="fa-solid fa-hand-holding-dollar me-2"></i> ทะเบียนรายรับแบบละเอียด
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -159,10 +177,10 @@ const FinancePage = {
                         <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> ความเคลื่อนไหวทางบัญชี (Running Ledger)</h5>
                         <div>
                             <button class="btn btn-primary fw-bold shadow-sm rounded-pill px-4 me-2" onclick="FinancePage.printSummary()">
-                                <i class="fa-solid fa-chart-pie me-2 text-white"></i> พิมพ์สรุปยอด
+                                <i class="fa-solid fa-chart-pie me-2 text-white"></i> พิมพ์รายงานสรุป (Report)
                             </button>
                             <button class="btn btn-dark fw-bold shadow-sm rounded-pill px-4" onclick="FinancePage.printLedger()">
-                                <i class="fa-solid fa-print me-2 text-warning"></i> พิมพ์ Statement
+                                <i class="fa-solid fa-print me-2 text-warning"></i> พิมพ์สมุดบัญชี (Statement)
                             </button>
                         </div>
                     </div>
@@ -175,7 +193,7 @@ const FinancePage = {
                                     <th style="width: 35%;">รายละเอียดรายการ</th>
                                     <th class="text-end text-success" style="width: 10%;">เงินเข้า (IN)</th>
                                     <th class="text-end text-danger" style="width: 10%;">เงินออก (OUT)</th>
-                                    <th class="text-end text-primary" style="width: 15%;">ยอดคงเหลือ (BAL)</th>
+                                    <th class="text-end text-primary" style="width: 15%;">ยอดสะสม (BAL)</th>
                                 </tr>
                             </thead>
                             <tbody id="fin-ledger-body"><tr><td colspan="6" class="text-center py-5">...</td></tr></tbody>
@@ -190,13 +208,17 @@ const FinancePage = {
                         <table class="table table-finance w-100 mb-0">
                             <thead>
                                 <tr>
-                                    <th style="width: 12%;"><i class="fa-regular fa-calendar me-1"></i> วันที่</th>
-                                    <th style="width: 25%;"><i class="fa-solid fa-user me-1"></i> ผู้ป่วย</th>
-                                    <th style="width: 35%;">รายละเอียดค่าบริการ</th>
-                                    <th class="text-end text-success" style="width: 15%;">รวมสุทธิ (฿)</th>
+                                    <th style="width: 10%;"><i class="fa-regular fa-calendar me-1"></i> วันที่</th>
+                                    <th style="width: 18%;"><i class="fa-solid fa-user me-1"></i> ผู้ป่วย</th>
+                                    <th style="width: 12%;"><i class="fa-solid fa-tags me-1"></i> สิทธิ/โหมด</th>
+                                    <th class="text-end text-primary" style="width: 12%;">ค่าฟอก (฿)</th>
+                                    <th class="text-end text-warning-dark" style="width: 12%;">ค่ายา (฿)</th>
+                                    <th class="text-end text-danger" style="width: 12%;">ค่าแล็บ (฿)</th>
+                                    <th class="text-end text-info" style="width: 12%;">ค่า X-Ray (฿)</th>
+                                    <th class="text-end text-success" style="width: 12%;">รวมสุทธิ (฿)</th>
                                 </tr>
                             </thead>
-                            <tbody id="fin-income-body"><tr><td colspan="4" class="text-center py-5">...</td></tr></tbody>
+                            <tbody id="fin-income-body"><tr><td colspan="8" class="text-center py-5">...</td></tr></tbody>
                         </table>
                     </div>
                 </div>
@@ -214,14 +236,15 @@ const FinancePage = {
                         <table class="table table-finance w-100 mb-0">
                             <thead>
                                 <tr>
-                                    <th style="width: 15%;"><i class="fa-regular fa-calendar me-1"></i> วันที่</th>
+                                    <th style="width: 12%;"><i class="fa-regular fa-calendar me-1"></i> วันที่</th>
                                     <th style="width: 15%;"><i class="fa-solid fa-tag me-1"></i> หมวดหมู่</th>
-                                    <th style="width: 35%;"><i class="fa-solid fa-align-left me-1"></i> รายละเอียด/ที่มา</th>
+                                    <th style="width: 30%;"><i class="fa-solid fa-align-left me-1"></i> รายละเอียด</th>
+                                    <th style="width: 15%;"><i class="fa-solid fa-code-branch me-1"></i> แหล่งที่มา</th>
                                     <th class="text-end text-danger" style="width: 15%;">ยอดจ่าย (฿)</th>
-                                    <th class="text-center" style="width: 20%;">จัดการ</th>
+                                    <th class="text-center" style="width: 13%;">จัดการ</th>
                                 </tr>
                             </thead>
-                            <tbody id="fin-expense-body"><tr><td colspan="5" class="text-center py-5">...</td></tr></tbody>
+                            <tbody id="fin-expense-body"><tr><td colspan="6" class="text-center py-5">...</td></tr></tbody>
                         </table>
                     </div>
                 </div>
@@ -255,6 +278,7 @@ const FinancePage = {
 
     init: function() {
         if (typeof db === 'undefined') return;
+        
         if (!this.hasCleanedUp) this.autoCleanUpOldRecords();
 
         if(!this.startDate || !this.endDate) {
@@ -329,13 +353,21 @@ const FinancePage = {
 
     autoCleanUpOldRecords: function() {
         this.hasCleanedUp = true;
-        const cutoffDate = new Date(); cutoffDate.setFullYear(cutoffDate.getFullYear() - 5);
+        const cutoffDate = new Date(); 
+        cutoffDate.setFullYear(cutoffDate.getFullYear() - 5);
         const cutoffStr = cutoffDate.toISOString().split('T')[0];
 
         db.ref('clinic_expenses_v2').orderByChild('date').endAt(cutoffStr).once('value').then(snap => {
             if (snap.exists()) {
-                let updates = {}; snap.forEach(child => { updates[child.key] = null; });
-                db.ref('clinic_expenses_v2').update(updates);
+                let updates = {}; 
+                let deletedCount = 0;
+                snap.forEach(child => { 
+                    updates[child.key] = null; 
+                    deletedCount++;
+                });
+                db.ref('clinic_expenses_v2').update(updates).then(() => {
+                    console.log(`[Auto-Purge] ลบประวัติรายจ่ายคลินิกที่เก่าเกิน 5 ปี สำเร็จ จำนวน ${deletedCount} รายการ`);
+                });
             }
         });
     },
@@ -373,14 +405,18 @@ const FinancePage = {
         
         document.getElementById('fin-month-text').innerHTML = `ข้อมูลบัญชีตั้งแต่ <b class="text-primary">${this.formatDateTh(this.startDate)}</b> ถึง <b class="text-primary">${this.formatDateTh(this.endDate)}</b>`;
 
+        // 🚨 ตัวแปรเก็บค่าสำหรับแจกแจงแหล่งที่มา
         let totalIncome = 0; let totalExpense = 0;
+        let sumDialysis = 0; let sumMed = 0; let sumLab = 0; let sumXray = 0;
+        let sumOpEx = 0; let sumStock = 0;
+        
         let incomeHtml = ''; let expenseHtml = ''; let masterLedger = []; 
 
         let filteredVisits = this.allVisits.filter(v => v && v.date && v.date >= this.startDate && v.date <= this.endDate && v.status === "เสร็จสิ้น");
         filteredVisits.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         if (filteredVisits.length === 0) {
-            incomeHtml = `<tr><td colspan="4" class="text-center py-5 text-muted"><i class="fa-solid fa-file-invoice-dollar fa-3x mb-3" style="opacity:0.2;"></i><br>ไม่มีรายรับในช่วงเวลานี้</td></tr>`;
+            incomeHtml = `<tr><td colspan="8" class="text-center py-5 text-muted"><i class="fa-solid fa-file-invoice-dollar fa-3x mb-3" style="opacity:0.2;"></i><br>ไม่มีรายรับในช่วงเวลานี้</td></tr>`;
         } else {
             filteredVisits.forEach(v => {
                 let base_fee = parseFloat(String(v.dialysis_fee || 0).replace(/,/g, '')); 
@@ -390,31 +426,45 @@ const FinancePage = {
                 let xray_fee = Number(v.xray_fee || 0);
                 let total_visit_fee = base_fee + med_fee + lab_fee + xray_fee;
                 
+                sumDialysis += base_fee;
+                sumMed += med_fee;
+                sumLab += lab_fee;
+                sumXray += xray_fee;
                 totalIncome += total_visit_fee; 
-                
-                let detailHtml = `<span class="badge badge-soft-success mb-1">${v.right || '-'}</span> <span class="badge badge-soft-primary mb-1">${v.hd_mode || 'HD ปกติ'}</span><br>`;
-                detailHtml += `<div class="small text-muted mt-1" style="line-height:1.6;">`;
-                detailHtml += `• ค่าฟอกเลือด: ฿${base_fee.toLocaleString()}<br>`;
-                if(med_fee > 0) detailHtml += `• ค่ายา: ฿${med_fee.toLocaleString()}<br>`;
-                if(lab_fee > 0) detailHtml += `• ค่าแล็บ: ฿${lab_fee.toLocaleString()}<br>`;
-                if(xray_fee > 0) detailHtml += `• ค่าเอ็กซเรย์: ฿${xray_fee.toLocaleString()}`;
-                detailHtml += `</div>`;
 
                 incomeHtml += `
                 <tr class="card-hover-float" style="cursor:default;">
                     <td><span class="fw-bold text-dark">${this.formatDateTh(v.date)}</span></td>
-                    <td><div class="fw-bold text-dark" style="font-family:'Prompt'; font-size:15px;">${v.name || 'ไม่ระบุชื่อ'}</div><div class="small text-muted">HN: ${v.hn}</div></td>
-                    <td>${detailHtml}</td>
-                    <td class="text-end fw-bold text-success" style="font-size:16px;">+ ฿${total_visit_fee.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    <td>
+                        <div class="fw-bold text-dark" style="font-family:'Prompt'; font-size:14.5px;">${v.name || 'ไม่ระบุชื่อ'}</div>
+                        <div class="small text-muted mt-1">HN: ${v.hn}</div>
+                    </td>
+                    <td>
+                        <div class="badge badge-soft-success mb-1 w-100">${v.right || '-'}</div>
+                        <div class="badge badge-soft-primary w-100">${v.hd_mode || 'HD ปกติ'}</div>
+                    </td>
+                    <td class="text-end fw-bold text-primary">${base_fee.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    <td class="text-end fw-bold text-warning-dark">${med_fee > 0 ? med_fee.toLocaleString(undefined, {minimumFractionDigits: 2}) : '-'}</td>
+                    <td class="text-end fw-bold text-danger">${lab_fee > 0 ? lab_fee.toLocaleString(undefined, {minimumFractionDigits: 2}) : '-'}</td>
+                    <td class="text-end fw-bold text-info">${xray_fee > 0 ? xray_fee.toLocaleString(undefined, {minimumFractionDigits: 2}) : '-'}</td>
+                    <td class="text-end fw-bold text-success" style="font-size:16px;">+ ${total_visit_fee.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                 </tr>`;
 
                 masterLedger.push({ dateObj: new Date(v.date + " " + (v.time || "00:00")), dateStr: v.date, type: 'INCOME', category: 'ค่าบริการฟอกเลือดและอื่นๆ', desc: `คิวฟอกไต HN:${v.hn} (${v.name}) [${v.hd_mode||'HD'}]`, amount: total_visit_fee });
             });
         }
+        
+        // ยิงข้อมูลลงหน้าจอรายรับ
         document.getElementById('fin-income-body').innerHTML = incomeHtml;
         document.getElementById('fin-total-income').innerText = totalIncome.toLocaleString(undefined, {minimumFractionDigits: 2});
         document.getElementById('fin-pt-count').innerText = filteredVisits.length;
+        
+        document.getElementById('fin-sum-dialysis').innerText = sumDialysis.toLocaleString(undefined, {minimumFractionDigits: 2});
+        document.getElementById('fin-sum-med').innerText = sumMed.toLocaleString(undefined, {minimumFractionDigits: 2});
+        document.getElementById('fin-sum-lab').innerText = sumLab.toLocaleString(undefined, {minimumFractionDigits: 2});
+        document.getElementById('fin-sum-xray').innerText = sumXray.toLocaleString(undefined, {minimumFractionDigits: 2});
 
+        // 🚨 เริ่มจัดการรายจ่าย
         let filteredExpenses = this.allExpenses.filter(e => e && e.date && e.date >= this.startDate && e.date <= this.endDate);
         let filteredStockLogs = this.stockTransactions.filter(log => log && log.timestamp && log.timestamp.split('T')[0] >= this.startDate && log.timestamp.split('T')[0] <= this.endDate && log.mode === 'out_sub' && log.note && log.note.includes("ตัดเบิก Flowsheet"));
 
@@ -429,10 +479,14 @@ const FinancePage = {
         combinedExpenses.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         if (combinedExpenses.length === 0) {
-            expenseHtml = `<tr><td colspan="5" class="text-center py-5 text-muted"><i class="fa-solid fa-receipt fa-3x mb-3" style="opacity:0.2;"></i><br>ไม่มีบันทึกรายจ่ายในช่วงเวลานี้</td></tr>`;
+            expenseHtml = `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fa-solid fa-receipt fa-3x mb-3" style="opacity:0.2;"></i><br>ไม่มีบันทึกรายจ่ายในช่วงเวลานี้</td></tr>`;
         } else {
             combinedExpenses.forEach(e => {
-                let amount = Number(e.amount) || 0; totalExpense += amount;
+                let amount = Number(e.amount) || 0; 
+                
+                if(e.isSystemGenerated) sumStock += amount; else sumOpEx += amount;
+                totalExpense += amount;
+
                 let catBadge = `<span class="badge bg-secondary px-3 py-1 shadow-sm rounded-pill">${e.category}</span>`;
                 if(e.category === 'ค่าน้ำ/ค่าไฟ/อินเทอร์เน็ต') catBadge = `<span class="badge badge-soft-warning px-3 py-1 shadow-sm rounded-pill">${e.category}</span>`;
                 else if(e.category === 'เงินเดือน/ค่าจ้าง') catBadge = `<span class="badge badge-soft-primary px-3 py-1 shadow-sm rounded-pill">${e.category}</span>`;
@@ -440,13 +494,18 @@ const FinancePage = {
                 else if(e.category === 'ซ่อมบำรุง/สถานที่') catBadge = `<span class="badge badge-soft-danger px-3 py-1 shadow-sm rounded-pill">${e.category}</span>`;
                 else if(e.category === 'ต้นทุนพัสดุฟอกเลือด') catBadge = `<span class="badge badge-soft-dark px-3 py-1 shadow-sm rounded-pill"><i class="fa-solid fa-box-open me-1"></i> ต้นทุนพัสดุ</span>`;
 
-                let deleteBtnHtml = e.isSystemGenerated ? `<span class="text-muted small"><i class="fa-solid fa-robot"></i> Auto-Log</span>` : `<button class="btn btn-sm btn-light border border-danger-subtle text-danger shadow-sm rounded px-3 py-1" onclick="FinancePage.deleteExpense('${e.id}')"><i class="fa-solid fa-trash me-1"></i> ลบ</button>`;
+                let sourceBadge = e.isSystemGenerated 
+                    ? `<div class="badge badge-soft-dark w-100"><i class="fa-solid fa-robot me-1"></i> ตัดสต๊อกอัตโนมัติ</div>`
+                    : `<div class="badge badge-soft-info w-100"><i class="fa-solid fa-user-pen me-1"></i> ลงบัญชีแมนวล</div><div class="small text-muted mt-1 fw-bold text-center">โดย: ${e.recorded_by || 'Admin'}</div>`;
+
+                let deleteBtnHtml = e.isSystemGenerated ? `-` : `<button class="btn btn-sm btn-light border border-danger-subtle text-danger shadow-sm rounded px-3 py-1" onclick="FinancePage.deleteExpense('${e.id}')"><i class="fa-solid fa-trash me-1"></i> ลบ</button>`;
 
                 expenseHtml += `
                 <tr class="card-hover-float" style="cursor:default;">
                     <td><span class="fw-bold text-dark">${this.formatDateTh(e.date)}</span></td>
                     <td>${catBadge}</td>
-                    <td><div class="fw-bold text-dark" style="font-family:'Prompt'; font-size:14.5px;">${e.description || '-'}</div><div class="small text-muted"><i class="fa-solid fa-user-pen me-1"></i> บันทึกโดย: ${e.recorded_by || 'Admin'}</div></td>
+                    <td><div class="fw-bold text-dark" style="font-family:'Prompt'; font-size:14.5px;">${e.description || '-'}</div></td>
+                    <td>${sourceBadge}</td>
                     <td class="text-end fw-bold text-danger" style="font-size:16px;">- ฿${amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                     <td class="text-center">${deleteBtnHtml}</td>
                 </tr>`;
@@ -454,9 +513,13 @@ const FinancePage = {
                 masterLedger.push({ dateObj: new Date(e.date + " " + (e.time || "23:59")), dateStr: e.date, type: 'EXPENSE', category: e.category, desc: e.description, amount: amount });
             });
         }
+        
         document.getElementById('fin-expense-body').innerHTML = expenseHtml;
         document.getElementById('fin-total-expense').innerText = totalExpense.toLocaleString(undefined, {minimumFractionDigits: 2});
+        document.getElementById('fin-sum-opex').innerText = sumOpEx.toLocaleString(undefined, {minimumFractionDigits: 2});
+        document.getElementById('fin-sum-stock').innerText = sumStock.toLocaleString(undefined, {minimumFractionDigits: 2});
 
+        // 🚨 บันทึกยอดสุทธิ
         let netProfit = totalIncome - totalExpense;
         let netEl = document.getElementById('fin-net-profit');
         if (netProfit >= 0) { 
@@ -465,6 +528,10 @@ const FinancePage = {
             netEl.innerHTML = `<span class="text-danger">฿${netProfit.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>`; 
         }
 
+        // เก็บออบเจกต์สรุปไว้ใช้ตอนพิมพ์
+        this._summaryData = { totalIncome, totalExpense, netProfit, sumDialysis, sumMed, sumLab, sumXray, sumOpEx, sumStock };
+
+        // 🚨 สมุดบัญชีรวม (Ledger)
         masterLedger.sort((a, b) => a.dateObj - b.dateObj);
         let ledgerHtml = ''; let runningBalance = 0;
 
@@ -572,12 +639,85 @@ const FinancePage = {
         });
     },
 
+    // 🚨 THE FIX: พิมพ์สรุปยอดเชิงลึกแบบละเอียด 🚨
     printSummary: function() {
+        const d = this._summaryData;
+        if(d.totalIncome === 0 && d.totalExpense === 0) { Swal.fire('ข้อมูลว่างเปล่า', 'ไม่มีข้อมูลให้สรุปในช่วงเวลานี้', 'warning'); return; }
+
         db.ref('clinic_settings_v2').once('value').then(snap => {
             const settings = snap.val() || { clinic_name: "DIALYSIS PRO CLINIC" };
             let chartImgHtml = ''; const chartCanvas = document.getElementById('financeChart');
-            if(chartCanvas && this.chartInstance) { try { chartImgHtml = `<img src="${chartCanvas.toDataURL('image/png')}" style="max-width:480px; height:auto; display:block; margin:0 auto; object-fit:contain;">`; } catch(e){} }
-            const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Summary</title><link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet"><style>*{-webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;} body{font-family:'Sarabun',sans-serif;color:#000;padding:15px;font-size:13px;}.header{text-align:center;margin-bottom:20px;border-bottom:2px solid #000;padding-bottom:12px;}.header h2{font-size:22px;font-weight:700;margin:0;}.section-title{font-size:14px;font-weight:bold;margin-top:20px;margin-bottom:15px;border-left:4px solid #2563eb;padding-left:8px;}.cards-container{display:flex;justify-content:space-between;margin-bottom:25px;gap:10px;}.print-card{flex:1;border:1px solid #cbd5e1;padding:12px;border-radius:10px;text-align:center;background:#f8fafc;-webkit-print-color-adjust:exact;}</style></head><body><div class="header"><h2>${settings.clinic_name}</h2><h3>รายงานสรุปดุลกระแสเงินสดและสัดส่วนผลประกอบการคลินิก</h3><div>ช่วงเวลาสืบค้น: ${this.formatDateTh(this.startDate)} ถึง ${this.formatDateTh(this.endDate)}</div></div><div class="section-title">1. ผลประกอบการทางการเงิน (Financial Position Summary)</div><div class="cards-container"><div class="print-card" style="background:#f0fdf4;"><b>รายรับรวม:</b> ฿${document.getElementById('fin-total-income').innerText}</div><div class="print-card" style="background:#fef2f2;"><b>รายจ่ายรวม:</b> ฿${document.getElementById('fin-total-expense').innerText}</div><div class="print-card" style="background:#eff6ff;"><b>กำไรสุทธิ:</b> ฿${document.getElementById('fin-net-profit').innerText}</div></div><div class="section-title">2. แผนภูมิเปรียบเทียบดุลกระแสเงินสด</div><div style="padding:15px; border:1px solid #e2e8f0; border-radius:12px;">${chartImgHtml}</div></body></html>`;
+            if(chartCanvas && this.chartInstance) { try { chartImgHtml = `<img src="${chartCanvas.toDataURL('image/png')}" style="max-width:500px; height:auto; display:block; margin:0 auto; object-fit:contain;">`; } catch(e){} }
+            
+            const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Summary</title><link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+                <style>
+                    *{-webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;} 
+                    body{font-family:'Sarabun',sans-serif;color:#000;padding:20px;font-size:13px;}
+                    .header{text-align:center;margin-bottom:20px;border-bottom:2px solid #000;padding-bottom:15px;}
+                    .header h2{font-size:24px;font-weight:700;margin:0;}
+                    .section-title{font-size:16px;font-weight:bold;margin-top:25px;margin-bottom:10px;border-left:4px solid #2563eb;padding-left:10px; background: #f8fafc; padding: 6px 10px;}
+                    table{width:100%;border-collapse:collapse;margin-top:10px;}
+                    th,td{border:1px solid #cbd5e1;padding:8px 10px;}
+                    th{background-color:#f1f5f9 !important; font-weight:bold;}
+                    .total-row { background-color: #f8fafc; font-weight: bold; font-size: 14px; }
+                    .text-right { text-align: right; }
+                    .cards-container{display:flex;justify-content:space-between;gap:15px;margin-bottom:10px;}
+                    .print-card{flex:1;border:2px solid #cbd5e1;padding:15px;border-radius:12px;text-align:center;background:#fff;}
+                    .val-income { color: #166534; font-size: 20px; font-weight: bold; margin-top: 5px; }
+                    .val-expense { color: #991b1b; font-size: 20px; font-weight: bold; margin-top: 5px; }
+                    .val-net { color: #1e40af; font-size: 24px; font-weight: bold; margin-top: 5px; }
+                </style></head><body>
+                <div class="header">
+                    <h2>${settings.clinic_name}</h2>
+                    <h3>รายงานสรุปดุลกระแสเงินสดและโครงสร้างรายได้-ต้นทุนแบบละเอียด (Financial Breakdown)</h3>
+                    <div>รอบการสืบค้น: ${this.formatDateTh(this.startDate)} ถึง ${this.formatDateTh(this.endDate)}</div>
+                </div>
+
+                <div class="cards-container">
+                    <div class="print-card" style="border-color: #bbf7d0;">
+                        <div style="font-weight:bold; color:#15803d;">รายรับรวมสุทธิ (Total Income)</div>
+                        <div class="val-income">฿${d.totalIncome.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+                    </div>
+                    <div class="print-card" style="border-color: #fecaca;">
+                        <div style="font-weight:bold; color:#b91c1c;">รายจ่ายรวมสุทธิ (Total Expense)</div>
+                        <div class="val-expense">฿${d.totalExpense.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+                    </div>
+                    <div class="print-card" style="border-color: #bfdbfe; background: #eff6ff;">
+                        <div style="font-weight:bold; color:#1d4ed8;">กำไรสุทธิ (Net Cash Flow)</div>
+                        <div class="val-net">฿${d.netProfit.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap: 20px; margin-top: 25px;">
+                    <div style="flex: 1;">
+                        <div class="section-title" style="border-color: #10b981; color: #15803d;">1. รายรับแจกแจงตามหมวดหมู่ค่าบริการ</div>
+                        <table>
+                            <tr><td>1.1 รายได้จากค่าฟอกเลือด (Dialysis Base Fee)</td><td class="text-right">฿${d.sumDialysis.toLocaleString(undefined, {minimumFractionDigits: 2})}</td></tr>
+                            <tr><td>1.2 รายได้จากค่ายาและเวชภัณฑ์ (Medications)</td><td class="text-right">฿${d.sumMed.toLocaleString(undefined, {minimumFractionDigits: 2})}</td></tr>
+                            <tr><td>1.3 รายได้จากค่าตรวจทางห้องปฏิบัติการ (Labs)</td><td class="text-right">฿${d.sumLab.toLocaleString(undefined, {minimumFractionDigits: 2})}</td></tr>
+                            <tr><td>1.4 รายได้จากค่าภาพถ่ายรังสี (X-Ray)</td><td class="text-right">฿${d.sumXray.toLocaleString(undefined, {minimumFractionDigits: 2})}</td></tr>
+                            <tr class="total-row"><td class="text-right text-success">รวมรายได้ทั้งหมด (Total Income):</td><td class="text-right" style="color: #15803d;">฿${d.totalIncome.toLocaleString(undefined, {minimumFractionDigits: 2})}</td></tr>
+                        </table>
+                    </div>
+
+                    <div style="flex: 1;">
+                        <div class="section-title" style="border-color: #ef4444; color: #b91c1c;">2. รายจ่ายแจกแจงตามหมวดหมู่ต้นทุน</div>
+                        <table>
+                            <tr><td>2.1 บิลค่าใช้จ่ายทั่วไป (Operational Expense)</td><td class="text-right">฿${d.sumOpEx.toLocaleString(undefined, {minimumFractionDigits: 2})}</td></tr>
+                            <tr><td>2.2 ต้นทุนพัสดุฟอกเลือด (Stock Consumption)</td><td class="text-right">฿${d.sumStock.toLocaleString(undefined, {minimumFractionDigits: 2})}</td></tr>
+                            <tr class="total-row"><td class="text-right text-danger">รวมต้นทุน/รายจ่าย (Total Expense):</td><td class="text-right" style="color: #b91c1c;">฿${d.totalExpense.toLocaleString(undefined, {minimumFractionDigits: 2})}</td></tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="section-title" style="margin-top: 30px;">3. แผนภูมิเปรียบเทียบดุลกระแสเงินสด</div>
+                <div style="padding:15px; border:1px solid #e2e8f0; border-radius:12px; background: #f8fafc;">${chartImgHtml}</div>
+
+                <div style="text-align:right; margin-top:50px;">
+                    <p>ลงชื่อ .............................................................. ผู้จัดทำรายงานบัญชี</p>
+                    <p style="margin-right:45px;">( ........................................................ )</p>
+                </div>
+                </body></html>`;
             this._executePrint(html);
         });
     },

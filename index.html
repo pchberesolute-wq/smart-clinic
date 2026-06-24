@@ -2,19 +2,39 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    
     <title>DIALYSIS PRO - Cloud OS</title>
     
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     
     <link rel="stylesheet" href="./css/style.css">
+
+    <style>
+        body.swal2-shown #lock-screen-overlay,
+        body.swal2-toast-shown #lock-screen-overlay {
+            filter: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        #lock-screen-overlay * {
+            filter: none !important;
+        }
+        .swal2-container {
+            z-index: 9999999 !important;
+        }
+    </style>
     
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js" defer></script>
 </head>
 <body>
     
@@ -30,63 +50,29 @@
         <div class="sidebar-menu-container">
             <ul class="nav-menu">
                 <li class="nav-section">🏥 งานบริการและรักษา</li>
-                <li class="nav-item active" onclick="App.switchPage('dashboard', this)">
-                    <i class="fa-solid fa-chart-pie"></i> <span>แดชบอร์ดภาพรวม (Overview)</span>
-                </li>
-                <li class="nav-item" onclick="App.switchPage('visits', this)">
-                    <i class="fa-solid fa-bed-pulse"></i> <span>คิวฟอกไตประจำวัน (Daily Visits)</span>
-                </li>
-                <li class="nav-item" onclick="App.switchPage('patients', this)">
-                    <i class="fa-solid fa-hospital-user"></i> <span>ทะเบียนผู้ป่วย (Patient Mgt.)</span>
-                </li>
+                <li class="nav-item active" onclick="App.switchPage('dashboard', this)"><i class="fa-solid fa-chart-pie"></i> <span>แดชบอร์ดภาพรวม (Overview)</span></li>
+                <li class="nav-item" onclick="App.switchPage('visits', this)"><i class="fa-solid fa-bed-pulse"></i> <span>คิวฟอกไตประจำวัน (Daily Visits)</span></li>
+                <li class="nav-item" onclick="App.switchPage('visit_detail', this)"><i class="fa-solid fa-file-medical"></i> <span>บันทึกข้อมูลฟอกเลือด (HD Flowsheet)</span></li>
+                <li class="nav-item" onclick="App.switchPage('patients', this)"><i class="fa-solid fa-hospital-user"></i> <span>ทะเบียนผู้ป่วย (Patient Mgt.)</span></li>
+                <li class="nav-item" onclick="App.switchPage('patient_history', this)"><i class="fa-solid fa-folder-open"></i> <span>แฟ้มประวัติผู้ป่วย (EMR)</span></li>
                 
-                <li class="nav-item" onclick="App.switchPage('patient_status', this)">
-                    <i class="fa-solid fa-truck-medical" style="color: var(--danger);"></i> <span style="color: var(--danger);">ผู้ป่วยส่งต่อ/จำหน่าย</span>
-                </li>
+                <li class="nav-item" onclick="App.switchPage('document_center', this)"><i class="fa-solid fa-file-image"></i> <span>ศูนย์รวมเอกสาร (Gallery)</span></li>
                 
-                <li class="nav-item" onclick="App.switchPage('visit_detail', this)">
-                    <i class="fa-solid fa-file-medical"></i> <span>บันทึกข้อมูลฟอกเลือด (HD Flowsheet)</span>
-                </li>
-                <li class="nav-item" onclick="App.switchPage('patient_history', this)">
-                    <i class="fa-solid fa-folder-open"></i> <span>แฟ้มประวัติผู้ป่วย (EMR)</span>
-                </li>
+                <li class="nav-item" onclick="App.switchPage('patient_status', this)"><i class="fa-solid fa-truck-medical"></i> <span>ผู้ป่วยส่งต่อ/จำหน่าย</span></li>
 
                 <li class="nav-section mt-4">📦 บริหารจัดการพัสดุ</li>
-                <li class="nav-item" onclick="App.switchPage('inventory', this)">
-                    <i class="fa-solid fa-boxes-packing"></i> <span>คลังน้ำยาและพัสดุ</span>
-                </li>
-                
-                <li class="nav-item" onclick="App.switchPage('monthly_requisition', this)">
-                    <i class="fa-solid fa-file-excel text-success"></i> <span class="fw-bold text-success">ฟอร์มเบิกของประจำเดือน</span>
-                </li>
-
-                <li class="nav-item" onclick="App.switchPage('stock_forecast', this)">
-                    <i class="fa-solid fa-robot"></i> <span>คำนวณยอดเบิก</span>
-                </li>
-                <li class="nav-item" onclick="App.switchPage('stock_manage', this)">
-                    <i class="fa-solid fa-clipboard-check"></i> <span>เบิกจ่ายและนับสต๊อก</span>
-                </li>
-                <li class="nav-item" onclick="App.switchPage('stock_history', this)">
-                    <i class="fa-solid fa-clock-rotate-left"></i> <span>ประวัติเข้า-ออก สต๊อก</span>
-                </li>
-                
-                <li class="nav-item" onclick="App.switchPage('usage_statistics', this)">
-                    <i class="fa-solid fa-chart-line text-success"></i> <span>สถิติการใช้พัสดุและยาฉีด</span>
-                </li>
+                <li class="nav-item" onclick="App.switchPage('inventory', this)"><i class="fa-solid fa-boxes-packing"></i> <span>คลังน้ำยาและพัสดุ</span></li>
+                <li class="nav-item" onclick="App.switchPage('stock_manage', this)"><i class="fa-solid fa-clipboard-check"></i> <span>เบิกจ่ายและนับสต๊อก</span></li>
+                <li class="nav-item" onclick="App.switchPage('stock_history', this)"><i class="fa-solid fa-clock-rotate-left"></i> <span>ประวัติเข้า-ออก สต๊อก</span></li>
+                <li class="nav-item" onclick="App.switchPage('monthly_requisition', this)"><i class="fa-solid fa-file-excel"></i> <span>ฟอร์มเบิกของประจำเดือน</span></li>
+                <li class="nav-item" onclick="App.switchPage('stock_forecast', this)"><i class="fa-solid fa-robot"></i> <span>คำนวณยอดเบิก</span></li>
+                <li class="nav-item" onclick="App.switchPage('usage_statistics', this)"><i class="fa-solid fa-chart-line"></i> <span>สถิติการใช้พัสดุและยาฉีด</span></li>
                 
                 <li class="nav-section mt-4">📊 สรุปผลและตั้งค่า</li>
-                <li class="nav-item" onclick="App.switchPage('search_copy', this)">
-                    <i class="fa-solid fa-copy"></i> <span>ค้นหาและคัดลอกด่วน</span>
-                </li>
-                <li class="nav-item" onclick="App.switchPage('finance', this)">
-                    <i class="fa-solid fa-file-invoice-dollar"></i> <span>รายได้และเบิกจ่าย</span>
-                </li>
-                <li class="nav-item" onclick="App.switchPage('department_ledger', this)">
-                    <i class="fa-solid fa-wallet"></i> <span>บัญชีภายในหน่วยงาน</span>
-                </li>
-                <li class="nav-item" onclick="App.switchPage('settings', this)">
-                    <i class="fa-solid fa-sliders"></i> <span>ตั้งค่าคลินิก</span>
-                </li>
+                <li class="nav-item" onclick="App.switchPage('finance', this)"><i class="fa-solid fa-file-invoice-dollar"></i> <span>รายได้และเบิกจ่าย</span></li>
+                <li class="nav-item" onclick="App.switchPage('department_ledger', this)"><i class="fa-solid fa-wallet"></i> <span>บัญชีภายในหน่วยงาน</span></li>
+                <li class="nav-item" onclick="App.switchPage('search_copy', this)"><i class="fa-solid fa-copy"></i> <span>ค้นหาและคัดลอกด่วน</span></li>
+                <li class="nav-item" onclick="App.switchPage('settings', this)"><i class="fa-solid fa-sliders"></i> <span>ตั้งค่าคลินิก</span></li>
             </ul>
         </div>
 
@@ -106,7 +92,7 @@
     <main class="main-content">
         <nav class="topbar">
             <div class="d-flex align-items-center gap-2 w-100 max-w-500">
-                <button class="btn btn-light d-xl-none shadow-sm me-1" onclick="document.getElementById('sidebar').classList.toggle('active')" style="border-radius: 12px;">
+                <button class="btn btn-light d-xl-none shadow-sm me-1" onclick="document.getElementById('sidebar').classList.toggle('active')" style="border-radius: 12px; padding: 8px 12px;" aria-label="Toggle Menu">
                     <i class="fa-solid fa-bars text-primary"></i>
                 </button>
                 <div class="search-box-modern shadow-sm" style="width: 380px;">
@@ -117,7 +103,7 @@
             
             <div class="topbar-actions">
                 <div class="time-widget" id="clockDisplay">
-                    กำลังโหลดเวลา...
+                    <i class="fas fa-spinner fa-spin text-primary"></i> กำลังซิงค์เวลา...
                 </div>
             </div>
         </nav>
@@ -125,31 +111,38 @@
         <div id="app-content" class="content-wrapper"></div>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous" defer></script>
+    <script src="https://unpkg.com/html5-qrcode" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js" defer></script>
     
-    <script src="./js/firebase-config.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="./js/firebase-config.js?v=12" defer></script>
     
-    <script src="./js/pages/login.js?v=12"></script>
-    <script src="./js/pages/dashboard.js?v=12"></script>
-    <script src="./js/pages/patients.js?v=12"></script>
-    <script src="./js/pages/patient_status.js?v=12"></script> 
-    <script src="./js/pages/patient_form.js?v=12"></script>
-    <script src="./js/pages/patient_history.js?v=12"></script> 
-    <script src="./js/pages/visits.js?v=12"></script>
-    <script src="./js/pages/visit_detail.js?v=12"></script>
-    <script src="./js/pages/search_copy.js?v=12"></script>
-    <script src="./js/pages/inventory.js?v=12"></script> 
-    <script src="./js/pages/stock_forecast.js?v=12"></script> 
-    <script src="./js/pages/stock_manage.js?v=12"></script> 
-    <script src="./js/pages/stock_history.js?v=12"></script> 
-    <script src="./js/pages/monthly_requisition.js?v=12"></script> 
-    <script src="./js/pages/usage_statistics.js?v=12"></script> 
-    <script src="./js/pages/finance.js?v=12"></script> 
-    <script src="./js/pages/department_ledger.js?v=12"></script> 
-    <script src="./js/pages/settings.js?v=12"></script>
-    <script src="./js/main.js?v=12"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <script src="./js/security_shield.js?v=1" defer></script>
+    
+    <script src="./js/auto_purge_service.js?v=12" defer></script>
+    
+    <script src="./js/responsive_engine.js?v=1" defer></script>
+    
+    <script src="./js/pages/login.js?v=12" defer></script>
+    <script src="./js/pages/dashboard.js?v=12" defer></script>
+    <script src="./js/pages/patients.js?v=12" defer></script>
+    <script src="./js/pages/patient_status.js?v=12" defer></script> 
+    <script src="./js/pages/patient_form.js?v=12" defer></script>
+    <script src="./js/pages/patient_history.js?v=12" defer></script> 
+    <script src="./js/pages/visits.js?v=12" defer></script>
+    <script src="./js/pages/visit_detail.js?v=12" defer></script>
+    <script src="./js/pages/document_center.js?v=12" defer></script>
+    <script src="./js/pages/search_copy.js?v=12" defer></script>
+    <script src="./js/pages/inventory.js?v=12" defer></script> 
+    <script src="./js/pages/stock_forecast.js?v=12" defer></script> 
+    <script src="./js/pages/stock_manage.js?v=12" defer></script> 
+    <script src="./js/pages/stock_history.js?v=12" defer></script> 
+    <script src="./js/pages/monthly_requisition.js?v=12" defer></script> 
+    <script src="./js/pages/usage_statistics.js?v=12" defer></script> 
+    <script src="./js/pages/finance.js?v=12" defer></script> 
+    <script src="./js/pages/department_ledger.js?v=12" defer></script> 
+    <script src="./js/pages/settings.js?v=12" defer></script>
+    
+    <script src="./js/main.js?v=12" defer></script>
 </body>
 </html>

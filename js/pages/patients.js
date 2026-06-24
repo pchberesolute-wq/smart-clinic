@@ -1,5 +1,5 @@
 // js/pages/patients.js
-// 🚀 โมดูลทะเบียนผู้ป่วย (Styled Excel Export Edition + Safe String Format)
+// 🚀 โมดูลทะเบียนผู้ป่วย (Styled Excel Export + Bulletproof Async Barcode Scanner + Quick Status Change)
 
 const PatientsPage = {
     allData: [], 
@@ -132,11 +132,67 @@ const PatientsPage = {
                         '<button class="btn btn-sm btn-primary shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0;" onclick="event.stopPropagation(); PatientsPage.viewHistory(\'' + p.hn + '\')" title="แฟ้มประวัติ (EMR)"><i class="fa-solid fa-folder-open"></i></button>' +
                         '<button class="btn btn-sm btn-warning text-dark shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0;" onclick="event.stopPropagation(); PatientsPage.editPatient(\'' + p.hn + '\')" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>' +
                         '<button class="btn btn-sm btn-info text-white shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0;" onclick="event.stopPropagation(); PatientsPage.printOPDCard(\'' + p.hn + '\')" title="พิมพ์บัตร OPD"><i class="fa-solid fa-print"></i></button>' +
+                        
+                        '' +
+                        '<button class="btn btn-sm btn-danger text-white shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0;" onclick="event.stopPropagation(); PatientsPage.changeStatus(\'' + p.hn + '\', \'' + fullName + '\')" title="เปลี่ยนสถานะ/จำหน่ายผู้ป่วย"><i class="fa-solid fa-user-minus"></i></button>' +
+                        
                     '</div>' +
                 '</td>' +
             '</tr>';
         });
         tbody.innerHTML = html;
+    },
+
+    // 🚨 THE FIX: ฟังก์ชันเปลี่ยนสถานะแบบรวดเร็ว (1-Click Status Change)
+    changeStatus: function(hn, patientName) {
+        Swal.fire({
+            title: 'จำหน่ายผู้ป่วย (เปลี่ยนสถานะ)',
+            html: `<div class="text-start mb-2 text-muted">กำลังดำเนินการกับ: <b class="text-dark">${patientName}</b></div>`,
+            input: 'select',
+            inputOptions: {
+                'Admit รพ.': '🏥 Admit โรงพยาบาล',
+                'ย้ายคลินิก': '🔄 ย้ายคลินิก / จำหน่ายออก',
+                'เสียชีวิต': '⬛ เสียชีวิต'
+            },
+            inputPlaceholder: '-- เลือกสถานะใหม่ --',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#cbd5e1',
+            confirmButtonText: 'บันทึกและย้ายผู้ป่วย',
+            cancelButtonText: 'ยกเลิก',
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'กรุณาเลือกสถานะเพื่อดำเนินการ!';
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const newStatus = result.value;
+                Swal.fire({ title: 'กำลังบันทึกข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                
+                db.ref('patients_database_v2/patients').once('value').then(snap => {
+                    let data = snap.val();
+                    if (!data) return;
+                    let patientsList = Array.isArray(data) ? data : Object.keys(data).map(k => data[k]);
+                    let targetIndex = patientsList.findIndex(p => p && p.hn === hn);
+                    
+                    if (targetIndex !== -1) {
+                        patientsList[targetIndex].status = newStatus;
+                        // 🚨 ประทับตราวลาล่าสุดลงไป เพื่อให้หน้า Archive คำนวณวันหมดอายุ 5 ปีได้ถูกต้อง
+                        patientsList[targetIndex].last_updated = new Date().toISOString(); 
+                        
+                        db.ref('patients_database_v2/patients').set(patientsList).then(() => {
+                            Swal.fire('จำหน่ายสำเร็จ!', `ย้ายผู้ป่วยเข้าสู่หมวด "${newStatus}" เรียบร้อยแล้ว`, 'success');
+                            // หมายเหตุ: หน้าจอจะตัดรายชื่อออกอัตโนมัติเนื่องจากเราใช้ระบบ Real-time listener .on()
+                        }).catch(err => {
+                            Swal.fire('เกิดข้อผิดพลาด', err.message, 'error');
+                        });
+                    } else {
+                        Swal.fire('ข้อผิดพลาด', 'ไม่พบข้อมูลผู้ป่วยในระบบ', 'error');
+                    }
+                });
+            }
+        });
     },
 
     openExportModal: function() {
@@ -173,7 +229,6 @@ const PatientsPage = {
         });
     },
 
-    // 🌟 [EXCEL STYLING ALGORITHM]: อัลกอริทึมจัดทำไฟล์ Excel สีสันจัดเต็ม
     executeExcelExport: function(rightFilter) {
         Swal.fire({ title: 'กำลังประมวลผล Excel...', html: 'ระบบกำลังจัดรูปเล่มตาราง กรุณารอสักครู่', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
         
@@ -209,10 +264,7 @@ const PatientsPage = {
                 });
             });
 
-            // สร้าง Worksheet
             const worksheet = XLSX.utils.json_to_sheet(excelData);
-
-            // 🎨 1. Apply Styles (ใช้ xlsx-js-style API)
             const range = XLSX.utils.decode_range(worksheet['!ref']);
             for (let R = range.s.r; R <= range.e.r; ++R) {
                 for (let C = range.s.c; C <= range.e.c; ++C) {
@@ -220,7 +272,6 @@ const PatientsPage = {
                     const cellRef = XLSX.utils.encode_cell(cellAddress);
                     if (!worksheet[cellRef]) continue;
 
-                    // กำหนดขอบมาตรฐาน และฟอนต์ Tahoma ทุกช่อง
                     let cellStyle = {
                         border: {
                             top: { style: "thin", color: { rgb: "CBD5E1" } },
@@ -232,37 +283,30 @@ const PatientsPage = {
                         alignment: { vertical: "center", horizontal: "left" }
                     };
 
-                    // Header Row (R=0)
                     if (R === 0) {
-                        cellStyle.fill = { fgColor: { rgb: "2563EB" } }; // พื้นหลังสีน้ำเงินเข้ม
-                        cellStyle.font = { name: "Tahoma", sz: 11, color: { rgb: "FFFFFF" }, bold: true }; // ตัวอักษรสีขาว หนา
+                        cellStyle.fill = { fgColor: { rgb: "2563EB" } }; 
+                        cellStyle.font = { name: "Tahoma", sz: 11, color: { rgb: "FFFFFF" }, bold: true }; 
                         cellStyle.alignment = { horizontal: "center", vertical: "center" };
-                    } 
-                    // Data Rows (R>0)
-                    else {
-                        // สลับสีบรรทัด (Zebra stripe)
+                    } else {
                         if (R % 2 !== 0) {
-                            cellStyle.fill = { fgColor: { rgb: "F8FAFC" } }; // พื้นเทาอ่อน
+                            cellStyle.fill = { fgColor: { rgb: "F8FAFC" } }; 
                         } else {
-                            cellStyle.fill = { fgColor: { rgb: "FFFFFF" } }; // พื้นขาว
+                            cellStyle.fill = { fgColor: { rgb: "FFFFFF" } }; 
                         }
-                        // จัดกึ่งกลางสำหรับคอลัมน์ ลำดับ, HN, อายุ, ปชช, เวร, โรคติดต่อ, กรุ๊ปเลือด, เบอร์โทร
                         if ([0, 1, 3, 4, 5, 7, 8, 9, 10].includes(C)) {
                             cellStyle.alignment.horizontal = "center";
                         }
                     }
-                    
                     worksheet[cellRef].s = cellStyle;
                 }
             }
 
-            // 📏 2. Auto-Fit Columns Width
             const objectMaxLength = []; 
             for (let i = 0; i < excelData.length; i++) {
                 const value = Object.values(excelData[i]);
                 for (let j = 0; j < value.length; j++) {
                     if (typeof objectMaxLength[j] === 'undefined') {
-                        objectMaxLength[j] = Object.keys(excelData[0])[j].length; // คำนวณจากชื่อ Header ด้วย
+                        objectMaxLength[j] = Object.keys(excelData[0])[j].length; 
                     }
                     const valLength = value[j] ? String(value[j]).length : 0;
                     if (valLength > objectMaxLength[j]) {
@@ -271,12 +315,9 @@ const PatientsPage = {
                 }
             }
             
-            // จำกัดความกว้างไม่ให้แคบไปหรือกว้างไป (Min 10, Max 45) + เผื่อ Padding อีก 4
             const wscols = objectMaxLength.map(w => { return { width: Math.min(Math.max(w + 4, 10), 45) } });
             worksheet['!cols'] = wscols;
-
-            // 📐 3. Header Row Height
-            worksheet['!rows'] = [{ hpt: 30 }]; // ให้แถวหัวตารางสูง 30 (ดูอลังการขึ้น)
+            worksheet['!rows'] = [{ hpt: 30 }]; 
 
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "ทะเบียนผู้ป่วย");
@@ -286,7 +327,6 @@ const PatientsPage = {
 
             XLSX.writeFile(workbook, fileName);
             Swal.fire('ดาวน์โหลดสำเร็จ!', 'ไฟล์ Excel ถูกตกแต่งและจัดเรียงอย่างสวยงามแล้ว', 'success');
-
         }, 800); 
     },
 
@@ -296,10 +336,16 @@ const PatientsPage = {
 
     loadScannerLibrary: function(callback) {
         if (window.Html5Qrcode) { callback(); return; }
+        const existingScript = document.querySelector('script[src*="html5-qrcode"]');
+        if (existingScript) {
+            existingScript.addEventListener('load', () => callback());
+            return;
+        }
         Swal.showLoading();
         const script = document.createElement('script');
         script.src = 'https://unpkg.com/html5-qrcode';
         script.onload = () => { Swal.hideLoading(); callback(); };
+        script.onerror = () => { Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถดาวน์โหลดซอฟต์แวร์สแกนเนอร์จากเครือข่ายได้', 'error'); };
         document.head.appendChild(script);
     },
 
@@ -324,7 +370,10 @@ const PatientsPage = {
         Swal.fire({
             title: '<h4 class="fw-bold mb-0 text-dark" style="font-family:\'Prompt\';"><i class="fa-solid fa-expand me-2 text-primary"></i>สแกนบาร์โค้ดบัตรผู้ป่วย</h4>',
             html: scannerHtml,
-            showConfirmButton: false, showCancelButton: true, cancelButtonText: 'ปิดหน้าต่าง',
+            showCancelButton: true,
+            showConfirmButton: false,
+            cancelButtonText: 'ปิดหน้าต่าง',
+            allowOutsideClick: false,
             didOpen: () => {
                 const input = document.getElementById('swal-barcode-input');
                 if(input) input.focus();
@@ -351,66 +400,128 @@ const PatientsPage = {
                     }
                 });
             },
-            willClose: () => { this.isScanningModalOpen = false; this.stopCameraScanner(); }
+            willClose: () => {
+                this.isScanningModalOpen = false;
+                this.stopCameraScanner();
+            }
         });
     },
 
     switchScanMode: function(mode) {
-        const usbSec = document.getElementById('swal-usb-scanner'); const camSec = document.getElementById('swal-cam-scanner');
-        const btnUsb = document.getElementById('btn-scan-usb'); const btnCam = document.getElementById('btn-scan-cam');
+        const usbSec = document.getElementById('swal-usb-scanner'); 
+        const camSec = document.getElementById('swal-cam-scanner');
+        const btnUsb = document.getElementById('btn-scan-usb'); 
+        const btnCam = document.getElementById('btn-scan-cam');
 
         if (mode === 'usb') {
-            camSec.style.display = 'none'; usbSec.style.display = 'block';
-            btnUsb.className = 'btn btn-premium btn-premium-primary flex-fill';
-            btnCam.className = 'btn btn-light fw-bold flex-fill border shadow-sm rounded-pill text-secondary';
+            if (camSec) camSec.style.display = 'none';
+            if (usbSec) usbSec.style.display = 'block';
+            if (btnUsb) btnUsb.className = 'btn btn-premium btn-premium-primary flex-fill';
+            if (btnCam) btnCam.className = 'btn btn-light fw-bold flex-fill border shadow-sm rounded-pill text-secondary';
             this.stopCameraScanner();
-            setTimeout(() => { const input = document.getElementById('swal-barcode-input'); if(input) input.focus(); }, 100);
+            setTimeout(() => { const input = document.getElementById('swal-barcode-input'); if(input) input.focus(); }, 120);
         } else {
-            usbSec.style.display = 'none'; camSec.style.display = 'block';
-            btnCam.className = 'btn btn-premium btn-premium-primary flex-fill';
-            btnUsb.className = 'btn btn-light fw-bold flex-fill border shadow-sm rounded-pill text-secondary';
+            if (usbSec) usbSec.style.display = 'none';
+            if (camSec) camSec.style.display = 'block';
+            if (btnCam) btnCam.className = 'btn btn-premium btn-premium-primary flex-fill';
+            if (btnUsb) btnUsb.className = 'btn btn-light fw-bold flex-fill border shadow-sm rounded-pill text-secondary';
             this.startCameraScanner();
         }
     },
 
     startCameraScanner: function() {
-        this.loadScannerLibrary(() => {
+        this.loadScannerLibrary(async () => {
             if (this.html5QrCode) {
-                try { if (this.html5QrCode.getState() === 2) { this.html5QrCode.stop().then(() => { this.html5QrCode.clear(); this.initCamera(); }).catch(e => { this.initCamera(); }); } else { this.initCamera(); } } catch(e) { this.initCamera(); }
-            } else { this.initCamera(); }
+                try {
+                    if (this.html5QrCode.getState() === 2) {
+                        await this.html5QrCode.stop();
+                    }
+                    this.html5QrCode.clear();
+                } catch(e) {
+                    console.error("Camera release handler", e);
+                }
+            }
+            this.initCamera();
         });
     },
 
     initCamera: function() {
-        const reader = document.getElementById('camera-reader'); if (!reader) return;
-        reader.innerHTML = ''; this.html5QrCode = new Html5Qrcode("camera-reader");
-        const config = { fps: 10, qrbox: { width: 250, height: 100 } };
+        const reader = document.getElementById('camera-reader'); 
+        if (!reader) return;
         
-        this.html5QrCode.start({ facingMode: "environment" }, config,
+        reader.innerHTML = ''; 
+        this.html5QrCode = new Html5Qrcode("camera-reader");
+        
+        const config = { 
+            fps: 15, 
+            qrbox: function(viewfinderWidth, viewFinderHeight) {
+                let width = Math.floor(viewfinderWidth * 0.75);
+                let height = Math.floor(viewFinderHeight * 0.35);
+                if (width < 250) width = 250;
+                if (height < 120) height = 120;
+                return { width: width, height: height };
+            },
+            aspectRatio: 1.333334
+        };
+        
+        this.html5QrCode.start(
+            { facingMode: "environment" }, 
+            config,
             (decodedText) => {
-                this.isScanningModalOpen = false; this.stopCameraScanner(); Swal.close();
+                this.isScanningModalOpen = false; 
+                this.stopCameraScanner(); 
+                Swal.close();
                 let scannedHN = decodedText.trim().replace(/\*/g, '');
                 this.processBarcodeSearch(scannedHN);
-            }, (errorMessage) => { }
+            }, 
+            (errorMessage) => { /* Silent failure */ }
         ).catch(err => {
-            if (document.getElementById('camera-reader')) { document.getElementById('camera-reader').innerHTML = '<div class="p-4 text-center"><i class="fa-solid fa-camera-slash fa-3x mb-2 text-danger"></i><br><b class="text-white">ไม่สามารถเปิดกล้องได้</b></div>'; }
+            console.error("Camera start failure: ", err);
+            if (document.getElementById('camera-reader')) { 
+                document.getElementById('camera-reader').innerHTML = 
+                    '<div class="p-4 text-center text-white" style="font-family:\'Prompt\';">' +
+                        '<i class="fa-solid fa-camera-slash fa-3x mb-3 text-danger"></i><br>' +
+                        '<b class="fs-5">ไม่สามารถเข้าถึงกล้องถ่ายรูปได้</b><br>' +
+                        '<p class="small text-muted mt-2 mb-0">1. โปรดตรวจสอบการอนุญาตสิทธิ์กล้องในเบราว์เซอร์<br>2. ระบบกล้องต้องรันผ่านลิงก์เว็บแบบปลอดภัย (HTTPS) เท่านั้น</p>' +
+                    '</div>'; 
+            }
         });
     },
 
     stopCameraScanner: function() {
         if (this.html5QrCode) {
-            try { if (this.html5QrCode.getState() === 2) { this.html5QrCode.stop().then(() => { this.html5QrCode.clear(); this.html5QrCode = null; }).catch(err => { this.html5QrCode = null; }); } else { this.html5QrCode.clear(); this.html5QrCode = null; } } catch (err) { this.html5QrCode = null; }
+            try { 
+                if (this.html5QrCode.getState() === 2) { 
+                    this.html5QrCode.stop().then(() => { 
+                        this.html5QrCode.clear(); 
+                        this.html5QrCode = null; 
+                    }).catch(err => { 
+                        this.html5QrCode = null; 
+                    }); 
+                } else { 
+                    this.html5QrCode.clear(); 
+                    this.html5QrCode = null; 
+                } 
+            } catch (err) { 
+                this.html5QrCode = null; 
+            }
         }
     },
 
     processBarcodeSearch: function(scannedHN) {
         Swal.fire({ title: 'กำลังค้นหาแฟ้มประวัติ...', didOpen: () => Swal.showLoading() });
         setTimeout(() => {
-            let foundPt = this.allData.find(p => p.hn.toLowerCase() === scannedHN.toLowerCase());
+            let foundPt = this.allData.find(p => String(p.hn).toLowerCase() === String(scannedHN).toLowerCase());
             if (foundPt) {
                 Swal.fire({ title: 'พบข้อมูลผู้ป่วย!', html: 'กำลังเปิดแฟ้มประวัติ EMR ของ<br><b class="text-primary fs-5" style="font-family:\'Prompt\';">' + foundPt.name_th + '</b>', icon: 'success', timer: 1500, showConfirmButton: false }).then(() => this.viewHistory(foundPt.hn));
             } else {
-                Swal.fire({ title: 'ไม่พบข้อมูล!', html: 'ไม่พบผู้ป่วยรหัส HN: <b class="text-danger">' + scannedHN + '</b> ในระบบ<br><span class="small text-muted">โปรดตรวจสอบรหัสบาร์โค้ด หรือลงทะเบียนผู้ป่วยใหม่</span>', icon: 'error', confirmButtonText: '<i class="fa-solid fa-rotate-right me-2"></i> สแกนใหม่อีกครั้ง', confirmButtonColor: '#ef4444' }).then(() => this.openScanner());
+                Swal.fire({ 
+                    title: 'ไม่พบข้อมูล!', 
+                    html: 'ไม่พบผู้ป่วยรหัส HN: <b class="text-danger">' + scannedHN + '</b> ในระบบ<br><span class="small text-muted">โปรดตรวจสอบรหัสบาร์โค้ด หรือลงทะเบียนผู้ป่วยใหม่</span>', 
+                    icon: 'error', 
+                    confirmButtonText: '<i class="fa-solid fa-rotate-right me-2"></i> สแกนใหม่อีกครั้ง', 
+                    confirmButtonColor: '#ef4444' 
+                }).then(() => this.openScanner());
             }
         }, 600);
     },

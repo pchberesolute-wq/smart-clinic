@@ -27,7 +27,8 @@ const App = {
             monthly_requisition: typeof MonthlyRequisitionPage !== 'undefined' ? MonthlyRequisitionPage : null,
             usage_statistics: typeof UsageStatisticsPage !== 'undefined' ? UsageStatisticsPage : null,
             finance: typeof FinancePage !== 'undefined' ? FinancePage : null,
-            department_ledger: typeof DepartmentLedgerPage !== 'undefined' ? DepartmentLedgerPage : null 
+            department_ledger: typeof DepartmentLedgerPage !== 'undefined' ? DepartmentLedgerPage : null,
+            document_center: typeof DocumentCenterPage !== 'undefined' ? DocumentCenterPage : null 
         };
     },
 
@@ -124,7 +125,7 @@ const App = {
         this.resetIdleTimer(); 
     },
 
-    // 🌟 THE FIX: ฟังก์ชันแจ้งเตือนอัจฉริยะแบบ Native (เหมือนหน้า Search Copy)
+    // 🌟 THE FIX: ฟังก์ชันแจ้งเตือนอัจฉริยะแบบ Native 🌟
     showLockScreenToast: function(message) {
         const toast = document.getElementById('lock-screen-toast');
         const toastText = document.getElementById('lock-screen-toast-text');
@@ -133,10 +134,10 @@ const App = {
         toastText.innerText = message;
         toast.classList.add('show');
 
-        // สไลด์ออกเมื่อครบ 2 วินาที
+        // สไลด์ออกเมื่อครบ 2.5 วินาที
         setTimeout(() => {
             toast.classList.remove('show');
-        }, 2000);
+        }, 2500);
     },
 
     lockScreen: function() {
@@ -159,12 +160,11 @@ const App = {
 
         const userImg = `https://ui-avatars.com/api/?name=${encodeURIComponent(this.currentUser.name)}&background=2563eb&color=fff&bold=true`;
 
-        // 🚨 ฝังกล่องแจ้งเตือน (Native Toast) แบบเดียวกับหน้า Search ไว้ด้านบนสุด 🚨
+        // 🚨 ฝังกล่องแจ้งเตือน Native Toast ไว้ด้านบนสุด 🚨
         overlay.innerHTML = `
             <style>
                 @keyframes slideDownFadeSafe { from { opacity: 0; transform: translate3d(0, -30px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
                 
-                /* โครงสร้าง Native Toast สำหรับหน้าจอ Lock Screen */
                 .lock-custom-toast {
                     position: absolute;
                     top: 20px;
@@ -179,7 +179,7 @@ const App = {
                     color: #0f172a;
                     font-weight: 700;
                     font-size: 15px;
-                    z-index: 999999;
+                    z-index: 9999999;
                     display: flex;
                     align-items: center;
                     gap: 12px;
@@ -245,7 +245,7 @@ const App = {
     unlockScreen: function() {
         const pw = document.getElementById('unlock-password').value.trim();
         if (!pw) { 
-            // 🚨 เรียกใช้ Native Toast แทน Swal.fire() 🚨
+            // 🚨 ใช้ Native Toast แทน ไม่พึ่งพา SweetAlert 🚨
             this.showLockScreenToast('กรุณากรอกรหัสผ่าน');
             return; 
         }

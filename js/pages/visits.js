@@ -1,10 +1,45 @@
 // js/pages/visits.js
-// 🚀 โมดูลหน้าคิวฟอกไต Kanban Board (Silent Auto-Purge & Dual-Dropdown Fix)
+// 🚀 โมดูลหน้าคิวฟอกไต Kanban Board (Flicker-Free Native 3D Toast & Silent Auto-Purge Edition)
 
 const VisitsPage = {
     currentTab: 'active', allVisits: [], patientsList: [], hasCleanedUp: false,
 
     html: `
+        <style>
+            /* 🌟 [PREMIUM NATIVE TOAST CSS] แยกตัวออกมาจากโครงสร้าง SweetAlert เพื่อแก้บั๊กเบลอแบบถาวร */
+            .dialysis-custom-toast {
+                position: fixed;
+                top: 30px;
+                right: 30px;
+                background: #ffffff !important;
+                border: 2px solid #10b981 !important;
+                box-shadow: 0 15px 35px -5px rgba(16, 185, 129, 0.25), 0 5px 15px -3px rgba(0, 0, 0, 0.08) !important;
+                border-radius: 50px !important;
+                padding: 12px 28px !important;
+                font-family: 'Prompt', sans-serif !important;
+                color: #0f172a !important;
+                font-weight: 700 !important;
+                font-size: 15px !important;
+                z-index: 99999999 !important;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                transform: translate3d(120%, 0, 0);
+                opacity: 0;
+                transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15), opacity 0.3s ease;
+                pointer-events: none;
+            }
+            .dialysis-custom-toast.show {
+                transform: translate3d(0, 0, 0);
+                opacity: 1;
+            }
+
+            .min-w-300 { min-width: 320px; }
+            .visit-card { transition: all 0.3s ease; border-radius: 16px; border: 2px solid transparent; cursor: pointer; background: #fff;}
+            .visit-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-float-primary); border-color: var(--primary-light);}
+            .visit-bed { background: var(--bg-main); padding: 6px 12px; border-radius: 20px; font-weight: 700; font-size: 11.5px; color: var(--text-dark); font-family: 'Prompt';}
+        </style>
+
         <div class="page-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div>
                 <h2 class="page-title text-primary"><i class="fa-solid fa-bed-pulse me-2"></i> คิวฟอกไตประจำวัน</h2>
@@ -81,13 +116,13 @@ const VisitsPage = {
                 </div>
             </div>
         </div>
-        
-        <style>
-            .min-w-300 { min-width: 320px; }
-            .visit-card { transition: all 0.3s ease; border-radius: 16px; border: 2px solid transparent; cursor: pointer; background: #fff;}
-            .visit-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-float-primary); border-color: var(--primary-light);}
-            .visit-bed { background: var(--bg-main); padding: 6px 12px; border-radius: 20px; font-weight: 700; font-size: 11.5px; color: var(--text-dark); font-family: 'Prompt';}
-        </style>
+
+        <div id="dialysisPoaster" class="dialysis-custom-toast">
+            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center shadow-sm" style="width:28px; height:28px;">
+                <i class="fa-solid fa-check" style="font-size:14px;"></i>
+            </div>
+            <span id="dialysisPoasterText">อัปเดตสำเร็จแล้ว</span>
+        </div>
     `,
 
     init: function() {
@@ -124,6 +159,20 @@ const VisitsPage = {
 
         if (window.visitAutoUpdateInterval) clearInterval(window.visitAutoUpdateInterval);
         window.visitAutoUpdateInterval = setInterval(() => { this.checkAutoStart(); }, 30000);
+    },
+
+    // 🌟 ฟังก์ชันแจ้งเตือนอัจฉริยะ (Native 3D Toast)
+    showNativeToast: function(message) {
+        const toast = document.getElementById('dialysisPoaster');
+        const toastText = document.getElementById('dialysisPoasterText');
+        if(!toast || !toastText) return;
+
+        toastText.innerText = message;
+        toast.classList.add('show');
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 1500);
     },
 
     // 🌟 [SILENT PURGE] กวาดข้อมูล 5 ปีทิ้งแบบเงียบๆ ไม่เด้ง Alert
@@ -443,7 +492,11 @@ const VisitsPage = {
         }).then((result) => {
             if (result.isConfirmed) {
                 let newStatus = result.value; let updatedVisits = this.allVisits.map(item => item.id === visitId ? { ...item, status: newStatus } : item);
-                db.ref('patients_database_v2/visits').set(updatedVisits).then(() => { const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 }); Toast.fire({ icon: 'success', title: 'อัปเดตสถานะสำเร็จ' }); });
+                
+                // 🚨 THE FIX: เปลี่ยนมาใช้ Native Toast แทน SweetAlert 🚨
+                db.ref('patients_database_v2/visits').set(updatedVisits).then(() => { 
+                    this.showNativeToast('อัปเดตสถานะคิวสำเร็จ');
+                });
             } else if (result.isDenied) {
                 Swal.fire({ title: 'ยืนยันการลบ?', text: `ต้องการยกเลิกคิวเตียง ${v.bed} ของ ${v.name} ใช่หรือไม่?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'ใช่, ยกเลิกคิว' }).then((delRes) => {
                     if (delRes.isConfirmed) { let updatedVisits = this.allVisits.filter(item => item.id !== visitId); db.ref('patients_database_v2/visits').set(updatedVisits).then(() => Swal.fire('ลบแล้ว!', 'คิวถูกยกเลิกออกจากกระดาน', 'success')); }
