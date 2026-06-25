@@ -1,54 +1,20 @@
 // js/pages/security_shield.js
-// 🛡️ โมดูลเกราะป้องกันความปลอดภัย + Smart Context Menu (V7 - 100% Native Toast & Plain Text Guard)
+// 🛡️ โมดูลเกราะป้องกันความปลอดภัย + Smart Context Menu (V8 - Removed 30-min Auto Logout)
 
 const SecurityShield = {
-    idleTimeout: 30 * 60 * 1000, // ⏳ ตั้งเวลาเตะออกถ้าไม่ขยับเมาส์ 30 นาที
-    idleTimer: null,
     selectedTextToCopy: "", // 🌟 ตัวแปรลับ: ใช้เก็บข้อความที่คลุมดำไว้
 
     init: function() {
         this.preventClickjacking();
-        this.setupSessionTimeout();
         this.injectNativeToast(); // 🌟 ฝังกล่องแจ้งเตือน Native ตัวเดียวกับ search_copy.js
         this.setupCustomContextMenu(); // 🌟 เมนูคลิกขวา
         this.secureLocalStorage();
         this.hijackConsole();
-        console.log("%c🛡️ [Security Shield] Smart Menu V7 (Native Toast) Activated.", "color: #10b981; font-weight: bold; font-size: 14px;");
+        console.log("%c🛡️ [Security Shield] Smart Menu V8 (No Auto-Logout) Activated.", "color: #10b981; font-weight: bold; font-size: 14px;");
     },
 
     preventClickjacking: function() {
         if (window.top !== window.self) window.top.location = window.self.location;
-    },
-
-    setupSessionTimeout: function() {
-        const resetTimer = () => {
-            clearTimeout(this.idleTimer);
-            this.idleTimer = setTimeout(() => this.enforceLogout(), this.idleTimeout);
-        };
-        window.addEventListener('mousemove', resetTimer);
-        window.addEventListener('keypress', resetTimer);
-        window.addEventListener('scroll', resetTimer);
-        window.addEventListener('click', resetTimer);
-        window.addEventListener('touchstart', resetTimer);
-        resetTimer();
-    },
-
-    enforceLogout: function() {
-        if (localStorage.getItem('dialysis_user_session')) {
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: 'หมดเวลาเชื่อมต่อ',
-                    text: 'ระบบได้ทำการล็อคเอาท์อัตโนมัติเนื่องจากไม่มีการใช้งานเกิน 30 นาที',
-                    icon: 'warning',
-                    allowOutsideClick: false,
-                    confirmButtonText: 'เข้าสู่ระบบใหม่',
-                    confirmButtonColor: '#2563eb'
-                }).then(() => {
-                    if (typeof App !== 'undefined' && App.logout) App.logout();
-                    else { localStorage.clear(); window.location.reload(); }
-                });
-            }
-        }
     },
 
     // 🌟 1. ระบบกล่องแจ้งเตือน (ก๊อปปี้ CSS/HTML มาจากหน้า search_copy.js เป๊ะๆ 100%)
@@ -132,7 +98,7 @@ const SecurityShield = {
         }
 
         toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 1500); // 1.5 วินาทีเท่าหน้า search_copy
+        setTimeout(() => toast.classList.remove('show'), 1500); // 1.5 วินาที
     },
 
     // 🌟 2. เมนูคลิกขวา Custom Context Menu

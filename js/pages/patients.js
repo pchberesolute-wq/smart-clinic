@@ -1,5 +1,5 @@
 // js/pages/patients.js
-// 🚀 โมดูลทะเบียนผู้ป่วย (Styled Excel Export + Bulletproof Async Barcode Scanner + Quick Status Change)
+// 🚀 โมดูลทะเบียนผู้ป่วย (Bulletproof Anti-Crash Edition + Excel Export)
 
 const PatientsPage = {
     allData: [], 
@@ -55,22 +55,49 @@ const PatientsPage = {
         '</div>',
 
     init: function() {
-        if (typeof db === 'undefined') return;
+        if (typeof db === 'undefined' || typeof firebase === 'undefined') {
+            document.getElementById('pt-table-body').innerHTML = '<tr><td colspan="6" class="text-center py-5 text-danger"><i class="fa-solid fa-triangle-exclamation fa-3x mb-3"></i><br>ไม่พบการเชื่อมต่อฐานข้อมูล</td></tr>';
+            return;
+        }
 
-        db.ref('clinic_rights_v2').once('value').then(snap => {
-            const data = snap.val();
-            this.clinicRights = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])) : [];
-        });
+        // 🚨 สร้างฟังก์ชันโหลดที่ปลอดภัย 100%
+        const executeLoad = () => {
+            db.ref('clinic_rights_v2').once('value').then(snap => {
+                const data = snap.val();
+                this.clinicRights = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])) : [];
+            });
 
-        db.ref('patients_database_v2/patients').on('value', snap => {
-            const data = snap.val();
-            let rawPatients = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])) : [];
-            this.allData = rawPatients.filter(p => p !== null && (p.status || 'ปกติ') === 'ปกติ'); 
-            
-            const countText = document.getElementById('pt-count-text');
-            if (countText) countText.innerText = 'พบรายชื่อผู้ป่วย (Active) ในระบบทั้งหมด ' + this.allData.length + ' ราย';
-            this.renderTable(this.allData);
-        });
+            db.ref('patients_database_v2/patients').on('value', snap => {
+                try {
+                    const data = snap.val();
+                    let rawPatients = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])) : [];
+                    this.allData = rawPatients.filter(p => p && typeof p === 'object' && (p.status || 'ปกติ') === 'ปกติ'); 
+                    
+                    const countText = document.getElementById('pt-count-text');
+                    if (countText) countText.innerText = 'พบรายชื่อผู้ป่วย (Active) ในระบบทั้งหมด ' + this.allData.length + ' ราย';
+                    this.renderTable(this.allData);
+                } catch (err) {
+                    console.error("Render Error:", err);
+                    document.getElementById('pt-table-body').innerHTML = '<tr><td colspan="6" class="text-center py-5 text-danger"><i class="fa-solid fa-bug fa-3x mb-3"></i><br>ข้อมูลเวชระเบียนมีปัญหา: ' + err.message + '</td></tr>';
+                }
+            }, (error) => {
+                document.getElementById('pt-table-body').innerHTML = '<tr><td colspan="6" class="text-center py-5 text-danger"><i class="fa-solid fa-triangle-exclamation fa-3x mb-3"></i><br>ฐานข้อมูลปฏิเสธการเข้าถึง (Permission Denied)</td></tr>';
+            });
+        };
+
+        // 🚨 เช็คกุญแจแบบปลอดภัย ไม่สร้าง Listener ซ้ำซ้อน
+        if (firebase.auth().currentUser) {
+            executeLoad();
+        } else {
+            const unsub = firebase.auth().onAuthStateChanged((user) => {
+                if (user) {
+                    unsub(); // ทำลาย Listener ทิ้งทันทีเพื่อไม่ให้เมมโมรี่เต็ม
+                    executeLoad();
+                } else {
+                    document.getElementById('pt-table-body').innerHTML = '<tr><td colspan="6" class="text-center py-5 text-warning"><i class="fa-solid fa-lock fa-3x mb-3"></i><br>กำลังตรวจสอบสิทธิ์การเข้าถึง...</td></tr>';
+                }
+            });
+        }
 
         setTimeout(() => {
             const searchInput = document.getElementById('ptSearch');
@@ -107,7 +134,8 @@ const PatientsPage = {
             if (inf === "HIV") infHtml = '<span class="badge bg-danger px-3 py-2 shadow-sm rounded-pill" style="font-size:11px;"><i class="fa-solid fa-virus me-1"></i> HIV +</span>';
             if (inf === "HBV") infHtml = '<span class="badge bg-warning text-dark px-3 py-2 shadow-sm rounded-pill" style="font-size:11px;"><i class="fa-solid fa-virus me-1"></i> HBV +</span>';
 
-            let imgSrc = p.photo_base64 ? (p.photo_base64.startsWith('data:image') ? p.photo_base64 : 'data:image/jpeg;base64,' + p.photo_base64) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(p.name_th||'X') + '&background=3b82f6&color=fff&bold=true';
+            // ป้องกันการแครชถ้ารูปถ่ายไม่สมบูรณ์
+            let imgSrc = p.photo_base64 && typeof p.photo_base64 === 'string' ? (p.photo_base64.startsWith('data:image') ? p.photo_base64 : 'data:image/jpeg;base64,' + p.photo_base64) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(p.name_th||'X') + '&background=3b82f6&color=fff&bold=true';
             let fullName = (p.title || '') + (p.name_th || 'ไม่ระบุชื่อ');
 
             html += '<tr class="card-hover-float" style="cursor: pointer;">' +
@@ -132,10 +160,7 @@ const PatientsPage = {
                         '<button class="btn btn-sm btn-primary shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0;" onclick="event.stopPropagation(); PatientsPage.viewHistory(\'' + p.hn + '\')" title="แฟ้มประวัติ (EMR)"><i class="fa-solid fa-folder-open"></i></button>' +
                         '<button class="btn btn-sm btn-warning text-dark shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0;" onclick="event.stopPropagation(); PatientsPage.editPatient(\'' + p.hn + '\')" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>' +
                         '<button class="btn btn-sm btn-info text-white shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0;" onclick="event.stopPropagation(); PatientsPage.printOPDCard(\'' + p.hn + '\')" title="พิมพ์บัตร OPD"><i class="fa-solid fa-print"></i></button>' +
-                        
-                        '' +
                         '<button class="btn btn-sm btn-danger text-white shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0;" onclick="event.stopPropagation(); PatientsPage.changeStatus(\'' + p.hn + '\', \'' + fullName + '\')" title="เปลี่ยนสถานะ/จำหน่ายผู้ป่วย"><i class="fa-solid fa-user-minus"></i></button>' +
-                        
                     '</div>' +
                 '</td>' +
             '</tr>';
@@ -143,7 +168,6 @@ const PatientsPage = {
         tbody.innerHTML = html;
     },
 
-    // 🚨 THE FIX: ฟังก์ชันเปลี่ยนสถานะแบบรวดเร็ว (1-Click Status Change)
     changeStatus: function(hn, patientName) {
         Swal.fire({
             title: 'จำหน่ายผู้ป่วย (เปลี่ยนสถานะ)',
@@ -161,9 +185,7 @@ const PatientsPage = {
             confirmButtonText: 'บันทึกและย้ายผู้ป่วย',
             cancelButtonText: 'ยกเลิก',
             inputValidator: (value) => {
-                if (!value) {
-                    return 'กรุณาเลือกสถานะเพื่อดำเนินการ!';
-                }
+                if (!value) return 'กรุณาเลือกสถานะเพื่อดำเนินการ!';
             }
         }).then((result) => {
             if (result.isConfirmed) {
@@ -178,12 +200,9 @@ const PatientsPage = {
                     
                     if (targetIndex !== -1) {
                         patientsList[targetIndex].status = newStatus;
-                        // 🚨 ประทับตราวลาล่าสุดลงไป เพื่อให้หน้า Archive คำนวณวันหมดอายุ 5 ปีได้ถูกต้อง
                         patientsList[targetIndex].last_updated = new Date().toISOString(); 
-                        
                         db.ref('patients_database_v2/patients').set(patientsList).then(() => {
                             Swal.fire('จำหน่ายสำเร็จ!', `ย้ายผู้ป่วยเข้าสู่หมวด "${newStatus}" เรียบร้อยแล้ว`, 'success');
-                            // หมายเหตุ: หน้าจอจะตัดรายชื่อออกอัตโนมัติเนื่องจากเราใช้ระบบ Real-time listener .on()
                         }).catch(err => {
                             Swal.fire('เกิดข้อผิดพลาด', err.message, 'error');
                         });
@@ -288,14 +307,8 @@ const PatientsPage = {
                         cellStyle.font = { name: "Tahoma", sz: 11, color: { rgb: "FFFFFF" }, bold: true }; 
                         cellStyle.alignment = { horizontal: "center", vertical: "center" };
                     } else {
-                        if (R % 2 !== 0) {
-                            cellStyle.fill = { fgColor: { rgb: "F8FAFC" } }; 
-                        } else {
-                            cellStyle.fill = { fgColor: { rgb: "FFFFFF" } }; 
-                        }
-                        if ([0, 1, 3, 4, 5, 7, 8, 9, 10].includes(C)) {
-                            cellStyle.alignment.horizontal = "center";
-                        }
+                        cellStyle.fill = { fgColor: (R % 2 !== 0) ? { rgb: "F8FAFC" } : { rgb: "FFFFFF" } }; 
+                        if ([0, 1, 3, 4, 5, 7, 8, 9, 10].includes(C)) cellStyle.alignment.horizontal = "center";
                     }
                     worksheet[cellRef].s = cellStyle;
                 }
@@ -305,27 +318,20 @@ const PatientsPage = {
             for (let i = 0; i < excelData.length; i++) {
                 const value = Object.values(excelData[i]);
                 for (let j = 0; j < value.length; j++) {
-                    if (typeof objectMaxLength[j] === 'undefined') {
-                        objectMaxLength[j] = Object.keys(excelData[0])[j].length; 
-                    }
+                    if (typeof objectMaxLength[j] === 'undefined') objectMaxLength[j] = Object.keys(excelData[0])[j].length; 
                     const valLength = value[j] ? String(value[j]).length : 0;
-                    if (valLength > objectMaxLength[j]) {
-                        objectMaxLength[j] = valLength;
-                    }
+                    if (valLength > objectMaxLength[j]) objectMaxLength[j] = valLength;
                 }
             }
             
-            const wscols = objectMaxLength.map(w => { return { width: Math.min(Math.max(w + 4, 10), 45) } });
-            worksheet['!cols'] = wscols;
+            worksheet['!cols'] = objectMaxLength.map(w => { return { width: Math.min(Math.max(w + 4, 10), 45) } });
             worksheet['!rows'] = [{ hpt: 30 }]; 
 
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "ทะเบียนผู้ป่วย");
             
             let fileName = rightFilter === 'ALL' ? "ทะเบียนผู้ป่วยทั้งหมด_Active" : "ทะเบียนผู้ป่วย_สิทธิ_" + rightFilter;
-            fileName += "_" + new Date().toISOString().split('T')[0] + ".xlsx";
-
-            XLSX.writeFile(workbook, fileName);
+            XLSX.writeFile(workbook, fileName + "_" + new Date().toISOString().split('T')[0] + ".xlsx");
             Swal.fire('ดาวน์โหลดสำเร็จ!', 'ไฟล์ Excel ถูกตกแต่งและจัดเรียงอย่างสวยงามแล้ว', 'success');
         }, 800); 
     },
@@ -337,10 +343,7 @@ const PatientsPage = {
     loadScannerLibrary: function(callback) {
         if (window.Html5Qrcode) { callback(); return; }
         const existingScript = document.querySelector('script[src*="html5-qrcode"]');
-        if (existingScript) {
-            existingScript.addEventListener('load', () => callback());
-            return;
-        }
+        if (existingScript) { existingScript.addEventListener('load', () => callback()); return; }
         Swal.showLoading();
         const script = document.createElement('script');
         script.src = 'https://unpkg.com/html5-qrcode';
@@ -351,7 +354,6 @@ const PatientsPage = {
 
     openScanner: function() {
         this.isScanningModalOpen = true;
-
         let scannerHtml = '<div class="d-flex justify-content-center gap-2 mb-3 mt-3">' +
             '<button id="btn-scan-usb" class="btn btn-premium btn-premium-primary flex-fill" onclick="PatientsPage.switchScanMode(\'usb\')"><i class="fa-solid fa-gun me-2"></i> ปืนสแกน (USB)</button>' +
             '<button id="btn-scan-cam" class="btn btn-light fw-bold flex-fill border shadow-sm rounded-pill text-secondary" onclick="PatientsPage.switchScanMode(\'cam\')"><i class="fa-solid fa-mobile-screen-button me-2"></i> กล้องมือถือ</button>' +
@@ -361,19 +363,14 @@ const PatientsPage = {
             '<input type="text" id="swal-barcode-input" class="form-control form-control-lg text-center fw-bold text-primary shadow-sm input-modern" placeholder="ยิงบาร์โค้ดลงในช่องนี้..." autocomplete="off" style="font-size: 20px; letter-spacing: 2px;">' +
         '</div>' +
         '<div id="swal-cam-scanner" style="display: none;">' +
-            '<div id="camera-reader" class="border rounded-4 overflow-hidden shadow-sm bg-dark d-flex align-items-center justify-content-center" style="width: 100%; min-height: 250px;">' +
-                '<i class="fa-solid fa-camera fa-2x text-secondary"></i>' +
-            '</div>' +
+            '<div id="camera-reader" class="border rounded-4 overflow-hidden shadow-sm bg-dark d-flex align-items-center justify-content-center" style="width: 100%; min-height: 250px;"><i class="fa-solid fa-camera fa-2x text-secondary"></i></div>' +
             '<p class="text-muted small mt-3 mb-0">อนุญาตให้เข้าถึงกล้องและส่องที่บาร์โค้ด</p>' +
         '</div>';
 
         Swal.fire({
             title: '<h4 class="fw-bold mb-0 text-dark" style="font-family:\'Prompt\';"><i class="fa-solid fa-expand me-2 text-primary"></i>สแกนบาร์โค้ดบัตรผู้ป่วย</h4>',
             html: scannerHtml,
-            showCancelButton: true,
-            showConfirmButton: false,
-            cancelButtonText: 'ปิดหน้าต่าง',
-            allowOutsideClick: false,
+            showCancelButton: true, showConfirmButton: false, cancelButtonText: 'ปิดหน้าต่าง', allowOutsideClick: false,
             didOpen: () => {
                 const input = document.getElementById('swal-barcode-input');
                 if(input) input.focus();
@@ -381,48 +378,32 @@ const PatientsPage = {
                 input.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') {
                         let scannedHN = input.value.trim().replace(/\*/g, '');
-                        if (scannedHN) { 
-                            this.isScanningModalOpen = false;
-                            Swal.close(); 
-                            PatientsPage.processBarcodeSearch(scannedHN); 
-                        }
+                        if (scannedHN) { this.isScanningModalOpen = false; Swal.close(); PatientsPage.processBarcodeSearch(scannedHN); }
                     }
                 });
                 
                 input.addEventListener('blur', () => {
                     if (!this.isScanningModalOpen) return; 
                     const usbDiv = document.getElementById('swal-usb-scanner');
-                    if(usbDiv && usbDiv.style.display === 'block') {
-                        setTimeout(() => {
-                            const currentInput = document.getElementById('swal-barcode-input');
-                            if(currentInput && this.isScanningModalOpen) currentInput.focus();
-                        }, 100);
-                    }
+                    if(usbDiv && usbDiv.style.display === 'block') setTimeout(() => { const currentInput = document.getElementById('swal-barcode-input'); if(currentInput && this.isScanningModalOpen) currentInput.focus(); }, 100);
                 });
             },
-            willClose: () => {
-                this.isScanningModalOpen = false;
-                this.stopCameraScanner();
-            }
+            willClose: () => { this.isScanningModalOpen = false; this.stopCameraScanner(); }
         });
     },
 
     switchScanMode: function(mode) {
-        const usbSec = document.getElementById('swal-usb-scanner'); 
-        const camSec = document.getElementById('swal-cam-scanner');
-        const btnUsb = document.getElementById('btn-scan-usb'); 
-        const btnCam = document.getElementById('btn-scan-cam');
+        const usbSec = document.getElementById('swal-usb-scanner'); const camSec = document.getElementById('swal-cam-scanner');
+        const btnUsb = document.getElementById('btn-scan-usb'); const btnCam = document.getElementById('btn-scan-cam');
 
         if (mode === 'usb') {
-            if (camSec) camSec.style.display = 'none';
-            if (usbSec) usbSec.style.display = 'block';
+            if (camSec) camSec.style.display = 'none'; if (usbSec) usbSec.style.display = 'block';
             if (btnUsb) btnUsb.className = 'btn btn-premium btn-premium-primary flex-fill';
             if (btnCam) btnCam.className = 'btn btn-light fw-bold flex-fill border shadow-sm rounded-pill text-secondary';
             this.stopCameraScanner();
             setTimeout(() => { const input = document.getElementById('swal-barcode-input'); if(input) input.focus(); }, 120);
         } else {
-            if (usbSec) usbSec.style.display = 'none';
-            if (camSec) camSec.style.display = 'block';
+            if (usbSec) usbSec.style.display = 'none'; if (camSec) camSec.style.display = 'block';
             if (btnCam) btnCam.className = 'btn btn-premium btn-premium-primary flex-fill';
             if (btnUsb) btnUsb.className = 'btn btn-light fw-bold flex-fill border shadow-sm rounded-pill text-secondary';
             this.startCameraScanner();
@@ -431,59 +412,36 @@ const PatientsPage = {
 
     startCameraScanner: function() {
         this.loadScannerLibrary(async () => {
-            if (this.html5QrCode) {
-                try {
-                    if (this.html5QrCode.getState() === 2) {
-                        await this.html5QrCode.stop();
-                    }
-                    this.html5QrCode.clear();
-                } catch(e) {
-                    console.error("Camera release handler", e);
-                }
-            }
+            if (this.html5QrCode) { try { if (this.html5QrCode.getState() === 2) await this.html5QrCode.stop(); this.html5QrCode.clear(); } catch(e) { } }
             this.initCamera();
         });
     },
 
     initCamera: function() {
-        const reader = document.getElementById('camera-reader'); 
-        if (!reader) return;
-        
-        reader.innerHTML = ''; 
-        this.html5QrCode = new Html5Qrcode("camera-reader");
+        const reader = document.getElementById('camera-reader'); if (!reader) return;
+        reader.innerHTML = ''; this.html5QrCode = new Html5Qrcode("camera-reader");
         
         const config = { 
             fps: 15, 
             qrbox: function(viewfinderWidth, viewFinderHeight) {
-                let width = Math.floor(viewfinderWidth * 0.75);
-                let height = Math.floor(viewFinderHeight * 0.35);
-                if (width < 250) width = 250;
-                if (height < 120) height = 120;
+                let width = Math.floor(viewfinderWidth * 0.75); let height = Math.floor(viewFinderHeight * 0.35);
+                if (width < 250) width = 250; if (height < 120) height = 120;
                 return { width: width, height: height };
             },
             aspectRatio: 1.333334
         };
         
-        this.html5QrCode.start(
-            { facingMode: "environment" }, 
-            config,
+        this.html5QrCode.start({ facingMode: "environment" }, config,
             (decodedText) => {
-                this.isScanningModalOpen = false; 
-                this.stopCameraScanner(); 
-                Swal.close();
+                this.isScanningModalOpen = false; this.stopCameraScanner(); Swal.close();
                 let scannedHN = decodedText.trim().replace(/\*/g, '');
                 this.processBarcodeSearch(scannedHN);
             }, 
-            (errorMessage) => { /* Silent failure */ }
+            (errorMessage) => { }
         ).catch(err => {
-            console.error("Camera start failure: ", err);
             if (document.getElementById('camera-reader')) { 
                 document.getElementById('camera-reader').innerHTML = 
-                    '<div class="p-4 text-center text-white" style="font-family:\'Prompt\';">' +
-                        '<i class="fa-solid fa-camera-slash fa-3x mb-3 text-danger"></i><br>' +
-                        '<b class="fs-5">ไม่สามารถเข้าถึงกล้องถ่ายรูปได้</b><br>' +
-                        '<p class="small text-muted mt-2 mb-0">1. โปรดตรวจสอบการอนุญาตสิทธิ์กล้องในเบราว์เซอร์<br>2. ระบบกล้องต้องรันผ่านลิงก์เว็บแบบปลอดภัย (HTTPS) เท่านั้น</p>' +
-                    '</div>'; 
+                    '<div class="p-4 text-center text-white" style="font-family:\'Prompt\';"><i class="fa-solid fa-camera-slash fa-3x mb-3 text-danger"></i><br><b class="fs-5">ไม่สามารถเข้าถึงกล้องถ่ายรูปได้</b></div>'; 
             }
         });
     },
@@ -491,20 +449,9 @@ const PatientsPage = {
     stopCameraScanner: function() {
         if (this.html5QrCode) {
             try { 
-                if (this.html5QrCode.getState() === 2) { 
-                    this.html5QrCode.stop().then(() => { 
-                        this.html5QrCode.clear(); 
-                        this.html5QrCode = null; 
-                    }).catch(err => { 
-                        this.html5QrCode = null; 
-                    }); 
-                } else { 
-                    this.html5QrCode.clear(); 
-                    this.html5QrCode = null; 
-                } 
-            } catch (err) { 
-                this.html5QrCode = null; 
-            }
+                if (this.html5QrCode.getState() === 2) { this.html5QrCode.stop().then(() => { this.html5QrCode.clear(); this.html5QrCode = null; }).catch(err => { this.html5QrCode = null; }); 
+                } else { this.html5QrCode.clear(); this.html5QrCode = null; } 
+            } catch (err) { this.html5QrCode = null; }
         }
     },
 
@@ -515,13 +462,7 @@ const PatientsPage = {
             if (foundPt) {
                 Swal.fire({ title: 'พบข้อมูลผู้ป่วย!', html: 'กำลังเปิดแฟ้มประวัติ EMR ของ<br><b class="text-primary fs-5" style="font-family:\'Prompt\';">' + foundPt.name_th + '</b>', icon: 'success', timer: 1500, showConfirmButton: false }).then(() => this.viewHistory(foundPt.hn));
             } else {
-                Swal.fire({ 
-                    title: 'ไม่พบข้อมูล!', 
-                    html: 'ไม่พบผู้ป่วยรหัส HN: <b class="text-danger">' + scannedHN + '</b> ในระบบ<br><span class="small text-muted">โปรดตรวจสอบรหัสบาร์โค้ด หรือลงทะเบียนผู้ป่วยใหม่</span>', 
-                    icon: 'error', 
-                    confirmButtonText: '<i class="fa-solid fa-rotate-right me-2"></i> สแกนใหม่อีกครั้ง', 
-                    confirmButtonColor: '#ef4444' 
-                }).then(() => this.openScanner());
+                Swal.fire({ title: 'ไม่พบข้อมูล!', html: 'ไม่พบผู้ป่วยรหัส HN: <b class="text-danger">' + scannedHN + '</b> ในระบบ', icon: 'error', confirmButtonText: 'สแกนใหม่อีกครั้ง', confirmButtonColor: '#ef4444' }).then(() => this.openScanner());
             }
         }, 600);
     },
@@ -538,126 +479,12 @@ const PatientsPage = {
 
             const clinic = clinicSnap.val() || { clinic_name: 'DIALYSIS PRO CLINIC', phone: '-', address: '-', tax_id: '-' };
 
-            let imgSrc = pt.photo_base64 ? (pt.photo_base64.startsWith('data:image') ? pt.photo_base64 : 'data:image/jpeg;base64,' + pt.photo_base64) : '';
+            let imgSrc = pt.photo_base64 && typeof pt.photo_base64 === 'string' ? (pt.photo_base64.startsWith('data:image') ? pt.photo_base64 : 'data:image/jpeg;base64,' + pt.photo_base64) : '';
             let photoHtml = imgSrc ? '<img src="' + imgSrc + '" style="width: 100px; height: 120px; object-fit: cover; border-radius: 12px; border: 3px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">' : '<div style="width: 100px; height: 120px; background: #f1f5f9; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; border: 3px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"><i class="fa-solid fa-user fa-2x mb-1"></i><span style="font-size:10px; font-weight:bold;">ติดรูปถ่าย</span></div>';
 
             const barcodeUrl = 'https://bwipjs-api.metafloor.com/?bcid=code128&text=' + encodeURIComponent(pt.hn) + '&scale=3&height=12&includetext=false';
 
-            const printContent = '<html>' +
-                '<head>' +
-                    '<title>OPD Card - ' + pt.name_th + '</title>' +
-                    '<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">' +
-                    '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">' +
-                    '<style>' +
-                        '@page { size: A4 landscape; margin: 0; } ' +
-                        'body { margin: 0; padding: 0; font-family: \'Sarabun\', sans-serif; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; width: 297mm; height: 209mm; display: flex; box-sizing: border-box; overflow: hidden; } ' +
-                        '* { box-sizing: border-box; } ' +
-                        '.page-half { width: 50%; height: 100%; padding: 12mm; position: relative; display: flex; flex-direction: column; } ' +
-                        '.fold-line { position: absolute; right: 0; top: 0; height: 100%; border-right: 2px dashed #cbd5e1; z-index: 10; } ' +
-                        '.fold-text { position: absolute; right: -12px; top: 15mm; background: #fff; color: #94a3b8; font-size: 10px; padding: 8px 0; font-family: \'Prompt\'; writing-mode: vertical-rl; } ' +
-                        '.back-cover { justify-content: space-between; padding-right: 18mm; } ' +
-                        '.clinic-branding h2 { font-family: \'Prompt\'; color: #2563eb; margin: 0 0 10px 0; font-size: 20px; } ' +
-                        '.clinic-info { color: #475569; font-size: 13px; line-height: 1.6; } ' +
-                        '.rules-box { background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; } ' +
-                        '.rules-box h4 { font-family: \'Prompt\'; color: #0f172a; margin: 0 0 8px 0; font-size: 14px; display: flex; align-items: center; gap: 8px; } ' +
-                        '.rules-box ul { font-size: 12px; color: #475569; padding-left: 20px; line-height: 1.6; margin: 0; } ' +
-                        '.rules-box li { margin-bottom: 5px; } ' +
-                        '.footer-note { text-align: center; color: #94a3b8; font-size: 10px; margin-top: auto; } ' +
-                        '.right-half { padding-left: 18mm; } ' +
-                        '.front-cover { background: #ffffff; border-radius: 20px; padding: 0; box-shadow: inset 0 0 0 1px #e2e8f0; border: 1px solid #cbd5e1; overflow: hidden; height: 100%; display: flex; flex-direction: column; } ' +
-                        '.header-banner { background: #2563eb; color: white; padding: 12px 15px; text-align: center; border-bottom: 4px solid #1e3a8a; } ' +
-                        '.header-banner h1 { font-family: \'Prompt\'; margin: 0; font-size: 20px; font-weight: 700; letter-spacing: 1px; } ' +
-                        '.header-banner p { margin: 3px 0 0 0; font-size: 11px; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; } ' +
-                        '.card-content { padding: 15px 20px; display: flex; flex-direction: column; flex: 1; } ' +
-                        '.profile-section { display: flex; gap: 15px; align-items: flex-start; margin-bottom: 15px; } ' +
-                        '.profile-info { flex: 1; } ' +
-                        '.hn-badge { display: inline-block; background: #eff6ff; color: #2563eb; padding: 5px 10px; border-radius: 8px; font-weight: 800; font-family: \'Prompt\'; font-size: 16px; border: 1px solid #bfdbfe; margin-bottom: 6px; } ' +
-                        '.profile-info h2 { font-family: \'Prompt\'; margin: 0 0 3px 0; font-size: 20px; color: #0f172a; } ' +
-                        '.profile-info .eng-name { color: #64748b; font-size: 12px; font-family: \'Prompt\'; margin-bottom: 8px; } ' +
-                        '.right-badge { display: inline-flex; align-items: center; gap: 6px; background: #ecfdf5; color: #10b981; border: 1px solid #a7f3d0; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; } ' +
-                        '.grid-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; } ' +
-                        '.info-box { background: #f8fafc; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; } ' +
-                        '.info-label { font-size: 10px; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 3px; font-family: \'Prompt\'; } ' +
-                        '.info-value { font-size: 13px; color: #0f172a; font-weight: 700; } ' +
-                        '.alert-section { background: #fff; border: 2px solid #fecaca; border-radius: 12px; padding: 12px; margin-bottom: auto; position: relative; overflow: hidden; } ' +
-                        '.alert-section::before { content: \'\'; position: absolute; left: 0; top: 0; height: 100%; width: 5px; background: #ef4444; } ' +
-                        '.alert-title { font-family: \'Prompt\'; color: #b91c1c; font-size: 13px; font-weight: bold; margin: 0 0 8px 0; display: flex; align-items: center; gap: 8px; } ' +
-                        '.alert-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } ' +
-                        '.alert-item { background: #fef2f2; padding: 8px; border-radius: 6px; border: 1px solid #fecaca; } ' +
-                        '.alert-label { font-size: 9px; color: #b91c1c; font-weight: bold; margin-bottom: 2px; } ' +
-                        '.alert-value { font-size: 12px; color: #991b1b; font-weight: bold; } ' +
-                        '.barcode-section { text-align: center; margin-top: 10px; padding-top: 10px; border-top: 2px dashed #e2e8f0; } ' +
-                        '.barcode-img { height: 42px; max-width: 100%; object-fit: contain; } ' +
-                        '.barcode-text { font-family: \'Prompt\'; font-size: 11px; font-weight: bold; color: #64748b; letter-spacing: 1px; margin-top: 4px; } ' +
-                    '</style>' +
-                '</head>' +
-                '<body>' +
-                    '<div class="page-half back-cover">' +
-                        '<div class="fold-line"><div class="fold-text">รอยพับกึ่งกลางกระดาษ (Fold Here)</div></div>' +
-                        '<div class="clinic-branding">' +
-                            '<h2><i class="fa-solid fa-hospital"></i> ' + clinic.clinic_name + '</h2>' +
-                            '<div class="clinic-info">' +
-                                '<strong><i class="fa-solid fa-location-dot me-2"></i> ที่อยู่:</strong> ' + clinic.address + '<br><br>' +
-                                '<strong><i class="fa-solid fa-phone me-2"></i> โทรศัพท์:</strong> ' + clinic.phone + '<br><br>' +
-                                '<strong><i class="fa-solid fa-file-invoice-dollar me-2"></i> เลขประจำตัวผู้เสียภาษี:</strong> ' + (clinic.tax_id || '-') + '<br><br>' +
-                                '<strong><i class="fa-solid fa-hashtag me-2"></i> รหัสสถานพยาบาล:</strong> ' + (clinic.clinic_id || '-') +
-                            '</div>' +
-                        '</div>' +
-                        '<div class="rules-box">' +
-                            '<h4><i class="fa-solid fa-bell text-warning"></i> ข้อปฏิบัติสำหรับผู้ป่วย</h4>' +
-                            '<ul>' +
-                                '<li>กรุณานำบัตรประจำตัวผู้ป่วย (OPD Card) เล่มนี้มาด้วยทุกครั้งที่เข้ารับบริการฟอกเลือด</li>' +
-                                '<li>กรุณามาก่อนเวลานัดหมายอย่างน้อย 15-30 นาที เพื่อเตรียมตัวและชั่งน้ำหนักก่อนฟอก</li>' +
-                                '<li>หากไม่สามารถมาตามนัดได้ หรือต้องการเลื่อนคิว กรุณาโทรแจ้งล่วงหน้าอย่างน้อย 1 วัน</li>' +
-                                '<li>แจ้งพยาบาลทันทีหากมีอาการผิดปกติ เช่น หอบเหนื่อย เจ็บหน้าอก หรือมีไข้</li>' +
-                            '</ul>' +
-                        '</div>' +
-                        '<div class="footer-note">พิมพ์จากระบบ Dialysis Pro EMR System เมื่อ ' + new Date().toLocaleDateString('th-TH') + ' เวลา ' + new Date().toLocaleTimeString('th-TH') + ' น.</div>' +
-                    '</div>' +
-                    '<div class="page-half right-half">' +
-                        '<div class="front-cover">' +
-                            '<div class="header-banner">' +
-                                '<h1>บัตรประจำตัวผู้ป่วย (OPD CARD)</h1>' +
-                                '<p>Hemodialysis Patient Identification</p>' +
-                            '</div>' +
-                            '<div class="card-content">' +
-                                '<div class="profile-section">' +
-                                    photoHtml +
-                                    '<div class="profile-info">' +
-                                        '<div class="hn-badge">HN: ' + pt.hn + '</div>' +
-                                        '<h2>' + (pt.title || '') + pt.name_th + '</h2>' +
-                                        '<div class="eng-name">' + (pt.name_en ? pt.name_en.toUpperCase() : '-') + '</div>' +
-                                        '<div class="right-badge"><i class="fa-solid fa-shield-heart"></i> สิทธิ: ' + (pt.right || 'ไม่ระบุ') + '</div>' +
-                                    '</div>' +
-                                '</div>' +
-                                '<div class="grid-info">' +
-                                    '<div class="info-box"><div class="info-label">เลขประจำตัว ปชช.</div><div class="info-value">' + (pt.idcard || pt.cid || '-') + '</div></div>' +
-                                    '<div class="info-box"><div class="info-label">วันเกิด / อายุ</div><div class="info-value">' + (pt.dob ? new Date(pt.dob).toLocaleDateString('th-TH') : '-') + ' (' + (pt.age ? pt.age+' ปี' : '-') + ')</div></div>' +
-                                    '<div class="info-box"><div class="info-label">กรุ๊ปเลือด</div><div class="info-value text-danger" style="font-size:15px;">' + (pt.blood_type || '-') + '</div></div>' +
-                                    '<div class="info-box"><div class="info-label">Dry Wt.</div><div class="info-value text-primary" style="font-size:15px;">' + (pt.dry_bw ? pt.dry_bw + ' Kg' : '-') + '</div></div>' +
-                                '</div>' +
-                                '<div class="alert-section">' +
-                                    '<div class="alert-title"><i class="fa-solid fa-triangle-exclamation"></i> ข้อมูลเฝ้าระวังทางการแพทย์</div>' +
-                                    '<div class="alert-grid">' +
-                                        '<div class="alert-item">' +
-                                            '<div class="alert-label">ประวัติแพ้ยา / แพ้อาหาร</div>' +
-                                            '<div class="alert-value">' + (pt.allergy || 'ไม่มีประวัติแพ้') + '</div>' +
-                                        '</div>' +
-                                        '<div class="alert-item" style="background:#fffbeb; border-color:#fde68a;">' +
-                                            '<div class="alert-label" style="color:#b45309;">โรคติดต่อทางเลือด</div>' +
-                                            '<div class="alert-value" style="color:#92400e;">' + (pt.infection || 'Negative') + '</div>' +
-                                        '</div>' +
-                                    '</div>' +
-                                '</div>' +
-                                '<div class="barcode-section">' +
-                                    '<img src="' + barcodeUrl + '" class="barcode-img" alt="Barcode HN" onload="window.parent.postMessage(\'barcodeLoaded\', \'*\');">' +
-                                    '<div class="barcode-text">SCAN HN BARCODE</div>' +
-                                '</div>' +
-                            '</div>' +
-                        '</div>' +
-                    '</div>' +
-                '</body>' +
-                '</html>';
+            const printContent = '<html><head><title>OPD Card - ' + pt.name_th + '</title><link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><style>@page { size: A4 landscape; margin: 0; } body { margin: 0; padding: 0; font-family: \'Sarabun\', sans-serif; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; width: 297mm; height: 209mm; display: flex; box-sizing: border-box; overflow: hidden; } * { box-sizing: border-box; } .page-half { width: 50%; height: 100%; padding: 12mm; position: relative; display: flex; flex-direction: column; } .fold-line { position: absolute; right: 0; top: 0; height: 100%; border-right: 2px dashed #cbd5e1; z-index: 10; } .fold-text { position: absolute; right: -12px; top: 15mm; background: #fff; color: #94a3b8; font-size: 10px; padding: 8px 0; font-family: \'Prompt\'; writing-mode: vertical-rl; } .back-cover { justify-content: space-between; padding-right: 18mm; } .clinic-branding h2 { font-family: \'Prompt\'; color: #2563eb; margin: 0 0 10px 0; font-size: 20px; } .clinic-info { color: #475569; font-size: 13px; line-height: 1.6; } .rules-box { background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; } .rules-box h4 { font-family: \'Prompt\'; color: #0f172a; margin: 0 0 8px 0; font-size: 14px; display: flex; align-items: center; gap: 8px; } .rules-box ul { font-size: 12px; color: #475569; padding-left: 20px; line-height: 1.6; margin: 0; } .rules-box li { margin-bottom: 5px; } .footer-note { text-align: center; color: #94a3b8; font-size: 10px; margin-top: auto; } .right-half { padding-left: 18mm; } .front-cover { background: #ffffff; border-radius: 20px; padding: 0; box-shadow: inset 0 0 0 1px #e2e8f0; border: 1px solid #cbd5e1; overflow: hidden; height: 100%; display: flex; flex-direction: column; } .header-banner { background: #2563eb; color: white; padding: 12px 15px; text-align: center; border-bottom: 4px solid #1e3a8a; } .header-banner h1 { font-family: \'Prompt\'; margin: 0; font-size: 20px; font-weight: 700; letter-spacing: 1px; } .header-banner p { margin: 3px 0 0 0; font-size: 11px; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; } .card-content { padding: 15px 20px; display: flex; flex-direction: column; flex: 1; } .profile-section { display: flex; gap: 15px; align-items: flex-start; margin-bottom: 15px; } .profile-info { flex: 1; } .hn-badge { display: inline-block; background: #eff6ff; color: #2563eb; padding: 5px 10px; border-radius: 8px; font-weight: 800; font-family: \'Prompt\'; font-size: 16px; border: 1px solid #bfdbfe; margin-bottom: 6px; } .profile-info h2 { font-family: \'Prompt\'; margin: 0 0 3px 0; font-size: 20px; color: #0f172a; } .profile-info .eng-name { color: #64748b; font-size: 12px; font-family: \'Prompt\'; margin-bottom: 8px; } .right-badge { display: inline-flex; align-items: center; gap: 6px; background: #ecfdf5; color: #10b981; border: 1px solid #a7f3d0; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; } .grid-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; } .info-box { background: #f8fafc; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; } .info-label { font-size: 10px; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 3px; font-family: \'Prompt\'; } .info-value { font-size: 13px; color: #0f172a; font-weight: 700; } .alert-section { background: #fff; border: 2px solid #fecaca; border-radius: 12px; padding: 12px; margin-bottom: auto; position: relative; overflow: hidden; } .alert-section::before { content: \'\'; position: absolute; left: 0; top: 0; height: 100%; width: 5px; background: #ef4444; } .alert-title { font-family: \'Prompt\'; color: #b91c1c; font-size: 13px; font-weight: bold; margin: 0 0 8px 0; display: flex; align-items: center; gap: 8px; } .alert-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .alert-item { background: #fef2f2; padding: 8px; border-radius: 6px; border: 1px solid #fecaca; } .alert-label { font-size: 9px; color: #b91c1c; font-weight: bold; margin-bottom: 2px; } .alert-value { font-size: 12px; color: #991b1b; font-weight: bold; } .barcode-section { text-align: center; margin-top: 10px; padding-top: 10px; border-top: 2px dashed #e2e8f0; } .barcode-img { height: 42px; max-width: 100%; object-fit: contain; } .barcode-text { font-family: \'Prompt\'; font-size: 11px; font-weight: bold; color: #64748b; letter-spacing: 1px; margin-top: 4px; }</style></head><body><div class="page-half back-cover"><div class="fold-line"><div class="fold-text">รอยพับกึ่งกลางกระดาษ (Fold Here)</div></div><div class="clinic-branding"><h2><i class="fa-solid fa-hospital"></i> ' + clinic.clinic_name + '</h2><div class="clinic-info"><strong><i class="fa-solid fa-location-dot me-2"></i> ที่อยู่:</strong> ' + clinic.address + '<br><br><strong><i class="fa-solid fa-phone me-2"></i> โทรศัพท์:</strong> ' + clinic.phone + '<br><br><strong><i class="fa-solid fa-file-invoice-dollar me-2"></i> เลขประจำตัวผู้เสียภาษี:</strong> ' + (clinic.tax_id || '-') + '<br><br><strong><i class="fa-solid fa-hashtag me-2"></i> รหัสสถานพยาบาล:</strong> ' + (clinic.clinic_id || '-') + '</div></div><div class="rules-box"><h4><i class="fa-solid fa-bell text-warning"></i> ข้อปฏิบัติสำหรับผู้ป่วย</h4><ul><li>กรุณานำบัตรประจำตัวผู้ป่วย (OPD Card) เล่มนี้มาด้วยทุกครั้งที่เข้ารับบริการฟอกเลือด</li><li>กรุณามาก่อนเวลานัดหมายอย่างน้อย 15-30 นาที เพื่อเตรียมตัวและชั่งน้ำหนักก่อนฟอก</li><li>หากไม่สามารถมาตามนัดได้ หรือต้องการเลื่อนคิว กรุณาโทรแจ้งล่วงหน้าอย่างน้อย 1 วัน</li><li>แจ้งพยาบาลทันทีหากมีอาการผิดปกติ เช่น หอบเหนื่อย เจ็บหน้าอก หรือมีไข้</li></ul></div><div class="footer-note">พิมพ์จากระบบ Dialysis Pro EMR System เมื่อ ' + new Date().toLocaleDateString('th-TH') + ' เวลา ' + new Date().toLocaleTimeString('th-TH') + ' น.</div></div><div class="page-half right-half"><div class="front-cover"><div class="header-banner"><h1>บัตรประจำตัวผู้ป่วย (OPD CARD)</h1><p>Hemodialysis Patient Identification</p></div><div class="card-content"><div class="profile-section">' + photoHtml + '<div class="profile-info"><div class="hn-badge">HN: ' + pt.hn + '</div><h2>' + (pt.title || '') + pt.name_th + '</h2><div class="eng-name">' + (pt.name_en ? pt.name_en.toUpperCase() : '-') + '</div><div class="right-badge"><i class="fa-solid fa-shield-heart"></i> สิทธิ: ' + (pt.right || 'ไม่ระบุ') + '</div></div></div><div class="grid-info"><div class="info-box"><div class="info-label">เลขประจำตัว ปชช.</div><div class="info-value">' + (pt.idcard || pt.cid || '-') + '</div></div><div class="info-box"><div class="info-label">วันเกิด / อายุ</div><div class="info-value">' + (pt.dob ? new Date(pt.dob).toLocaleDateString('th-TH') : '-') + ' (' + (pt.age ? pt.age+' ปี' : '-') + ')</div></div><div class="info-box"><div class="info-label">กรุ๊ปเลือด</div><div class="info-value text-danger" style="font-size:15px;">' + (pt.blood_type || '-') + '</div></div><div class="info-box"><div class="info-label">Dry Wt.</div><div class="info-value text-primary" style="font-size:15px;">' + (pt.dry_bw ? pt.dry_bw + ' Kg' : '-') + '</div></div></div><div class="alert-section"><div class="alert-title"><i class="fa-solid fa-triangle-exclamation"></i> ข้อมูลเฝ้าระวังทางการแพทย์</div><div class="alert-grid"><div class="alert-item"><div class="alert-label">ประวัติแพ้ยา / แพ้อาหาร</div><div class="alert-value">' + (pt.allergy || 'ไม่มีประวัติแพ้') + '</div></div><div class="alert-item" style="background:#fffbeb; border-color:#fde68a;"><div class="alert-label" style="color:#b45309;">โรคติดต่อทางเลือด</div><div class="alert-value" style="color:#92400e;">' + (pt.infection || 'Negative') + '</div></div></div></div><div class="barcode-section"><img src="' + barcodeUrl + '" class="barcode-img" alt="Barcode HN" onload="window.parent.postMessage(\'barcodeLoaded\', \'*\');"><div class="barcode-text">SCAN HN BARCODE</div></div></div></div></div></body></html>';
 
             const printWin = window.open('', '_blank');
             printWin.document.open();

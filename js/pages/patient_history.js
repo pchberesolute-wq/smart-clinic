@@ -1,5 +1,5 @@
 // js/pages/patient_history.js
-// 🚀 โมดูลประวัติการรักษาเชิงลึก (Horizontal Scroll Tabs + Universal Date Filters + Inner Scroll + 5-Year Purge)
+// 🚀 โมดูลประวัติการรักษาเชิงลึก (Bulletproof Anti-Crash Edition)
 
 const PatientHistoryPage = {
     hn: null, patientData: null, chartInstance: null, allVisits: [], invItems: [], medItems: [], xraysList: [], allPatientsList: [],
@@ -14,21 +14,19 @@ const PatientHistoryPage = {
             .btn-outline-dark.bg-white:hover, .btn-outline-dark.bg-white:hover * { background-color: #0f172a !important; border-color: #0f172a !important; color: #ffffff !important; }
             .btn-outline-primary.bg-white:hover, .btn-outline-primary.bg-white:hover * { background-color: #3b82f6 !important; border-color: #3b82f6 !important; color: #ffffff !important; }
             
-            /* 🚨 THE FIX: ดีไซน์แท็บแนวนอนที่สมบูรณ์แบบ (Sleek Horizontal Scrollbar) 🚨 */
             .emr-nav-tabs-container { margin-bottom: 20px; width: 100%; border-radius: 20px; background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02); padding: 6px; }
             .emr-nav-tabs { 
                 display: flex; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; 
                 gap: 6px; margin: 0; padding: 4px; list-style: none;
                 -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;
             }
-            /* แต่ง Scrollbar ให้บางและสวยงาม ไม่เกะกะสายตา */
             .emr-nav-tabs::-webkit-scrollbar { height: 6px; }
             .emr-nav-tabs::-webkit-scrollbar-track { background: transparent; }
             .emr-nav-tabs::-webkit-scrollbar-thumb { background-color: #e2e8f0; border-radius: 10px; }
             .emr-nav-tabs::-webkit-scrollbar-thumb:hover { background-color: #cbd5e1; }
 
             .emr-nav-tabs .nav-link { 
-                flex: 0 0 auto; /* บังคับไม่ให้ปุ่มหดตัว (Anti-Shrink) */
+                flex: 0 0 auto; 
                 color: var(--muted); border: none; background: transparent; 
                 transition: all 0.2s ease; padding: 10px 20px; font-size: 14.5px; 
                 border-radius: 14px; font-family: 'Prompt'; font-weight: 700;
@@ -49,7 +47,6 @@ const PatientHistoryPage = {
             .doc-img-container { height: 140px; background: #f8fafc; display: flex; align-items: center; justify-content: center; overflow: hidden; border-bottom: 1px solid #e2e8f0; }
             .doc-img-container img { width: 100%; height: 100%; object-fit: cover; }
 
-            /* 🚨 THE FIX: Scroll Viewport จำกัดความสูงทุกแท็บ 🚨 */
             .emr-scroll-area { max-height: 58vh; overflow-y: auto; overflow-x: hidden; padding-right: 10px; }
             .emr-scroll-area::-webkit-scrollbar { width: 6px; }
             .emr-scroll-area::-webkit-scrollbar-track { background: #f8fafc; border-radius: 10px; }
@@ -100,7 +97,6 @@ const PatientHistoryPage = {
                 <div class="row align-items-center position-relative z-1" id="ph-header-inner"></div>
             </div>
 
-            <!-- 🚨 เมนูแท็บแบบ Horizontal Scroll 🚨 -->
             <div class="emr-nav-tabs-container">
                 <ul class="nav emr-nav-tabs" id="emrTabs" role="tablist">
                     <li class="nav-item" role="presentation">
@@ -126,7 +122,6 @@ const PatientHistoryPage = {
 
             <div class="tab-content" id="emrTabContent">
                 
-                <!-- TAB 1: ประวัติการรักษา (Timeline) -->
                 <div class="tab-pane fade show active" id="tab-timeline" role="tabpanel">
                     <div class="modern-panel position-relative overflow-hidden">
                         <div style="position: absolute; top: -30px; right: -20px; opacity: 0.02; font-size: 200px; pointer-events: none;"><i class="fa-solid fa-clock-rotate-left"></i></div>
@@ -140,14 +135,12 @@ const PatientHistoryPage = {
                             </div>
                         </div>
 
-                        <!-- 🚨 กรอบจำกัดความสูง (Scroll Area) 🚨 -->
                         <div class="emr-scroll-area position-relative z-1">
                             <div id="ph-timeline-content"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- TAB 2: กราฟสัญญาณชีพ -->
                 <div class="tab-pane fade" id="tab-vitals" role="tabpanel">
                     <div class="modern-panel">
                         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
@@ -164,7 +157,6 @@ const PatientHistoryPage = {
                     </div>
                 </div>
 
-                <!-- TAB 3: ผลแล็บ -->
                 <div class="tab-pane fade" id="tab-labs" role="tabpanel">
                     <div class="modern-panel">
                         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
@@ -198,7 +190,6 @@ const PatientHistoryPage = {
                     </div>
                 </div>
 
-                <!-- TAB 4: ภาพถ่ายรังสี X-Ray -->
                 <div class="tab-pane fade" id="tab-xrays" role="tabpanel">
                     <div class="modern-panel">
                         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
@@ -215,7 +206,6 @@ const PatientHistoryPage = {
                     </div>
                 </div>
 
-                <!-- TAB 5: เอกสารและไฟล์สแกน -->
                 <div class="tab-pane fade" id="tab-docs" role="tabpanel">
                     <div class="modern-panel">
                         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
@@ -235,7 +225,6 @@ const PatientHistoryPage = {
                     </div>
                 </div>
 
-                <!-- TAB 6: ยาและเวชภัณฑ์ -->
                 <div class="tab-pane fade" id="tab-meds" role="tabpanel">
                     <div class="modern-panel">
                         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
@@ -258,6 +247,7 @@ const PatientHistoryPage = {
         </div>
     `,
 
+    // 🚨 1. ปลดล็อคระบบรอกุญแจที่ถูกต้อง (Safe Auth Check)
     init: function(hn) {
         this.timelineLimit = 15; this.labLimit = 15; this.docLimit = 16;
         this.currentTimelineFilter = ''; this.currentLabFilter = ''; this.currentXrayFilter = ''; this.currentDocFilter = ''; this.currentVitalsFilter = ''; this.currentMedsFilter = '';
@@ -268,15 +258,28 @@ const PatientHistoryPage = {
             document.getElementById('ph-search-input').value = '';
             document.getElementById('ph-search-results').innerHTML = '';
             
-            if (typeof db !== 'undefined') {
+            if (typeof db !== 'undefined' && typeof firebase !== 'undefined') {
                 document.getElementById('ph-search-loading').style.display = 'block';
-                db.ref('patients_database_v2/patients').once('value').then(snap => {
-                    const data = snap.val();
-                    let rawPatients = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])) : [];
-                    this.allPatientsList = rawPatients.filter(p => p !== null);
-                    document.getElementById('ph-search-loading').style.display = 'none';
-                    document.getElementById('ph-search-input').focus();
-                });
+                
+                const execSearchLoad = () => {
+                    db.ref('patients_database_v2/patients').once('value').then(snap => {
+                        const data = snap.val();
+                        let rawPatients = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])) : [];
+                        this.allPatientsList = rawPatients.filter(p => p !== null);
+                        document.getElementById('ph-search-loading').style.display = 'none';
+                        document.getElementById('ph-search-input').focus();
+                    }).catch(err => {
+                        document.getElementById('ph-search-loading').innerHTML = '<span class="text-danger"><i class="fa-solid fa-triangle-exclamation"></i> ไม่สามารถดึงข้อมูลได้</span>';
+                    });
+                };
+
+                if (firebase.auth().currentUser) {
+                    execSearchLoad();
+                } else {
+                    const unsub = firebase.auth().onAuthStateChanged((user) => {
+                        if(user) { unsub(); execSearchLoad(); }
+                    });
+                }
             }
             return;
         }
@@ -284,37 +287,16 @@ const PatientHistoryPage = {
         document.getElementById('ph-search-screen').style.display = 'none';
         document.getElementById('ph-main-screen').style.display = 'block';
         this.hn = hn; 
-        this.loadPatientData(); 
-    },
+        
+        const execMainLoad = () => { this.loadPatientData(); };
 
-    searchPatients: function(term) {
-        const resultsContainer = document.getElementById('ph-search-results');
-        if(!term || term.trim() === '') { resultsContainer.innerHTML = ''; return; }
-        const lowerTerm = term.toLowerCase().trim();
-        const matches = this.allPatientsList.filter(p => 
-            (p.hn && p.hn.toLowerCase().includes(lowerTerm)) || 
-            (p.name_th && p.name_th.toLowerCase().includes(lowerTerm)) || 
-            (p.idcard && p.idcard.replace(/-/g, '').includes(lowerTerm.replace(/-/g, '')))
-        ).slice(0, 12); 
-
-        if(matches.length === 0) { resultsContainer.innerHTML = `<div class="col-12 text-center py-4 text-muted"><i class="fa-solid fa-folder-open fa-2x mb-2" style="opacity:0.3;"></i><br>ไม่พบผู้ป่วยที่ตรงกับข้อมูลนี้</div>`; return; }
-
-        let html = '';
-        matches.forEach(p => {
-            let imgSrc = p.photo_base64 ? (p.photo_base64.startsWith('data:image') ? p.photo_base64 : 'data:image/jpeg;base64,' + p.photo_base64) : `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name_th||'X')}&background=3b82f6&color=fff&bold=true`;
-            html += `
-                <div class="col-md-6 col-lg-4">
-                    <div class="modern-panel p-3 border shadow-sm d-flex align-items-center bg-white card-hover-float" style="cursor:pointer;" onclick="PatientHistoryPage.init('${p.hn}')">
-                        <img src="${imgSrc}" class="me-3 shadow-sm border border-2 border-light" style="width: 55px; height: 55px; border-radius: 12px; object-fit: cover;">
-                        <div>
-                            <div class="fw-bold text-dark" style="font-family:'Prompt'; font-size:15.5px;">${p.title||''}${p.name_th}</div>
-                            <div class="text-primary fw-bold" style="font-size:13px;"><i class="fa-solid fa-id-card-clip me-1"></i> HN: ${p.hn}</div>
-                        </div>
-                        <i class="fa-solid fa-chevron-right ms-auto text-primary opacity-50"></i>
-                    </div>
-                </div>`;
-        });
-        resultsContainer.innerHTML = html;
+        if (firebase.auth().currentUser) {
+            execMainLoad();
+        } else {
+            const unsub = firebase.auth().onAuthStateChanged((user) => {
+                if(user) { unsub(); execMainLoad(); }
+            });
+        }
     },
 
     loadPatientData: async function() {
@@ -335,14 +317,16 @@ const PatientHistoryPage = {
             this.patientData = toArray(ptSnap.val()).find(p => p.hn === this.hn);
             if (!this.patientData) { Swal.fire('Error', 'ไม่พบข้อมูล', 'error'); App.switchPage('patients'); return; }
 
-            if (!this.patientData.history) this.patientData.history = [];
-            if (!this.patientData.labs) this.patientData.labs = [];
-            if (!this.patientData.medications) this.patientData.medications = [];
+            // 🚨 ป้องกันข้อมูลแหว่ง เปลี่ยน Array เป็น Object แล้วทำให้ระบบพัง
+            this.patientData.history = Array.isArray(this.patientData.history) ? this.patientData.history : (this.patientData.history ? Object.values(this.patientData.history) : []);
+            this.patientData.labs = Array.isArray(this.patientData.labs) ? this.patientData.labs : (this.patientData.labs ? Object.values(this.patientData.labs) : []);
+            this.patientData.medications = Array.isArray(this.patientData.medications) ? this.patientData.medications : (this.patientData.medications ? Object.values(this.patientData.medications) : []);
             
             this.autoCleanUpOldRecords();
 
-            this.patientData.history.sort((a, b) => new Date(b.date) - new Date(a.date));
-            this.patientData.labs.sort((a, b) => new Date(b.date) - new Date(a.date));
+            // 🚨 ป้องกันบั๊กวันที่ว่างเปล่าแล้วทำให้ระบบเรียงข้อมูลค้าง
+            this.patientData.history.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+            this.patientData.labs.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 
             let allRawVisits = toArray(visitSnap.val());
             this.allVisits = allRawVisits.filter(v => v.hn === this.hn);
@@ -357,10 +341,12 @@ const PatientHistoryPage = {
             this.renderMeds();
             this.renderXraysTab(); 
             this.renderDocsTab();
-        } catch (e) { console.error(e); }
+        } catch (e) { 
+            console.error("Load Patient Data Error:", e);
+            document.getElementById('ph-header-loading').innerHTML = '<div class="text-danger py-5"><i class="fa-solid fa-triangle-exclamation fa-3x mb-3"></i><br>ดึงข้อมูลล้มเหลว: ' + e.message + '</div>';
+        }
     },
 
-    // 🚨 [5-Year Auto Purge] ล้างข้อมูลเก่าเกิน 5 ปี 🚨
     autoCleanUpOldRecords: function() {
         let isModified = false;
         const cutoffDate = new Date(); 
@@ -393,7 +379,7 @@ const PatientHistoryPage = {
         headerContainer.style.display = 'block';
         
         const p = this.patientData;
-        let imgSrc = p.photo_base64 ? (p.photo_base64.startsWith('data:image') ? p.photo_base64 : 'data:image/jpeg;base64,' + p.photo_base64) : `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name_th)}&background=e2e8f0&color=64748b`;
+        let imgSrc = p.photo_base64 && typeof p.photo_base64 === 'string' ? (p.photo_base64.startsWith('data:image') ? p.photo_base64 : 'data:image/jpeg;base64,' + p.photo_base64) : `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name_th)}&background=e2e8f0&color=64748b`;
         
         let alertHtml = '';
         if(p.allergy && p.allergy !== 'ไม่มี') alertHtml += `<span class="badge px-3 py-2 rounded-pill me-2 shadow-sm" style="background: var(--danger-gradient); color:white; font-size:12px;"><i class="fa-solid fa-triangle-exclamation me-2"></i> แพ้ยา: ${p.allergy}</span>`;

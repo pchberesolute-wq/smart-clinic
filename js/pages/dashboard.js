@@ -1,5 +1,5 @@
 // js/pages/dashboard.js
-// 🚀 โมดูลแดชบอร์ดภาพรวมอัจฉริยะ (Smart Stock Cost Integration & High Performance)
+// 🚀 โมดูลแดชบอร์ดภาพรวมอัจฉริยะ (Anti-Race Condition & Smart Stock Cost Integration)
 
 const DashboardPage = {
     selectedDate: new Date().toISOString().split('T')[0],
@@ -123,7 +123,7 @@ const DashboardPage = {
                             <thead style="position: sticky; top: 0; z-index: 10;">
                                 <tr>
                                     <th style="width: 15%;">เตียง</th>
-                                    <th>ชื่อผู้ป่วย</th>
+                                    <th style="width: 35%;">ชื่อผู้ป่วย</th>
                                     <th style="width: 30%;">ข้อมูลรอบ/สิทธิ</th>
                                     <th class="text-center" style="width: 20%;">สถานะ</th>
                                 </tr>
@@ -162,65 +162,116 @@ const DashboardPage = {
         </div>
     `,
 
+    // 🚨 1. อัปเกรดฟังก์ชัน init: วางระบบสมองกลรอกุญแจก่อนโหลดข้อมูล
     init: function() {
-        if (typeof db === 'undefined') return;
+        if (typeof db === 'undefined' || typeof firebase === 'undefined') {
+            this.showDashboardError("ไม่พบการเชื่อมต่อฐานข้อมูล");
+            return;
+        }
 
         const dateInput = document.getElementById('dashDateSelector');
         if(dateInput) {
             dateInput.value = this.selectedDate;
-            this.updateDateDisplay(this.selectedDate); 
+            if(this.updateDateDisplay) this.updateDateDisplay(this.selectedDate); 
             
             dateInput.addEventListener('change', (e) => {
                 this.selectedDate = e.target.value;
-                this.updateDateDisplay(this.selectedDate); 
-                this.loadVisitsData();
+                if(this.updateDateDisplay) this.updateDateDisplay(this.selectedDate); 
+                if(this.loadVisitsData) this.loadVisitsData();
             });
         }
 
-        db.ref('patients_database_v2/patients').on('value', snap => {
-            const data = snap.val();
-            let rawPatients = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])) : [];
-            let activePatients = rawPatients.filter(p => p !== null && p.status !== 'ย้ายคลินิก' && p.status !== 'เสียชีวิต');
-            this.allPatients = activePatients;
-            
-            if (document.getElementById('dash-total-pt')) document.getElementById('dash-total-pt').innerText = activePatients.length.toLocaleString();
-
-            let rightsCount = {};
-            activePatients.forEach(p => {
-                let r = p.right || 'ไม่ระบุสิทธิ';
-                rightsCount[r] = (rightsCount[r] || 0) + 1;
-            });
-            this.renderRightsChart(Object.keys(rightsCount), Object.values(rightsCount));
-            this.renderRightsBreakdownUI(rightsCount);
+        // 🚨 [Anti-Race Condition]: สั่งให้รอกุญแจความปลอดภัยจาก Firebase ก่อน!
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                // กุญแจพร้อม ลุยดึงข้อมูล!
+                this.fetchAllDashboardData(); 
+            } else {
+                // ถ้ายืนยันตัวตนหลุด ให้ขึ้นแจ้งเตือนเพื่อไม่ให้หน้าจอค้าง
+                this.showDashboardError("กำลังรอตรวจสอบสิทธิ์การเข้าถึง...");
+            }
         });
+    },
 
-        db.ref('patients_database_v2/visits').on('value', snap => {
-            const data = snap.val();
-            let raw = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])) : [];
-            this.allVisits = raw.filter(v => v !== null);
-            this.loadVisitsData(); 
-            this.renderFinanceWidget(); 
-        });
+    // 🚨 2. ฟังก์ชันหลักสำหรับดึงข้อมูลทั้งหมดเข้าหน้าแดชบอร์ด
+    fetchAllDashboardData: function() {
+        const onFirebaseError = (error) => {
+            console.error("🔥 [Firebase Error]:", error);
+            this.showDashboardError("ฐานข้อมูลปฏิเสธการเข้าถึง (Permission Denied)");
+        };
 
-        db.ref('inventory_database_v2/items').on('value', snap => {
-            const data = snap.val();
-            this.inventoryItems = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])).filter(Boolean) : [];
-            this.renderLowStockWidget();
-            this.renderFinanceWidget(); // อัปเดต Finance เพื่อให้ต้นทุนเป็นปัจจุบัน
-        });
+        try {
+            // ดึงข้อมูลคนไข้
+            db.ref('patients_database_v2/patients').on('value', snap => {
+                const data = snap.val();
+                let rawPatients = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])) : [];
+                let activePatients = rawPatients.filter(p => p !== null && p.status !== 'ย้ายคลินิก' && p.status !== 'เสียชีวิต');
+                
+                this.allPatients = activePatients;
+                const ptEl = document.getElementById('dash-total-pt');
+                if (ptEl) ptEl.innerText = activePatients.length.toLocaleString();
 
-        // 🌟 ดึงข้อมูลประวัติการทำรายการเพื่อคำนวณต้นทุนการเบิกแบบเรียลไทม์
-        db.ref('inventory_database_v2/transactions').on('value', snap => {
-            const data = snap.val();
-            this.stockTransactions = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
-            this.renderFinanceWidget();
-        });
+                let rightsCount = {};
+                activePatients.forEach(p => {
+                    let r = p.right || 'ไม่ระบุสิทธิ';
+                    rightsCount[r] = (rightsCount[r] || 0) + 1;
+                });
+                if(typeof this.renderRightsChart === 'function') this.renderRightsChart(Object.keys(rightsCount), Object.values(rightsCount));
+                if(typeof this.renderRightsBreakdownUI === 'function') this.renderRightsBreakdownUI(rightsCount);
+            }, onFirebaseError);
 
-        db.ref('clinic_expenses_v2').on('value', snap => {
-            const data = snap.val();
-            this.allExpenses = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
-            this.renderFinanceWidget();
+            // ดึงข้อมูลคิวฟอกไต
+            db.ref('patients_database_v2/visits').on('value', snap => {
+                const data = snap.val();
+                let raw = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])) : [];
+                this.allVisits = raw.filter(v => v !== null);
+                if(typeof this.loadVisitsData === 'function') this.loadVisitsData(); 
+                if(typeof this.renderFinanceWidget === 'function') this.renderFinanceWidget(); 
+            }, onFirebaseError);
+
+            // ดึงพัสดุและรายจ่าย
+            db.ref('inventory_database_v2/items').on('value', snap => {
+                const data = snap.val();
+                this.inventoryItems = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])).filter(Boolean) : [];
+                if(typeof this.renderLowStockWidget === 'function') this.renderLowStockWidget();
+                if(typeof this.renderFinanceWidget === 'function') this.renderFinanceWidget(); 
+            }, onFirebaseError);
+
+            db.ref('inventory_database_v2/transactions').on('value', snap => {
+                const data = snap.val();
+                this.stockTransactions = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
+                if(typeof this.renderFinanceWidget === 'function') this.renderFinanceWidget();
+            }, onFirebaseError);
+
+            db.ref('clinic_expenses_v2').on('value', snap => {
+                const data = snap.val();
+                this.allExpenses = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
+                if(typeof this.renderFinanceWidget === 'function') this.renderFinanceWidget();
+            }, onFirebaseError);
+
+        } catch (fatalError) {
+            this.showDashboardError("เกิดข้อผิดพลาดในการดึงข้อมูล");
+        }
+    },
+
+    // 🚨 3. ฟังก์ชันหยุดตัวหมุน และแสดงเลข 0 เมื่อไม่มีข้อมูลหรือเกิด Error
+    showDashboardError: function(msg) {
+        const dateText = document.getElementById('dash-date-text');
+        if(dateText) dateText.innerHTML = `<span class="text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation"></i> ${msg}</span>`;
+        
+        document.querySelectorAll('.fa-spinner').forEach(el => {
+            const parent = el.parentElement;
+            if(parent) parent.innerHTML = `<span class="text-danger fs-6 fw-bold">0</span>`; 
         });
+        
+        const bedStatus = document.getElementById('dash-bed-status');
+        if(bedStatus) bedStatus.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-5"><i class="fa-solid fa-box-open fa-2x mb-3 opacity-50"></i><br>ยังไม่มีข้อมูลในระบบ</td></tr>`;
+        
+        const lowStock = document.getElementById('dash-low-stock-list');
+        if(lowStock) lowStock.innerHTML = `<div class="text-center text-muted py-4">ยังไม่มีข้อมูล</div>`;
+        
+        const financeWidget = document.getElementById('dash-finance-widget');
+        if(financeWidget) financeWidget.innerHTML = `<div class="text-center text-muted py-4">ยังไม่มีข้อมูล</div>`;
     },
 
     updateDateDisplay: function(dateStr) {
@@ -307,7 +358,7 @@ const DashboardPage = {
                 <tr>
                     <td><span class="badge bg-dark px-3 py-2 rounded-pill shadow-sm" style="font-size: 13px;">เตียง ${v.bed || '-'}</span></td>
                     <td>
-                        <div class="fw-bold text-dark" style="font-size: 15px; font-family: 'Prompt';">${v.name || 'ไม่ระบุชื่อ'}</div>
+                        <div class="fw-bold text-dark text-truncate" style="font-size: 15px; font-family: 'Prompt'; max-width: 150px;">${v.name || 'ไม่ระบุชื่อ'}</div>
                         <div class="small text-muted"><i class="fa-solid fa-id-card text-primary me-1"></i> ${v.hn || '-'}</div>
                     </td>
                     <td>
@@ -429,7 +480,7 @@ const DashboardPage = {
             mExpense += Number(e.amount) || 0;
         });
         
-        mExpense += aggregatedStockCosts; // นำต้นทุน Flowsheet มารวมเป็นรายจ่ายสุทธิประจำเดือน
+        mExpense += aggregatedStockCosts; 
 
         let net = mIncome - mExpense;
         let netColor = net >= 0 ? 'text-primary' : 'text-danger';

@@ -1,39 +1,11 @@
 // js/pages/visits.js
-// 🚀 โมดูลหน้าคิวฟอกไต Kanban Board (Flicker-Free Native 3D Toast & Silent Auto-Purge Edition)
+// 🚀 โมดูลหน้าคิวฟอกไต Kanban Board (Bulletproof Anti-Crash Edition)
 
 const VisitsPage = {
     currentTab: 'active', allVisits: [], patientsList: [], hasCleanedUp: false,
 
     html: `
         <style>
-            /* 🌟 [PREMIUM NATIVE TOAST CSS] แยกตัวออกมาจากโครงสร้าง SweetAlert เพื่อแก้บั๊กเบลอแบบถาวร */
-            .dialysis-custom-toast {
-                position: fixed;
-                top: 30px;
-                right: 30px;
-                background: #ffffff !important;
-                border: 2px solid #10b981 !important;
-                box-shadow: 0 15px 35px -5px rgba(16, 185, 129, 0.25), 0 5px 15px -3px rgba(0, 0, 0, 0.08) !important;
-                border-radius: 50px !important;
-                padding: 12px 28px !important;
-                font-family: 'Prompt', sans-serif !important;
-                color: #0f172a !important;
-                font-weight: 700 !important;
-                font-size: 15px !important;
-                z-index: 99999999 !important;
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                transform: translate3d(120%, 0, 0);
-                opacity: 0;
-                transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15), opacity 0.3s ease;
-                pointer-events: none;
-            }
-            .dialysis-custom-toast.show {
-                transform: translate3d(0, 0, 0);
-                opacity: 1;
-            }
-
             .min-w-300 { min-width: 320px; }
             .visit-card { transition: all 0.3s ease; border-radius: 16px; border: 2px solid transparent; cursor: pointer; background: #fff;}
             .visit-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-float-primary); border-color: var(--primary-light);}
@@ -48,13 +20,10 @@ const VisitsPage = {
             <div class="d-flex gap-2 flex-wrap">
                 <div class="search-box-modern shadow-sm p-1 ps-3 bg-white d-flex align-items-center position-relative" style="width: auto; border-radius: 50px;">
                     <input type="date" id="visitDateSelector" class="position-absolute" style="opacity: 0; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer; z-index: 10;" onfocus="this.showPicker && this.showPicker()">
-                    
                     <i class="fa-solid fa-calendar-day text-primary me-2 position-relative" style="z-index: 1; pointer-events: none;"></i>
                     <span id="visitDateDisplay" class="fw-bold text-dark position-relative" style="font-family:'Prompt'; min-width: 90px; text-align: center; z-index: 1; pointer-events: none;">กำลังโหลด...</span>
-                    
                     <button class="btn btn-premium-primary ms-3 py-1 px-3 shadow-sm position-relative" style="border-radius: 50px; font-size:14px; z-index: 20;" onclick="VisitsPage.setToday()" title="กลับมาวันที่ปัจจุบัน">วันนี้</button>
                 </div>
-
                 <button class="btn btn-premium btn-premium-danger" onclick="VisitsPage.quickSwipeCheckOut()">
                     <i class="fa-solid fa-id-card-clip me-2"></i> ดึงคิวออก
                 </button>
@@ -116,27 +85,40 @@ const VisitsPage = {
                 </div>
             </div>
         </div>
-
-        <div id="dialysisPoaster" class="dialysis-custom-toast">
-            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center shadow-sm" style="width:28px; height:28px;">
-                <i class="fa-solid fa-check" style="font-size:14px;"></i>
-            </div>
-            <span id="dialysisPoasterText">อัปเดตสำเร็จแล้ว</span>
-        </div>
     `,
 
     init: function() {
-        if (typeof db === 'undefined') return;
+        if (typeof db === 'undefined' || typeof firebase === 'undefined') return;
 
-        if (!this.hasCleanedUp) this.autoCleanUpOldRecords();
+        // 🚨 สร้างฟังก์ชันโหลดที่ปลอดภัย
+        const executeLoad = () => {
+            if (!this.hasCleanedUp) this.autoCleanUpOldRecords();
 
-        db.ref('patients_database_v2/patients').on('value', snap => {
-            const data = snap.val();
-            let raw = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])) : [];
-            this.patientsList = raw.filter(p => p !== null);
-        });
+            db.ref('patients_database_v2/patients').on('value', snap => {
+                const data = snap.val();
+                let raw = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])) : [];
+                this.patientsList = raw.filter(p => p !== null);
+            });
 
-        this.setToday();
+            this.setToday();
+            
+            if (window.visitAutoUpdateInterval) clearInterval(window.visitAutoUpdateInterval);
+            window.visitAutoUpdateInterval = setInterval(() => { this.checkAutoStart(); }, 30000);
+        };
+
+        // 🚨 เช็คกุญแจแบบปลอดภัย
+        if (firebase.auth().currentUser) {
+            executeLoad();
+        } else {
+            const unsub = firebase.auth().onAuthStateChanged((user) => {
+                if (user) {
+                    unsub(); // ทำลายตัวเองหลังได้กุญแจ
+                    executeLoad();
+                } else {
+                    document.getElementById('visit-date-text').innerHTML = '<span class="text-warning fw-bold"><i class="fa-solid fa-lock"></i> กำลังตรวจสอบสิทธิ์...</span>';
+                }
+            });
+        }
         
         const dateInput = document.getElementById('visitDateSelector');
         if(dateInput) {
@@ -156,26 +138,52 @@ const VisitsPage = {
                 });
             });
         }
-
-        if (window.visitAutoUpdateInterval) clearInterval(window.visitAutoUpdateInterval);
-        window.visitAutoUpdateInterval = setInterval(() => { this.checkAutoStart(); }, 30000);
     },
 
-    // 🌟 ฟังก์ชันแจ้งเตือนอัจฉริยะ (Native 3D Toast)
-    showNativeToast: function(message) {
-        const toast = document.getElementById('dialysisPoaster');
-        const toastText = document.getElementById('dialysisPoasterText');
-        if(!toast || !toastText) return;
+    loadVisitsData: function() {
+        if(typeof db === 'undefined') return;
+        const dateStr = document.getElementById('visitDateSelector').value; if(!dateStr) return;
+        
+        const dObj = new Date(dateStr); const thaiDate = `${String(dObj.getDate()).padStart(2,'0')}/${String(dObj.getMonth() + 1).padStart(2,'0')}/${dObj.getFullYear() + 543}`;
+        const dateTextEl = document.getElementById('visit-date-text');
+        if(dateTextEl) dateTextEl.innerHTML = `<i class="fa-regular fa-calendar-check text-success me-1"></i> แสดงคิวประจำวันที่ <b class="text-dark">${thaiDate}</b>`;
 
-        toastText.innerText = message;
-        toast.classList.add('show');
+        db.ref('patients_database_v2/visits').on('value', snap => {
+            try {
+                const data = snap.val();
+                let rawVisits = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])) : [];
+                this.allVisits = rawVisits.filter(v => v !== null);
 
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 1500);
+                let todayVisits = this.allVisits.filter(v => v.date === dateStr);
+                let activeVisits = todayVisits.filter(v => v.status !== "เสร็จสิ้น");
+                let finishedVisits = todayVisits.filter(v => v.status === "เสร็จสิ้น");
+
+                this.renderStats(todayVisits);
+
+                let displayVisits = this.currentTab === 'active' ? activeVisits : finishedVisits;
+                let mVisits = [], aVisits = [], eVisits = [];
+                
+                displayVisits.forEach(v => {
+                    // ป้องกันบั๊กถ้า v.time ไม่ใช่ String
+                    let hour = parseInt(String(v.time || "00:00").split(":")[0]) || 0;
+                    if(hour >= 0 && hour < 10) mVisits.push(v); else if(hour >= 10 && hour < 14) aVisits.push(v); else eVisits.push(v);
+                });
+
+                this.renderColumn('board-morning', mVisits, 'รอบเช้า');
+                this.renderColumn('board-afternoon', aVisits, 'รอบบ่าย');
+                this.renderColumn('board-evening', eVisits, 'รอบเย็น');
+            } catch (err) {
+                console.error("Render Visits Error:", err);
+                document.getElementById('board-morning').innerHTML = '<div class="text-center text-danger p-4"><i class="fa-solid fa-bug fa-2x mb-2"></i><br>ข้อมูลคิวฟอกไตขัดข้อง: ' + err.message + '</div>';
+            }
+        }, (error) => {
+            console.error("Load Visits Error:", error);
+            document.getElementById('board-morning').innerHTML = '<div class="text-center text-danger p-4"><i class="fa-solid fa-triangle-exclamation fa-2x mb-2"></i><br>ไม่สามารถโหลดข้อมูลได้</div>';
+            document.getElementById('board-afternoon').innerHTML = '';
+            document.getElementById('board-evening').innerHTML = '';
+        });
     },
 
-    // 🌟 [SILENT PURGE] กวาดข้อมูล 5 ปีทิ้งแบบเงียบๆ ไม่เด้ง Alert
     autoCleanUpOldRecords: function() {
         this.hasCleanedUp = true;
         const cutoffDate = new Date();
@@ -188,10 +196,7 @@ const VisitsPage = {
             let visits = Array.isArray(data) ? data : Object.keys(data).map(k => data[k]);
             let originalLen = visits.length;
             
-            // คัดเอาเฉพาะข้อมูลที่ใหม่กว่า 5 ปี (ลบของเก่าทิ้ง)
             let validVisits = visits.filter(v => v && v.date && v.date >= cutoffStr);
-            
-            // อัปเดตกลับไปที่ Firebase เงียบๆ เฉพาะกรณีที่มีการลบจริงๆ เท่านั้น
             if (validVisits.length < originalLen) {
                 db.ref('patients_database_v2/visits').set(validVisits).then(() => {
                     console.log(`♻️ Auto-Purged ${originalLen - validVisits.length} old visits from Kanban Board.`);
@@ -200,7 +205,6 @@ const VisitsPage = {
         });
     },
 
-    // 🌟 [SILENT STATUS UPDATE] อัปเดตสถานะ "กำลังฟอกไต" อัตโนมัติ โดยไม่เรียก Toast มารบกวน
     checkAutoStart: function() {
         if (typeof db === 'undefined' || !this.allVisits || this.allVisits.length === 0) return;
         const now = new Date(); const tzo = now.getTimezoneOffset() * 60000;
@@ -209,13 +213,12 @@ const VisitsPage = {
         
         let updatedVisits = this.allVisits.map(v => {
             if (v.date === todayStr && v.status === "รอตรวจ" && v.time) {
-                const parts = v.time.split(':');
+                const parts = String(v.time).split(':');
                 if (parts.length === 2) {
                     const hours = parseInt(parts[0], 10); const minutes = parseInt(parts[1], 10);
                     const scheduledTime = new Date(); scheduledTime.setHours(hours, minutes, 0, 0);
                     const diffMins = (now - scheduledTime) / 60000;
                     
-                    // ถ้าเลยเวลามา 5 นาที ให้เปลี่ยนสถานะ
                     if (diffMins >= 5) { 
                         needsUpdate = true; 
                         return { ...v, status: "กำลังฟอกไต" }; 
@@ -225,7 +228,6 @@ const VisitsPage = {
             return v;
         });
 
-        // 🌟 ถ้าระบบเจอคิวที่เลยเวลา จะสั่งเซฟทับเงียบๆ ตัว Listener ของ Firebase จะพาการ์ดเปลี่ยนสีเองครับ
         if (needsUpdate) {
             db.ref('patients_database_v2/visits').set(updatedVisits);
         }
@@ -258,39 +260,6 @@ const VisitsPage = {
         this.loadVisitsData(); 
     },
 
-    loadVisitsData: function() {
-        if(typeof db === 'undefined') return;
-        const dateStr = document.getElementById('visitDateSelector').value; if(!dateStr) return;
-        
-        const dObj = new Date(dateStr); const thaiDate = `${String(dObj.getDate()).padStart(2,'0')}/${String(dObj.getMonth() + 1).padStart(2,'0')}/${dObj.getFullYear() + 543}`;
-        const dateTextEl = document.getElementById('visit-date-text');
-        if(dateTextEl) dateTextEl.innerHTML = `<i class="fa-regular fa-calendar-check text-success me-1"></i> แสดงคิวประจำวันที่ <b class="text-dark">${thaiDate}</b>`;
-
-        db.ref('patients_database_v2/visits').on('value', snap => {
-            const data = snap.val();
-            let rawVisits = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])) : [];
-            this.allVisits = rawVisits.filter(v => v !== null);
-
-            let todayVisits = this.allVisits.filter(v => v.date === dateStr);
-            let activeVisits = todayVisits.filter(v => v.status !== "เสร็จสิ้น");
-            let finishedVisits = todayVisits.filter(v => v.status === "เสร็จสิ้น");
-
-            this.renderStats(todayVisits);
-
-            let displayVisits = this.currentTab === 'active' ? activeVisits : finishedVisits;
-            let mVisits = [], aVisits = [], eVisits = [];
-            
-            displayVisits.forEach(v => {
-                let hour = parseInt((v.time || "00:00").split(":")[0]) || 0;
-                if(hour >= 0 && hour < 10) mVisits.push(v); else if(hour >= 10 && hour < 14) aVisits.push(v); else eVisits.push(v);
-            });
-
-            this.renderColumn('board-morning', mVisits, 'รอบเช้า');
-            this.renderColumn('board-afternoon', aVisits, 'รอบบ่าย');
-            this.renderColumn('board-evening', eVisits, 'รอบเย็น');
-        });
-    },
-
     renderStats: function(dailyVisits) {
         let tTotal = dailyVisits.length; let tWait = dailyVisits.filter(v => v.status === 'รอตรวจ').length;
         let tDialysis = dailyVisits.filter(v => v.status === 'กำลังฟอกไต').length; let tDone = dailyVisits.filter(v => v.status === 'เสร็จสิ้น').length;
@@ -306,7 +275,7 @@ const VisitsPage = {
 
     renderColumn: function(elementId, visitList, shiftName) {
         const el = document.getElementById(elementId); if(!el) return;
-        visitList.sort((a, b) => (a.time || "00:00").localeCompare(b.time || "00:00"));
+        visitList.sort((a, b) => String(a.time || "00:00").localeCompare(String(b.time || "00:00")));
 
         if(visitList.length === 0) {
             el.innerHTML = `<div class="text-center p-4 border border-dashed rounded-4 text-muted h-100 d-flex flex-column align-items-center justify-content-center" style="background: var(--bg-main); border-color: #cbd5e1 !important;"><i class="fa-solid fa-bed text-light fa-3x mb-3" style="color:#cbd5e1!important;"></i><p class="mb-0 fw-bold" style="font-size:14px; font-family:'Prompt';">${shiftName} ยังไม่มีข้อมูลคิว</p></div>`;
@@ -493,9 +462,9 @@ const VisitsPage = {
             if (result.isConfirmed) {
                 let newStatus = result.value; let updatedVisits = this.allVisits.map(item => item.id === visitId ? { ...item, status: newStatus } : item);
                 
-                // 🚨 THE FIX: เปลี่ยนมาใช้ Native Toast แทน SweetAlert 🚨
+                // 🚨 ปลดล็อกแก้บั๊กโชว์ Toast
                 db.ref('patients_database_v2/visits').set(updatedVisits).then(() => { 
-                    this.showNativeToast('อัปเดตสถานะคิวสำเร็จ');
+                    Swal.fire({ title: 'อัปเดตสถานะคิวสำเร็จ', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
                 });
             } else if (result.isDenied) {
                 Swal.fire({ title: 'ยืนยันการลบ?', text: `ต้องการยกเลิกคิวเตียง ${v.bed} ของ ${v.name} ใช่หรือไม่?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'ใช่, ยกเลิกคิว' }).then((delRes) => {

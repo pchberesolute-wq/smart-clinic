@@ -1,5 +1,5 @@
 // js/pages/visit_detail.js
-// 🚀 โมดูลบันทึกข้อมูลฟอกไตเชิงลึก (3-Columns + 📸 Smart Scanner + ⚡ Reactive Pricing + 🧹 5-Year Auto-Purge)
+// 🚀 โมดูลบันทึกข้อมูลฟอกไตเชิงลึก (Anti-Race Condition + Smart Scanner + ⚡ Reactive Pricing + 🧹 5-Year Auto-Purge)
 
 const VisitDetailPage = {
     visitId: null, visitData: null, isFormLoaded: false,
@@ -242,43 +242,88 @@ const VisitDetailPage = {
             '</div>' +
         '</div>',
 
+    // 🚨 1. แก้บั๊กหมุนค้าง: ฝังระบบรอกุญแจก่อนโหลดหน้า Search และโหลดข้อมูลคนไข้
     init: function(visitId) {
         this.isFormLoaded = false;
         const today = new Date();
         this.selectedDate = this.selectedDate || (new Date(Date.now() - (today.getTimezoneOffset() * 60000))).toISOString().split('T')[0];
         
-        // 🚨 5-Year Auto Purge Rule (รันตอนเข้ามาที่หน้านี้เลย) 🚨
         if (!this.hasCleanedUp) this.autoCleanUpOldRecords();
 
-        if (!visitId || typeof visitId !== 'string') { 
-            document.getElementById('vd-search-screen').style.display = 'block'; document.getElementById('vd-main-screen').style.display = 'none'; document.getElementById('vd-search-loading').style.display = 'block'; document.getElementById('vd-active-visits-container').innerHTML = '';
-            setTimeout(() => { const dp = document.getElementById('vd-search-date-picker'); if(dp) { dp.value = this.selectedDate; this.updateDateDisplay(this.selectedDate); dp.onchange = (e) => { this.selectedDate = e.target.value; this.updateDateDisplay(this.selectedDate); this.init(null); }; } }, 50);
-            if (typeof db === 'undefined') return;
-            Promise.all([db.ref('patients_database_v2/visits').once('value'), db.ref('patients_database_v2/patients').once('value')]).then(([vSnap, pSnap]) => {
-                document.getElementById('vd-search-loading').style.display = 'none';
-                let rawVisits = vSnap.val() ? (Array.isArray(vSnap.val()) ? vSnap.val() : Object.keys(vSnap.val()).map(k => vSnap.val()[k])) : [];
-                let rawPts = pSnap.val() ? (Array.isArray(pSnap.val()) ? pSnap.val() : Object.keys(pSnap.val()).map(k => pSnap.val()[k])) : [];
-                let todayVisits = rawVisits.filter(v => v && v.date === this.selectedDate);
-                const container = document.getElementById('vd-active-visits-container'); if(!container) return;
-                if (todayVisits.length === 0) { container.innerHTML = '<div class="col-12 text-center py-5 fade-in-up"><i class="fa-solid fa-bed text-muted fa-4x mb-4" style="opacity: 0.2;"></i><h4 class="text-muted fw-bold">ไม่มีรายชื่อคิวฟอกเลือด</h4><p class="text-muted mb-4">ไม่มีประวัติการจัดคิวในวันที่เลือก</p><button class="btn btn-premium btn-premium-primary px-5" onclick="App.switchPage(\'visits\')"><i class="fa-solid fa-list-check me-2"></i> ไปหน้าจัดการคิว</button></div>'; return; }
-                todayVisits.sort((a, b) => { if(a.time !== b.time) return (a.time || "").localeCompare(b.time || ""); return (parseInt(a.bed) || 999) - (parseInt(b.bed) || 999); });
-                let html = '';
-                todayVisits.forEach((v, idx) => { 
-                    let ptData = rawPts.find(p => String(p.hn) === String(v.hn)) || {};
-                    let imgSrc = ptData.photo_base64 ? (ptData.photo_base64.startsWith('data:image') ? ptData.photo_base64 : 'data:image/jpeg;base64,' + ptData.photo_base64) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(v.name||'X') + '&background=3b82f6&color=fff&bold=true';
-                    let bColor = "var(--primary)"; let badgeClass = "badge-soft-primary"; let opacityClass = "";
-                    if(v.status === "กำลังฟอกไต") { bColor = "var(--warning)"; badgeClass = "badge-soft-warning"; }
-                    if(v.status === "เสร็จสิ้น") { bColor = "var(--success)"; badgeClass = "badge-soft-success"; opacityClass = "opacity:0.75"; }
-                    html += '<div class="col-md-6 col-lg-4 fade-in-up" style="animation-delay: ' + (idx * 0.05) + 's"><div class="modern-panel p-4 h-100 d-flex flex-column card-hover-float" style="border-left: 5px solid ' + bColor + '; cursor: pointer; ' + opacityClass + '" onclick="VisitDetailPage.init(\'' + v.id + '\')"><div class="d-flex justify-content-between align-items-start mb-3"><div class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill shadow-sm fs-6"><i class="fa-solid fa-bed me-2"></i> เตียง ' + (v.bed||'-') + '</div><span class="badge ' + badgeClass + ' rounded-pill px-3 py-2 shadow-sm" style="font-size:13px;">' + (v.status || 'รอตรวจ') + '</span></div><div class="d-flex align-items-center mb-4"><img src="' + imgSrc + '" class="vd-avatar me-3"><div class="min-w-0"><h5 class="fw-bold text-dark mb-1 text-truncate" style="font-family:\'Prompt\'; font-size:18px;">' + v.name + '</h5><div class="text-muted fw-bold small"><i class="fa-solid fa-id-card text-secondary me-1"></i> HN: ' + v.hn + '</div></div></div><div class="mt-auto pt-3 border-top border-light"><div class="fw-bold text-primary" style="font-size:15px;"><i class="fa-regular fa-clock me-2 text-secondary"></i> รอบเวลา: ' + (v.time||'-') + ' น.</div></div></div></div>';
-                });
-                container.innerHTML = html;
-            }); return;
+        if (typeof db === 'undefined' || typeof firebase === 'undefined') {
+            document.getElementById('vd-search-loading').innerHTML = '<div class="text-danger py-5"><i class="fa-solid fa-triangle-exclamation fa-3x mb-3"></i><br>ไม่พบการเชื่อมต่อฐานข้อมูล</div>';
+            return;
         }
-        document.getElementById('vd-search-screen').style.display = 'none'; document.getElementById('vd-main-screen').style.display = 'block'; this.visitId = visitId; this.loadData();
+
+        // กรณีที่ไม่ได้ระบุ ID ให้ไปหน้าค้นหาเตียงของวันนี้
+        if (!visitId || typeof visitId !== 'string') { 
+            document.getElementById('vd-search-screen').style.display = 'block'; 
+            document.getElementById('vd-main-screen').style.display = 'none'; 
+            document.getElementById('vd-search-loading').style.display = 'block'; 
+            document.getElementById('vd-active-visits-container').innerHTML = '';
+            
+            setTimeout(() => { 
+                const dp = document.getElementById('vd-search-date-picker'); 
+                if(dp) { 
+                    dp.value = this.selectedDate; 
+                    this.updateDateDisplay(this.selectedDate); 
+                    dp.onchange = (e) => { 
+                        this.selectedDate = e.target.value; 
+                        this.updateDateDisplay(this.selectedDate); 
+                        this.init(null); 
+                    }; 
+                } 
+            }, 50);
+            
+            const execSearchLoad = () => {
+                Promise.all([db.ref('patients_database_v2/visits').once('value'), db.ref('patients_database_v2/patients').once('value')]).then(([vSnap, pSnap]) => {
+                    document.getElementById('vd-search-loading').style.display = 'none';
+                    let rawVisits = vSnap.val() ? (Array.isArray(vSnap.val()) ? vSnap.val() : Object.keys(vSnap.val()).map(k => vSnap.val()[k])) : [];
+                    let rawPts = pSnap.val() ? (Array.isArray(pSnap.val()) ? pSnap.val() : Object.keys(pSnap.val()).map(k => pSnap.val()[k])) : [];
+                    let todayVisits = rawVisits.filter(v => v && v.date === this.selectedDate);
+                    
+                    const container = document.getElementById('vd-active-visits-container'); if(!container) return;
+                    
+                    if (todayVisits.length === 0) { 
+                        container.innerHTML = '<div class="col-12 text-center py-5 fade-in-up"><i class="fa-solid fa-bed text-muted fa-4x mb-4" style="opacity: 0.2;"></i><h4 class="text-muted fw-bold">ไม่มีรายชื่อคิวฟอกเลือด</h4><p class="text-muted mb-4">ไม่มีประวัติการจัดคิวในวันที่เลือก</p><button class="btn btn-premium btn-premium-primary px-5" onclick="App.switchPage(\'visits\')"><i class="fa-solid fa-list-check me-2"></i> ไปหน้าจัดการคิว</button></div>'; 
+                        return; 
+                    }
+                    
+                    todayVisits.sort((a, b) => { if(a.time !== b.time) return (a.time || "").localeCompare(b.time || ""); return (parseInt(a.bed) || 999) - (parseInt(b.bed) || 999); });
+                    
+                    let html = '';
+                    todayVisits.forEach((v, idx) => { 
+                        let ptData = rawPts.find(p => String(p.hn) === String(v.hn)) || {};
+                        let imgSrc = ptData.photo_base64 && typeof ptData.photo_base64 === 'string' ? (ptData.photo_base64.startsWith('data:image') ? ptData.photo_base64 : 'data:image/jpeg;base64,' + ptData.photo_base64) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(v.name||'X') + '&background=3b82f6&color=fff&bold=true';
+                        let bColor = "var(--primary)"; let badgeClass = "badge-soft-primary"; let opacityClass = "";
+                        if(v.status === "กำลังฟอกไต") { bColor = "var(--warning)"; badgeClass = "badge-soft-warning"; }
+                        if(v.status === "เสร็จสิ้น") { bColor = "var(--success)"; badgeClass = "badge-soft-success"; opacityClass = "opacity:0.75"; }
+                        
+                        html += '<div class="col-md-6 col-lg-4 fade-in-up" style="animation-delay: ' + (idx * 0.05) + 's"><div class="modern-panel p-4 h-100 d-flex flex-column card-hover-float" style="border-left: 5px solid ' + bColor + '; cursor: pointer; ' + opacityClass + '" onclick="VisitDetailPage.init(\'' + v.id + '\')"><div class="d-flex justify-content-between align-items-start mb-3"><div class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill shadow-sm fs-6"><i class="fa-solid fa-bed me-2"></i> เตียง ' + (v.bed||'-') + '</div><span class="badge ' + badgeClass + ' rounded-pill px-3 py-2 shadow-sm" style="font-size:13px;">' + (v.status || 'รอตรวจ') + '</span></div><div class="d-flex align-items-center mb-4"><img src="' + imgSrc + '" class="vd-avatar me-3"><div class="min-w-0"><h5 class="fw-bold text-dark mb-1 text-truncate" style="font-family:\'Prompt\'; font-size:18px;">' + v.name + '</h5><div class="text-muted fw-bold small"><i class="fa-solid fa-id-card text-secondary me-1"></i> HN: ' + v.hn + '</div></div></div><div class="mt-auto pt-3 border-top border-light"><div class="fw-bold text-primary" style="font-size:15px;"><i class="fa-regular fa-clock me-2 text-secondary"></i> รอบเวลา: ' + (v.time||'-') + ' น.</div></div></div></div>';
+                    });
+                    container.innerHTML = html;
+                }).catch(err => {
+                    document.getElementById('vd-search-loading').innerHTML = '<div class="text-danger py-5"><i class="fa-solid fa-triangle-exclamation fa-3x mb-3"></i><br>ดึงข้อมูลล้มเหลว: ' + err.message + '</div>';
+                });
+            };
+
+            if (firebase.auth().currentUser) { execSearchLoad(); } 
+            else { const unsub = firebase.auth().onAuthStateChanged((user) => { if (user) { unsub(); execSearchLoad(); } }); }
+            return;
+        }
+
+        // กรณีระบุ ID เข้ามาตรงๆ ให้ดึงข้อมูลเชิงลึก
+        document.getElementById('vd-search-screen').style.display = 'none'; 
+        document.getElementById('vd-main-screen').style.display = 'block'; 
+        this.visitId = visitId; 
+        
+        if (firebase.auth().currentUser) { this.loadData(); } 
+        else { const unsub = firebase.auth().onAuthStateChanged((user) => { if (user) { unsub(); this.loadData(); } }); }
     },
 
     updateDateDisplay: function(dateStr) { const displayEl = document.getElementById('vdSearchDateDisplay'); if (displayEl && dateStr) { const dateObj = new Date(dateStr); displayEl.innerText = dateObj.toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' }); } },
     
+    // 🚨 2. ลบประวัติ 5 ปีแบบปลอดภัย ป้องกันบั๊ก Silent Crash
     autoCleanUpOldRecords: function() {
         this.hasCleanedUp = true;
         const cutoffDate = new Date();
@@ -305,9 +350,7 @@ const VisitDetailPage = {
                 });
                 
                 deletedVisitsCount = originalVisitsLen - validVisits.length;
-                if (deletedVisitsCount > 0) {
-                    db.ref('patients_database_v2/visits').set(validVisits);
-                }
+                if (deletedVisitsCount > 0) db.ref('patients_database_v2/visits').set(validVisits);
             }
 
             let patientListVal = pSnap.val();
@@ -316,15 +359,12 @@ const VisitDetailPage = {
                 let isAnyPatientUpdated = false;
 
                 patients.forEach(p => {
-                    if (p) {
+                    if (p && typeof p === 'object') {
                         if (Array.isArray(p.history)) {
                             let oldHistLen = p.history.length;
                             p.history = p.history.filter(h => h && h.date && new Date(h.date).getTime() >= cutoffTime);
                             let diff = oldHistLen - p.history.length;
-                            if (diff > 0) {
-                                isAnyPatientUpdated = true;
-                                deletedHistoryCount += diff;
-                            }
+                            if (diff > 0) { isAnyPatientUpdated = true; deletedHistoryCount += diff; }
                         }
                         if (Array.isArray(p.labs)) {
                             let oldLabsLen = p.labs.length;
@@ -334,24 +374,8 @@ const VisitDetailPage = {
                     }
                 });
 
-                if (isAnyPatientUpdated) {
-                    db.ref('patients_database_v2/patients').set(patients);
-                }
+                if (isAnyPatientUpdated) db.ref('patients_database_v2/patients').set(patients);
             }
-
-            if (deletedVisitsCount > 0 || deletedHistoryCount > 0) {
-                const Toast = Swal.mixin({ 
-                    toast: true, position: 'bottom-end', showConfirmButton: false, timer: 6000,
-                    didOpen: (toast) => {
-                        toast.style.background = '#ffffff';
-                        toast.style.border = '2px solid #3b82f6';
-                        toast.style.borderRadius = '16px';
-                        toast.style.fontFamily = "'Prompt', sans-serif";
-                    }
-                });
-                Toast.fire({ icon: 'info', title: `♻️ ล้างคิวฟอกเลือด/ประวัติเก่าเกิน 5 ปี สำเร็จ (${deletedVisitsCount + deletedHistoryCount} รายการ)` });
-            }
-
         }).catch(err => console.error("Error in autoCleanUpOldRecords:", err));
     },
 
@@ -361,6 +385,7 @@ const VisitDetailPage = {
         ptVisits.sort((a, b) => { let dateA = new Date(a.date + " " + (a.time || "00:00")); let dateB = new Date(b.date + " " + (b.time || "00:00")); return dateB - dateA; });
         let prevVisit = ptVisits[0]; 
         if (!prevVisit) { Swal.fire({ title: 'ไม่พบข้อมูลก่อนหน้า', text: 'ผู้ป่วยรายนี้ยังไม่มีประวัติการฟอกเลือดในระบบครับ', icon: 'info', confirmButtonText: 'ตกลง', confirmButtonColor: '#3b82f6' }); return; }
+        
         switch(section) {
             case 'machine': document.getElementById('vd-dialyzer').value = prevVisit.hd_dialyzer || ''; document.getElementById('vd-mode').value = prevVisit.hd_mode || ''; document.getElementById('vd-right').value = prevVisit.right || ''; document.getElementById('vd-dialysis-fee').value = prevVisit.dialysis_fee || ''; document.getElementById('vd-qb').value = prevVisit.hd_qb || ''; document.getElementById('vd-qd').value = prevVisit.hd_qd || ''; document.getElementById('vd-uf').value = prevVisit.hd_uf || ''; break;
             case 'vitals': document.getElementById('vd-pre-wt').value = prevVisit.pre_wt || ''; document.getElementById('vd-post-wt').value = prevVisit.post_wt || ''; document.getElementById('vd-pre-bp').value = prevVisit.pre_bp || ''; document.getElementById('vd-post-bp').value = prevVisit.post_bp || ''; break;
@@ -373,6 +398,7 @@ const VisitDetailPage = {
         Swal.fire({ title: 'ดึงข้อมูลสำเร็จ!', icon: 'success', timer: 1500, showConfirmButton: false });
     },
 
+    // 🚨 3. โหลดข้อมูลด้วย Try...Catch ป้องกันค้างเวลาดึงข้อมูลใหญ่ๆ
     loadData: async function() {
         if (typeof db === 'undefined') return;
         document.getElementById('vd-loading').style.display = 'block'; document.getElementById('vd-content').style.display = 'none';
@@ -408,7 +434,11 @@ const VisitDetailPage = {
             let visits = toArray(visitSnap.val()); this.allVisits = visits; this.visitData = visits.find(v => String(v.id) === String(this.visitId));
             if (!this.visitData) { Swal.fire('ข้อผิดพลาด', 'ไม่พบข้อมูลคิวนี้', 'error'); App.switchPage('visits'); return; }
 
-            this.currentMeds = this.visitData.other_meds || []; this.currentXrays = this.visitData.xray_list || []; this.currentLabs = this.visitData.lab_results || []; this.currentAttachments = this.visitData.attachments || []; this.isStockDeducted = this.visitData.is_stock_deducted || false;
+            this.currentMeds = Array.isArray(this.visitData.other_meds) ? this.visitData.other_meds : []; 
+            this.currentXrays = Array.isArray(this.visitData.xray_list) ? this.visitData.xray_list : []; 
+            this.currentLabs = Array.isArray(this.visitData.lab_results) ? this.visitData.lab_results : []; 
+            this.currentAttachments = Array.isArray(this.visitData.attachments) ? this.visitData.attachments : []; 
+            this.isStockDeducted = this.visitData.is_stock_deducted || false;
             
             db.ref('clinic_note_templates_v2').on('value', snap => {
                 let liveNotes = toArray(snap.val());
@@ -423,7 +453,10 @@ const VisitDetailPage = {
             
             setTimeout(() => { this.initScannerEvents(); }, 200);
 
-        } catch (e) { Swal.fire('ข้อผิดพลาด', 'โหลดข้อมูลไม่สำเร็จ', 'error'); }
+        } catch (e) { 
+            console.error("Load Data Error:", e);
+            document.getElementById('vd-loading').innerHTML = '<div class="text-danger py-5"><i class="fa-solid fa-triangle-exclamation fa-3x mb-3"></i><br>โหลดข้อมูลไม่สำเร็จ: ' + e.message + '</div>';
+        }
     },
 
     renderFormUI: function() {
@@ -795,4 +828,4 @@ const VisitDetailPage = {
     manageRights: function() { let h = '<div class="list-group mb-3 text-start shadow-sm" style="border-radius:12px; overflow:hidden;">'; this.clinicRights.forEach(r => { h += '<div class="list-group-item d-flex justify-content-between align-items-center p-3 bg-white"><div><div class="fw-bold text-dark" style="font-size:15px;">' + r.name + '</div><div class="text-success fw-bold small"><i class="fa-solid fa-tag me-1"></i> ราคา: ฿' + Number(r.price||0).toLocaleString() + '</div></div><div><button class="btn btn-sm btn-light shadow-sm me-1" onclick="Swal.close(); setTimeout(()=>VisitDetailPage.editRight(\'' + r.id + '\'),300)"><i class="fa-solid fa-pen text-warning"></i></button><button class="btn btn-sm btn-light shadow-sm" onclick="Swal.close(); setTimeout(()=>VisitDetailPage.deleteRight(\'' + r.id + '\'),300)"><i class="fa-solid fa-trash text-danger"></i></button></div></div>'; }); h += '</div>'; Swal.fire({ title: '<h4 class="fw-bold text-success"><i class="fa-solid fa-shield-heart"></i> ตั้งค่าสิทธิการรักษา</h4>', html: h, showCancelButton: true, confirmButtonText: '+ เพิ่มสิทธิ', confirmButtonColor: '#10b981', cancelButtonText: 'ปิด' }).then(r => { if(r.isConfirmed) setTimeout(() => this.editRight(null), 300); }); },
     editRight: function(id) { let m = id ? this.clinicRights.find(x => String(x.id) === String(id)) : { name: '', price: 1500 }; Swal.fire({ title: '<h5 class="fw-bold">' + (id?'แก้ไขสิทธิ':'เพิ่มสิทธิ') + '</h5>', html: '<div class="text-start mt-3"><label class="fw-bold small text-secondary">ชื่อสิทธิ</label><input type="text" id="swal-right-name" class="form-control mb-3" value="' + m.name + '"><label class="fw-bold small text-secondary">ราคา</label><input type="number" id="swal-right-price" class="form-control" value="' + (m.price||0) + '"></div>', showCancelButton: true, confirmButtonText: 'บันทึก', confirmButtonColor: '#10b981', preConfirm: () => { let n = document.getElementById('swal-right-name').value.trim(); let p = document.getElementById('swal-right-price').value; if(!n) return Swal.showValidationMessage('กรุณากรอกชื่อ'); return { id: id||'R'+Date.now(), name: n, price: Number(p) }; } }).then(res => { if(res.isConfirmed) { let u = [...this.clinicRights]; if(id) u[u.findIndex(x=>String(x.id)===String(id))] = res.value; else u.push(res.value); db.ref('clinic_rights_v2').set(u).then(() => { this.clinicRights = u; this.renderRightDropdown(); Swal.fire({title:'บันทึกสำเร็จ', icon:'success', timer:1000, showConfirmButton:false}).then(()=>this.manageRights()); }); } else if(res.isDismissed) this.manageRights(); }); },
     deleteRight: function(id) { Swal.fire({ title: 'ลบหรือไม่?', icon: 'warning', showCancelButton: true, confirmButtonText: 'ลบ', confirmButtonColor: '#ef4444' }).then(r => { if(r.isConfirmed) { let u = this.clinicRights.filter(x=>String(x.id)!==String(id)); db.ref('clinic_rights_v2').set(u).then(() => { this.clinicRights = u; this.renderRightDropdown(); Swal.fire({title:'ลบสำเร็จ', icon:'success', timer:1000, showConfirmButton:false}).then(()=>this.manageRights()); }); } else this.manageRights(); }); }
-}; 
+};
