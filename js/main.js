@@ -20,6 +20,8 @@ const App = {
             visits: typeof VisitsPage !== 'undefined' ? VisitsPage : null,
             settings: typeof SettingsPage !== 'undefined' ? SettingsPage : null,
             search_copy: typeof SearchCopyPage !== 'undefined' ? SearchCopyPage : null,
+            // 🌟 ลงทะเบียนหน้า about เข้าระบบ 🌟
+            about: typeof AboutPage !== 'undefined' ? AboutPage : null,
             inventory: typeof InventoryPage !== 'undefined' ? InventoryPage : null,
             stock_forecast: typeof StockForecastPage !== 'undefined' ? StockForecastPage : null,
             stock_manage: typeof StockManagePage !== 'undefined' ? StockManagePage : null,
@@ -30,6 +32,30 @@ const App = {
             department_ledger: typeof DepartmentLedgerPage !== 'undefined' ? DepartmentLedgerPage : null,
             document_center: typeof DocumentCenterPage !== 'undefined' ? DocumentCenterPage : null 
         };
+    },
+
+    // 🌟 1. แยกฟังก์ชันนาฬิกาออกมาทำงานอิสระ เพื่อไม่ให้โดนบั๊กอื่นบล็อกการทำงาน 🌟
+    initClock: function() {
+        const updateClock = () => {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const dateStr = now.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
+            
+            const clockEl = document.getElementById('clockDisplay');
+            if (clockEl) {
+                clockEl.innerHTML = `
+                    <div style="display: flex; align-items: center; white-space: nowrap; font-variant-numeric: tabular-nums;">
+                        <i class="fa-regular fa-clock" style="color:var(--primary); font-size:16px;"></i> 
+                        <span style="color: var(--text-dark); font-size: 14.5px; margin-left: 8px; font-weight: 700;">${dateStr}</span> 
+                        <span style="color: #cbd5e1; margin: 0 10px;">|</span> 
+                        <span style="color: var(--primary); font-weight: 800; font-size: 15.5px; letter-spacing: 0.5px; width: 85px; display: inline-block; text-align: center;">${timeStr}</span>
+                        <span style="color: var(--primary); font-weight: 800; font-size: 15.5px; margin-left: 4px;">น.</span>
+                    </div>
+                `;
+            }
+        };
+        updateClock(); // รันทันทีไม่ต้องรอให้ครบ 1 วินาที
+        setInterval(updateClock, 1000);
     },
 
     switchPage: function(pageName, element, payload = null) {
@@ -125,7 +151,6 @@ const App = {
         this.resetIdleTimer(); 
     },
 
-    // 🌟 THE FIX: ฟังก์ชันแจ้งเตือนอัจฉริยะแบบ Native 🌟
     showLockScreenToast: function(message) {
         const toast = document.getElementById('lock-screen-toast');
         const toastText = document.getElementById('lock-screen-toast-text');
@@ -134,7 +159,6 @@ const App = {
         toastText.innerText = message;
         toast.classList.add('show');
 
-        // สไลด์ออกเมื่อครบ 2.5 วินาที
         setTimeout(() => {
             toast.classList.remove('show');
         }, 2500);
@@ -148,7 +172,6 @@ const App = {
         if (!overlay) {
             overlay = document.createElement('div');
             overlay.id = 'lock-screen-overlay';
-            // พื้นหลังสีดำทึบโปร่งแสง 95%
             overlay.style.cssText = `
                 position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
                 background: rgba(15, 23, 42, 0.95); 
@@ -158,9 +181,10 @@ const App = {
             document.body.appendChild(overlay);
         }
 
-        const userImg = `https://ui-avatars.com/api/?name=${encodeURIComponent(this.currentUser.name)}&background=2563eb&color=fff&bold=true`;
+        // 🚨 ป้องกันบั๊กแครชเวลาข้อมูลผู้ใช้ไม่ครบ 🚨
+        const safeName = (this.currentUser && this.currentUser.name) ? this.currentUser.name : 'User';
+        const userImg = `https://ui-avatars.com/api/?name=${encodeURIComponent(safeName)}&background=2563eb&color=fff&bold=true`;
 
-        // 🚨 ฝังกล่องแจ้งเตือน Native Toast ไว้ด้านบนสุด 🚨
         overlay.innerHTML = `
             <style>
                 @keyframes slideDownFadeSafe { from { opacity: 0; transform: translate3d(0, -30px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
@@ -200,7 +224,7 @@ const App = {
                 <span id="lock-screen-toast-text">ข้อความแจ้งเตือน</span>
             </div>
 
-            <div class="text-center" style="width: 100%; max-width: 420px; padding: 40px; background: #ffffff; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); animation: slideDownFadeSafe 0.4s ease forwards; transform: translate3d(0,0,0); -webkit-transform: translate3d(0,0,0); position: relative;">
+            <div class="text-center" style="width: 100%; max-width: 420px; padding: 40px; background: #ffffff; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); animation: slideDownFadeSafe 0.4s ease forwards; transform: translate3d(0,0,0); position: relative;">
                 
                 <div class="mb-4">
                     <div id="lock-time-display" style="font-size: 3.5rem; font-weight: 800; color: #0f172a; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -1px;">--:--:--</div>
@@ -208,7 +232,7 @@ const App = {
                 </div>
 
                 <img src="${userImg}" class="rounded-circle mb-3 border border-3 border-white" style="width: 80px; height: 80px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                <h4 class="fw-bold text-dark mb-1" style="font-family:'Prompt';">${this.currentUser.name}</h4>
+                <h4 class="fw-bold text-dark mb-1" style="font-family:'Prompt';">${safeName}</h4>
                 <p class="text-muted small mb-4"><i class="fa-solid fa-lock text-warning me-1"></i> หน้าจอถูกล็อคเนื่องจากไม่มีการใช้งาน</p>
                 
                 <div class="input-group mb-4" style="border-radius: 14px; overflow:hidden; background: #fff; border: 1px solid #cbd5e1; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
@@ -245,7 +269,6 @@ const App = {
     unlockScreen: function() {
         const pw = document.getElementById('unlock-password').value.trim();
         if (!pw) { 
-            // 🚨 ใช้ Native Toast แทน ไม่พึ่งพา SweetAlert 🚨
             this.showLockScreenToast('กรุณากรอกรหัสผ่าน');
             return; 
         }
@@ -265,27 +288,27 @@ const App = {
             const data = snap.val();
             let rawUsers = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])) : [];
             
-            if (this.currentUser.id === 'MASTER_ADMIN' && pw === 'admin1234') {
+            if (this.currentUser && this.currentUser.id === 'MASTER_ADMIN' && pw === 'admin1234') {
                 this.isLocked = false;
                 if(this.lockClockInterval) clearInterval(this.lockClockInterval);
                 localStorage.removeItem('dialysis_is_locked'); 
-                document.getElementById('lock-screen-overlay').remove();
+                const overlay = document.getElementById('lock-screen-overlay');
+                if (overlay) overlay.remove();
                 this.resetIdleTimer();
                 return;
             }
 
-            let user = rawUsers.find(u => u.username.toLowerCase() === this.currentUser.username.toLowerCase() && u.password === pw && u.status === 'active');
+            let user = rawUsers.find(u => this.currentUser && u.username.toLowerCase() === this.currentUser.username.toLowerCase() && u.password === pw && u.status === 'active');
 
             if (user) {
                 this.isLocked = false;
                 if(this.lockClockInterval) clearInterval(this.lockClockInterval); 
                 localStorage.removeItem('dialysis_is_locked'); 
-                document.getElementById('lock-screen-overlay').remove();
+                const overlay = document.getElementById('lock-screen-overlay');
+                if (overlay) overlay.remove();
                 this.resetIdleTimer();
             } else {
-                // 🚨 เรียกใช้ Native Toast เมื่อรหัสผ่านผิด 🚨
                 this.showLockScreenToast('รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่');
-                
                 btn.innerHTML = origText; btn.disabled = false;
                 document.getElementById('unlock-password').value = '';
                 document.getElementById('unlock-password').focus();
@@ -321,26 +344,35 @@ const App = {
         if(mainContent) mainContent.style.marginLeft = '';
         if(appContent) appContent.style.padding = '';
 
-        this.currentUser = JSON.parse(sessionStr);
-        const userInfoName = document.querySelector('.user-info h4');
-        if (userInfoName) {
-            const roleLabels = {
-                'admin': '(ผู้ดูแลระบบ)',
-                'doctor': '(แพทย์)',
-                'head_nurse': '(หัวหน้าพยาบาล)',
-                'nurse': '(พยาบาล)',
-                'assistant': '(ผู้ช่วย PN/NA)',
-                'finance': '(การเงิน/บัญชี)',
-                'stock': '(เจ้าหน้าที่พัสดุ)'
-            };
-            let roleTitle = roleLabels[this.currentUser.role] || '(พนักงานทั่วไป)';
-            userInfoName.innerText = `${this.currentUser.name} ${roleTitle}`;
-            
-            const avatar = document.querySelector('.user-avatar');
-            if(avatar) {
-                let initials = this.currentUser.name.substring(0, 2).toUpperCase();
-                avatar.innerText = initials;
+        // 🚨 ใส่ Try...Catch ป้องกันข้อมูลผู้ใช้พังจนหยุดการทำงาน 🚨
+        try {
+            this.currentUser = JSON.parse(sessionStr);
+            const userInfoName = document.querySelector('.user-info h4');
+            if (userInfoName && this.currentUser) {
+                const roleLabels = {
+                    'admin': '(ผู้ดูแลระบบ)',
+                    'doctor': '(แพทย์)',
+                    'head_nurse': '(หัวหน้าพยาบาล)',
+                    'nurse': '(พยาบาล)',
+                    'assistant': '(ผู้ช่วย PN/NA)',
+                    'finance': '(การเงิน/บัญชี)',
+                    'stock': '(เจ้าหน้าที่พัสดุ)'
+                };
+                let roleTitle = roleLabels[this.currentUser.role] || '(พนักงานทั่วไป)';
+                let safeName = this.currentUser.name || 'ผู้ใช้งาน';
+                userInfoName.innerText = `${safeName} ${roleTitle}`;
+                
+                const avatar = document.querySelector('.user-avatar');
+                if(avatar) {
+                    let initials = safeName.substring(0, 2).toUpperCase();
+                    avatar.innerText = initials;
+                }
             }
+        } catch (e) {
+            console.error("Session parse error", e);
+            localStorage.removeItem('dialysis_user_session');
+            this.switchPage('login');
+            return false;
         }
 
         this.setupIdleTimer();
@@ -354,6 +386,9 @@ const App = {
 };
 
 window.addEventListener('DOMContentLoaded', () => {
+    // 🚨 เปิดสวิตช์นาฬิกาทันทีโดยไม่สนบั๊ก 🚨
+    try { App.initClock(); } catch (e) { console.error("Clock Init Error:", e); }
+
     if (!sessionStorage.getItem('dialysis_session_active')) {
         localStorage.removeItem('dialysis_user_session');
         localStorage.removeItem('dialysis_is_locked');
@@ -365,25 +400,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const defaultMenu = document.querySelector('.nav-item.active') || document.querySelector('.nav-item');
     App.switchPage('dashboard', defaultMenu);
-
-    setInterval(() => {
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        const dateStr = now.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
-        
-        const clockEl = document.getElementById('clockDisplay');
-        if (clockEl) {
-            clockEl.innerHTML = `
-                <div style="display: flex; align-items: center; white-space: nowrap; font-variant-numeric: tabular-nums;">
-                    <i class="fa-regular fa-clock" style="color:var(--primary); font-size:16px;"></i> 
-                    <span style="color: var(--text-dark); font-size: 14.5px; margin-left: 8px; font-weight: 700;">${dateStr}</span> 
-                    <span style="color: #cbd5e1; margin: 0 10px;">|</span> 
-                    <span style="color: var(--primary); font-weight: 800; font-size: 15.5px; letter-spacing: 0.5px; width: 85px; display: inline-block; text-align: center;">${timeStr}</span>
-                    <span style="color: var(--primary); font-weight: 800; font-size: 15.5px; margin-left: 4px;">น.</span>
-                </div>
-            `;
-        }
-    }, 1000);
 
     if (typeof db !== 'undefined') {
         db.ref('clinic_settings_v2').on('value', snap => {

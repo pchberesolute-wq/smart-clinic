@@ -1,8 +1,7 @@
 /* css/style.css */
-/* 💎 DIALYSIS PRO - Vibrant 3D & Colorful Icons UI (Clean Responsive Edition) */
+/* 💎 DIALYSIS PRO - Vibrant 3D & Colorful Icons UI (Ultimate Responsive Edition) */
 
 :root {
-    /* 🌟 สีสันสดใส & ไล่สี (Gradients) */
     --primary: #2563eb;
     --primary-dark: #1e40af;
     --primary-light: #eff6ff;
@@ -34,7 +33,6 @@
     --text-muted: #64748b;
     --border-color: rgba(226, 232, 240, 0.8);
     
-    /* 🌟 แสงเงาหนักๆ แบบนุ่มนวล (Heavy Soft Shadows 3D) */
     --shadow-panel: 0 15px 35px -5px rgba(15, 23, 42, 0.08), 0 5px 15px -3px rgba(15, 23, 42, 0.04);
     --shadow-float-primary: 0 12px 25px -6px rgba(37, 99, 235, 0.45);
     --shadow-float-danger: 0 12px 25px -6px rgba(225, 29, 72, 0.4);
@@ -43,9 +41,9 @@
     --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.03);
     
     --sidebar-width: 320px; 
+    --sidebar-collapsed-width: 90px;
     --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     
-    /* 🔲 ความโค้ง (Border Radius) */
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 16px;
@@ -55,13 +53,24 @@
 
 * { box-sizing: border-box; }
 
+/* 🌟 Fluid Typography & Overflow Protection */
+html { 
+    font-size: clamp(13px, 1vw + 10px, 16px); 
+    -webkit-text-size-adjust: 100%; 
+}
+
 body { 
     font-family: 'Sarabun', sans-serif; 
     background-color: var(--bg-body); 
     color: var(--text-dark); 
-    margin: 0; padding: 0; overflow-x: hidden; 
+    margin: 0; padding: 0; 
+    overflow-x: hidden !important; 
+    width: 100%; max-width: 100vw;
     -webkit-font-smoothing: antialiased; 
 }
+
+img, canvas, iframe, video, svg { max-width: 100% !important; height: auto; }
+h1, h2, h3, h4, h5, h6, p, span, div, a { overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; }
 
 h1, h2, h3, h4, h5, h6, .page-title { font-family: 'Prompt', sans-serif; letter-spacing: -0.5px;}
 
@@ -112,19 +121,18 @@ h1, h2, h3, h4, h5, h6, .page-title { font-family: 'Prompt', sans-serif; letter-
     margin-right: 10px; transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 🌈 กำหนดสีแยกเฉพาะแต่ละไอคอนให้ดูน่าใช้งาน */
-.nav-item i.fa-chart-pie { color: #3b82f6; }            /* แดชบอร์ด: สีน้ำเงิน */
-.nav-item i.fa-bed-pulse { color: #10b981; }            /* คิวฟอกไต: สีเขียว */
-.nav-item i.fa-hospital-user { color: #8b5cf6; }        /* ผู้ป่วย: สีม่วง */
-.nav-item i.fa-file-medical { color: #f43f5e; }          /* 🌟 Flowsheet: สีแดงชมพู */
-.nav-item i.fa-folder-open { color: #06b6d4; }           /* 🌟 EMR: สีฟ้าครามสว่าง */
-.nav-item i.fa-boxes-packing { color: #f59e0b; }        /* คลังพัสดุ: สีส้ม */
-.nav-item i.fa-robot { color: #ec4899; }                /* Smart PO: สีชมพู */
-.nav-item i.fa-clipboard-check { color: #14b8a6; }       /* นับสต๊อก: สีเขียวอมฟ้า (Teal) */
-.nav-item i.fa-clock-rotate-left { color: #64748b; }     /* ประวัติ: สีเทา */
-.nav-item i.fa-copy, .nav-item i.fa-magnifying-glass { color: #0ea5e9; } /* ค้นหา: สีฟ้าสว่าง */
-.nav-item i.fa-file-invoice-dollar { color: #22c55e; }   /* การเงิน: สีเขียวมินต์ */
-.nav-item i.fa-sliders, .nav-item i.fa-gear { color: #475569; } /* ตั้งค่า: สีเทาเข้ม */
+.nav-item i.fa-chart-pie { color: #3b82f6; }            
+.nav-item i.fa-bed-pulse { color: #10b981; }            
+.nav-item i.fa-hospital-user { color: #8b5cf6; }        
+.nav-item i.fa-file-medical { color: #f43f5e; }          
+.nav-item i.fa-folder-open { color: #06b6d4; }           
+.nav-item i.fa-boxes-packing { color: #f59e0b; }        
+.nav-item i.fa-robot { color: #ec4899; }                
+.nav-item i.fa-clipboard-check { color: #14b8a6; }       
+.nav-item i.fa-clock-rotate-left { color: #64748b; }     
+.nav-item i.fa-copy, .nav-item i.fa-magnifying-glass { color: #0ea5e9; } 
+.nav-item i.fa-file-invoice-dollar { color: #22c55e; }   
+.nav-item i.fa-sliders, .nav-item i.fa-gear { color: #475569; } 
 
 .nav-item:hover { 
     background: #f8fafc; color: var(--text-dark); 
@@ -163,10 +171,21 @@ h1, h2, h3, h4, h5, h6, .page-title { font-family: 'Prompt', sans-serif; letter-
 .user-info p { margin: 0; font-size: 11px; font-weight: 600; margin-top: 2px; color: #64748b; transition: all 0.2s;}
 .user-card-wrapper:hover .user-info p { color: #e11d48; transform: translateX(3px); }
 
+/* ฉากหลังเมนูตอนกางมือถือ */
+.sidebar-backdrop-engine {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(15, 23, 42, 0.4); z-index: 9998;
+    opacity: 0; visibility: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+}
+.sidebar-backdrop-engine.active {
+    opacity: 1; visibility: visible;
+}
+
 /* ==========================================================================
    2. 🌟 TOPBAR & CONTENT
    ========================================================================== */
-.main-content { margin-left: var(--sidebar-width); min-height: 100vh; display: flex; flex-direction: column; transition: var(--transition); }
+.main-content { margin-left: var(--sidebar-width); min-height: calc(var(--vh, 1vh) * 100); display: flex; flex-direction: column; transition: var(--transition); }
 
 .topbar { 
     height: 90px; background: transparent; padding: 0 30px; 
@@ -197,11 +216,12 @@ h1, h2, h3, h4, h5, h6, .page-title { font-family: 'Prompt', sans-serif; letter-
 .page-title { font-size: 28px; font-weight: 800; color: var(--text-dark); margin: 0;}
 
 /* ==========================================================================
-   3. 🌟 PANELS & PREMIUM BUTTONS (เงาจัดเต็ม)
+   3. 🌟 PANELS & PREMIUM BUTTONS
    ========================================================================== */
 .modern-panel { 
     background: var(--bg-surface); border-radius: var(--radius-xl); padding: 30px; 
     box-shadow: var(--shadow-panel); border: 1px solid #ffffff; 
+    width: 100%; max-width: 100% !important;
 }
 .card-hover-float { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid transparent; }
 .card-hover-float:hover { transform: translateY(-4px); box-shadow: var(--shadow-float-primary); border-color: var(--primary-light); }
@@ -209,7 +229,6 @@ h1, h2, h3, h4, h5, h6, .page-title { font-family: 'Prompt', sans-serif; letter-
 .btn { border-radius: 14px; font-family: 'Prompt'; font-weight: 700; padding: 12px 24px; transition: var(--transition); border: none;}
 .btn:active { transform: scale(0.95); }
 
-/* 🔥 ปุ่มพรีเมียมสีต่างๆ */
 .btn-premium-primary { background: var(--primary-gradient); color: white !important; box-shadow: var(--shadow-float-primary);}
 .btn-premium-primary:hover { background: linear-gradient(135deg, #1d4ed8, #1e3a8a); transform: translateY(-3px);}
 
@@ -222,19 +241,17 @@ h1, h2, h3, h4, h5, h6, .page-title { font-family: 'Prompt', sans-serif; letter-
 .btn-premium-warning { background: var(--warning-gradient); color: white !important; box-shadow: var(--shadow-float-warning);}
 .btn-premium-warning:hover { background: linear-gradient(135deg, #b45309, #78350f); transform: translateY(-3px);}
 
-/* 🌈 ป้ายสถานะแบบซอฟท์ (Soft Badges) */
 .badge-soft-primary { background: var(--primary-light); color: var(--primary); border: 1px solid #bfdbfe; font-weight: 700; padding: 6px 12px; border-radius: 50px; }
 .badge-soft-success { background: var(--success-light); color: var(--success-dark); border: 1px solid #bbf7d0; font-weight: 700; padding: 6px 12px; border-radius: 50px; }
 .badge-soft-warning { background: var(--warning-light); color: var(--warning-dark); border: 1px solid #fde68a; font-weight: 700; padding: 6px 12px; border-radius: 50px; }
 .badge-soft-danger { background: var(--danger-light); color: var(--danger-dark); border: 1px solid #fecaca; font-weight: 700; padding: 6px 12px; border-radius: 50px; }
 .badge-soft-info { background: var(--info-light); color: var(--info-dark); border: 1px solid #bae6fd; font-weight: 700; padding: 6px 12px; border-radius: 50px; }
 
-/* ช่องกรอกข้อความ (Inputs) */
 .input-modern { border-radius: 12px !important; border: 1px solid #cbd5e1 !important; background: #f8fafc; font-weight: 600 !important; padding: 10px 15px !important; transition: all 0.2s; color: var(--text-dark) !important;}
 .input-modern:focus { background: #fff !important; border-color: var(--primary) !important; box-shadow: 0 0 0 4px rgba(37,99,235,0.15) !important; outline: none; }
 
 /* ==========================================================================
-   4. 🌟 PREMIUM TABLES
+   4. 🌟 PREMIUM TABLES & MODALS
    ========================================================================== */
 .table-premium { margin-bottom: 0; width: 100%; border-collapse: separate; border-spacing: 0 10px; }
 .table-premium th { 
@@ -253,12 +270,78 @@ h1, h2, h3, h4, h5, h6, .page-title { font-family: 'Prompt', sans-serif; letter-
 }
 
 div.swal2-container { z-index: 9999999 !important; backdrop-filter: blur(8px); background: rgba(15, 23, 42, 0.7);}
-.swal2-popup { border-radius: var(--radius-xl) !important; font-family: 'Sarabun' !important; box-shadow: var(--shadow-panel) !important;}
+.swal2-popup { 
+    width: 90% !important; max-width: 500px !important;
+    padding: clamp(1em, 3vw, 2em) !important; box-sizing: border-box; 
+    border-radius: clamp(16px, 4vw, 24px) !important; font-family: 'Sarabun' !important; box-shadow: var(--shadow-panel) !important;
+}
 .swal2-title { font-family: 'Prompt' !important; font-weight: 800 !important;}
 .swal2-confirm { border-radius: 14px !important; font-family: 'Prompt' !important; font-weight: 700 !important; padding: 14px 30px !important; background: var(--primary-gradient) !important; box-shadow: var(--shadow-float-primary) !important;}
 
 /* ==========================================================================
-   5. 🖨️ PRINT ONLY (ปิดเมนูตอนสั่งพิมพ์)
+   5. 📱 RESPONSIVE ADAPTERS (สมองกลปรับขนาดจอ 3 เลเยอร์)
+   ========================================================================== */
+
+/* เลเยอร์ 1: สำหรับแท็บเล็ตและ iPad แนวตั้ง (Portrait) */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .sidebar { width: var(--sidebar-collapsed-width); }
+    .sidebar-brand { padding: 0; justify-content: center; }
+    .brand-icon { margin-right: 0; }
+    .brand-text, .nav-section, .nav-item span, .user-info { display: none; }
+    .nav-item { justify-content: center; padding: 14px 0; margin: 4px 15px; }
+    .nav-item i { margin-right: 0; font-size: 22px; width: auto; }
+    .user-card-wrapper { padding: 10px; margin: 0 10px; border: none; background: transparent; box-shadow: none;}
+    .user-card { justify-content: center; }
+    .user-avatar { margin-right: 0; width: 45px; height: 45px; min-width: 45px;}
+    .main-content { margin-left: var(--sidebar-collapsed-width); }
+    .search-box-modern { width: 100% !important; }
+}
+
+/* เลเยอร์ 2: สำหรับหน้าจอมือถือโดยเฉพาะ */
+@media (max-width: 767px) {
+    .sidebar { 
+        position: fixed !important; transform: none !important;
+        left: -320px; top: 0; height: 100vh;
+        width: clamp(260px, 75vw, 320px) !important; 
+        z-index: 9999 !important; background: #fff;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 5px 0 25px rgba(0,0,0,0.15); overflow-y: auto;
+    }
+    .sidebar.active { left: 0 !important; }
+    .brand-text, .nav-section, .nav-item span, .user-info { display: block; } 
+    .nav-item { justify-content: flex-start; padding: 12px 18px; margin: 6px 20px; }
+    .nav-item i { margin-right: 12px; font-size: 18px; }
+    .user-card-wrapper { border: 1px solid #e2e8f0; padding: 12px; margin: 0;}
+    .user-avatar { margin-right: 12px; }
+    
+    .main-content { margin-left: 0 !important; }
+    .topbar { padding: 0 15px !important; height: 80px; }
+    .content-wrapper { padding: 0 15px 30px 15px !important; }
+    .topbar button.d-xl-none { z-index: 10000; position: relative; display: flex !important; margin-right: 10px;} 
+    
+    .time-widget { display: none; } /* ซ่อนนาฬิกาบนมือถือเพื่อประหยัดพื้นที่ */
+    .search-box, .search-box-modern { width: 100% !important; max-width: 100% !important; }
+    
+    /* กฎเหล็ก Apple: ฟอนต์ใน Input ต้อง 16px ขึ้นไป ป้องกันซูมเอง */
+    input[type="text"], input[type="number"], input[type="date"], input[type="password"],
+    select, textarea, .form-control, .input-modern { font-size: 16px !important; }
+
+    /* ปุ่มกดบนมือถือให้ใหญ่พอนิ้วจิ้ม */
+    .btn { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; white-space: normal; line-height: 1.4; }
+
+    /* แท็บเมนู (Tabs) เลื่อนซ้ายขวาได้ */
+    .nav-tabs, .nav-pills, .emr-nav-pills, .finance-nav-tabs { 
+        flex-wrap: nowrap !important; overflow-x: auto !important; 
+        overflow-y: hidden !important; -webkit-overflow-scrolling: touch; 
+        justify-content: flex-start !important; padding-bottom: 5px; 
+    }
+    
+    .table-responsive { margin-bottom: 1rem; width: 100%; -webkit-overflow-scrolling: touch; }
+    .table th, .table td { white-space: nowrap; }
+}
+
+/* ==========================================================================
+   6. 🖨️ PRINT ONLY (ปิดเมนูตอนสั่งพิมพ์)
    ========================================================================== */
 @media print {
     .sidebar, .topbar, .btn { display: none !important; }
