@@ -30,7 +30,6 @@ const AboutPage = {
         </div>
 
         <div class="row g-4 pb-4">
-            <!-- 🌟 ฝั่งซ้าย: ข้อมูลระบบหลัก และ Tech Stack -->
             <div class="col-xl-8 col-lg-7 fade-in-up" style="animation-delay: 0.1s;">
                 <div class="modern-panel p-5 h-100 position-relative overflow-hidden" style="border-top: 5px solid var(--primary); border-radius: 20px;">
                     <div style="position: absolute; top: -30px; right: -20px; opacity: 0.02; font-size: 250px; pointer-events: none;">
@@ -38,10 +37,8 @@ const AboutPage = {
                     </div>
                     
                     <div class="d-flex align-items-center mb-4 position-relative z-1">
-                        <!-- 🚨 จุดใส่รูปโลโก้ใหม่ของคุณหมอ 🚨 -->
-                        <!-- วิธีเปลี่ยนรูป: เอาลิงก์รูปภาพมาใส่ในช่อง src="..." ได้เลยครับ -->
                         <div class="app-logo-frame me-4">
-                            <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=200&auto=format&fit=crop" id="about-app-logo" alt="Dialysis Pro Logo">
+                            <img src="./img/logo.png" id="about-app-logo" alt="DIALYSIS PRO Logo" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=200&auto=format&fit=crop';">
                         </div>
                         <div>
                             <h2 class="fw-bold text-dark mb-1" style="font-family:'Prompt';">DIALYSIS PRO <span class="text-primary">CLOUD OS</span></h2>
@@ -90,7 +87,6 @@ const AboutPage = {
                         </ul>
                     </div>
 
-                    <!-- ส่วนเทคโนโลยีและโปรแกรมที่ใช้พัฒนา -->
                     <div class="mt-5 position-relative z-1 pt-4 border-top border-light">
                         <h5 class="fw-bold text-dark mb-4"><i class="fa-solid fa-code text-primary me-2"></i> เทคโนโลยีและโปรแกรมที่ใช้พัฒนา (Tech Stack & Tools)</h5>
                         
@@ -166,11 +162,9 @@ const AboutPage = {
                 </div>
             </div>
 
-            <!-- 🌟 ฝั่งขวา: กล่องข้อมูลผู้พัฒนา คณะจัดทำ และ License -->
             <div class="col-xl-4 col-lg-5 fade-in-up" style="animation-delay: 0.2s;">
                 <div class="modern-panel p-4 h-100 d-flex flex-column" style="border-top: 5px solid var(--danger); border-radius: 20px;">
                     
-                    <!-- ส่วนลิขสิทธิ์ซอฟต์แวร์ -->
                     <div class="text-center mb-4 pb-4 border-bottom border-light">
                         <div class="rounded-circle bg-danger-subtle text-danger d-inline-flex align-items-center justify-content-center shadow-sm mb-3" style="width: 65px; height: 65px;">
                             <i class="fa-solid fa-copyright fa-2x"></i>
@@ -190,7 +184,6 @@ const AboutPage = {
                         </div>
                     </div>
 
-                    <!-- ส่วนรายชื่อคณะผู้จัดทำ -->
                     <div class="mb-2">
                         <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-users-viewfinder me-2"></i> คณะจัดทำและพัฒนาระบบ</h6>
                         
@@ -223,7 +216,6 @@ const AboutPage = {
                         </div>
                     </div>
                     
-                    <!-- ส่วนท้าย (Database) -->
                     <div class="mt-auto pt-3 border-top border-light">
                         <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded-4 border border-secondary-subtle">
                             <span class="text-muted small fw-bold">Database Sync</span>

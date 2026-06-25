@@ -1,15 +1,29 @@
 // js/pages/login.js
-// 🚀 โมดูลหน้าลงชื่อเข้าใช้งาน (V8 - Premium Glassmorphism & Cloud Sync Fix)
+// 🚀 โมดูลหน้าลงชื่อเข้าใช้งาน (V12 - Elite Event Delegation & Bug Fixes)
+
+// 🚨 ระบบป้องกันหน้าเว็บกระพริบ (Anti-Flash Engine)
+(function preventFlash() {
+    if (!localStorage.getItem('dialysis_user_session')) {
+        const antiFlashStyle = document.createElement('style');
+        antiFlashStyle.id = 'anti-flash-style';
+        antiFlashStyle.innerHTML = `
+            #sidebar, .topbar { display: none !important; }
+            .main-content { margin-left: 0 !important; background: #f8fafc !important; }
+            body { background: #f8fafc !important; }
+        `;
+        document.head.appendChild(antiFlashStyle);
+    }
+})();
 
 const LoginPage = {
     roleConfig: {
-        'admin': { label: 'ผู้ดูแลระบบ', emoji: '🛡️' },
-        'doctor': { label: 'แพทย์', emoji: '🩺' },
-        'head_nurse': { label: 'หัวหน้าพยาบาล', emoji: '👑' },
-        'nurse': { label: 'พยาบาล', emoji: '👩‍⚕️' },
-        'assistant': { label: 'ผู้ช่วยพยาบาล', emoji: '🩹' },
-        'finance': { label: 'การเงิน/บัญชี', emoji: '💵' },
-        'stock': { label: 'พัสดุ', emoji: '📦' }
+        'admin': { label: 'ผู้ดูแลระบบ', iconHtml: '<i class="fa-solid fa-shield-halved text-danger"></i>' },
+        'doctor': { label: 'แพทย์', iconHtml: '<i class="fa-solid fa-user-doctor text-success"></i>' },
+        'head_nurse': { label: 'หัวหน้าพยาบาล', iconHtml: '<i class="fa-solid fa-star text-warning"></i>' },
+        'nurse': { label: 'พยาบาล', iconHtml: '<i class="fa-solid fa-user-nurse text-primary"></i>' },
+        'assistant': { label: 'ผู้ช่วยพยาบาล', iconHtml: '<i class="fa-solid fa-hand-holding-medical text-info"></i>' },
+        'finance': { label: 'การเงิน/บัญชี', iconHtml: '<i class="fa-solid fa-file-invoice-dollar text-success"></i>' },
+        'stock': { label: 'พัสดุ', iconHtml: '<i class="fa-solid fa-boxes-packing text-secondary"></i>' }
     },
 
     html: `
@@ -30,23 +44,55 @@ const LoginPage = {
             }
             @keyframes slideUpFade { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
 
-            .brand-logo-wrapper {
-                width: 85px; height: 85px; background: var(--primary-gradient);
-                border-radius: 24px; display: flex; align-items: center; justify-content: center;
-                font-size: 38px; color: white; margin: 0 auto 20px; box-shadow: var(--shadow-float-primary);
-                transform: rotate(-10deg); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            }
+            .brand-logo-wrapper { width: 100px; height: 100px; margin: 0 auto 20px; transform: rotate(-5deg); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; }
             .login-card:hover .brand-logo-wrapper { transform: rotate(0deg) scale(1.08); }
+            .brand-logo-wrapper img { width: 100%; height: 100%; object-fit: cover; border-radius: 28px; box-shadow: 0 15px 35px -5px rgba(37, 99, 235, 0.4); border: 3px solid #ffffff; background: #ffffff; }
 
             .login-title-h2 { letter-spacing: -0.5px; white-space: nowrap; overflow: visible; font-size: clamp(18px, 4vw, 26px); }
 
+            /* 🌟 สไตล์กล่อง ไอคอนโปรไฟล์ 🌟 */
+            .profile-selector-btn {
+                background: rgba(241, 245, 249, 0.8); border: 2px solid transparent; border-radius: 14px;
+                padding: 12px 18px; display: flex; align-items: center; justify-content: space-between;
+                cursor: pointer; transition: all 0.3s ease; box-shadow: inset 0 2px 4px rgba(255,255,255,0.5);
+            }
+            .profile-selector-btn:hover { background: #fff; border-color: #bfdbfe; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1); }
+            
+            .selected-user-info { display: flex; align-items: center; gap: 14px; }
+            .selected-avatar-img { 
+                width: 42px; height: 42px; border-radius: 50%; object-fit: cover; 
+                border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            .selected-text-group { display: flex; flex-direction: column; align-items: flex-start; }
+            .selected-name { font-weight: 700; color: #1e293b; font-size: 15px; font-family: 'Prompt', sans-serif; line-height: 1.2; }
+            .selected-role { font-weight: 600; color: #64748b; font-size: 12px; }
+
+            .custom-options-panel {
+                display: none; position: absolute; width: 100%; top: calc(100% + 8px); left: 0;
+                background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+                border: 1px solid rgba(203, 213, 225, 0.8); border-radius: 16px;
+                box-shadow: 0 15px 35px -5px rgba(0,0,0,0.15); z-index: 9999;
+                max-height: 280px; overflow-y: auto; padding: 10px;
+                animation: slideDownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
+            .custom-options-panel::-webkit-scrollbar { width: 6px; }
+            .custom-options-panel::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+            
+            .custom-option-item {
+                display: flex; align-items: center; padding: 10px 15px;
+                border-radius: 12px; cursor: pointer; transition: all 0.2s; margin-bottom: 4px; border: 1px solid transparent;
+            }
+            .custom-option-item:hover { background: #f1f5f9; border-color: #e2e8f0; transform: translateX(3px); }
+            
+            .custom-option-avatar { width: 38px; height: 38px; border-radius: 50%; margin-right: 14px; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+            .custom-option-icon { width: 38px; height: 38px; border-radius: 50%; margin-right: 14px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 16px; box-shadow: inset 0 0 0 1px #e2e8f0; }
+            
             .input-modern-login { background: rgba(241, 245, 249, 0.8); border: 2px solid transparent; border-radius: 14px; padding-left: 15px; font-weight: 600; color: #1e293b; transition: all 0.3s; }
             .input-modern-login:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15); }
-            .input-modern-login::placeholder { color: #94a3b8; font-weight: 500; }
             .modern-icon-login { background: rgba(241, 245, 249, 0.8); border: 2px solid transparent; border-right: none; border-radius: 14px 0 0 14px; color: #64748b; transition: all 0.3s; }
             .input-group:focus-within .modern-icon-login { background: #fff; border-color: var(--primary); color: var(--primary); }
             .input-group:focus-within .input-modern-login { border-left-color: transparent; }
-            
+
             .swal2-popup.premium-alert { border-radius: 24px !important; padding: 25px 20px !important; border: 1px solid rgba(255,255,255,0.8) !important; background: rgba(255, 255, 255, 0.98) !important; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15) !important; }
             .swal2-confirm.premium-btn { border-radius: 12px !important; padding: 12px 28px !important; font-family: 'Prompt', sans-serif !important; font-weight: 600 !important; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important; color: white !important; box-shadow: 0 8px 15px -3px rgba(37, 99, 235, 0.3) !important; border: none !important; transition: all 0.3s ease; }
             .swal2-confirm.premium-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -3px rgba(37, 99, 235, 0.4) !important; }
@@ -62,18 +108,36 @@ const LoginPage = {
 
             <div class="login-card">
                 <div class="text-center mb-4 pb-2">
-                    <div class="brand-logo-wrapper"><i class="fa-solid fa-droplet"></i></div>
+                    <div class="brand-logo-wrapper">
+                        <img src="./img/logo.png" alt="DIALYSIS PRO Logo" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=200&auto=format&fit=crop';">
+                    </div>
                     <h2 class="fw-bold text-dark mb-1 login-title-h2">หน่วยไตเทียม <span style="color: var(--primary);">โรงพยาบาลคริสเตียน แพร่</span></h2>
                     <p class="text-muted fw-medium small mb-0 mt-2">ระบบบริหารจัดการเวชระเบียนคลินิกฟอกไต</p>
                 </div>
 
                 <div class="mb-4 mt-5">
                     <label class="form-label fw-bold text-secondary small mb-2 ps-1">เลือกบัญชีผู้ใช้งานระบบ</label>
-                    <div class="input-group mb-3 shadow-sm" style="border-radius: 14px;">
-                        <span class="input-group-text modern-icon-login px-3"><i class="fa-solid fa-user-circle text-primary"></i></span>
-                        <select id="login-username-select" class="form-select form-select-lg input-modern-login border-start-0 fw-bold text-dark" style="cursor: pointer;" onchange="LoginPage.onUserSelectChange(this.value)">
-                            <option value="" disabled selected>-- กำลังโหลดข้อมูล... --</option>
-                        </select>
+                    
+                    <!-- 🌟 ปุ่ม Profile Dropdown ดีไซน์ใหม่ 🌟 -->
+                    <div class="position-relative mb-3" id="custom-dropdown-wrapper">
+                        <input type="hidden" id="login-username-select" value="">
+                        
+                        <div class="profile-selector-btn shadow-sm" onclick="LoginPage.toggleCustomDropdown(event)">
+                            <div class="selected-user-info" id="display-user-container">
+                                <!-- กรอบรูปวงกลมเริ่มต้น -->
+                                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; border: 2px solid #e2e8f0;">
+                                    <i class="fa-solid fa-user text-secondary"></i>
+                                </div>
+                                <div class="selected-text-group">
+                                    <span class="selected-name text-muted">กำลังโหลดข้อมูล...</span>
+                                    <span class="selected-role">กรุณารอสักครู่</span>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-chevron-down text-secondary ms-2" style="font-size: 14px;"></i>
+                        </div>
+
+                        <!-- ลิสต์รายชื่อที่เด้งลงมา (จะจัดการคลิกผ่าน Event Delegation) -->
+                        <div id="custom-user-list" class="custom-options-panel"></div>
                     </div>
 
                     <div id="manual-username-wrapper" style="display: none; animation: slideUpFade 0.3s ease forwards;">
@@ -121,36 +185,53 @@ const LoginPage = {
     allUsers: [],
 
     init: async function() {
-        const selectEl = document.getElementById('login-username-select');
+        // 🚨 ดักจับการคลิกเพื่อปิด Dropdown เมื่อคลิกที่อื่น
+        if (!window.customDropdownListenerAdded) {
+            document.addEventListener('click', (e) => {
+                const wrapper = document.getElementById('custom-dropdown-wrapper');
+                const list = document.getElementById('custom-user-list');
+                if (wrapper && list && !wrapper.contains(e.target)) {
+                    list.style.display = 'none';
+                }
+            });
+            window.customDropdownListenerAdded = true;
+        }
+
+        // 🚨 สถาปัตยกรรม Event Delegation สำหรับตรวจจับการคลิกเลือกผู้ใช้ 100% Bug-Free
+        const userListPanel = document.getElementById('custom-user-list');
+        if (userListPanel && !window.userListClickListenerAdded) {
+            userListPanel.addEventListener('click', (e) => {
+                const item = e.target.closest('.custom-option-item');
+                if (item) {
+                    const username = item.getAttribute('data-id');
+                    const name = item.getAttribute('data-name');
+                    const avatarUrl = item.getAttribute('data-avatar');
+                    const role = item.getAttribute('data-role');
+                    this.processUserSelection(username, name, avatarUrl, role);
+                }
+            });
+            window.userListClickListenerAdded = true;
+        }
 
         if (typeof firebase === 'undefined' || typeof db === 'undefined' || typeof firebase.auth !== 'function') {
-            selectEl.innerHTML = '<option disabled selected>❌ โหลดระบบรักษาความปลอดภัยไม่สำเร็จ</option>';
+            document.getElementById('display-user-container').innerHTML = `
+                <div class="rounded-circle bg-danger-subtle text-danger d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;"><i class="fa-solid fa-xmark"></i></div>
+                <div class="selected-text-group"><span class="selected-name text-danger">ระบบรักษาความปลอดภัยขัดข้อง</span></div>`;
             return;
         }
 
-        // 🚨 แก้โหลดช้า: ดึงจาก Cache มาโชว์ทันที
         let cachedUsers = localStorage.getItem('dialysis_cached_users');
         if (cachedUsers) {
             this.allUsers = JSON.parse(cachedUsers);
             this.renderUserDropdown();
         }
 
-        // แจ้งเตือนถ้ารันผ่าน file://
         if (window.location.protocol === 'file:') {
-            Swal.fire({
-                icon: 'error',
-                title: 'ไม่สามารถรันระบบบน file:// ได้',
-                html: '<p class="text-start">ระบบความปลอดภัยขั้นสูงไม่อนุญาตให้เปิดไฟล์ตรงๆ จากเครื่องครับ<br><br><b>วิธีแก้ไข:</b><br>1. ใช้ <b>Live Server</b> ใน VS Code<br>2. หรืออัพขึ้น Web Hosting จริง</p>',
-                allowOutsideClick: false
-            });
-            return;
+            Swal.fire({ icon: 'error', title: 'ไม่สามารถรันระบบบน file:// ได้', html: '<p class="text-start">ระบบความปลอดภัยไม่อนุญาตให้เปิดไฟล์ตรงๆ จากเครื่องครับ</p>', allowOutsideClick: false }); return;
         }
 
         try {
-            // 🚨 บังคับให้เบราว์เซอร์มือถือจำกุญแจถาวร แก้ปัญหาข้อมูลในมือถือหาย
             await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-
-            // 🚨 ระบบเรดาร์: ดึงข้อมูลจากคลาวด์แบบ Real-time
             firebase.auth().onAuthStateChanged(async (user) => {
                 if (user) {
                     db.ref('clinic_users_v2').on('value', snap => {
@@ -161,7 +242,9 @@ const LoginPage = {
                         if(this.allUsers.length > 0) {
                             localStorage.setItem('dialysis_cached_users', JSON.stringify(this.allUsers)); 
                         } else {
-                            selectEl.innerHTML = '<option disabled selected>-- ❌ ฐานข้อมูลบนคลาวด์ยังว่างเปล่า --</option>';
+                            document.getElementById('display-user-container').innerHTML = `
+                                <div class="rounded-circle bg-warning-subtle text-warning-dark d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;"><i class="fa-solid fa-database"></i></div>
+                                <div class="selected-text-group"><span class="selected-name text-warning-dark">ฐานข้อมูลว่างเปล่า</span></div>`;
                         }
                         this.renderUserDropdown();
                     });
@@ -169,27 +252,99 @@ const LoginPage = {
                     await firebase.auth().signInAnonymously();
                 }
             });
-
-        } catch (err) {
-            console.error("Init Error:", err);
-        }
+        } catch (err) { console.error("Init Error:", err); }
     },
 
+    toggleCustomDropdown: function(e) {
+        if(e) e.stopPropagation();
+        const list = document.getElementById('custom-user-list');
+        if(list) list.style.display = list.style.display === 'block' ? 'none' : 'block';
+    },
+
+    // 🌟 ฟังก์ชันประมวลผลเมื่อคลิกเลือกจาก List (ทำงานผ่าน Event Delegation) 🌟
+    processUserSelection: function(username, name, avatarUrl, role) {
+        document.getElementById('login-username-select').value = username;
+        
+        let roleIcon = '<i class="fa-solid fa-user-tag text-secondary"></i>';
+        let roleLabel = 'พนักงานทั่วไป';
+
+        if (role === 'manual') {
+            roleIcon = '<i class="fa-solid fa-lock text-warning"></i>';
+            roleLabel = 'สำหรับผู้ดูแลระบบ';
+        } else if (this.roleConfig[role]) {
+            roleIcon = this.roleConfig[role].iconHtml;
+            roleLabel = this.roleConfig[role].label;
+        }
+
+        let containerHtml = '';
+        if (avatarUrl && avatarUrl !== 'null') {
+            containerHtml = `
+                <img src="${avatarUrl}" class="selected-avatar-img">
+                <div class="selected-text-group">
+                    <span class="selected-name">${name}</span>
+                    <span class="selected-role">${roleIcon} <span class="ms-1">${roleLabel}</span></span>
+                </div>
+            `;
+        } else {
+            containerHtml = `
+                <div class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><i class="fa-solid fa-keyboard"></i></div>
+                <div class="selected-text-group">
+                    <span class="selected-name text-primary">${name}</span>
+                    <span class="selected-role">${roleIcon} <span class="ms-1">${roleLabel}</span></span>
+                </div>
+            `;
+        }
+        
+        document.getElementById('display-user-container').innerHTML = containerHtml;
+        document.getElementById('custom-user-list').style.display = 'none';
+        this.onUserSelectChange(username);
+    },
+
+    // วาดกล่อง Dropdown โดยใช้ Data Attributes
     renderUserDropdown: function() {
-        const selectEl = document.getElementById('login-username-select');
-        if(!selectEl) return;
+        const listEl = document.getElementById('custom-user-list');
+        if(!listEl) return;
 
-        let optionsHtml = '<option value="" disabled selected>-- เลือกชื่อผู้ใช้งานของคุณ --</option>';
+        document.getElementById('display-user-container').innerHTML = `
+            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; border: 2px solid #e2e8f0;"><i class="fa-solid fa-user text-secondary"></i></div>
+            <div class="selected-text-group"><span class="selected-name text-muted">คลิกเพื่อเลือกบัญชี</span><span class="selected-role">พนักงาน / ผู้ดูแลระบบ</span></div>
+        `;
+        
+        let html = '';
         this.allUsers.forEach(user => {
-            let roleData = this.roleConfig[user.role] || { label: 'พนักงานทั่วไป', emoji: '📋' };
-            optionsHtml += `<option value="${user.username}">${roleData.emoji} ${user.name} (${roleData.label})</option>`;
+            let roleData = this.roleConfig[user.role] || { label: 'พนักงานทั่วไป', iconHtml: '<i class="fa-solid fa-user-tag text-secondary"></i>' };
+            let avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=3b82f6&color=fff&bold=true&rounded=true`;
+            
+            // ใช้ data-attributes แทน onclick เพื่อป้องกัน String Escaping Bug
+            html += `
+                <div class="custom-option-item" data-id="${user.username}" data-name="${user.name}" data-avatar="${avatarUrl}" data-role="${user.role}">
+                    <img src="${avatarUrl}" class="custom-option-avatar">
+                    <div class="custom-option-text">
+                        <div class="custom-option-name">${user.name}</div>
+                        <div class="custom-option-role">${roleData.iconHtml} <span class="ms-1">${roleData.label}</span></div>
+                    </div>
+                </div>
+            `;
         });
-        optionsHtml += `<option value="manual">⌨️ กรอกไอดีเองด้วยมือ (Manual Login)</option>`;
-        selectEl.innerHTML = optionsHtml;
+        
+        // ปุ่มพิมพ์รหัสเอง
+        html += `
+            <div class="custom-option-item" style="border-top: 1px dashed #e2e8f0; margin-top: 5px; padding-top: 10px;" data-id="manual" data-name="กรอกไอดีเองด้วยมือ" data-avatar="null" data-role="manual">
+                <div class="custom-option-icon"><i class="fa-solid fa-keyboard text-primary"></i></div>
+                <div class="custom-option-text">
+                    <div class="custom-option-name text-primary">กรอกไอดีเองด้วยมือ</div>
+                    <div class="custom-option-role"><i class="fa-solid fa-lock text-warning"></i> <span class="ms-1">Manual Login</span></div>
+                </div>
+            </div>
+        `;
+        listEl.innerHTML = html;
 
+        // ดึงคนไข้ที่เคยติ๊ก "จำรหัส" ไว้มาโชว์อัตโนมัติ
         const savedUser = localStorage.getItem('dialysis_remember_username');
         if(savedUser && this.allUsers.some(u => u.username === savedUser)) {
-            selectEl.value = savedUser;
+            const userObj = this.allUsers.find(u => u.username === savedUser);
+            let avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userObj.name)}&background=3b82f6&color=fff&bold=true&rounded=true`;
+            this.processUserSelection(userObj.username, userObj.name, avatarUrl, userObj.role);
             document.getElementById('login-remember').checked = true;
         }
     },
@@ -214,8 +369,8 @@ const LoginPage = {
     },
 
     authenticate: async function() {
-        const selectEl = document.getElementById('login-username-select');
-        let usernameInp = selectEl.value;
+        const hiddenInput = document.getElementById('login-username-select');
+        let usernameInp = hiddenInput ? hiddenInput.value : '';
         const passwordInp = document.getElementById('login-password').value.trim();
         const btnLogin = document.getElementById('btn-login');
 
@@ -236,6 +391,7 @@ const LoginPage = {
         try {
             if (usernameInp === 'admin' && passwordInp === 'admin1234') {
                 App.currentUser = { id: 'MASTER_ADMIN', name: 'Master Admin', role: 'admin', status: 'active' };
+                document.getElementById('anti-flash-style')?.remove();
                 Swal.fire({ 
                     html: `<div class="mt-2"><i class="fa-solid fa-circle-check fa-4x text-success mb-3"></i><h4 class="fw-bold text-dark" style="font-family:'Prompt';">เข้าสู่ระบบสำเร็จ</h4><p class="text-muted small">ยินดีต้อนรับเข้าสู่ระบบ (Master Account)</p></div>`, 
                     timer: 1200, showConfirmButton: false, customClass: { popup: 'premium-alert' }
@@ -247,11 +403,7 @@ const LoginPage = {
 
             if (validUser) {
                 if (validUser.status !== 'active') {
-                    Swal.fire({ 
-                        html: '<div class="mt-2"><i class="fa-solid fa-user-lock fa-4x text-danger mb-3"></i><h4 class="fw-bold text-dark" style="font-family:\'Prompt\';">บัญชีถูกระงับ</h4><p class="text-muted small">บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ</p></div>', 
-                        showConfirmButton: true, confirmButtonText: 'ตกลง', buttonsStyling: false, 
-                        customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn premium-btn-danger' } 
-                    });
+                    Swal.fire({ html: '<div class="mt-2"><i class="fa-solid fa-user-lock fa-4x text-danger mb-3"></i><h4 class="fw-bold text-dark" style="font-family:\'Prompt\';">บัญชีถูกระงับ</h4><p class="text-muted small">บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ</p></div>', showConfirmButton: true, confirmButtonText: 'ตกลง', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn premium-btn-danger' } });
                     btnLogin.innerHTML = originalBtnHtml; btnLogin.disabled = false;
                     return;
                 }
@@ -262,6 +414,7 @@ const LoginPage = {
                 const sessionData = { id: validUser.id, username: validUser.username, name: validUser.name, role: validUser.role, login_time: new Date().getTime() };
                 localStorage.setItem('dialysis_user_session', JSON.stringify(sessionData));
                 App.currentUser = validUser;
+                document.getElementById('anti-flash-style')?.remove();
 
                 Swal.fire({ 
                     html: `<div class="mt-2"><i class="fa-solid fa-circle-check fa-4x text-success mb-3"></i><h4 class="fw-bold text-dark" style="font-family:'Prompt';">เข้าสู่ระบบสำเร็จ</h4><p class="text-muted small">ยินดีต้อนรับคุณ <b>${validUser.name}</b></p></div>`, 
@@ -269,123 +422,57 @@ const LoginPage = {
                 }).then(() => App.switchPage('dashboard'));
                 
             } else {
-                Swal.fire({ 
-                    html: '<div class="mt-2"><i class="fa-solid fa-circle-xmark fa-4x text-danger mb-3"></i><h4 class="fw-bold text-dark" style="font-family:\'Prompt\';">ล็อคอินล้มเหลว</h4><p class="text-muted small">รหัสผ่านไม่ถูกต้อง หรือไม่พบชื่อผู้ใช้งานนี้ในระบบ!</p></div>', 
-                    showConfirmButton: true, confirmButtonText: 'ลองใหม่อีกครั้ง', buttonsStyling: false,
-                    customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn premium-btn-danger' }
-                });
+                Swal.fire({ html: '<div class="mt-2"><i class="fa-solid fa-circle-xmark fa-4x text-danger mb-3"></i><h4 class="fw-bold text-dark" style="font-family:\'Prompt\';">ล็อคอินล้มเหลว</h4><p class="text-muted small">รหัสผ่านไม่ถูกต้อง หรือไม่พบชื่อผู้ใช้งานนี้ในระบบ!</p></div>', showConfirmButton: true, confirmButtonText: 'ลองใหม่อีกครั้ง', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn premium-btn-danger' } });
                 btnLogin.innerHTML = originalBtnHtml; btnLogin.disabled = false;
                 document.getElementById('login-password').value = '';
             }
-        } catch (error) {
-            console.error("Login Error:", error);
-            Swal.fire({ title: 'ข้อผิดพลาดเครือข่าย', text: 'ไม่สามารถเปิดประตูฐานข้อมูลได้ กรุณาตรวจสอบอินเทอร์เน็ต', icon: 'error', customClass: { popup: 'premium-alert' } });
-            btnLogin.innerHTML = originalBtnHtml; btnLogin.disabled = false;
-        }
+        } catch (error) { Swal.fire({ title: 'ข้อผิดพลาดเครือข่าย', text: 'ไม่สามารถเปิดประตูฐานข้อมูลได้ กรุณาตรวจสอบอินเทอร์เน็ต', icon: 'error', customClass: { popup: 'premium-alert' } }); btnLogin.innerHTML = originalBtnHtml; btnLogin.disabled = false; }
     },
 
     forgotPassword: function() {
         Swal.fire({
             title: '<h4 class="fw-bold text-primary mb-0" style="font-family:\'Prompt\';"><i class="fa-solid fa-unlock-keyhole me-2"></i> ขอรีเซ็ตรหัสผ่าน</h4>',
-            html: '<div class="text-start mt-3" style="font-family:\'Sarabun\';">' +
-                    '<label class="form-label fw-bold small text-secondary">กรุณาระบุ Username (ไอดี) ของคุณ</label>' +
-                    '<input type="text" id="swal-reset-username" class="form-control input-modern text-center fw-bold fs-5 mt-2" value="admin" onfocus="this.select()" placeholder="กรอก Username">' +
-                  '</div>',
-            showCancelButton: true, confirmButtonText: 'ถัดไป <i class="fa-solid fa-arrow-right ms-1"></i>', cancelButtonText: 'ยกเลิก', buttonsStyling: false, 
-            customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn mx-2', cancelButton: 'swal2-cancel premium-btn-cancel mx-2' },
-            preConfirm: () => {
-                const username = document.getElementById('swal-reset-username').value.trim();
-                if(!username) { Swal.showValidationMessage('กรุณาระบุ Username'); return false; }
-                return username;
-            }
+            html: '<div class="text-start mt-3" style="font-family:\'Sarabun\';"><label class="form-label fw-bold small text-secondary">กรุณาระบุ Username (ไอดี) ของคุณ</label><input type="text" id="swal-reset-username" class="form-control input-modern text-center fw-bold fs-5 mt-2" value="admin" onfocus="this.select()" placeholder="กรอก Username"></div>',
+            showCancelButton: true, confirmButtonText: 'ถัดไป <i class="fa-solid fa-arrow-right ms-1"></i>', cancelButtonText: 'ยกเลิก', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn mx-2', cancelButton: 'swal2-cancel premium-btn-cancel mx-2' },
+            preConfirm: () => { const username = document.getElementById('swal-reset-username').value.trim(); if(!username) { Swal.showValidationMessage('กรุณาระบุ Username'); return false; } return username; }
         }).then(async (result) => {
             if(result.isConfirmed) {
-                const targetUsername = result.value;
-                Swal.fire({title: 'กำลังตรวจสอบ...', didOpen: () => Swal.showLoading(), customClass: { popup: 'premium-alert' }});
-                
+                const targetUsername = result.value; Swal.fire({title: 'กำลังตรวจสอบ...', didOpen: () => Swal.showLoading(), customClass: { popup: 'premium-alert' }});
                 try {
-                    if(typeof firebase !== 'undefined' && firebase.auth) {
-                        if(firebase.auth().currentUser === null) {
-                            await firebase.auth().signInAnonymously();
-                        }
-                    }
-
-                    const [usersSnap, settingsSnap] = await Promise.all([
-                        db.ref('clinic_users_v2').once('value'),
-                        db.ref('clinic_settings_v2/admin_pin').once('value')
-                    ]);
-                    
-                    const usersData = usersSnap.val() || [];
-                    const adminPin = settingsSnap.val();
-                    
+                    if(typeof firebase !== 'undefined' && firebase.auth) { if(firebase.auth().currentUser === null) { await firebase.auth().signInAnonymously(); } }
+                    const [usersSnap, settingsSnap] = await Promise.all([ db.ref('clinic_users_v2').once('value'), db.ref('clinic_settings_v2/admin_pin').once('value') ]);
+                    const usersData = usersSnap.val() || []; const adminPin = settingsSnap.val();
                     let usersArray = Array.isArray(usersData) ? usersData : Object.keys(usersData).map(k => usersData[k]);
                     let userIndex = usersArray.findIndex(u => u && u.username.toLowerCase() === targetUsername.toLowerCase());
-                    
-                    if(userIndex === -1) {
-                        Swal.fire({ 
-                            html: `<div class="mt-2"><i class="fa-solid fa-user-xmark fa-4x text-danger mb-3"></i><h4 class="fw-bold text-dark" style="font-family:'Prompt';">ไม่พบผู้ใช้</h4><p class="text-muted small">ไม่มีไอดี <b>${targetUsername}</b> ในระบบ</p></div>`, 
-                            showConfirmButton: true, confirmButtonText: 'ตกลง', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn premium-btn-danger' } 
-                        });
-                        return;
-                    }
-                    
-                    if(!adminPin) {
-                        Swal.fire({ 
-                            html: '<div class="mt-2"><i class="fa-solid fa-triangle-exclamation fa-4x text-warning mb-3"></i><h4 class="fw-bold text-dark" style="font-family:\'Prompt\';">ระบบยังไม่พร้อม</h4><p class="text-muted small">ผู้ดูแลระบบยังไม่ได้ตั้งค่า <b>Admin PIN</b><br>โปรดไปตั้งค่าที่เมนูตั้งค่าคลินิกก่อนครับ</p></div>', 
-                            showConfirmButton: true, confirmButtonText: 'ตกลง', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn' } 
-                        });
-                        return;
-                    }
+                    if(userIndex === -1) { Swal.fire({ html: `<div class="mt-2"><i class="fa-solid fa-user-xmark fa-4x text-danger mb-3"></i><h4 class="fw-bold text-dark" style="font-family:'Prompt';">ไม่พบผู้ใช้</h4><p class="text-muted small">ไม่มีไอดี <b>${targetUsername}</b> ในระบบ</p></div>`, showConfirmButton: true, confirmButtonText: 'ตกลง', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn premium-btn-danger' } }); return; }
+                    if(!adminPin) { Swal.fire({ html: '<div class="mt-2"><i class="fa-solid fa-triangle-exclamation fa-4x text-warning mb-3"></i><h4 class="fw-bold text-dark" style="font-family:\'Prompt\';">ระบบยังไม่พร้อม</h4><p class="text-muted small">ผู้ดูแลระบบยังไม่ได้ตั้งค่า <b>Admin PIN</b><br>โปรดไปตั้งค่าที่เมนูตั้งค่าคลินิกก่อนครับ</p></div>', showConfirmButton: true, confirmButtonText: 'ตกลง', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn' } }); return; }
                     
                     Swal.fire({
                         title: '<h4 class="text-danger fw-bold" style="font-family:\'Prompt\';"><i class="fa-solid fa-shield-halved me-2"></i> ยืนยันสิทธิ์ Admin</h4>',
-                        html: `<p class="small text-muted mb-3" style="font-family:'Sarabun';">กรุณาให้ผู้ดูแลระบบกรอก <b>Admin PIN</b> เพื่ออนุมัติการรีเซ็ตรหัสผ่านให้ไอดี <b class="text-primary">${targetUsername}</b></p>` +
-                              `<input type="password" id="swal-auth-pin" class="form-control input-modern text-center fw-bold text-danger fs-3 tracking-widest" placeholder="******" maxlength="6" oninput="this.value=this.value.replace(/[^0-9]/g,'')">`,
-                        showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-check me-1"></i> ยืนยัน PIN', cancelButtonText: 'ยกเลิก', buttonsStyling: false,
-                        customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn premium-btn-danger mx-2', cancelButton: 'swal2-cancel premium-btn-cancel mx-2' },
-                        preConfirm: () => {
-                            const enteredPin = document.getElementById('swal-auth-pin').value;
-                            if(enteredPin !== adminPin.toString()) { Swal.showValidationMessage('PIN ไม่ถูกต้อง ไม่อนุญาตให้เปลี่ยนรหัส!'); return false; }
-                            return true;
-                        }
+                        html: `<p class="small text-muted mb-3" style="font-family:'Sarabun';">กรุณาให้ผู้ดูแลระบบกรอก <b>Admin PIN</b> เพื่ออนุมัติการรีเซ็ตรหัสผ่านให้ไอดี <b class="text-primary">${targetUsername}</b></p><input type="password" id="swal-auth-pin" class="form-control input-modern text-center fw-bold text-danger fs-3 tracking-widest" placeholder="******" maxlength="6" oninput="this.value=this.value.replace(/[^0-9]/g,'')">`,
+                        showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-check me-1"></i> ยืนยัน PIN', cancelButtonText: 'ยกเลิก', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn premium-btn-danger mx-2', cancelButton: 'swal2-cancel premium-btn-cancel mx-2' },
+                        preConfirm: () => { const enteredPin = document.getElementById('swal-auth-pin').value; if(enteredPin !== adminPin.toString()) { Swal.showValidationMessage('PIN ไม่ถูกต้อง ไม่อนุญาตให้เปลี่ยนรหัส!'); return false; } return true; }
                     }).then((pinResult) => {
                         if(pinResult.isConfirmed) {
                             Swal.fire({
                                 title: '<h5 class="fw-bold text-success mb-0" style="font-family:\'Prompt\';"><i class="fa-solid fa-key me-2"></i> ตั้งรหัสผ่านใหม่</h5>',
-                                html: '<div class="text-start mt-3" style="font-family:\'Sarabun\';">' +
-                                        '<label class="form-label small text-secondary fw-bold">รหัสผ่านใหม่ (New Password)</label>' +
-                                        '<input type="password" id="swal-new-pwd" class="form-control input-modern mb-3">' +
-                                        '<label class="form-label small text-secondary fw-bold">ยืนยันรหัสผ่านใหม่อีกครั้ง</label>' +
-                                        '<input type="password" id="swal-confirm-pwd" class="form-control input-modern">' +
-                                      '</div>',
-                                showCancelButton: true, confirmButtonText: 'เปลี่ยนรหัสผ่าน', cancelButtonText: 'ยกเลิก', buttonsStyling: false,
-                                customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn mx-2', cancelButton: 'swal2-cancel premium-btn-cancel mx-2' },
+                                html: '<div class="text-start mt-3" style="font-family:\'Sarabun\';"><label class="form-label small text-secondary fw-bold">รหัสผ่านใหม่ (New Password)</label><input type="password" id="swal-new-pwd" class="form-control input-modern mb-3"><label class="form-label small text-secondary fw-bold">ยืนยันรหัสผ่านใหม่อีกครั้ง</label><input type="password" id="swal-confirm-pwd" class="form-control input-modern"></div>',
+                                showCancelButton: true, confirmButtonText: 'เปลี่ยนรหัสผ่าน', cancelButtonText: 'ยกเลิก', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn mx-2', cancelButton: 'swal2-cancel premium-btn-cancel mx-2' },
                                 preConfirm: () => {
-                                    const p1 = document.getElementById('swal-new-pwd').value;
-                                    const p2 = document.getElementById('swal-confirm-pwd').value;
+                                    const p1 = document.getElementById('swal-new-pwd').value; const p2 = document.getElementById('swal-confirm-pwd').value;
                                     if(p1.length < 6) { Swal.showValidationMessage('รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร'); return false; }
-                                    if(p1 !== p2) { Swal.showValidationMessage('รหัสผ่านไม่ตรงกัน'); return false; }
-                                    return p1;
+                                    if(p1 !== p2) { Swal.showValidationMessage('รหัสผ่านไม่ตรงกัน'); return false; } return p1;
                                 }
                             }).then((pwdResult) => {
                                 if(pwdResult.isConfirmed) {
                                     Swal.fire({title: 'กำลังอัปเดตระบบ...', didOpen: () => Swal.showLoading(), customClass: { popup: 'premium-alert' }});
                                     usersArray[userIndex].password = pwdResult.value;
-                                    
-                                    db.ref('clinic_users_v2').set(usersArray).then(() => {
-                                        Swal.fire({
-                                            html: '<div class="mt-2"><i class="fa-solid fa-check-circle fa-4x text-success mb-3"></i><h4 class="fw-bold text-dark" style="font-family:\'Prompt\';">เปลี่ยนรหัสผ่านสำเร็จ!</h4><p class="text-muted small">กรุณาใช้รหัสผ่านใหม่เพื่อเข้าสู่ระบบ</p></div>', 
-                                            showConfirmButton: true, confirmButtonText: 'กลับไปหน้าล็อคอิน', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn' }
-                                        }).then(() => { LoginPage.init(); });
-                                    });
+                                    db.ref('clinic_users_v2').set(usersArray).then(() => { Swal.fire({ html: '<div class="mt-2"><i class="fa-solid fa-check-circle fa-4x text-success mb-3"></i><h4 class="fw-bold text-dark" style="font-family:\'Prompt\';">เปลี่ยนรหัสผ่านสำเร็จ!</h4><p class="text-muted small">กรุณาใช้รหัสผ่านใหม่เพื่อเข้าสู่ระบบ</p></div>', showConfirmButton: true, confirmButtonText: 'กลับไปหน้าล็อคอิน', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn' } }).then(() => { LoginPage.init(); }); });
                                 }
                             });
                         }
                     });
-
-                } catch(e) {
-                    Swal.fire({ title: 'เกิดข้อผิดพลาด', text: 'ระบบถูกล็อคอยู่ กรุณาติดต่อผู้ดูแลระบบ', icon: 'error', customClass: { popup: 'premium-alert' }});
-                }
+                } catch(e) { Swal.fire({ title: 'เกิดข้อผิดพลาด', text: 'ระบบถูกล็อคอยู่ กรุณาติดต่อผู้ดูแลระบบ', icon: 'error', customClass: { popup: 'premium-alert' }}); }
             }
         });
     }

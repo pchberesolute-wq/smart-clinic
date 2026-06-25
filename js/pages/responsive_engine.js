@@ -1,5 +1,5 @@
 // js/pages/responsive_engine.js
-// 🚀 สมองกลควบคุมการแสดงผล Responsive (V8 - Absolute Layout Override)
+// 🚀 สมองกลควบคุมการแสดงผล (V10 - Dual-Engine Architecture & Topbar Sync Optimized)
 
 const ResponsiveEngine = {
     lastWidth: window.innerWidth, 
@@ -24,7 +24,7 @@ const ResponsiveEngine = {
         const observer = new MutationObserver(() => this.autoWrapTables());
         observer.observe(document.body, { childList: true, subtree: true });
         
-        console.log("📱 [Responsive Engine] V8 Activated - Absolute Layout Control");
+        console.log("📱 [Responsive Engine] V10 Activated - Mobile Topbar Optimized");
     },
 
     handleWidthChange: function() {
@@ -39,7 +39,6 @@ const ResponsiveEngine = {
         document.documentElement.style.setProperty('--vh', `${vh}px`);
     },
 
-    // 🌟 ระบบควบคุม Sidebar บนมือถือ
     setupMobileMenu: function() {
         let backdrop = document.getElementById('mobile-sidebar-backdrop');
         if (!backdrop) {
@@ -91,13 +90,12 @@ const ResponsiveEngine = {
         });
     },
 
-    // 🚨 ท่าไม้ตาย: เขียนทับโครงสร้างหน้าจอทุกประเภทด้วย JavaScript ป้องกันแคชเบราว์เซอร์
+    // 🚨 ท่าไม้ตาย: ระบบแยกโครงสร้าง (Bifurcation Engine)
     injectUltimateStyles: function() {
-        if (document.getElementById('responsive-engine-v8-styles')) return;
+        if (document.getElementById('responsive-engine-v10-styles')) return;
 
         const css = `
-            /* 🛡️ กฎเหล็กบังคับไม่ให้ CSS อื่นมาทำลายโครงสร้าง (Absolute Layout Control) */
-            
+            /* 🛡️ กฎเหล็กบังคับหน้าจอทุกประเภท (Global Rules) */
             html, body {
                 width: 100% !important; max-width: 100vw !important;
                 overflow-x: hidden !important; margin: 0 !important; padding: 0 !important;
@@ -106,8 +104,8 @@ const ResponsiveEngine = {
             *, *::before, *::after { box-sizing: border-box !important; }
 
             /* บังคับตัดคำยาวๆ ไม่ให้กล่องแตก */
-            h1, h2, h3, h4, h5, h6, p, span, div, a {
-                overflow-wrap: break-word; word-wrap: break-word;
+            h1, h2, h3, h4, h5, h6, p, span, div, a, td, th {
+                overflow-wrap: break-word !important; word-wrap: break-word !important; word-break: break-word !important;
             }
 
             /* 🌟 เลเยอร์ 1: คอมพิวเตอร์ตั้งโต๊ะ (Desktop: 1200px ขึ้นไป) */
@@ -139,8 +137,32 @@ const ResponsiveEngine = {
                 .search-box-modern { width: 100% !important; }
             }
 
-            /* 🌟 เลเยอร์ 3: มือถือ (Mobile: ต่ำกว่า 768px) */
+            /* 🌟 เลเยอร์ 3: มือถือ (Mobile: ต่ำกว่า 768px) 🚨 แยกส่วนเด็ดขาด 🚨 */
             @media (max-width: 767px) {
+                
+                /* 1. บังคับย่อระยะห่าง (Padding/Margin) ที่สร้างมาเพื่อคอม ให้เล็กลงสำหรับมือถือ */
+                .p-4 { padding: 16px !important; }
+                .p-5 { padding: 20px !important; }
+                .modern-panel { padding: 20px 15px !important; border-radius: 16px !important; border-top-width: 4px !important; margin-bottom: 15px !important; }
+                
+                /* 2. บังคับโครงสร้าง Flex แนวนอน ให้เรียงแนวตั้งแบบแอพมือถือ */
+                .page-header { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important; }
+                .d-flex.align-items-center.mb-4.position-relative { flex-direction: column !important; align-items: flex-start !important; text-align: left !important; }
+                
+                /* แก้อาการรูปโลโก้หน้า About ใหญ่ทะลุจอ */
+                .app-logo-frame { width: 65px !important; height: 65px !important; margin-right: 0 !important; margin-bottom: 15px !important; border-radius: 16px !important; }
+                
+                /* 3. ย่อขนาดฟอนต์อัตโนมัติ */
+                h2 { font-size: 20px !important; }
+                h3 { font-size: 18px !important; }
+                h4 { font-size: 16px !important; }
+                h5 { font-size: 15px !important; }
+                .page-title { font-size: 22px !important; }
+                
+                /* 4. ปลดล็อคความสูงที่ตายตัว (แก้ปัญหากล่องโดนตัด) */
+                .h-100 { height: auto !important; }
+
+                /* 5. ควบคุม Sidebar สำหรับมือถือ */
                 .sidebar {
                     left: -320px !important;
                     width: clamp(260px, 75vw, 320px) !important; 
@@ -156,15 +178,19 @@ const ResponsiveEngine = {
                 .sidebar .user-card-wrapper { border: 1px solid #e2e8f0 !important; padding: 12px !important; margin: 0 !important; }
                 .sidebar .user-avatar { margin-right: 12px !important; }
 
-                .main-content { margin-left: 0 !important; }
-                .topbar { padding: 0 15px !important; height: 80px !important; }
-                .content-wrapper { padding: 0 15px 30px 15px !important; }
+                /* 6. ควบคุม Topbar & Live Sync บนมือถือ 🌟 */
+                .main-content { margin-left: 0 !important; width: 100vw !important; }
+                .topbar { padding: 0 15px !important; height: 75px !important; width: 100vw !important; justify-content: space-between !important; }
+                .topbar-actions { justify-content: flex-end !important; flex: 1 !important; }
+                .realtime-widget { margin-right: 0 !important; margin-left: auto !important; }
+                
+                .content-wrapper { padding: 0 12px 30px 12px !important; overflow-x: hidden !important; width: 100% !important; }
                 .topbar button.d-xl-none { display: flex !important; z-index: 10000 !important; margin-right: 10px !important; } 
                 
                 .time-widget { display: none !important; }
                 .search-box, .search-box-modern { width: 100% !important; max-width: 100% !important; }
                 
-                /* ฉากหลังมือถือ */
+                /* ฉากหลังมือถือเวลาเปิดเมนู */
                 .sidebar-backdrop-engine {
                     position: fixed !important; top: 0 !important; left: 0 !important; 
                     width: 100vw !important; height: 100vh !important;
@@ -187,13 +213,19 @@ const ResponsiveEngine = {
                     justify-content: flex-start !important; padding-bottom: 5px !important; 
                 }
                 
-                .table-responsive { margin-bottom: 1rem !important; width: 100% !important; -webkit-overflow-scrolling: touch !important; }
-                .table th, .table td { white-space: nowrap !important; }
+                /* ระบบ Table ที่ล้นจอในมือถือ */
+                .table-responsive { margin-bottom: 1rem !important; width: 100% !important; -webkit-overflow-scrolling: touch !important; border: none !important; padding: 0 !important; }
+                .table th, .table td { white-space: nowrap !important; font-size: 13.5px !important; padding: 10px 8px !important; }
+                
+                /* แก้ปัญหากล่องที่แบ่งครึ่ง 50/50 ในคอม ให้กลายเป็น 100% ในมือถือ */
+                .col-md-6, .col-lg-4, .col-xl-8, .col-xl-4 {
+                    width: 100% !important; flex: 0 0 100% !important; max-width: 100% !important;
+                }
             }
         `;
 
         const styleSheet = document.createElement("style");
-        styleSheet.id = 'responsive-engine-v8-styles';
+        styleSheet.id = 'responsive-engine-v10-styles';
         styleSheet.type = "text/css";
         styleSheet.innerText = css;
         document.head.appendChild(styleSheet);
