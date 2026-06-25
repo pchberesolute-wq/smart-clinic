@@ -1,5 +1,5 @@
 // js/pages/login.js
-// 🚀 โมดูลหน้าลงชื่อเข้าใช้งาน (Premium Glassmorphism + Ultimate Zero-Race-Condition Auth)
+// 🚀 โมดูลหน้าลงชื่อเข้าใช้งาน (V8 - Premium Glassmorphism & Cloud Sync Fix)
 
 const LoginPage = {
     roleConfig: {
@@ -72,7 +72,7 @@ const LoginPage = {
                     <div class="input-group mb-3 shadow-sm" style="border-radius: 14px;">
                         <span class="input-group-text modern-icon-login px-3"><i class="fa-solid fa-user-circle text-primary"></i></span>
                         <select id="login-username-select" class="form-select form-select-lg input-modern-login border-start-0 fw-bold text-dark" style="cursor: pointer;" onchange="LoginPage.onUserSelectChange(this.value)">
-                            <option value="" disabled selected>-- กำลังตรวจสอบความปลอดภัย... --</option>
+                            <option value="" disabled selected>-- กำลังโหลดข้อมูล... --</option>
                         </select>
                     </div>
 
@@ -104,7 +104,7 @@ const LoginPage = {
                     </div>
 
                     <button class="btn btn-premium btn-premium-primary w-100 py-3" id="btn-login" onclick="LoginPage.authenticate()" style="font-size: 17px;">
-                        เข้าสู่ระบบ (Secured Login) <i class="fa-solid fa-arrow-right ms-2"></i>
+                        เข้าสู่ระบบ (Secure Login) <i class="fa-solid fa-arrow-right ms-2"></i>
                     </button>
                 </div>
 
@@ -120,49 +120,53 @@ const LoginPage = {
 
     allUsers: [],
 
-    // 🚨 [ULTIMATE FIX] ใช้ระบบเรดาร์ดักจับ (onAuthStateChanged) แทนการเช็คสดๆ
     init: async function() {
-        if (typeof db === 'undefined' || typeof firebase === 'undefined') return;
+        const selectEl = document.getElementById('login-username-select');
 
-        // ดึงจาก Cache มาโชว์ก่อนเพื่อความเร็ว
+        if (typeof firebase === 'undefined' || typeof db === 'undefined' || typeof firebase.auth !== 'function') {
+            selectEl.innerHTML = '<option disabled selected>❌ โหลดระบบรักษาความปลอดภัยไม่สำเร็จ</option>';
+            return;
+        }
+
+        // 🚨 แก้โหลดช้า: ดึงจาก Cache มาโชว์ทันที
         let cachedUsers = localStorage.getItem('dialysis_cached_users');
         if (cachedUsers) {
             this.allUsers = JSON.parse(cachedUsers);
             this.renderUserDropdown();
         }
 
-        // แจ้งเตือนถ้ารันไฟล์ผ่านดับเบิ้ลคลิก (file://) เพราะ Firebase จะบล็อคทันที
+        // แจ้งเตือนถ้ารันผ่าน file://
         if (window.location.protocol === 'file:') {
             Swal.fire({
                 icon: 'error',
                 title: 'ไม่สามารถรันระบบบน file:// ได้',
-                html: '<p class="text-start">ระบบความปลอดภัยขั้นสูงไม่อนุญาตให้เปิดไฟล์ตรงๆ จากเครื่องครับ<br><br><b>วิธีแก้ไข:</b><br>1. ใช้ <b>Live Server</b> ใน VS Code<br>2. หรืออัพขึ้น Web Hosting จริง<br>3. หรือกลับไปแก้ Rules เป็น <code>.read: true</code> (ชั่วคราว)</p>',
+                html: '<p class="text-start">ระบบความปลอดภัยขั้นสูงไม่อนุญาตให้เปิดไฟล์ตรงๆ จากเครื่องครับ<br><br><b>วิธีแก้ไข:</b><br>1. ใช้ <b>Live Server</b> ใน VS Code<br>2. หรืออัพขึ้น Web Hosting จริง</p>',
                 allowOutsideClick: false
             });
             return;
         }
 
         try {
-            // 🚨 ระบบเรดาร์: เฝ้ารอจนกว่าสถานะกุญแจ (Auth) จะเสถียร 100%
-            firebase.auth().onAuthStateChanged((user) => {
+            // 🚨 บังคับให้เบราว์เซอร์มือถือจำกุญแจถาวร แก้ปัญหาข้อมูลในมือถือหาย
+            await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+            // 🚨 ระบบเรดาร์: ดึงข้อมูลจากคลาวด์แบบ Real-time
+            firebase.auth().onAuthStateChanged(async (user) => {
                 if (user) {
-                    // 🎉 ได้กุญแจแล้ว! (ไม่ว่าจะเป็นบัตรชั่วคราวหรือบัตรจริง) วิ่งไปดึงรายชื่อได้เลย!
-                    db.ref('clinic_users_v2').once('value').then(snap => {
+                    db.ref('clinic_users_v2').on('value', snap => {
                         const data = snap.val();
                         let rawUsers = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])) : [];
                         this.allUsers = rawUsers.filter(u => u !== null && u.status === 'active');
                         
-                        localStorage.setItem('dialysis_cached_users', JSON.stringify(this.allUsers)); 
+                        if(this.allUsers.length > 0) {
+                            localStorage.setItem('dialysis_cached_users', JSON.stringify(this.allUsers)); 
+                        } else {
+                            selectEl.innerHTML = '<option disabled selected>-- ❌ ฐานข้อมูลบนคลาวด์ยังว่างเปล่า --</option>';
+                        }
                         this.renderUserDropdown();
-                    }).catch(e => {
-                        console.warn("[Database] ติด Permission Denied หรือ Offline:", e);
                     });
                 } else {
-                    // ⏳ ยังไม่มีกุญแจ? สั่งให้ไปขอกุญแจชั่วคราวมาเดี๋ยวนี้!
-                    firebase.auth().signInAnonymously().catch(err => {
-                        console.error("[Auth] ขอกุญแจล้มเหลว:", err);
-                        Swal.fire('ข้อผิดพลาดการเชื่อมต่อ', 'ไม่สามารถสร้างกุญแจความปลอดภัยได้ โปรดเช็คอินเทอร์เน็ต', 'error');
-                    });
+                    await firebase.auth().signInAnonymously();
                 }
             });
 
@@ -187,7 +191,6 @@ const LoginPage = {
         if(savedUser && this.allUsers.some(u => u.username === savedUser)) {
             selectEl.value = savedUser;
             document.getElementById('login-remember').checked = true;
-            document.getElementById('login-password').focus();
         }
     },
 
