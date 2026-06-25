@@ -1,42 +1,54 @@
-// js/responsive_engine.js
-// 🚀 สมองกลควบคุมการแสดงผล Responsive (V3 - Ultimate Mobile Sidebar & Backdrop)
-// รองรับ มือถือ, iPad, Tablet และ PC ทุกรุ่น โดยไม่ให้ UI เพี้ยน
+// js/pages/responsive_engine.js
+// 🚀 สมองกลควบคุมการแสดงผล Responsive (V4 - Ultimate Auto-Scaler)
+// ซัพพอร์ต: Mobile, Tablet, iPad, PC (ป้องกัน UI เพี้ยน 100%)
 
 const ResponsiveEngine = {
+    // จำความกว้างเดิมไว้ เพื่อแยกแยะว่า "หมุนจอจริงๆ" หรือแค่ "คีย์บอร์ดเด้ง"
+    lastWidth: window.innerWidth, 
+
     init: function() {
         this.injectCoreStyles();
         this.fixMobileViewport();
         this.autoWrapTables();
-        this.setupMobileMenu(); // 🌟 อัปเกรด V3: เปิดใช้งานสมองกลควบคุมเมนูสไลด์ด้านข้าง
+        this.setupMobileMenu();
         
-        // คอยดักจับเมื่อมีการย่อขยายหน้าจอ หรือหมุนจอ (Rotate Device)
-        window.addEventListener('resize', () => this.handleResize());
-        window.addEventListener('orientationchange', () => this.handleResize());
+        // 🚨 ดักจับ Resize: ให้ทำงานเฉพาะเมื่อ "ความกว้าง (Width)" เปลี่ยนแปลงเท่านั้น
+        // วิธีนี้จะดับปัญหาคีย์บอร์ดมือถือเด้งรัวๆ เพราะคีย์บอร์ดเปลี่ยนแค่ความสูง (Height)
+        window.addEventListener('resize', () => {
+            if (window.innerWidth !== this.lastWidth) {
+                this.lastWidth = window.innerWidth;
+                this.handleWidthChange();
+            }
+        });
+
+        // ดักจับเวลาหมุนจอ (Rotate Device)
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => this.handleWidthChange(), 150); // ดีเลย์นิดนึงรอให้จอหมุนเสร็จ
+        });
         
-        // สังเกตการณ์หน้าเว็บ (MutationObserver) ถ้ามีการวาดตารางใหม่ ให้จับหุ้มกรอบป้องกันทะลุจอกันที
+        // สังเกตการณ์หน้าเว็บ (MutationObserver) ถ้ามีตารางใหม่โหลดมา ให้หุ้มเกราะทันที
         const observer = new MutationObserver(() => this.autoWrapTables());
         observer.observe(document.body, { childList: true, subtree: true });
         
-        console.log("📱 [Responsive Engine] V3 Activated - Full Mobile Navigation Enabled.");
+        console.log("📱 [Responsive Engine] V4 Activated - 100% Fluid Auto-Scaler");
     },
 
-    handleResize: function() {
+    handleWidthChange: function() {
         this.fixMobileViewport();
-        // ปิด Keyboard บนมือถือตอนหมุนจอเพื่อป้องกัน UI พัง
+        // ปิดคีย์บอร์ดทิ้งเมื่อมีการหมุนจอ เพื่อกัน UI บี้
         if(document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
             document.activeElement.blur();
         }
     },
 
     fixMobileViewport: function() {
-        // แก้ปัญหา 100vh บน Mobile Safari/Chrome ที่มักจะโดนแถบ URL ของเบราว์เซอร์บังส่วนล่าง
+        // แก้ปัญหาความสูง 100vh บน Mobile Safari/Chrome ที่ชอบโดนแถบ URL บัง
         let vh = window.innerHeight * 0.01;
         document.documentElement.style.setProperty('--vh', `${vh}px`);
     },
 
     // 🌟 ระบบควบคุม Sidebar บนมือถือ (Event Delegation & Backdrop Engine)
     setupMobileMenu: function() {
-        // 1. สร้างฉากหลังสีดำโปร่งแสง (Backdrop) สไตล์แอปมือถือพรีเมียม
         let backdrop = document.getElementById('mobile-sidebar-backdrop');
         if (!backdrop) {
             backdrop = document.createElement('div');
@@ -45,14 +57,12 @@ const ResponsiveEngine = {
             document.body.appendChild(backdrop);
         }
 
-        // 2. ใช้ Event Delegation ดักจับการกดปุ่มทั่วทั้งหน้าจอ
         document.addEventListener('click', (e) => {
             const sidebar = document.querySelector('.sidebar');
             if (!sidebar) return;
 
-            // ตรวจจับว่ากดปุ่มแฮมเบอร์เกอร์หรือไม่ (ปุ่มบน Topbar)
+            // ตรวจจับปุ่มแฮมเบอร์เกอร์
             const isMenuBtn = e.target.closest('.topbar button') || e.target.closest('button.d-xl-none');
-            
             if (isMenuBtn) {
                 const isActive = sidebar.classList.toggle('active');
                 backdrop.style.opacity = isActive ? '1' : '0';
@@ -61,7 +71,7 @@ const ResponsiveEngine = {
                 return;
             }
 
-            // 3. ปิดเมนูอัตโนมัติ เมื่อกดฉากหลัง หรือ เมื่อกดเลือกเมนูย่อยเสร็จแล้ว
+            // ตรวจจับคลิกนอกเมนู หรือคลิกเมนูย่อย ให้ปิด Sidebar อัตโนมัติ
             const isBackdropClick = e.target === backdrop;
             const isMenuLinkClick = e.target.closest('.sidebar .nav-link');
             
@@ -73,6 +83,7 @@ const ResponsiveEngine = {
         });
     },
 
+    // 🌟 หุ้มเกราะให้ตารางทั้งหมด ป้องกันตารางแทงทะลุขอบจอมือถือ
     autoWrapTables: function() {
         const tables = document.querySelectorAll('table.table:not(.wrapped-by-engine)');
         tables.forEach(table => {
@@ -81,7 +92,7 @@ const ResponsiveEngine = {
                 wrapper.className = 'table-responsive shadow-sm rounded-4 border border-light';
                 wrapper.style.width = '100%';
                 wrapper.style.overflowX = 'auto';
-                wrapper.style.WebkitOverflowScrolling = 'touch'; 
+                wrapper.style.WebkitOverflowScrolling = 'touch'; // เลื่อนสมูทบน iOS
                 
                 table.parentNode.insertBefore(wrapper, table);
                 wrapper.appendChild(table);
@@ -90,82 +101,119 @@ const ResponsiveEngine = {
         });
     },
 
+    // 🌟 อัดฉีด CSS ระดับปรมาจารย์ เพื่อบล็อกการแสดงผลเพี้ยน 100%
     injectCoreStyles: function() {
-        if (document.getElementById('responsive-engine-styles')) return;
+        if (document.getElementById('responsive-engine-v4-styles')) return;
 
         const css = `
-            /* 1. แก้ปัญหาความสูงหน้าจอบนมือถือ (Mobile Viewport Fix) */
+            /* 1. Global Safety Net (กันขอบล้น กันทะลุจอ บังคับตัดคำ) */
+            html, body {
+                width: 100% !important;
+                max-width: 100vw !important;
+                overflow-x: hidden !important; /* ดับจับทุกการล้นออกแกน X */
+                margin: 0; padding: 0;
+                -webkit-text-size-adjust: 100%; /* ห้าม iOS ซูมฟอนต์หน้าเว็บเอง */
+            }
+
+            *, *::before, *::after {
+                box-sizing: border-box !important;
+            }
+
+            /* บังคับตัดคำยาวๆ (เช่น ลิงก์, ชื่อคนยาวๆ) ไม่ให้ดันกล่องแตก */
+            h1, h2, h3, h4, h5, h6, p, span, div, a {
+                overflow-wrap: break-word;
+                word-wrap: break-word;
+                word-break: break-word;
+            }
+
             .main-content, .content-wrapper, .sidebar {
                 min-height: calc(var(--vh, 1vh) * 100);
             }
 
-            /* 2. บังคับไม่ให้ Content ทะลุขอบจอ (Horizontal Overflow Protection) */
-            html, body {
-                max-width: 100vw !important;
-                overflow-x: hidden !important;
-                width: 100% !important;
+            /* 2. Fluid Typography (ฟอนต์ย่อขยายดั่งยางยืด ไม่ต้องเขียน Media Query เยอะ) */
+            html {
+                font-size: clamp(13px, 1.2vw + 10px, 16px);
             }
 
-            img, canvas, iframe, video, svg { max-width: 100%; height: auto; }
-            html { font-size: 16px; }
-            @media (max-width: 1199px) { html { font-size: 15px; } }
-            @media (max-width: 991px) { html { font-size: 14.5px; } }
-            @media (max-width: 767px) { html { font-size: 14px; } }
-            @media (max-width: 575px) { html { font-size: 13.5px; } }
+            /* 3. Fluid Media (รูปและวิดีโอต้องไม่ล้นจอ) */
+            img, canvas, iframe, video, svg {
+                max-width: 100% !important;
+                height: auto;
+            }
 
+            /* 4. Modal (SweetAlert) Auto-Scaler */
             .swal2-popup {
-                width: 95% !important;
-                max-width: 600px !important;
-                padding: 1.5em !important;
+                width: 90% !important;
+                max-width: 500px !important;
+                padding: clamp(1em, 3vw, 2em) !important;
                 box-sizing: border-box;
+                border-radius: clamp(16px, 4vw, 24px) !important;
             }
 
-            /* 🚨 CSS สำหรับเมนูสไลด์ (Mobile Sidebar) 🚨 */
+            /* 5. Mobile Sidebar (ยืดหยุ่นตามจอมือถือ/iPad) */
             @media (max-width: 1199px) {
                 .sidebar {
                     position: fixed !important;
                     left: -320px;
                     top: 0;
                     height: 100vh;
-                    width: 280px !important;
+                    width: clamp(260px, 70vw, 320px) !important; 
                     z-index: 9999 !important;
                     background: #fff;
                     transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                     box-shadow: 5px 0 25px rgba(0,0,0,0.15);
                     overflow-y: auto;
                 }
-                .sidebar.active {
-                    left: 0 !important;
-                }
-                .topbar button.d-xl-none {
-                    z-index: 10000;
-                    position: relative;
-                }
+                .sidebar.active { left: 0 !important; }
+                .topbar button.d-xl-none { z-index: 10000; position: relative; }
+                
+                /* ปรับลด Padding ลงเพื่อให้จอแคบมีพื้นที่แสดงข้อมูลมากขึ้น */
+                .main-content { padding: 15px !important; }
             }
 
+            /* 6. Form & Touch Optimization (มือถือต้องกดง่าย ไม่ซูมเอง) */
             @media (max-width: 767px) {
-                input[type="text"], input[type="number"], input[type="date"], select, textarea, .form-control, .input-modern { font-size: 16px !important; }
-                .btn { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; white-space: normal; line-height: 1.4; }
-                .table-responsive { margin-bottom: 1rem; }
-                .table th, .table td { white-space: nowrap; }
-                .nav-tabs, .nav-pills, .emr-nav-pills, .finance-nav-tabs { flex-wrap: nowrap !important; overflow-x: auto !important; overflow-y: hidden !important; -webkit-overflow-scrolling: touch; justify-content: flex-start !important; padding-bottom: 5px; }
-                .search-box-modern { width: 100% !important; max-width: 100% !important; }
-            }
+                /* กฎเหล็ก Apple: ฟอนต์ใน Input ต้อง 16px ขึ้นไป ไม่งั้นกดพิมพ์แล้วจอจะซูมเข้าเอง */
+                input[type="text"], input[type="number"], input[type="date"], input[type="password"],
+                select, textarea, .form-control, .input-modern { 
+                    font-size: 16px !important; 
+                }
 
-            @media (min-width: 768px) and (max-width: 1024px) {
-                .search-box-modern { width: 100% !important; }
-                .stat-card-analytics, .stat-card-finance, .stat-card-ledger { padding: 15px; }
+                /* ปุ่มกดให้เต็มความกว้างและสูงพอดีนิ้ว (ขั้นต่ำ 44px) */
+                .btn { 
+                    min-height: 48px; 
+                    display: inline-flex; align-items: center; justify-content: center; 
+                    white-space: normal; line-height: 1.4; 
+                }
+
+                /* แท็บเมนู (Tabs) ให้เลื่อนปัดซ้ายขวาได้ ห้ามดันกันตกบรรทัด */
+                .nav-tabs, .nav-pills, .emr-nav-pills, .finance-nav-tabs { 
+                    flex-wrap: nowrap !important; overflow-x: auto !important; 
+                    overflow-y: hidden !important; -webkit-overflow-scrolling: touch; 
+                    justify-content: flex-start !important; padding-bottom: 5px; 
+                }
+
+                /* บังคับกล่องต่างๆ ให้ใช้ความกว้าง 100% แทนการ Fix Pixel */
+                .search-box-modern, .modern-panel, .card { 
+                    width: 100% !important; 
+                    max-width: 100% !important; 
+                    margin-left: 0 !important; margin-right: 0 !important;
+                }
+                
+                .table-responsive { margin-bottom: 1rem; width: 100%; -webkit-overflow-scrolling: touch; }
+                .table th, .table td { white-space: nowrap; }
             }
         `;
 
         const styleSheet = document.createElement("style");
-        styleSheet.id = 'responsive-engine-styles';
+        styleSheet.id = 'responsive-engine-v4-styles';
         styleSheet.type = "text/css";
         styleSheet.innerText = css;
         document.head.appendChild(styleSheet);
     }
 };
 
+// สตาร์ทเครื่องยนต์อัจฉริยะทันที
 document.addEventListener("DOMContentLoaded", () => {
     ResponsiveEngine.init();
 });

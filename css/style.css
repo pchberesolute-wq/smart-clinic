@@ -1,5 +1,5 @@
 /* css/style.css */
-/* 💎 DIALYSIS PRO - Vibrant 3D & Colorful Icons UI (Ultimate Edition) */
+/* 💎 DIALYSIS PRO - Vibrant 3D & Colorful Icons UI (Clean Responsive Edition) */
 
 :root {
     /* 🌟 สีสันสดใส & ไล่สี (Gradients) */
@@ -43,7 +43,6 @@
     --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.03);
     
     --sidebar-width: 320px; 
-    --sidebar-collapsed-width: 90px;
     --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     
     /* 🔲 ความโค้ง (Border Radius) */
@@ -259,40 +258,10 @@ div.swal2-container { z-index: 9999999 !important; backdrop-filter: blur(8px); b
 .swal2-confirm { border-radius: 14px !important; font-family: 'Prompt' !important; font-weight: 700 !important; padding: 14px 30px !important; background: var(--primary-gradient) !important; box-shadow: var(--shadow-float-primary) !important;}
 
 /* ==========================================================================
-   5. 🌟 RESPONSIVE (มือถือ / แท็บเล็ต)
+   5. 🖨️ PRINT ONLY (ปิดเมนูตอนสั่งพิมพ์)
    ========================================================================== */
-@media (max-width: 1199px) {
-    .sidebar { width: var(--sidebar-collapsed-width); }
-    .sidebar-brand { padding: 0; justify-content: center; }
-    .brand-icon { margin-right: 0; }
-    .brand-text, .nav-section, .nav-item span, .user-info { display: none; }
-    .nav-item { justify-content: center; padding: 14px 0; margin: 4px 15px; }
-    .nav-item i { margin-right: 0; font-size: 22px; width: auto; }
-    .user-card-wrapper { padding: 10px; margin: 0 10px; border: none; background: transparent; box-shadow: none;}
-    .user-card { justify-content: center; }
-    .user-avatar { margin-right: 0; width: 45px; height: 45px; min-width: 45px;}
-    .main-content { margin-left: var(--sidebar-collapsed-width); }
-}
-
-@media (max-width: 768px) {
-    .sidebar { transform: translateX(-100%); z-index: 9999; box-shadow: 10px 0 30px rgba(0,0,0,0.1); width: var(--sidebar-width); }
-    .brand-text, .nav-section, .nav-item span, .user-info { display: block; } 
-    .nav-item { justify-content: flex-start; padding: 12px 18px; margin: 6px 20px; }
-    .nav-item i { margin-right: 12px; font-size: 18px; }
-    .user-card-wrapper { border: 1px solid #e2e8f0; padding: 12px; margin: 0;}
-    .user-avatar { margin-right: 12px; }
-    
-    .main-content { margin-left: 0; }
-    .topbar { padding: 0 20px; height: 80px; }
-    .mobile-toggle-btn { display: flex !important; margin-right: 10px;} 
-    .time-widget { display: none; } 
-    .search-box, .search-box-modern { width: 100%; }
-    
-    body.sidebar-collapsed .sidebar { transform: translateX(0); }
-}
-
 @media print {
     .sidebar, .topbar, .btn { display: none !important; }
-    .main-content { margin-left: 0 !important; }
+    .main-content { margin-left: 0 !important; padding: 0 !important;}
     body { background: #fff !important; }
 }
