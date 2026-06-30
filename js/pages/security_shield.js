@@ -1,213 +1,227 @@
 // js/pages/security_shield.js
-// 🛡️ โมดูลเกราะป้องกันความปลอดภัย + Smart Context Menu (V8 - Removed 30-min Auto Logout)
+// 🛡️ Enterprise Security Service: Smart Context Menu, Anti-Clickjacking & XSS Defense
 
-const SecurityShield = {
-    selectedTextToCopy: "", // 🌟 ตัวแปรลับ: ใช้เก็บข้อความที่คลุมดำไว้
+class SecurityShieldService {
+    constructor() {
+        this.selectedTextToCopy = ""; 
+        // ผูกฟังก์ชัน (Bind) ไว้เพื่อการสร้างและการลบ Event อย่างหมดจด
+        this.boundContextMenu = this.#handleContextMenu.bind(this);
+        this.boundClickOutside = this.#handleClickOutside.bind(this);
+        this.boundKeyDown = this.#handleKeyDown.bind(this);
+    }
 
-    init: function() {
-        this.preventClickjacking();
-        this.injectNativeToast(); // 🌟 ฝังกล่องแจ้งเตือน Native ตัวเดียวกับ search_copy.js
-        this.setupCustomContextMenu(); // 🌟 เมนูคลิกขวา
-        this.secureLocalStorage();
-        this.hijackConsole();
-        console.log("%c🛡️ [Security Shield] Smart Menu V8 (No Auto-Logout) Activated.", "color: #10b981; font-weight: bold; font-size: 14px;");
-    },
-
-    preventClickjacking: function() {
-        if (window.top !== window.self) window.top.location = window.self.location;
-    },
-
-    // 🌟 1. ระบบกล่องแจ้งเตือน (ก๊อปปี้ CSS/HTML มาจากหน้า search_copy.js เป๊ะๆ 100%)
-    injectNativeToast: function() {
-        if (document.getElementById('dialysisPoaster')) return; // ถ้ามีอยู่แล้วให้ข้ามไป
-
-        const toastHtml = `
-            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center shadow-sm" style="width:28px; height:28px;">
-                <i class="fa-solid fa-check" style="font-size:14px;"></i>
-            </div>
-            <span id="dialysisPoasterText">คัดลอกข้อความสำเร็จ</span>
-        `;
-
-        if (!document.getElementById('dialysis-toast-style')) {
-            const css = `
-                .dialysis-custom-toast {
-                    position: fixed;
-                    top: 30px;
-                    right: 30px;
-                    background: #ffffff !important;
-                    border: 2px solid #10b981 !important;
-                    box-shadow: 0 15px 35px -5px rgba(16, 185, 129, 0.25), 0 5px 15px -3px rgba(0, 0, 0, 0.08) !important;
-                    border-radius: 50px !important;
-                    padding: 12px 28px !important;
-                    font-family: 'Prompt', sans-serif !important;
-                    color: #0f172a !important;
-                    font-weight: 700 !important;
-                    font-size: 15px !important;
-                    z-index: 99999999 !important;
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    transform: translate3d(120%, 0, 0);
-                    opacity: 0;
-                    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15), opacity 0.3s ease;
-                    pointer-events: none;
-                }
-                .dialysis-custom-toast.show {
-                    transform: translate3d(0, 0, 0);
-                    opacity: 1;
-                }
-                @media print { .dialysis-custom-toast { display: none !important; } }
-            `;
-            const style = document.createElement('style'); 
-            style.id = 'dialysis-toast-style';
-            style.innerHTML = css; 
-            document.head.appendChild(style);
-        }
-
-        const div = document.createElement('div'); 
-        div.id = 'dialysisPoaster';
-        div.className = 'dialysis-custom-toast';
-        div.innerHTML = toastHtml; 
-        document.body.appendChild(div);
-    },
-
-    showNativeToast: function(message, isWarning = false) {
-        let toast = document.getElementById('dialysisPoaster');
-        let toastText = document.getElementById('dialysisPoasterText');
+    init() {
+        this.#preventClickjacking();
+        this.#injectNativeToast(); // ฝังกล่องแจ้งเตือน (ใช้ร่วมกับโมดูลอื่น)
+        this.#setupCustomContextMenu(); // สร้างและผูก Event ของเมนูคลิกขวา
         
-        if(!toast || !toastText) {
-            this.injectNativeToast();
-            toast = document.getElementById('dialysisPoaster');
-            toastText = document.getElementById('dialysisPoasterText');
+        // ⚠️ การ Hijack Console และ LocalStorage เป็นเพียงลูกเล่นขู่ผู้ใช้ทั่วไป 
+        // ไม่สามารถกันโปรแกรมเมอร์ได้จริง แต่ก็มีประโยชน์ในแง่จิตวิทยาครับ
+        this.#secureLocalStorage();
+        this.#hijackConsole();
+        
+        console.log("%c🛡️ [Security Shield] Enterprise Guard Activated.", "color: #10b981; font-weight: bold; font-size: 14px;");
+    }
+
+    // ---------------------------------------------------------
+    // 🚧 Core Protections
+    // ---------------------------------------------------------
+    #preventClickjacking() {
+        if (window.top !== window.self) {
+            window.top.location = window.self.location;
+        }
+    }
+
+    #secureLocalStorage() {
+        try {
+            Object.defineProperty(window, 'localStorage', { 
+                configurable: false, enumerable: false, value: window.localStorage 
+            });
+        } catch (e) {
+            // ปล่อยผ่านหากเบราว์เซอร์ไม่รองรับ
+        }
+    }
+
+    #hijackConsole() {
+        setTimeout(() => {
+            console.log("%cหยุดนะ! (STOP!)", "color: red; font-size: 50px; font-weight: bold; text-shadow: 2px 2px 0 #000;");
+            console.log("%cคุณกำลังเข้าสู่พื้นที่สำหรับนักพัฒนา (Developer Area) การนำโค้ดที่ไม่ได้อนุญาตมาวางที่นี่อาจทำให้ข้อมูลเวชระเบียนสูญหายหรือถูกขโมยได้!", "font-size: 14px; color: #333;");
+        }, 1000);
+    }
+
+    // ---------------------------------------------------------
+    // 🪄 UI Injection (Singleton DOM Creation)
+    // ---------------------------------------------------------
+    #injectNativeToast() {
+        if (document.getElementById('dialysisPoaster')) return; // ป้องกันการสร้างซ้ำซ้อน
+
+        // โครงสร้าง HTML ที่คลีนที่สุด โดยไปพึ่งพา CSS ใน style.css
+        const toastHtml = `
+            <div id="dialysisPoaster" class="dialysis-custom-toast">
+                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center shadow-sm" style="width:28px; height:28px;">
+                    <i class="fa-solid fa-check" style="font-size:14px;"></i>
+                </div>
+                <span id="dialysisPoasterText">คัดลอกข้อความสำเร็จ</span>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', toastHtml);
+    }
+
+    showNativeToast(message, isWarning = false) {
+        const toast = document.getElementById('dialysisPoaster');
+        const toastText = document.getElementById('dialysisPoasterText');
+        
+        if (!toast || !toastText) {
+            this.#injectNativeToast(); // Fallback กรณีหาไม่เจอ
+            return this.showNativeToast(message, isWarning);
         }
 
         toastText.innerText = message;
         
-        // ปรับสีและไอคอนตามสถานะ (แจ้งเตือน หรือ สำเร็จ)
+        // ปรับแต่ง UI ตามประเภทข้อความ
         const iconContainer = toast.querySelector('div');
         const icon = toast.querySelector('i');
         
         if (isWarning) {
-            toast.style.borderColor = '#f59e0b'; // สีส้ม
+            toast.style.borderColor = '#f59e0b';
             iconContainer.className = 'rounded-circle bg-warning text-dark d-flex align-items-center justify-content-center shadow-sm';
             icon.className = 'fa-solid fa-exclamation';
         } else {
-            toast.style.borderColor = '#10b981'; // สีเขียว
+            toast.style.borderColor = '#10b981';
             iconContainer.className = 'rounded-circle bg-success text-white d-flex align-items-center justify-content-center shadow-sm';
             icon.className = 'fa-solid fa-check';
         }
 
         toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 1500); // 1.5 วินาที
-    },
+        
+        // ใช้ setTimeout แบบระมัดระวัง
+        if (this.toastTimeout) clearTimeout(this.toastTimeout);
+        this.toastTimeout = setTimeout(() => toast.classList.remove('show'), 1500);
+    }
 
-    // 🌟 2. เมนูคลิกขวา Custom Context Menu
-    setupCustomContextMenu: function() {
+    // ---------------------------------------------------------
+    // 🖱️ Custom Context Menu (Smart Menu)
+    // ---------------------------------------------------------
+    #setupCustomContextMenu() {
+        if (document.getElementById('clinic-smart-menu')) return; // ป้องกันการสร้างซ้ำซ้อน
+
         const menuHtml = `
             <div id="clinic-smart-menu" class="smart-menu-container shadow-lg">
-                <div class="smart-menu-header">
-                    <i class="fa-solid fa-shield-halved text-success me-1"></i> Smart Menu
-                </div>
-                <div class="smart-menu-item" onclick="SecurityShield.handleCopy()">
+                <div class="smart-menu-header"><i class="fa-solid fa-shield-halved text-success me-1"></i> Smart Menu</div>
+                
+                <div class="smart-menu-item" id="sm-copy">
                     <i class="fa-regular fa-copy text-primary"></i> คัดลอกข้อความ (Copy)
                 </div>
-                <div class="smart-menu-item" onclick="document.execCommand('cut'); document.getElementById('clinic-smart-menu').style.display='none';">
+                <div class="smart-menu-item" id="sm-cut">
                     <i class="fa-solid fa-scissors text-danger"></i> ตัด (Cut)
                 </div>
-                <div class="smart-menu-item" onclick="SecurityShield.handlePaste()">
+                <div class="smart-menu-item" id="sm-paste">
                     <i class="fa-regular fa-clipboard text-success"></i> วาง (Paste)
                 </div>
-                <div class="smart-menu-item" onclick="document.execCommand('selectAll'); document.getElementById('clinic-smart-menu').style.display='none';">
+                <div class="smart-menu-item" id="sm-select-all">
                     <i class="fa-solid fa-object-group text-secondary"></i> เลือกทั้งหมด (Select All)
                 </div>
                 <div class="smart-menu-divider"></div>
-                <div class="smart-menu-item" onclick="if(typeof App !== 'undefined') { App.switchPage('dashboard'); } document.getElementById('clinic-smart-menu').style.display='none';">
+                
+                <div class="smart-menu-item" id="sm-home">
                     <i class="fa-solid fa-house-medical text-primary"></i> ไปหน้าแดชบอร์ด
                 </div>
-                <div class="smart-menu-item" onclick="document.getElementById('clinic-smart-menu').style.display='none'; window.print();">
+                <div class="smart-menu-item" id="sm-print">
                     <i class="fa-solid fa-print text-warning"></i> พิมพ์หน้าจอ (Print)
                 </div>
-                <div class="smart-menu-item" onclick="window.location.reload()">
+                <div class="smart-menu-item" id="sm-refresh">
                     <i class="fa-solid fa-rotate-right text-info"></i> โหลดหน้าใหม่ (Refresh)
                 </div>
             </div>
         `;
+        document.body.insertAdjacentHTML('beforeend', menuHtml);
 
-        const css = `
-            .smart-menu-container {
-                display: none; position: absolute; z-index: 999999;
-                background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px);
-                border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; width: 240px;
-                box-shadow: 0 15px 35px rgba(0,0,0,0.15); font-family: 'Prompt', sans-serif; overflow: hidden;
-            }
-            .smart-menu-header {
-                font-size: 11px; padding: 8px 16px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;
-                color: #64748b; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;
-            }
-            .smart-menu-item {
-                padding: 10px 16px; font-size: 14px; font-weight: 500; color: #334155;
-                cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 12px;
-            }
-            .smart-menu-item:hover { background: #eff6ff; color: #2563eb; }
-            .smart-menu-divider { height: 1px; background: #e2e8f0; margin: 4px 0; }
-            @media print { #clinic-smart-menu { display: none !important; } }
-        `;
+        // 🚨 ผูก Events ให้กับปุ่มในเมนู (แทนการใช้ onclick ใน HTML string)
+        document.getElementById('sm-copy').addEventListener('click', () => this.handleCopy());
+        document.getElementById('sm-cut').addEventListener('click', () => { document.execCommand('cut'); this.#closeMenu(); });
+        document.getElementById('sm-paste').addEventListener('click', () => this.handlePaste());
+        document.getElementById('sm-select-all').addEventListener('click', () => { document.execCommand('selectAll'); this.#closeMenu(); });
+        document.getElementById('sm-home').addEventListener('click', () => { if(typeof App !== 'undefined') App.switchPage('dashboard'); this.#closeMenu(); });
+        document.getElementById('sm-print').addEventListener('click', () => { this.#closeMenu(); window.print(); });
+        document.getElementById('sm-refresh').addEventListener('click', () => window.location.reload());
 
-        const style = document.createElement('style'); style.innerHTML = css; document.head.appendChild(style);
-        const div = document.createElement('div'); div.innerHTML = menuHtml; document.body.appendChild(div);
+        // ผูก Listener จับการคลิกและกดคีย์บอร์ด
+        document.addEventListener('contextmenu', this.boundContextMenu);
+        document.addEventListener('click', this.boundClickOutside);
+        document.addEventListener('keydown', this.boundKeyDown);
+    }
+
+    #handleContextMenu(e) {
+        const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        if (isTouchDevice || window.innerWidth <= 800) return; // ปล่อยผ่านบนมือถือ
+
+        const target = e.target;
         const menu = document.getElementById('clinic-smart-menu');
+        if (!menu) return;
+        
+        // ปล่อยให้ช่อง Input/Textarea ใช้คลิกขวาแบบ Native ได้ปกติ
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+            menu.style.display = 'none'; 
+            return; 
+        }
 
-        // 🚨 ดักจับคลิกขวา
-        document.addEventListener('contextmenu', (e) => {
-            const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-            if (isTouchDevice || window.innerWidth <= 800) return; // ปล่อยมือถือผ่าน
+        // キャปเจอร์ข้อความที่ถูกคลุมดำไว้ก่อน
+        this.selectedTextToCopy = window.getSelection().toString();
 
-            const target = e.target;
-            
-            // ปล่อยให้ช่อง Input ใช้คลิกขวาปกติ
-            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
-                menu.style.display = 'none'; 
-                return; 
-            }
+        e.preventDefault(); 
+        
+        // คำนวณตำแหน่งไม่ให้ล้นหน้าจอ
+        let x = e.pageX; 
+        let y = e.pageY;
+        const menuWidth = 240;
+        const menuHeight = 320;
 
-            // แคปเจอร์ข้อความที่คลุมดำไว้
-            SecurityShield.selectedTextToCopy = window.getSelection().toString();
+        if (x + menuWidth > window.innerWidth) x = window.innerWidth - menuWidth;
+        if (y + menuHeight > window.innerHeight) y = window.innerHeight - menuHeight;
 
+        menu.style.left = `${x}px`; 
+        menu.style.top = `${y}px`;
+        menu.style.display = 'block';
+    }
+
+    #handleClickOutside() {
+        this.#closeMenu();
+    }
+
+    #closeMenu() {
+        const menu = document.getElementById('clinic-smart-menu');
+        if (menu) menu.style.display = 'none';
+    }
+
+    #handleKeyDown(e) {
+        // บล็อค F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
+        if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j')) || (e.ctrlKey && (e.key === 'U' || e.key === 'u'))) {
             e.preventDefault(); 
-            let x = e.pageX; let y = e.pageY;
-            if (x + 240 > window.innerWidth) x = window.innerWidth - 240;
-            if (y + 320 > window.innerHeight) y = window.innerHeight - 320;
+            return false;
+        }
+    }
 
-            menu.style.left = x + 'px'; menu.style.top = y + 'px';
-            menu.style.display = 'block';
-        });
-
-        document.addEventListener('click', () => { if(menu) menu.style.display = 'none'; });
-
-        document.onkeydown = function(e) {
-            if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) || (e.ctrlKey && e.keyCode == 85)) {
-                e.preventDefault(); return false;
-            }
-        };
-    },
-
-    // 🌟 3. ระบบ Copy กันโค้ด HTML 100% (บังคับให้คลุมดำก่อน)
-    handleCopy: async function() {
+    // ---------------------------------------------------------
+    // 📋 Clipboard Core Logic (Anti-Scraping)
+    // ---------------------------------------------------------
+    async handleCopy() {
+        // ใช้ค่าที่จับไว้ตอนกดคลิกขวา หรือ ดึงจาก Selection ปัจจุบัน
         const text = this.selectedTextToCopy || window.getSelection().toString(); 
         
-        // 🚨 สำคัญที่สุด: ถ้าไม่ได้คลุมดำข้อความ ห้ามก๊อปปี้เด็ดขาด (ป้องกันการก๊อปโค้ด)
+        // 🚨 บังคับ: ถ้าไม่ได้คลุมดำข้อความ ห้ามก๊อปปี้เด็ดขาด (ป้องกันคนกด Copy เพื่อดึงโค้ด HTML)
         if (!text || text.trim() === '') {
             this.showNativeToast("กรุณาลากคลุมดำข้อความก่อนคัดลอก", true);
-            document.getElementById('clinic-smart-menu').style.display = 'none';
+            this.#closeMenu();
             return;
         }
 
         try {
-            // บังคับก๊อปปี้แต่ตัวหนังสือธรรมดา (Plain Text)
+            // ใช้ Clipboard API ใหม่ถ้าเบราว์เซอร์รองรับ (ต้องเป็น HTTPS)
             if (navigator.clipboard && window.isSecureContext) {
                 await navigator.clipboard.writeText(text.trim());
             } else {
-                let textArea = document.createElement("textarea");
+                // Fallback สำหรับเบราว์เซอร์เก่า
+                const textArea = document.createElement("textarea");
                 textArea.value = text.trim();
                 textArea.style.position = "fixed"; textArea.style.opacity = "0";
                 document.body.appendChild(textArea);
@@ -215,18 +229,17 @@ const SecurityShield = {
                 document.execCommand('copy');
                 textArea.remove(); 
             }
-            
             this.showNativeToast("คัดลอกข้อความสำเร็จ");
         } catch (err) {
-            this.showNativeToast("คัดลอกล้มเหลว", true);
+            console.error("Clipboard Error:", err);
+            this.showNativeToast("การคัดลอกล้มเหลว", true);
         }
         
-        this.selectedTextToCopy = "";
-        document.getElementById('clinic-smart-menu').style.display = 'none';
-    },
+        this.selectedTextToCopy = ""; // ล้างค่าทิ้ง
+        this.#closeMenu();
+    }
 
-    // 🌟 4. ระบบวางข้อความ
-    handlePaste: async function() {
+    async handlePaste() {
         try {
             const text = await navigator.clipboard.readText();
             const activeEl = document.activeElement;
@@ -235,37 +248,32 @@ const SecurityShield = {
                 const start = activeEl.selectionStart;
                 const end = activeEl.selectionEnd;
                 const val = activeEl.value;
+                
                 activeEl.value = val.slice(0, start) + text + val.slice(end);
                 activeEl.selectionStart = activeEl.selectionEnd = start + text.length;
-                activeEl.dispatchEvent(new Event('input', { bubbles: true })); 
+                activeEl.dispatchEvent(new Event('input', { bubbles: true })); // กระตุ้นระบบ Auto-Save ของ UI
+                
                 this.showNativeToast("วางข้อความสำเร็จ");
             } else {
                 document.execCommand('insertText', false, text);
                 this.showNativeToast("วางข้อความสำเร็จ");
             }
         } catch (err) {
-            this.showNativeToast("กรุณากด Ctrl+V เพื่อวางข้อความ", true);
+            this.showNativeToast("กรุณากด Ctrl+V เพื่อวางข้อความแทน", true);
         }
-        document.getElementById('clinic-smart-menu').style.display = 'none';
-    },
+        this.#closeMenu();
+    }
 
-    secureLocalStorage: function() {
-        Object.defineProperty(window, 'localStorage', { configurable: false, enumerable: false, value: window.localStorage });
-    },
-
-    hijackConsole: function() {
-        setTimeout(() => {
-            console.log("%cหยุดนะ! (STOP!)", "color: red; font-size: 50px; font-weight: bold; text-shadow: 2px 2px 0 #000;");
-        }, 1000);
-    },
-
-    sanitizeInput: function(str) {
+    // ฟังก์ชันเสริมสำหรับใช้ภายนอก (XSS Sanitizer)
+    sanitizeInput(str) {
         if (typeof str !== 'string') return str;
         return str.replace(/[&<>'"]/g, function(tag) {
             const charsToReplace = { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' };
             return charsToReplace[tag] || tag;
         });
     }
-};
+}
 
+// 🌐 Expose & Auto-Execute Service
+const SecurityShield = new SecurityShieldService();
 document.addEventListener("DOMContentLoaded", () => { SecurityShield.init(); });

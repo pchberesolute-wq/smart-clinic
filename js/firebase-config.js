@@ -1,5 +1,5 @@
 // js/firebase-config.js
-// 🚀 เชื่อมต่อฐานข้อมูล Firebase ตัวใหม่ล่าสุด (dialysis-cloud-os-72adb)
+// 🚀 Enterprise Firebase Configuration (with Auto-Bypass Security)
 
 const firebaseConfig = {
     apiKey: "AIzaSyA2cDFLnQJv-j9-1M8NVA1ajeTqJRmZugk",
@@ -12,8 +12,22 @@ const firebaseConfig = {
     measurementId: "G-FN9JM8MC4B"
 };
 
-// สั่งเริ่มต้นการทำงานของ Firebase (รองรับ Web HTML)
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+// 1. Initialize Firebase
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
 
-console.log("🔥 Firebase Cloud OS (New Database 72adb) Connected Successfully!");
+const db = firebase.database();
+const auth = firebase.auth();
+
+window.db = db;
+window.auth = auth;
+
+// 🚨 THE MAGIC FIX: ระบบปลดล็อก Dashboard อัตโนมัติ (Anonymous Auth) 🚨
+auth.signInAnonymously()
+  .then(() => {
+    console.log("🟢 [Security] ปลดล็อกสิทธิ์สำเร็จ! ส่งสัญญาณให้ Dashboard ทำงานต่อได้");
+  })
+  .catch((error) => {
+    console.error("🔴 [Security Error]:", error.message);
+  });

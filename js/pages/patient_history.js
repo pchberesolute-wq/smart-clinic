@@ -1,12 +1,31 @@
 // js/pages/patient_history.js
-// 🚀 โมดูลประวัติการรักษาเชิงลึก (Bulletproof Anti-Crash Edition)
+// 🚀 Enterprise EMR Module: Full HTML Included, Atomic Updates, Auto-Print Generator (DDD Ubiquitous Language Updated)
 
-const PatientHistoryPage = {
-    hn: null, patientData: null, chartInstance: null, allVisits: [], invItems: [], medItems: [], xraysList: [], allPatientsList: [],
-    timelineLimit: 15, labLimit: 15, docLimit: 16,
-    currentTimelineFilter: '', currentLabFilter: '', currentXrayFilter: '', currentDocFilter: '', currentVitalsFilter: '', currentMedsFilter: '',
+class PatientHistoryPageComponent {
+    constructor() {
+        this.hn = null;
+        this.firebaseKey = null;
+        this.patientData = null;
+        this.chartInstance = null;
+        this.allVisits = [];
+        this.invItems = [];
+        this.medItems = [];
+        this.xraysList = [];
+        this.allPatientsList = [];
+        this.timelineLimit = 15;
+        this.labLimit = 15;
+        this.docLimit = 16;
+        this.currentTimelineFilter = '';
+        this.currentLabFilter = '';
+        this.currentXrayFilter = '';
+        this.currentDocFilter = '';
+        this.currentVitalsFilter = '';
+        this.currentMedsFilter = '';
+        this.firebaseListeners = [];
+    }
 
-    html: `
+    get html() {
+        return `
         <style>
             * { -webkit-font-smoothing: antialiased !important; -moz-osx-font-smoothing: grayscale !important; text-rendering: optimizeLegibility !important; }
             .form-label, .text-secondary, .text-muted { color: #334155 !important; font-weight: 600 !important; letter-spacing: 0.2px; }
@@ -81,7 +100,7 @@ const PatientHistoryPage = {
                     <h2 class="page-title text-dark" style="font-weight: 800;"><i class="fa-solid fa-folder-open text-primary me-2"></i> แฟ้มประวัติผู้ป่วย <span class="text-muted fw-normal fs-5">(EMR)</span></h2>
                 </div>
                 <div class="d-flex gap-2">
-                    <button class="btn btn-outline-dark fw-bold shadow-sm rounded-pill px-4 bg-white border-2 card-hover-float" onclick="window.print()">
+                    <button class="btn btn-outline-dark fw-bold shadow-sm rounded-pill px-4 bg-white border-2 card-hover-float" onclick="PatientHistoryPage.printEMR()">
                         <i class="fa-solid fa-print me-2 text-primary"></i> พิมพ์ประวัติ
                     </button>
                     <button class="btn btn-premium btn-premium-success px-4 card-hover-float" onclick="PatientHistoryPage.openAddRecordModal()">
@@ -245,12 +264,13 @@ const PatientHistoryPage = {
                 </div>
             </div>
         </div>
-    `,
+        `;
+    }
 
-    // 🚨 1. ปลดล็อคระบบรอกุญแจที่ถูกต้อง (Safe Auth Check)
-    init: function(hn) {
+    init(hn = null) {
         this.timelineLimit = 15; this.labLimit = 15; this.docLimit = 16;
         this.currentTimelineFilter = ''; this.currentLabFilter = ''; this.currentXrayFilter = ''; this.currentDocFilter = ''; this.currentVitalsFilter = ''; this.currentMedsFilter = '';
+        this.firebaseKey = null;
 
         if (!hn || typeof hn !== 'string') {
             document.getElementById('ph-search-screen').style.display = 'block';
@@ -267,7 +287,8 @@ const PatientHistoryPage = {
                         let rawPatients = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])) : [];
                         this.allPatientsList = rawPatients.filter(p => p !== null);
                         document.getElementById('ph-search-loading').style.display = 'none';
-                        document.getElementById('ph-search-input').focus();
+                        const searchInput = document.getElementById('ph-search-input');
+                        if(searchInput) searchInput.focus();
                     }).catch(err => {
                         document.getElementById('ph-search-loading').innerHTML = '<span class="text-danger"><i class="fa-solid fa-triangle-exclamation"></i> ไม่สามารถดึงข้อมูลได้</span>';
                     });
@@ -290,16 +311,25 @@ const PatientHistoryPage = {
         
         const execMainLoad = () => { this.loadPatientData(); };
 
-        if (firebase.auth().currentUser) {
+        if (typeof firebase !== 'undefined' && firebase.auth().currentUser) {
             execMainLoad();
-        } else {
+        } else if (typeof firebase !== 'undefined') {
             const unsub = firebase.auth().onAuthStateChanged((user) => {
                 if(user) { unsub(); execMainLoad(); }
             });
         }
-    },
+    }
 
-    loadPatientData: async function() {
+    destroy() {
+        this.firebaseListeners.forEach(l => db.ref(l.path).off('value', l.callback));
+        this.firebaseListeners = [];
+        if (this.chartInstance) {
+            this.chartInstance.destroy();
+            this.chartInstance = null;
+        }
+    }
+
+    async loadPatientData() {
         if (typeof db === 'undefined') return;
         document.getElementById('ph-header-loading').style.display = 'block';
 
@@ -314,17 +344,26 @@ const PatientHistoryPage = {
             
             const toArray = (snapVal) => snapVal ? (Array.isArray(snapVal) ? snapVal : Object.keys(snapVal).map(k => snapVal[k])).filter(Boolean) : [];
             
-            this.patientData = toArray(ptSnap.val()).find(p => p.hn === this.hn);
+            let foundPt = null;
+            let foundKey = null;
+            ptSnap.forEach(child => {
+                if (child.val().hn === this.hn) {
+                    foundPt = child.val();
+                    foundKey = child.key;
+                }
+            });
+
+            this.patientData = foundPt;
+            this.firebaseKey = foundKey;
+
             if (!this.patientData) { Swal.fire('Error', 'ไม่พบข้อมูล', 'error'); App.switchPage('patients'); return; }
 
-            // 🚨 ป้องกันข้อมูลแหว่ง เปลี่ยน Array เป็น Object แล้วทำให้ระบบพัง
             this.patientData.history = Array.isArray(this.patientData.history) ? this.patientData.history : (this.patientData.history ? Object.values(this.patientData.history) : []);
             this.patientData.labs = Array.isArray(this.patientData.labs) ? this.patientData.labs : (this.patientData.labs ? Object.values(this.patientData.labs) : []);
             this.patientData.medications = Array.isArray(this.patientData.medications) ? this.patientData.medications : (this.patientData.medications ? Object.values(this.patientData.medications) : []);
             
             this.autoCleanUpOldRecords();
 
-            // 🚨 ป้องกันบั๊กวันที่ว่างเปล่าแล้วทำให้ระบบเรียงข้อมูลค้าง
             this.patientData.history.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
             this.patientData.labs.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 
@@ -345,9 +384,9 @@ const PatientHistoryPage = {
             console.error("Load Patient Data Error:", e);
             document.getElementById('ph-header-loading').innerHTML = '<div class="text-danger py-5"><i class="fa-solid fa-triangle-exclamation fa-3x mb-3"></i><br>ดึงข้อมูลล้มเหลว: ' + e.message + '</div>';
         }
-    },
+    }
 
-    autoCleanUpOldRecords: function() {
+    autoCleanUpOldRecords() {
         let isModified = false;
         const cutoffDate = new Date(); 
         cutoffDate.setFullYear(cutoffDate.getFullYear() - 5);
@@ -361,19 +400,15 @@ const PatientHistoryPage = {
         this.patientData.labs = this.patientData.labs.filter(l => new Date(l.date).getTime() >= cutoffTime);
         if (lLen !== this.patientData.labs.length) isModified = true;
 
-        if (isModified) {
-            db.ref('patients_database_v2/patients').once('value').then(snap => {
-                let list = snap.val(); let index = list.findIndex(p => p.hn === this.hn);
-                if (index !== -1) { 
-                    list[index] = this.patientData; 
-                    db.ref('patients_database_v2/patients').set(list); 
-                    console.log(`[Auto-Purge]: ลบประวัติเก่าเกิน 5 ปี ของ HN:${this.hn} เรียบร้อยแล้ว`);
-                }
+        if (isModified && this.firebaseKey) {
+            db.ref(`patients_database_v2/patients/${this.firebaseKey}`).update({
+                history: this.patientData.history,
+                labs: this.patientData.labs
             });
         }
-    },
+    }
 
-    renderHeader: function() {
+    renderHeader() {
         document.getElementById('ph-header-loading').style.display = 'none';
         const headerContainer = document.getElementById('ph-header-content'); 
         headerContainer.style.display = 'block';
@@ -408,28 +443,68 @@ const PatientHistoryPage = {
                     <span class="badge bg-light text-primary border border-primary-subtle px-3 py-2 rounded-pill shadow-sm" style="font-size:12px;"><i class="fa-solid fa-weight-scale me-2"></i> Dry Weight: ${p.dry_bw || '-'} Kg</span>
                 </div>
             </div>`;
-    },
+    }
 
-    getMedNameFromId: function(id) {
+    getMedNameFromId(id) {
         if(!id) return '-';
         let found = this.invItems.find(i => String(i.id) === String(id)) || this.medItems.find(m => String(m.id || m) === String(id));
         return found ? (found.name || found) : 'ไม่ทราบชื่อ';
-    },
-    getXrayNameFromId: function(id) {
+    }
+
+    getXrayNameFromId(id) {
         if(!id) return '-';
         let found = this.xraysList.find(x => String(x.id) === String(id));
         return found ? found.name : 'ไม่ทราบชื่อ';
-    },
+    }
 
-    filterTimeline: function(dateStr) { this.currentTimelineFilter = dateStr; this.renderTimeline(); },
-    filterVitals: function(dateStr) { this.currentVitalsFilter = dateStr; this.renderChart(); },
-    filterLabs: function(dateStr) { this.currentLabFilter = dateStr; this.renderLabs(); },
-    filterXrays: function(dateStr) { this.currentXrayFilter = dateStr; this.renderXraysTab(); },
-    filterDocs: function(dateStr) { this.currentDocFilter = dateStr; this.renderDocsTab(); },
-    filterMeds: function(dateStr) { this.currentMedsFilter = dateStr; this.renderMeds(); },
+    filterTimeline(dateStr) { this.currentTimelineFilter = dateStr; this.renderTimeline(); }
+    filterVitals(dateStr) { this.currentVitalsFilter = dateStr; this.renderChart(); }
+    filterLabs(dateStr) { this.currentLabFilter = dateStr; this.renderLabs(); }
+    filterXrays(dateStr) { this.currentXrayFilter = dateStr; this.renderXraysTab(); }
+    filterDocs(dateStr) { this.currentDocFilter = dateStr; this.renderDocsTab(); }
+    filterMeds(dateStr) { this.currentMedsFilter = dateStr; this.renderMeds(); }
 
-    loadMoreTimeline: function() { this.timelineLimit += 10; this.renderTimeline(); },
-    renderTimeline: function() {
+    loadMoreTimeline() { this.timelineLimit += 10; this.renderTimeline(); }
+    
+    searchPatients(term) {
+        const container = document.getElementById('ph-search-results');
+        const searchTerm = term.toLowerCase().trim();
+        
+        if (!searchTerm) {
+            container.innerHTML = '';
+            return;
+        }
+
+        const results = this.allPatientsList.filter(p => 
+            (p.name_th || '').toLowerCase().includes(searchTerm) || 
+            (p.hn || '').toLowerCase().includes(searchTerm) || 
+            (p.idcard || '').toLowerCase().includes(searchTerm)
+        ).slice(0, 12); 
+
+        if (results.length === 0) {
+            container.innerHTML = '<div class="col-12 text-center text-muted py-4"><i class="fa-solid fa-user-xmark fa-2x mb-2"></i><br>ไม่พบข้อมูลที่ค้นหา</div>';
+            return;
+        }
+
+        let html = '';
+        results.forEach(p => {
+            let imgSrc = p.photo_base64 && typeof p.photo_base64 === 'string' ? (p.photo_base64.startsWith('data:image') ? p.photo_base64 : 'data:image/jpeg;base64,' + p.photo_base64) : `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name_th)}&background=e2e8f0&color=64748b`;
+            
+            html += `
+            <div class="col-md-6 col-lg-4">
+                <div class="p-3 bg-white border border-light rounded-4 shadow-sm d-flex align-items-center card-hover-float" style="cursor: pointer;" onclick="PatientHistoryPage.init('${p.hn}')">
+                    <img src="${imgSrc}" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                    <div class="min-w-0">
+                        <div class="fw-bold text-dark text-truncate" style="font-family:'Prompt'; font-size: 15px;">${p.title||''}${p.name_th}</div>
+                        <div class="text-primary small fw-bold">HN: ${p.hn}</div>
+                    </div>
+                </div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    renderTimeline() {
         const container = document.getElementById('ph-timeline-content');
         let filteredHistory = this.patientData.history;
         if (this.currentTimelineFilter) filteredHistory = filteredHistory.filter(h => h.date === this.currentTimelineFilter);
@@ -482,7 +557,8 @@ const PatientHistoryPage = {
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
                             <h5 class="fw-bold text-dark mb-1" style="font-family:'Prompt';"><i class="fa-regular fa-calendar me-2 text-primary"></i>${dateStr}</h5>
-                            <div class="text-primary fw-bold" style="font-size:13px;"><i class="fa-solid fa-user-doctor me-2"></i> ${historyRow.doctor || 'แพทย์/พยาบาล'}</div>
+                            <!-- 🚨 THE FIX: อัปเดตคำศัพท์เป็น ผู้ทำรายการ 🚨 -->
+                            <div class="text-primary fw-bold" style="font-size:13px;"><i class="fa-solid fa-user-pen me-2"></i> ${historyRow.doctor || 'ไม่ระบุผู้ทำรายการ'}</div>
                         </div>
                         <div class="d-flex gap-2">
                             <button class="btn btn-sm btn-light border border-warning-subtle text-warning-dark shadow-sm px-3 py-1 rounded-pill" onclick="PatientHistoryPage.editRecord('${historyRow.id || index}')" title="แก้ไข"><i class="fa-solid fa-pen me-1"></i> แก้ไข</button>
@@ -513,9 +589,9 @@ const PatientHistoryPage = {
             html += `<div class="text-center mt-4 mb-4"><button class="btn btn-light text-primary fw-bold rounded-pill px-5 py-2 shadow-sm border" onclick="PatientHistoryPage.loadMoreTimeline()"><i class="fa-solid fa-angle-down me-2"></i> โหลดประวัติเก่าเพิ่มเติม (เหลือ ${remaining} วัน)</button></div>`;
         }
         container.innerHTML = html;
-    },
+    }
 
-    renderXraysTab: function() {
+    renderXraysTab() {
         const container = document.getElementById('ph-xrays-content');
         let html = '';
         let hasXray = false;
@@ -551,7 +627,8 @@ const PatientHistoryPage = {
                             </div>
                             <div>
                                 <div class="fw-bold text-dark" style="font-size:15px; font-family:'Prompt';">${dateStr}</div>
-                                <div class="text-info fw-bold" style="font-size:12px;">สั่งโดย: ${historyRow.doctor || '-'}</div>
+                                <!-- 🚨 THE FIX: อัปเดตคำศัพท์เป็น ผู้ทำรายการ 🚨 -->
+                                <div class="text-info fw-bold" style="font-size:12px;">ผู้ทำรายการ: ${historyRow.doctor || '-'}</div>
                             </div>
                         </div>
                         ${xrayItemsHtml}
@@ -565,10 +642,11 @@ const PatientHistoryPage = {
         } else {
             container.innerHTML = html;
         }
-    },
+    }
 
-    loadMoreDocs: function() { this.docLimit += 12; this.renderDocsTab(); },
-    renderDocsTab: function() {
+    loadMoreDocs() { this.docLimit += 12; this.renderDocsTab(); }
+    
+    renderDocsTab() {
         const container = document.getElementById('ph-docs-content');
         let allDocsOfPatient = [];
         
@@ -618,18 +696,19 @@ const PatientHistoryPage = {
             html += `<div class="col-12 text-center mt-4 mb-4"><button class="btn btn-light text-primary fw-bold rounded-pill px-5 py-2 shadow-sm border" onclick="PatientHistoryPage.loadMoreDocs()"><i class="fa-solid fa-angle-down me-2"></i> โหลดไฟล์ก่อนหน้าเพิ่มเติม (เหลือ ${remaining} ไฟล์)</button></div>`;
         }
         container.innerHTML = html;
-    },
+    }
 
-    viewDocument: function(dataUrl, isPdf) {
+    viewDocument(dataUrl, isPdf) {
         if (isPdf === 'true') {
             Swal.fire({ html: `<iframe src="${dataUrl}" style="width:100%; height:75vh; border:none; border-radius:12px;"></iframe>`, showConfirmButton: false, width: '90%', padding: '10px', showCloseButton: true });
         } else {
             Swal.fire({ imageUrl: dataUrl, imageAlt: 'Scanned Document', showConfirmButton: false, width: '80%', padding: '0', background: 'transparent', showCloseButton: true });
         }
-    },
+    }
 
-    loadMoreLabs: function() { this.labLimit += 10; this.renderLabs(); },
-    renderLabs: function() {
+    loadMoreLabs() { this.labLimit += 10; this.renderLabs(); }
+    
+    renderLabs() {
         const tbody = document.getElementById('ph-labs-content');
         let filteredLabs = this.patientData.labs;
         if(this.currentLabFilter) filteredLabs = filteredLabs.filter(l => l.date === this.currentLabFilter);
@@ -657,9 +736,9 @@ const PatientHistoryPage = {
             html += `<tr><td colspan="8" class="text-center py-4"><button class="btn btn-light text-danger fw-bold rounded-pill px-5 shadow-sm border border-danger-subtle" onclick="PatientHistoryPage.loadMoreLabs()"><i class="fa-solid fa-angle-down me-2"></i> โหลดผลแล็บเก่า</button></td></tr>`;
         }
         tbody.innerHTML = html;
-    },
+    }
 
-    renderMeds: function() {
+    renderMeds() {
         const container = document.getElementById('ph-meds-content');
         if (this.currentMedsFilter) {
             let pastVisit = this.allVisits.find(v => v.date === this.currentMedsFilter);
@@ -740,9 +819,9 @@ const PatientHistoryPage = {
         if(mainHtml) finalHtml += `<div class="col-12 mb-2"><h6 class="fw-bold text-dark mb-0"><i class="fa-solid fa-pump-medical text-primary me-2"></i> เวชภัณฑ์หลักประจำเครื่อง (Main Dialysis Supplies)</h6></div>${mainHtml}`;
         if(otherHtml) finalHtml += `<div class="col-12 mb-2 mt-4 pt-4 border-top border-light"><h6 class="fw-bold text-dark mb-0"><i class="fa-solid fa-capsules text-warning me-2"></i> ยาฉีดและเวชภัณฑ์อื่นๆ (Other Medications)</h6></div>${otherHtml}`;
         container.innerHTML = finalHtml;
-    },
+    }
 
-    renderChart: function() {
+    renderChart() {
         const canvas = document.getElementById('vitalsChart'); if(!canvas) return;
         
         let filteredHistory = [...this.patientData.history].reverse();
@@ -773,7 +852,10 @@ const PatientHistoryPage = {
 
         if(this.chartInstance) this.chartInstance.destroy();
         const ctx = canvas.getContext('2d');
-        this.chartInstance = new Chart(ctx, {
+        const ChartEngine = typeof Chart !== 'undefined' ? Chart : window.Chart;
+        if (!ChartEngine) return;
+
+        this.chartInstance = new ChartEngine(ctx, {
             type: 'line',
             data: { labels: labels, datasets: [ 
                 { label: 'Systolic (ตัวบน)', data: sysData, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderWidth: 4, tension: 0.4, fill: true, pointBackgroundColor: '#ef4444', pointRadius: 5 }, 
@@ -781,16 +863,18 @@ const PatientHistoryPage = {
             ] },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: {font: {family: 'Prompt', size: 14}} } }, scales: { y: { beginAtZero: false, suggestedMin: 60, suggestedMax: 180 } } }
         });
-    },
+    }
 
-    openAddRecordModal: function() { this.showRecordModal(); },
-    editRecord: function(idOrIndex) {
+    openAddRecordModal() { this.showRecordModal(); }
+    
+    editRecord(idOrIndex) {
         let index = this.patientData.history.findIndex(h => h.id === idOrIndex);
         if (index === -1) index = parseInt(idOrIndex);
         if (isNaN(index) || !this.patientData.history[index]) return;
         this.showRecordModal(this.patientData.history[index], index);
-    },
-    deleteRecord: function(idOrIndex) {
+    }
+
+    deleteRecord(idOrIndex) {
         Swal.fire({ title: 'ลบประวัตินี้?', text: "ข้อมูลจะถูกลบถาวร ไม่สามารถกู้คืนได้", icon: 'warning', showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-trash"></i> ยืนยันการลบ', confirmButtonColor: '#ef4444', cancelButtonText: 'ยกเลิก' })
         .then((result) => {
             if (result.isConfirmed) {
@@ -800,8 +884,9 @@ const PatientHistoryPage = {
                 this.saveToDB();
             }
         });
-    },
-    showRecordModal: function(record = null, index = null) {
+    }
+
+    showRecordModal(record = null, index = null) {
         let isEdit = record !== null;
         Swal.fire({
             title: `<h4 class="fw-bold text-primary" style="font-family:'Prompt';"><i class="fa-solid ${isEdit?'fa-pen':'fa-plus'} me-2"></i>${isEdit ? 'แก้ไขประวัติการรักษา' : 'เพิ่มบันทึกการรักษาด่วน'}</h4>`,
@@ -825,7 +910,7 @@ const PatientHistoryPage = {
                     <input type="text" id="add-rec-cc" class="form-control input-modern mb-3" value="${isEdit ? (record.cc==='-'?'':record.cc) : ''}" placeholder="เช่น มารับการฟอกเลือดตามนัด">
                     
                     <label class="form-label fw-bold text-dark small"><i class="fa-solid fa-notes-medical me-2"></i> บันทึกการรักษา / Order</label>
-                    <textarea id="add-rec-note" class="form-control input-modern" rows="4" style="line-height:1.6;" placeholder="จดบันทึกของแพทย์หรือพยาบาล...">${isEdit ? (record.note==='-'?'':record.note) : ''}</textarea>
+                    <textarea id="add-rec-note" class="form-control input-modern" rows="4" style="line-height:1.6;" placeholder="จดบันทึกการรักษา...">${isEdit ? (record.note==='-'?'':record.note) : ''}</textarea>
                 </div>
             `,
             showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-save me-1"></i> บันทึกข้อมูล', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#2563eb', width: 500,
@@ -835,22 +920,25 @@ const PatientHistoryPage = {
                     date: document.getElementById('add-rec-date').value,
                     bp: document.getElementById('add-rec-bp').value || '-', weight: document.getElementById('add-rec-wt').value || '-',
                     cc: document.getElementById('add-rec-cc').value || '-', note: document.getElementById('add-rec-note').value,
-                    doctor: isEdit ? record.doctor : (App.currentUser ? App.currentUser.name : 'แพทย์ผู้ดูแล')
+                    // 🚨 THE FIX: อัปเดตคำศัพท์เป็น ผู้ทำรายการ 🚨
+                    doctor: isEdit ? record.doctor : (App.currentUser ? App.currentUser.name : 'ผู้ทำรายการ')
                 };
                 if (isEdit) this.patientData.history[index] = newData; else this.patientData.history.push(newData);
                 this.saveToDB();
             }
         });
-    },
+    }
 
-    openAddLabModal: function() { this.showLabModal(); },
-    editLab: function(idOrIndex) {
+    openAddLabModal() { this.showLabModal(); }
+    
+    editLab(idOrIndex) {
         let index = this.patientData.labs.findIndex(l => l.id === idOrIndex);
         if (index === -1) index = parseInt(idOrIndex);
         if (isNaN(index) || !this.patientData.labs[index]) return;
         this.showLabModal(this.patientData.labs[index], index);
-    },
-    deleteLab: function(idOrIndex) {
+    }
+
+    deleteLab(idOrIndex) {
         Swal.fire({ title: 'ลบผลแล็บนี้?', text: "ข้อมูลจะถูกลบถาวร ไม่สามารถกู้คืนได้", icon: 'warning', showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-trash"></i> ยืนยันการลบ', confirmButtonColor: '#ef4444', cancelButtonText: 'ยกเลิก' })
         .then((result) => {
             if (result.isConfirmed) {
@@ -860,8 +948,9 @@ const PatientHistoryPage = {
                 this.saveToDB();
             }
         });
-    },
-    showLabModal: function(lab = null, index = null) {
+    }
+
+    showLabModal(lab = null, index = null) {
         let isEdit = lab !== null;
         const v = (val) => isEdit && val ? val : '';
         Swal.fire({
@@ -893,15 +982,26 @@ const PatientHistoryPage = {
                 this.saveToDB();
             }
         });
-    },
+    }
 
-    openAddMedModal: function() { this.showMedModal(); },
-    editMed: function(index) { if (!this.patientData.medications[index]) return; this.showMedModal(this.patientData.medications[index], index); },
-    deleteMed: function(index) {
+    openAddMedModal() { this.showMedModal(); }
+    
+    editMed(index) { 
+        if (!this.patientData.medications[index]) return; 
+        this.showMedModal(this.patientData.medications[index], index); 
+    }
+
+    deleteMed(index) {
         Swal.fire({ title: 'ลบรายการยานี้?', icon: 'warning', showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-trash"></i> ยืนยันลบยา', confirmButtonColor: '#ef4444', cancelButtonText:'ยกเลิก' })
-        .then((result) => { if (result.isConfirmed) { this.patientData.medications.splice(index, 1); this.saveToDB(); } });
-    },
-    showMedModal: function(med = null, index = null) {
+        .then((result) => { 
+            if (result.isConfirmed) { 
+                this.patientData.medications.splice(index, 1); 
+                this.saveToDB(); 
+            } 
+        });
+    }
+
+    showMedModal(med = null, index = null) {
         let isEdit = med !== null;
         Swal.fire({
             title: `<h4 class="fw-bold text-warning" style="font-family:'Prompt';"><i class="fa-solid fa-pills me-2"></i>${isEdit ? 'แก้ไขยาและเวชภัณฑ์' : 'เพิ่มยาและเวชภัณฑ์'}</h4>`,
@@ -921,19 +1021,160 @@ const PatientHistoryPage = {
                 this.saveToDB();
             }
         });
-    },
-
-    saveToDB: function() {
-        Swal.fire({ title: 'กำลังอัปเดตแฟ้มประวัติ...', didOpen: () => Swal.showLoading() });
-        db.ref('patients_database_v2/patients').once('value').then(snap => {
-            let list = snap.val(); let index = list.findIndex(p => p.hn === this.hn);
-            if(index !== -1) {
-                list[index] = this.patientData;
-                db.ref('patients_database_v2/patients').set(list).then(() => {
-                    Swal.fire({title:'อัปเดตเรียบร้อย!', icon:'success', timer:1500, showConfirmButton:false});
-                    this.loadPatientData(); 
-                });
-            }
-        });
     }
-};
+
+    saveToDB() {
+        Swal.fire({ title: 'กำลังอัปเดตแฟ้มประวัติ...', didOpen: () => Swal.showLoading() });
+        
+        if (this.firebaseKey) {
+            db.ref(`patients_database_v2/patients/${this.firebaseKey}`).update(this.patientData).then(() => {
+                Swal.fire({title:'อัปเดตเรียบร้อย!', icon:'success', timer:1500, showConfirmButton:false});
+                this.loadPatientData(); 
+            }).catch(err => {
+                Swal.fire('เกิดข้อผิดพลาด', err.message, 'error');
+            });
+        } else {
+            db.ref('patients_database_v2/patients').once('value').then(snap => {
+                let list = snap.val(); let index = list.findIndex(p => p.hn === this.hn);
+                if(index !== -1) {
+                    list[index] = this.patientData;
+                    db.ref('patients_database_v2/patients').set(list).then(() => {
+                        Swal.fire({title:'อัปเดตเรียบร้อย!', icon:'success', timer:1500, showConfirmButton:false});
+                        this.loadPatientData(); 
+                    });
+                }
+            });
+        }
+    }
+
+    // =========================================================================
+    // 🖨️ THE FIX: EMR Report Generator (สำหรับปริ้นท์ลง A4)
+    // =========================================================================
+    printEMR() {
+        if (!this.patientData) {
+            Swal.fire('ข้อผิดพลาด', 'ไม่พบข้อมูลผู้ป่วยสำหรับพิมพ์', 'error');
+            return;
+        }
+
+        const p = this.patientData;
+        const printWindow = window.open('', '_blank');
+
+        let historyHtml = '';
+        let sortedHistory = [...(p.history || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        if (sortedHistory.length > 0) {
+            historyHtml = sortedHistory.map(h => {
+                let visit = this.allVisits.find(v => v.id === h.id) || {};
+                let medsText = [];
+                if(visit.hd_dialysate_item) medsText.push(`น้ำยา: ${this.getMedNameFromId(visit.hd_dialysate_item)}${visit.hd_dialysate_qty ? `(${visit.hd_dialysate_qty})` : ''}`);
+                if(visit.hd_saline_item) medsText.push(`NSS: ${this.getMedNameFromId(visit.hd_saline_item)}${visit.hd_saline_qty ? `(${visit.hd_saline_qty})` : ''}`);
+                if(visit.hd_heparin_item) medsText.push(`Heparin: ${this.getMedNameFromId(visit.hd_heparin_item)}${visit.hd_heparin_qty ? `(${visit.hd_heparin_qty})` : ''}`);
+
+                // 🚨 THE FIX: อัปเดตคำศัพท์เป็น ผู้ทำรายการ 🚨
+                return `
+                <div style="border-bottom: 1px dashed #ccc; padding: 12px 0; page-break-inside: avoid;">
+                    <div style="font-weight:bold; font-size: 16px;">วันที่: ${new Date(h.date).toLocaleDateString('th-TH')} <span style="font-weight:normal; font-size: 14px; color:#555;">(ผู้ทำรายการ: ${h.doctor || '-'})</span></div>
+                    <div style="font-size:14px; color:#333; margin-top: 4px;"><b>BP:</b> ${h.bp || '-'} | <b>Wt:</b> ${h.weight || '-'} Kg</div>
+                    <div style="font-size:14px; color:#333; margin-top: 4px;"><b>การใช้ยา/เวชภัณฑ์:</b> ${medsText.length > 0 ? medsText.join(', ') : '-'}</div>
+                    <div style="margin-top:6px; font-size:14px;"><b>อาการสำคัญ (CC):</b> ${visit.cc || h.cc || '-'}</div>
+                    <div style="font-size:14px; margin-top: 2px;"><b>บันทึกการรักษา (Note):</b> ${visit.note || h.note || '-'}</div>
+                </div>`;
+            }).join('');
+        } else {
+            historyHtml = '<div style="padding: 10px; color: #555;">ไม่มีประวัติการรักษา</div>';
+        }
+
+        let labsHtml = '';
+        let sortedLabs = [...(p.labs || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
+        if (sortedLabs.length > 0) {
+            labsHtml = `
+            <table style="width:100%; border-collapse: collapse; margin-top:10px; font-size:14px; text-align: center;">
+                <tr style="background:#f1f5f9;">
+                    <th style="border:1px solid #000; padding:8px;">วันที่</th>
+                    <th style="border:1px solid #000; padding:8px;">BUN</th>
+                    <th style="border:1px solid #000; padding:8px;">Cr</th>
+                    <th style="border:1px solid #000; padding:8px;">K</th>
+                    <th style="border:1px solid #000; padding:8px;">Ca</th>
+                    <th style="border:1px solid #000; padding:8px;">P</th>
+                    <th style="border:1px solid #000; padding:8px;">Hct</th>
+                </tr>
+                ${sortedLabs.map(l => `
+                <tr>
+                    <td style="border:1px solid #000; padding:6px;">${new Date(l.date).toLocaleDateString('th-TH')}</td>
+                    <td style="border:1px solid #000; padding:6px;">${l.bun||'-'}</td>
+                    <td style="border:1px solid #000; padding:6px;">${l.cr||'-'}</td>
+                    <td style="border:1px solid #000; padding:6px;">${l.k||'-'}</td>
+                    <td style="border:1px solid #000; padding:6px;">${l.ca||'-'}</td>
+                    <td style="border:1px solid #000; padding:6px;">${l.p||'-'}</td>
+                    <td style="border:1px solid #000; padding:6px;">${l.hct||'-'}</td>
+                </tr>`).join('')}
+            </table>`;
+        } else {
+            labsHtml = '<div style="padding: 10px; color: #555;">ไม่มีผลแล็บ</div>';
+        }
+
+        const html = `
+        <!DOCTYPE html>
+        <html lang="th">
+        <head>
+            <meta charset="UTF-8">
+            <title>EMR - ${p.hn}</title>
+            <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+            <style>
+                body { font-family: 'Sarabun', sans-serif; color: #000; line-height: 1.5; padding: 20px 40px; margin: 0; }
+                h1, h2, h3, h4 { font-family: 'Sarabun', sans-serif; }
+                .print-btn { padding: 12px 24px; font-size: 16px; cursor: pointer; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+                .print-btn:hover { background: #1d4ed8; }
+                @media print { 
+                    .no-print { display: none !important; } 
+                    body { padding: 0; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+                <button class="print-btn" onclick="window.print()">🖨️ สั่งพิมพ์เอกสารนี้</button>
+            </div>
+            
+            <h2 style="text-align:center; margin-bottom: 5px; font-weight: bold;">แฟ้มประวัติผู้ป่วย (Electronic Medical Record)</h2>
+            <h4 style="text-align:center; margin-top: 0; color: #555;">หน่วยไตเทียม</h4>
+            <hr style="border:1px solid #000; margin-bottom: 20px;">
+            
+            <table style="width: 100%; font-size: 16px; margin-bottom: 25px; border-collapse: collapse;">
+                <tr>
+                    <td width="50%" style="padding: 4px 0;"><b>ชื่อ-สกุล:</b> ${p.title||''}${p.name_th}</td>
+                    <td width="50%" style="padding: 4px 0;"><b>HN:</b> ${p.hn}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 4px 0;"><b>อายุ:</b> ${p.age || '-'}</td>
+                    <td style="padding: 4px 0;"><b>สิทธิการรักษา:</b> ${p.right || '-'}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 4px 0;"><b>กรุ๊ปเลือด:</b> ${p.blood_type || '-'}</td>
+                    <td style="padding: 4px 0;"><b>โรคประจำตัว:</b> ${p.underlying_disease || '-'}</td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="padding: 4px 0;"><b style="color:#dc2626;">ประวัติแพ้ยา:</b> ${p.allergy || '-'}</td>
+                </tr>
+            </table>
+
+            <h3 style="background:#f1f5f9; padding:8px 12px; border-left:5px solid #2563eb; font-size:18px; margin-top: 30px;">ประวัติการรักษา (Treatment Timeline)</h3>
+            ${historyHtml}
+
+            <h3 style="background:#f1f5f9; padding:8px 12px; border-left:5px solid #dc2626; font-size:18px; margin-top: 40px; page-break-before: auto;">ผลตรวจห้องปฏิบัติการ (Lab Results)</h3>
+            ${labsHtml}
+            
+            <script>
+                setTimeout(() => window.print(), 800);
+            </script>
+        </body>
+        </html>
+        `;
+        
+        printWindow.document.write(html);
+        printWindow.document.close();
+    }
+}
+
+const PatientHistoryPage = new PatientHistoryPageComponent();
+window.PatientHistoryPage = PatientHistoryPage;

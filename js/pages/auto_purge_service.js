@@ -1,54 +1,66 @@
 // js/auto_purge_service.js
-// 🚀 สมองกลส่วนกลาง: ระบบกวาดล้างข้อมูลเก่าเกิน 5 ปี (Global Auto-Purge Service & Cloud FinOps)
+// 🚀 Enterprise FinOps Engine: Distributed Auto-Purge Service
 
 const AutoPurgeService = {
     isPurging: false,
 
     init: function() {
-        // เช็ค Cache ว่า "วันนี้" ระบบเคยกวาดขยะไปแล้วหรือยัง? (ป้องการการทำงานซ้ำซ้อน)
-        const today = new Date().toISOString().split('T')[0];
-        const lastPurge = localStorage.getItem('last_global_purge_date');
-        
-        if (lastPurge === today) {
-            console.log("✅ [Global Auto-Purge] วันนี้ทำการกวาดล้างข้อมูลเก่าไปแล้ว (Standby Mode)");
-            return;
-        }
-
-        // หน่วงเวลา 5 วินาทีรอให้หน้าจอหลัก (UI) โหลดเสร็จก่อน เพื่อไม่ให้แย่งความเร็วเน็ตกัน
+        // หน่วงเวลา 10 วินาที เพื่อไม่ให้แย่ง Bandwidth ตอนเปิดหน้าจอ Dashboard ครั้งแรก
         setTimeout(() => {
-            this.runGlobalPurge().then((deletedCount) => {
-                // บันทึกว่าวันนี้ทำความสะอาดแล้ว
-                localStorage.setItem('last_global_purge_date', today);
-                
-                // แจ้งเตือนพยาบาลกรณีที่มีการลบขยะออกไปจริงๆ
-                if (deletedCount > 0) {
-                    this.showToast(`คืนพื้นที่ให้ Cloud! ลบข้อมูลเก่าเกิน 5 ปี จำนวน ${deletedCount} รายการ`);
+            this.tryAcquireLockAndPurge();
+        }, 10000);
+    },
+
+    // 🔒 1. ระบบ Distributed Lock (ป้องกันรันซ้ำซ้อนจากหลายเครื่อง)
+    tryAcquireLockAndPurge: async function() {
+        if (typeof db === 'undefined') return;
+
+        const today = new Date().toISOString().split('T')[0];
+        const lockRef = db.ref('system_metadata/last_global_purge_date');
+
+        try {
+            // ใช้ Transaction สั่งคุยกับเซิร์ฟเวอร์โดยตรง (Locking Mechanism)
+            const { committed, snapshot } = await lockRef.transaction((currentValue) => {
+                // ถ้าวันนี้มีเครื่องอื่นทำไปแล้ว ยกเลิกทันที
+                if (currentValue === today) {
+                    return; // Abort transaction
                 }
+                // ถ้ายังไม่มีใครทำ ให้เครื่องนี้เป็นคนทำ และเซ็ตวันที่ของวันนี้
+                return today; 
             });
-        }, 5000);
+
+            if (!committed) {
+                console.log("✅ [FinOps] วันนี้คลินิกทำการกวาดล้างข้อมูลไปแล้วจากเครื่องอื่น (Standby Mode)");
+                return;
+            }
+
+            // ถ้าได้กุญแจ (Lock) มาแล้ว ค่อยเริ่มทำความสะอาด
+            const deletedCount = await this.runGlobalPurge();
+            
+            if (deletedCount > 0) {
+                this.showToast(`คืนพื้นที่ให้ Cloud! ลบข้อมูลเก่าเกิน 5 ปี จำนวน ${deletedCount} รายการ`);
+            }
+        } catch (error) {
+            console.error("❌ [FinOps] Transaction Lock Error:", error);
+        }
     },
 
     showToast: function(msg) {
-        if(typeof Swal !== 'undefined') {
-            const Toast = Swal.mixin({
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
                 toast: true, position: 'bottom-end', showConfirmButton: false, timer: 6000,
-                didOpen: (toast) => {
-                    toast.style.background = '#ffffff';
-                    toast.style.border = '2px solid #3b82f6';
-                    toast.style.borderRadius = '16px';
-                    toast.style.fontFamily = "'Prompt', sans-serif";
-                }
+                icon: 'info', title: '♻️ ' + msg,
+                customClass: { popup: 'shadow-lg border-primary rounded-4' }
             });
-            Toast.fire({ icon: 'info', title: '♻️ ' + msg });
         }
     },
 
+    // 🧹 2. ปฏิบัติการกวาดล้าง (Atomic Payload Construction)
     runGlobalPurge: async function() {
-        if (typeof db === 'undefined') return 0;
         if (this.isPurging) return 0;
         this.isPurging = true;
 
-        console.log("🚀 [Global Auto-Purge] เริ่มต้นสแกนฐานข้อมูลทั้งระบบ...");
+        console.log("🚀 [FinOps] เริ่มต้นสแกนหาข้อมูลหมดอายุ (Older than 5 years)...");
         
         const cutoffDate = new Date();
         cutoffDate.setFullYear(cutoffDate.getFullYear() - 5);
@@ -59,256 +71,95 @@ const AutoPurgeService = {
         let totalDeleted = 0;
 
         try {
-            // 🧹 1. กวาดล้างแฟ้มผู้ป่วย (ประวัติการฟอก / ผลแล็บ / คนไข้ที่จำหน่ายออกเกิน 5 ปี)
+            // -------------------------------------------------------------
+            // 🛡️ ส่วนที่ 1: กวาดล้างแฟ้มผู้ป่วย (แบบเจาะจง ไม่เซฟทับทั้งตู้)
+            // -------------------------------------------------------------
             const pSnap = await db.ref('patients_database_v2/patients').once('value');
             if (pSnap.exists()) {
-                let patients = Object.values(pSnap.val());
-                let isPatientUpdated = false;
+                const patients = pSnap.val();
+                const updates = {}; // สร้างตระกร้าสำหรับส่งคำสั่งอัปเดตแบบรวดเดียว (Batch)
 
-                let validPatients = patients.filter(p => {
-                    if (!p) return false;
+                // ลูปผ่าน Key/ID ของ Firebase ป้องกันปัญหา Array Index เลื่อน
+                Object.entries(patients).forEach(([patientId, p]) => {
+                    if (!p) return;
                     
-                    // ลบคนไข้ที่สถานะ "จำหน่าย/ตาย/ย้าย" ที่เก่ากว่า 5 ปี ทิ้งทั้งก้อน
+                    // กรณีตาย/ย้าย/จำหน่าย เกิน 5 ปี -> ลบคนไข้ทิ้งทั้งแฟ้ม
                     if ((p.status || 'ปกติ') !== 'ปกติ') {
                         let recordDate = new Date(p.last_updated || p.register_date || "2000-01-01").getTime();
                         if (recordDate < cutoffTime) {
+                            updates[`${patientId}`] = null; // คำสั่ง Null ใน Firebase คือการลบทิ้ง
                             totalDeleted++;
-                            return false; 
+                            return; 
                         }
                     }
                     
-                    // ล้างประวัติ (History) และ ผลแล็บ (Labs) เก่าๆ ของคนไข้ที่ยังฟอกอยู่
+                    // กรณีคนไข้ยังอยู่ แต่ประวัติ (History) ยาวเกินไป -> ตัดส่วนเก่าทิ้ง
                     if (Array.isArray(p.history)) {
-                        let oldLen = p.history.length;
-                        p.history = p.history.filter(h => h && h.date && new Date(h.date).getTime() >= cutoffTime);
-                        if (p.history.length < oldLen) {
-                            isPatientUpdated = true;
-                            totalDeleted += (oldLen - p.history.length);
+                        let validHistory = p.history.filter(h => h && h.date && new Date(h.date).getTime() >= cutoffTime);
+                        if (validHistory.length < p.history.length) {
+                            updates[`${patientId}/history`] = validHistory;
+                            totalDeleted += (p.history.length - validHistory.length);
                         }
                     }
+                    
+                    // ล้างผลแล็บ (Labs)
                     if (Array.isArray(p.labs)) {
-                        let oldLen = p.labs.length;
-                        p.labs = p.labs.filter(l => l && l.date && new Date(l.date).getTime() >= cutoffTime);
-                        if (p.labs.length < oldLen) {
-                            isPatientUpdated = true;
-                            totalDeleted += (oldLen - p.labs.length);
+                        let validLabs = p.labs.filter(l => l && l.date && new Date(l.date).getTime() >= cutoffTime);
+                        if (validLabs.length < p.labs.length) {
+                            updates[`${patientId}/labs`] = validLabs;
+                            totalDeleted += (p.labs.length - validLabs.length);
                         }
                     }
-                    return true;
                 });
 
-                if (validPatients.length < patients.length || isPatientUpdated) {
-                    await db.ref('patients_database_v2/patients').set(validPatients);
+                // ส่งคำสั่งอัปเดตทีเดียว (Atomic Update) - ถ้ามีคนไข้ใหม่เพิ่มมาตอนส่งคำสั่งนี้ คนไข้ใหม่จะไม่หาย!
+                if (Object.keys(updates).length > 0) {
+                    await db.ref('patients_database_v2/patients').update(updates);
                 }
             }
 
-            // 🧹 2. กวาดล้างคิวฟอกไต (Visits) ที่เก่าเกิน 5 ปี (ครอบคลุมไฟล์เอกสารสแกนด้วย)
-            const vSnap = await db.ref('patients_database_v2/visits').once('value');
-            if (vSnap.exists()) {
-                let visits = Object.values(vSnap.val());
-                let originalLen = visits.length;
-                let validVisits = visits.filter(v => v && v.date && v.date >= cutoffStrDate);
-                if (validVisits.length < originalLen) {
-                    await db.ref('patients_database_v2/visits').set(validVisits);
-                    totalDeleted += (originalLen - validVisits.length);
-                }
-            }
+            // -------------------------------------------------------------
+            // 🛡️ ส่วนที่ 2: กวาดล้างคิวและธุรกรรม (Query โดยตรง ประหยัด RAM)
+            // -------------------------------------------------------------
+            
+            // ใช้ helper function เพื่อลดโค้ดซ้ำซ้อน
+            totalDeleted += await this.purgeNodeByDate('patients_database_v2/visits', 'date', cutoffStrDate);
+            totalDeleted += await this.purgeNodeByDate('inventory_database_v2/transactions', 'timestamp', cutoffStrISO);
+            totalDeleted += await this.purgeNodeByDate('clinic_expenses_v2', 'date', cutoffStrDate);
+            totalDeleted += await this.purgeNodeByDate('department_ledger_v2', 'date', cutoffStrDate);
 
-            // 🧹 3. กวาดล้างประวัติการเบิกจ่ายสต๊อก (Inventory Transactions)
-            const tSnap = await db.ref('inventory_database_v2/transactions').orderByChild('timestamp').endAt(cutoffStrISO).once('value');
-            if (tSnap.exists()) {
-                let updates = {};
-                tSnap.forEach(child => { updates[child.key] = null; totalDeleted++; });
-                await db.ref('inventory_database_v2/transactions').update(updates);
-            }
-
-            // 🧹 4. กวาดล้างสมุดบัญชีคลินิก (Clinic Expenses)
-            const eSnap = await db.ref('clinic_expenses_v2').orderByChild('date').endAt(cutoffStrDate).once('value');
-            if (eSnap.exists()) {
-                let updates = {};
-                eSnap.forEach(child => { updates[child.key] = null; totalDeleted++; });
-                await db.ref('clinic_expenses_v2').update(updates);
-            }
-
-            // 🧹 5. กวาดล้างบัญชีภายในหน่วยงาน (Department Ledger)
-            const lSnap = await db.ref('department_ledger_v2').orderByChild('date').endAt(cutoffStrDate).once('value');
-            if (lSnap.exists()) {
-                let updates = {};
-                lSnap.forEach(child => { updates[child.key] = null; totalDeleted++; });
-                await db.ref('department_ledger_v2').update(updates);
-            }
-
-            console.log(`✅ [Global Auto-Purge] สแกนเสร็จสิ้น! ล้างขยะไปทั้งหมด ${totalDeleted} รายการ`);
+            console.log(`✅ [FinOps] ทำความสะอาดเสร็จสิ้น! คืนพื้นที่รวม ${totalDeleted} รายการ`);
             return totalDeleted;
 
         } catch (error) {
-            console.error("❌ [Global Auto-Purge] เกิดข้อผิดพลาด:", error);
+            console.error("❌ [FinOps] เกิดข้อผิดพลาดระหว่างการกวาดล้าง:", error);
+            // ปลดล็อคเผื่อให้เครื่องอื่นทำงานแทนในกรณีที่เครื่องนี้ Crash
+            await db.ref('system_metadata/last_global_purge_date').set(null); 
             return 0;
         } finally {
             this.isPurging = false;
         }
+    },
+
+    // ฟังก์ชันผู้ช่วย: ค้นหาและลบเฉพาะรายการที่เก่ากว่ากำหนดแบบรวดเดียว
+    purgeNodeByDate: async function(path, dateField, cutoffString) {
+        let deleted = 0;
+        // query เฉพาะของเก่ามาลบ ไม่ต้องโหลดของใหม่มาให้เปลืองเน็ต
+        const snap = await db.ref(path).orderByChild(dateField).endAt(cutoffString).once('value');
+        
+        if (snap.exists()) {
+            let updates = {};
+            snap.forEach(child => { 
+                updates[child.key] = null; 
+                deleted++; 
+            });
+            await db.ref(path).update(updates);
+        }
+        return deleted;
     }
 };
 
-// ⚡ ฝังระบบรอให้ Firebase โหลดเสร็จ แล้วสั่งสตาร์ทสมองกลอัตโนมัติ
-let globalPurgeInterval = setInterval(() => {
-    if (typeof db !== 'undefined') {
-        AutoPurgeService.init();
-        clearInterval(globalPurgeInterval);
-    }
-}, 2000);// js/auto_purge_service.js
-// 🚀 สมองกลส่วนกลาง: ระบบกวาดล้างข้อมูลเก่าเกิน 5 ปี (Global Auto-Purge Service & Cloud FinOps)
-
-const AutoPurgeService = {
-    isPurging: false,
-
-    init: function() {
-        // เช็ค Cache ว่า "วันนี้" ระบบเคยกวาดขยะไปแล้วหรือยัง? (ป้องการการทำงานซ้ำซ้อน)
-        const today = new Date().toISOString().split('T')[0];
-        const lastPurge = localStorage.getItem('last_global_purge_date');
-        
-        if (lastPurge === today) {
-            console.log("✅ [Global Auto-Purge] วันนี้ทำการกวาดล้างข้อมูลเก่าไปแล้ว (Standby Mode)");
-            return;
-        }
-
-        // หน่วงเวลา 5 วินาทีรอให้หน้าจอหลัก (UI) โหลดเสร็จก่อน เพื่อไม่ให้แย่งความเร็วเน็ตกัน
-        setTimeout(() => {
-            this.runGlobalPurge().then((deletedCount) => {
-                // บันทึกว่าวันนี้ทำความสะอาดแล้ว
-                localStorage.setItem('last_global_purge_date', today);
-                
-                // แจ้งเตือนพยาบาลกรณีที่มีการลบขยะออกไปจริงๆ
-                if (deletedCount > 0) {
-                    this.showToast(`คืนพื้นที่ให้ Cloud! ลบข้อมูลเก่าเกิน 5 ปี จำนวน ${deletedCount} รายการ`);
-                }
-            });
-        }, 5000);
-    },
-
-    showToast: function(msg) {
-        if(typeof Swal !== 'undefined') {
-            const Toast = Swal.mixin({
-                toast: true, position: 'bottom-end', showConfirmButton: false, timer: 6000,
-                didOpen: (toast) => {
-                    toast.style.background = '#ffffff';
-                    toast.style.border = '2px solid #3b82f6';
-                    toast.style.borderRadius = '16px';
-                    toast.style.fontFamily = "'Prompt', sans-serif";
-                }
-            });
-            Toast.fire({ icon: 'info', title: '♻️ ' + msg });
-        }
-    },
-
-    runGlobalPurge: async function() {
-        if (typeof db === 'undefined') return 0;
-        if (this.isPurging) return 0;
-        this.isPurging = true;
-
-        console.log("🚀 [Global Auto-Purge] เริ่มต้นสแกนฐานข้อมูลทั้งระบบ...");
-        
-        const cutoffDate = new Date();
-        cutoffDate.setFullYear(cutoffDate.getFullYear() - 5);
-        const cutoffTime = cutoffDate.getTime();
-        const cutoffStrDate = cutoffDate.toISOString().split('T')[0];
-        const cutoffStrISO = cutoffDate.toISOString();
-
-        let totalDeleted = 0;
-
-        try {
-            // 🧹 1. กวาดล้างแฟ้มผู้ป่วย (ประวัติการฟอก / ผลแล็บ / คนไข้ที่จำหน่ายออกเกิน 5 ปี)
-            const pSnap = await db.ref('patients_database_v2/patients').once('value');
-            if (pSnap.exists()) {
-                let patients = Object.values(pSnap.val());
-                let isPatientUpdated = false;
-
-                let validPatients = patients.filter(p => {
-                    if (!p) return false;
-                    
-                    // ลบคนไข้ที่สถานะ "จำหน่าย/ตาย/ย้าย" ที่เก่ากว่า 5 ปี ทิ้งทั้งก้อน
-                    if ((p.status || 'ปกติ') !== 'ปกติ') {
-                        let recordDate = new Date(p.last_updated || p.register_date || "2000-01-01").getTime();
-                        if (recordDate < cutoffTime) {
-                            totalDeleted++;
-                            return false; 
-                        }
-                    }
-                    
-                    // ล้างประวัติ (History) และ ผลแล็บ (Labs) เก่าๆ ของคนไข้ที่ยังฟอกอยู่
-                    if (Array.isArray(p.history)) {
-                        let oldLen = p.history.length;
-                        p.history = p.history.filter(h => h && h.date && new Date(h.date).getTime() >= cutoffTime);
-                        if (p.history.length < oldLen) {
-                            isPatientUpdated = true;
-                            totalDeleted += (oldLen - p.history.length);
-                        }
-                    }
-                    if (Array.isArray(p.labs)) {
-                        let oldLen = p.labs.length;
-                        p.labs = p.labs.filter(l => l && l.date && new Date(l.date).getTime() >= cutoffTime);
-                        if (p.labs.length < oldLen) {
-                            isPatientUpdated = true;
-                            totalDeleted += (oldLen - p.labs.length);
-                        }
-                    }
-                    return true;
-                });
-
-                if (validPatients.length < patients.length || isPatientUpdated) {
-                    await db.ref('patients_database_v2/patients').set(validPatients);
-                }
-            }
-
-            // 🧹 2. กวาดล้างคิวฟอกไต (Visits) ที่เก่าเกิน 5 ปี (ครอบคลุมไฟล์เอกสารสแกนด้วย)
-            const vSnap = await db.ref('patients_database_v2/visits').once('value');
-            if (vSnap.exists()) {
-                let visits = Object.values(vSnap.val());
-                let originalLen = visits.length;
-                let validVisits = visits.filter(v => v && v.date && v.date >= cutoffStrDate);
-                if (validVisits.length < originalLen) {
-                    await db.ref('patients_database_v2/visits').set(validVisits);
-                    totalDeleted += (originalLen - validVisits.length);
-                }
-            }
-
-            // 🧹 3. กวาดล้างประวัติการเบิกจ่ายสต๊อก (Inventory Transactions)
-            const tSnap = await db.ref('inventory_database_v2/transactions').orderByChild('timestamp').endAt(cutoffStrISO).once('value');
-            if (tSnap.exists()) {
-                let updates = {};
-                tSnap.forEach(child => { updates[child.key] = null; totalDeleted++; });
-                await db.ref('inventory_database_v2/transactions').update(updates);
-            }
-
-            // 🧹 4. กวาดล้างสมุดบัญชีคลินิก (Clinic Expenses)
-            const eSnap = await db.ref('clinic_expenses_v2').orderByChild('date').endAt(cutoffStrDate).once('value');
-            if (eSnap.exists()) {
-                let updates = {};
-                eSnap.forEach(child => { updates[child.key] = null; totalDeleted++; });
-                await db.ref('clinic_expenses_v2').update(updates);
-            }
-
-            // 🧹 5. กวาดล้างบัญชีภายในหน่วยงาน (Department Ledger)
-            const lSnap = await db.ref('department_ledger_v2').orderByChild('date').endAt(cutoffStrDate).once('value');
-            if (lSnap.exists()) {
-                let updates = {};
-                lSnap.forEach(child => { updates[child.key] = null; totalDeleted++; });
-                await db.ref('department_ledger_v2').update(updates);
-            }
-
-            console.log(`✅ [Global Auto-Purge] สแกนเสร็จสิ้น! ล้างขยะไปทั้งหมด ${totalDeleted} รายการ`);
-            return totalDeleted;
-
-        } catch (error) {
-            console.error("❌ [Global Auto-Purge] เกิดข้อผิดพลาด:", error);
-            return 0;
-        } finally {
-            this.isPurging = false;
-        }
-    }
-};
-
-// ⚡ ฝังระบบรอให้ Firebase โหลดเสร็จ แล้วสั่งสตาร์ทสมองกลอัตโนมัติ
+// ⚡ ฝังระบบรอให้ Firebase โหลดเสร็จ แล้วสั่งสตาร์ท
 let globalPurgeInterval = setInterval(() => {
     if (typeof db !== 'undefined') {
         AutoPurgeService.init();

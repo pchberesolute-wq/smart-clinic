@@ -1,5 +1,5 @@
 // js/main.js
-// 🚀 ตัวควบคุมหลักของระบบ (Router, Auth Guard, RBAC Display, Auto-Logout & Native Toast Error Handler)
+// 🚀 Enterprise Core Router: Bulletproof Rendering, Zero-Freeze, Memory-Leak Prevention & Ghost CSS Terminator
 
 const App = {
     currentUser: null,
@@ -7,64 +7,176 @@ const App = {
     isLocked: false,
     lockTimeLimit: 15 * 60 * 1000, 
     lockClockInterval: null, 
+    mainClockInterval: null, 
+    activePageModule: null, 
+    mobileBackdrop: null, 
+    
+    pages: {}, 
 
-    getPages: function() {
-        return {
-            login: typeof LoginPage !== 'undefined' ? LoginPage : null,
-            dashboard: typeof DashboardPage !== 'undefined' ? DashboardPage : null,
-            patients: typeof PatientsPage !== 'undefined' ? PatientsPage : null,
-            patient_status: typeof PatientStatusPage !== 'undefined' ? PatientStatusPage : null, 
-            patient_form: typeof PatientFormPage !== 'undefined' ? PatientFormPage : null,
-            patient_history: typeof PatientHistoryPage !== 'undefined' ? PatientHistoryPage : null, 
-            visit_detail: typeof VisitDetailPage !== 'undefined' ? VisitDetailPage : null, 
-            visits: typeof VisitsPage !== 'undefined' ? VisitsPage : null,
-            settings: typeof SettingsPage !== 'undefined' ? SettingsPage : null,
-            search_copy: typeof SearchCopyPage !== 'undefined' ? SearchCopyPage : null,
-            // 🌟 ลงทะเบียนหน้า about เข้าระบบ 🌟
-            about: typeof AboutPage !== 'undefined' ? AboutPage : null,
-            inventory: typeof InventoryPage !== 'undefined' ? InventoryPage : null,
-            stock_forecast: typeof StockForecastPage !== 'undefined' ? StockForecastPage : null,
-            stock_manage: typeof StockManagePage !== 'undefined' ? StockManagePage : null,
-            stock_history: typeof StockHistoryPage !== 'undefined' ? StockHistoryPage : null,
-            monthly_requisition: typeof MonthlyRequisitionPage !== 'undefined' ? MonthlyRequisitionPage : null,
-            usage_statistics: typeof UsageStatisticsPage !== 'undefined' ? UsageStatisticsPage : null,
-            finance: typeof FinancePage !== 'undefined' ? FinancePage : null,
-            department_ledger: typeof DepartmentLedgerPage !== 'undefined' ? DepartmentLedgerPage : null,
-            document_center: typeof DocumentCenterPage !== 'undefined' ? DocumentCenterPage : null 
+    initPages: function() {
+        this.pages = {
+            login: typeof LoginPage !== 'undefined' ? LoginPage : window.LoginPage,
+            dashboard: typeof DashboardPage !== 'undefined' ? DashboardPage : window.DashboardPage,
+            patients: typeof PatientsPage !== 'undefined' ? PatientsPage : window.PatientsPage,
+            patient_status: typeof PatientStatusPage !== 'undefined' ? PatientStatusPage : window.PatientStatusPage, 
+            patient_form: typeof PatientFormPage !== 'undefined' ? PatientFormPage : window.PatientFormPage,
+            patient_history: typeof PatientHistoryPage !== 'undefined' ? PatientHistoryPage : window.PatientHistoryPage, 
+            visit_detail: typeof VisitDetailPage !== 'undefined' ? VisitDetailPage : window.VisitDetailPage, 
+            visits: typeof VisitsPage !== 'undefined' ? VisitsPage : window.VisitsPage,
+            settings: typeof SettingsPage !== 'undefined' ? SettingsPage : window.SettingsPage,
+            search_copy: typeof SearchCopyPage !== 'undefined' ? SearchCopyPage : window.SearchCopyPage,
+            about: typeof AboutPage !== 'undefined' ? AboutPage : window.AboutPage,
+            inventory: typeof InventoryPage !== 'undefined' ? InventoryPage : window.InventoryPage,
+            stock_forecast: typeof StockForecastPage !== 'undefined' ? StockForecastPage : window.StockForecastPage,
+            stock_manage: typeof StockManagePage !== 'undefined' ? StockManagePage : window.StockManagePage,
+            stock_history: typeof StockHistoryPage !== 'undefined' ? StockHistoryPage : window.StockHistoryPage,
+            monthly_requisition: typeof MonthlyRequisitionPage !== 'undefined' ? MonthlyRequisitionPage : window.MonthlyRequisitionPage,
+            usage_statistics: typeof UsageStatisticsPage !== 'undefined' ? UsageStatisticsPage : window.UsageStatisticsPage,
+            finance: typeof FinancePage !== 'undefined' ? FinancePage : window.FinancePage,
+            department_ledger: typeof DepartmentLedgerPage !== 'undefined' ? DepartmentLedgerPage : window.DepartmentLedgerPage,
+            document_center: typeof DocumentCenterPage !== 'undefined' ? DocumentCenterPage : window.DocumentCenterPage 
         };
     },
 
-    // 🌟 1. แยกฟังก์ชันนาฬิกาออกมาทำงานอิสระ เพื่อไม่ให้โดนบั๊กอื่นบล็อกการทำงาน 🌟
+    getPages: function() {
+        this.initPages();
+        return this.pages;
+    },
+
+    // =========================================================================
+    // 📱 ระบบจัดการเมนูมือถือที่เสถียรที่สุด (Zero-Freeze & Resize-Aware)
+    // =========================================================================
+    initMobileSidebar: function() {
+        const btnToggle = document.getElementById('btnToggleSidebar');
+        
+        if (!this.mobileBackdrop) {
+            this.mobileBackdrop = document.createElement('div');
+            this.mobileBackdrop.id = 'app-mobile-backdrop';
+            this.mobileBackdrop.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.6); z-index:990; opacity:0; visibility:hidden; transition:opacity 0.3s ease, visibility 0.3s ease;';
+            document.body.appendChild(this.mobileBackdrop);
+
+            this.mobileBackdrop.addEventListener('click', () => {
+                this.toggleSidebar(false);
+            });
+        }
+
+        if (btnToggle) {
+            const newBtnToggle = btnToggle.cloneNode(true);
+            btnToggle.parentNode.replaceChild(newBtnToggle, btnToggle);
+            
+            newBtnToggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const sidebar = document.getElementById('sidebar');
+                const isCurrentlyActive = sidebar && sidebar.classList.contains('active');
+                this.toggleSidebar(!isCurrentlyActive);
+            });
+        }
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 1024 && this.mobileBackdrop && this.mobileBackdrop.style.visibility === 'visible') {
+                this.toggleSidebar(false); 
+            }
+        });
+    },
+
+    toggleSidebar: function(forceOpen) {
+        const sidebar = document.getElementById('sidebar');
+        if (!sidebar) return;
+
+        if (forceOpen && window.innerWidth <= 1024) { 
+            sidebar.classList.add('active');
+            if (this.mobileBackdrop) {
+                this.mobileBackdrop.style.visibility = 'visible';
+                this.mobileBackdrop.style.opacity = '1';
+            }
+            document.body.style.overflow = 'hidden'; 
+        } else {
+            sidebar.classList.remove('active');
+            if (this.mobileBackdrop) {
+                this.mobileBackdrop.style.opacity = '0';
+                setTimeout(() => { 
+                    if (!sidebar.classList.contains('active')) {
+                        this.mobileBackdrop.style.visibility = 'hidden'; 
+                    }
+                }, 300);
+            }
+            document.body.style.overflow = ''; 
+        }
+    },
+    // =========================================================================
+
+    clearAllOverlays: function() {
+        try {
+            const lockOverlay = document.getElementById('lock-screen-overlay');
+            if (lockOverlay) lockOverlay.remove();
+
+            if (typeof Swal !== 'undefined' && Swal.isVisible()) {
+                Swal.close();
+            }
+
+            document.body.style.pointerEvents = 'auto';
+            document.body.classList.remove('swal2-shown', 'swal2-height-auto');
+            document.querySelectorAll('.swal2-container').forEach(el => el.remove());
+            
+            if (this.mobileBackdrop && this.mobileBackdrop.style.visibility === 'visible' && window.innerWidth > 1024) {
+                 this.toggleSidebar(false);
+            }
+        } catch(e) { console.warn("Overlay Cleanup Error:", e); }
+    },
+
     initClock: function() {
         const updateClock = () => {
             const now = new Date();
             const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const dateStr = now.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
+            
+            const day = now.getDate();
+            const monthNames = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+            const month = monthNames[now.getMonth()];
+            const year = (now.getFullYear() + 543).toString().slice(-2);
+            const dateStr = `${day} ${month} ${year}`;
             
             const clockEl = document.getElementById('clockDisplay');
             if (clockEl) {
                 clockEl.innerHTML = `
-                    <div style="display: flex; align-items: center; white-space: nowrap; font-variant-numeric: tabular-nums;">
-                        <i class="fa-regular fa-clock" style="color:var(--primary); font-size:16px;"></i> 
-                        <span style="color: var(--text-dark); font-size: 14.5px; margin-left: 8px; font-weight: 700;">${dateStr}</span> 
-                        <span style="color: #cbd5e1; margin: 0 10px;">|</span> 
-                        <span style="color: var(--primary); font-weight: 800; font-size: 15.5px; letter-spacing: 0.5px; width: 85px; display: inline-block; text-align: center;">${timeStr}</span>
-                        <span style="color: var(--primary); font-weight: 800; font-size: 15.5px; margin-left: 4px;">น.</span>
+                    <div style="display: flex; align-items: center; white-space: nowrap;">
+                        <i class="fa-regular fa-clock" style="color:var(--primary); font-size:16.5px; margin-right: 10px;"></i> 
+                        <span style="color: #0f172a; font-size: 14px; font-weight: 700; width: 80px; text-align: right; display: inline-block;">${dateStr}</span> 
+                        <span style="color: #cbd5e1; margin: 0 12px; font-weight: 400;">|</span> 
+                        <span style="color: var(--primary); font-weight: 800; font-size: 15px; letter-spacing: 0.5px; font-variant-numeric: tabular-nums; width: 75px; text-align: center; display: inline-block;">${timeStr}</span>
+                        <span style="color: var(--primary); font-weight: 800; font-size: 15px; margin-left: 2px;">น.</span>
                     </div>
                 `;
             }
         };
-        updateClock(); // รันทันทีไม่ต้องรอให้ครบ 1 วินาที
-        setInterval(updateClock, 1000);
+        updateClock(); 
+        if (this.mainClockInterval) clearInterval(this.mainClockInterval);
+        this.mainClockInterval = setInterval(updateClock, 1000);
     },
 
+    // 🚨 THE FIX: อัปเกรดระบบ Router แบบกันกระสุน 100% 🚨
     switchPage: function(pageName, element, payload = null) {
         const sidebar = document.getElementById('sidebar');
         const topbar = document.querySelector('.topbar');
         const mainContent = document.querySelector('.main-content');
-        const appContent = document.getElementById('app-content');
+        let appContent = document.getElementById('app-content');
+
+        // Failsafe 1: สร้างกล่องใหม่ถอยหลัง ถ้าเผลอลบแท็ก HTML ทิ้ง
+        if (!appContent && mainContent) {
+            appContent = document.createElement('div');
+            appContent.id = 'app-content';
+            appContent.style.cssText = 'transition: opacity 0.3s ease-in-out; width: 100%; min-height: 80vh;';
+            mainContent.appendChild(appContent);
+        }
+
+        this.toggleSidebar(false);
 
         if (pageName !== 'login') {
+            // 🚨 THE FIX: ฉีกผ้าคลุมล่องหนทิ้งแบบ 100% (ทั้งแบบ Class และแบบ Tag CSS) 🚨
+            document.documentElement.classList.remove('not-logged-in');
+            const ghostStyle = document.getElementById('anti-flash-style');
+            if (ghostStyle) ghostStyle.remove();
+
             if(sidebar) sidebar.style.display = '';
             if(topbar) topbar.style.display = '';
             if(mainContent) mainContent.style.marginLeft = '';
@@ -94,28 +206,56 @@ const App = {
 
         if (!appContent) return;
         
+        this.clearAllOverlays();
+        
+        if (this.activePageModule && typeof this.activePageModule.destroy === 'function') {
+            try { this.activePageModule.destroy(); } 
+            catch (e) { console.warn(`[Router] Cleanup error on previous page:`, e); }
+        }
+        
         appContent.style.opacity = 0; 
         
         setTimeout(() => {
-            const availablePages = this.getPages();
-            const pageModule = availablePages[pageName];
-            
-            if (pageModule && pageModule.html) {
-                appContent.innerHTML = pageModule.html;
-                if (pageModule.init) {
-                    try { pageModule.init(payload); } 
-                    catch (error) { console.error(`Error initializing page [${pageName}]:`, error); }
+            // Failsafe 2: try...catch ป้องกัน Error ทำให้ม่านค้าง
+            try {
+                const availablePages = this.getPages();
+                const pageModule = availablePages[pageName];
+                
+                if (pageModule && pageModule.html) {
+                    appContent.innerHTML = pageModule.html;
+                    this.activePageModule = pageModule;
+
+                    if (pageModule.init) {
+                        try { pageModule.init(payload); } 
+                        catch (error) { 
+                            console.error(`[Router] Init Error [${pageName}]:`, error); 
+                            this.clearAllOverlays(); 
+                        }
+                    }
+                } else {
+                    appContent.innerHTML = `
+                        <div class="text-center py-5 shadow-sm mx-auto mt-5" style="max-width: 600px; background:#fff; border-radius:16px; border:1px solid #e2e8f0;">
+                            <i class="fa-solid fa-triangle-exclamation fa-4x text-warning mb-4"></i>
+                            <h3 class="fw-bold text-dark" style="font-family:'Prompt';">ฟังก์ชัน [${pageName}] ยังไม่พร้อมใช้งาน</h3>
+                            <p class="text-muted mb-0">โปรดตรวจสอบการเชื่อมต่อไฟล์โมดูล</p>
+                        </div>`;
+                    this.activePageModule = null;
                 }
-            } else {
+            } catch (fatalError) {
+                console.error("[Router] Fatal Crash:", fatalError);
                 appContent.innerHTML = `
-                    <div class="text-center py-5 shadow-sm mx-auto mt-5" style="max-width: 600px; background:#fff; border-radius:16px; border:1px solid #e2e8f0;">
-                        <i class="fa-solid fa-triangle-exclamation fa-4x text-warning mb-4"></i>
-                        <h3 class="fw-bold text-dark" style="font-family:'Prompt';">ฟังก์ชัน [${pageName}] ยังไม่พร้อมใช้งาน</h3>
-                        <p class="text-muted mb-0">โปรดตรวจสอบว่าได้โหลดสคริปต์หน้าเพจนี้ในไฟล์ index.html เรียบร้อยแล้ว</p>
+                    <div class="text-center py-5 shadow-sm mx-auto mt-5" style="max-width: 600px; background:#fef2f2; border-radius:16px; border:1px solid #fecaca;">
+                        <i class="fa-solid fa-bug fa-4x text-danger mb-4"></i>
+                        <h3 class="fw-bold text-danger" style="font-family:'Prompt';">เกิดข้อผิดพลาดในการแสดงผล</h3>
+                        <p class="text-danger mb-0">${fatalError.message}</p>
                     </div>`;
+            } finally {
+                // Failsafe 3: ไม่ว่าจะโหลดสำเร็จหรือพัง ต้องเปิดม่านขึ้นมาเสมอ! 100% Guaranteed
+                appContent.style.opacity = 1; 
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setTimeout(() => this.clearAllOverlays(), 300);
             }
-            appContent.style.opacity = 1; 
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
         }, 150);
     },
 
@@ -130,6 +270,12 @@ const App = {
         }).then((result) => {
             if (result.isConfirmed) {
                 if(this.lockClockInterval) clearInterval(this.lockClockInterval);
+                if(this.mainClockInterval) clearInterval(this.mainClockInterval);
+                
+                if (this.activePageModule && typeof this.activePageModule.destroy === 'function') {
+                    try { this.activePageModule.destroy(); } catch (e) {}
+                }
+
                 localStorage.removeItem('dialysis_user_session');
                 localStorage.removeItem('dialysis_is_locked'); 
                 sessionStorage.removeItem('dialysis_session_active'); 
@@ -181,7 +327,6 @@ const App = {
             document.body.appendChild(overlay);
         }
 
-        // 🚨 ป้องกันบั๊กแครชเวลาข้อมูลผู้ใช้ไม่ครบ 🚨
         const safeName = (this.currentUser && this.currentUser.name) ? this.currentUser.name : 'User';
         const userImg = `https://ui-avatars.com/api/?name=${encodeURIComponent(safeName)}&background=2563eb&color=fff&bold=true`;
 
@@ -190,31 +335,13 @@ const App = {
                 @keyframes slideDownFadeSafe { from { opacity: 0; transform: translate3d(0, -30px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
                 
                 .lock-custom-toast {
-                    position: absolute;
-                    top: 20px;
-                    left: 50%;
-                    transform: translate3d(-50%, -150%, 0);
-                    background: #ffffff;
-                    border: 2px solid #ef4444;
-                    box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.2);
-                    border-radius: 50px;
-                    padding: 10px 25px;
-                    font-family: 'Prompt', sans-serif;
-                    color: #0f172a;
-                    font-weight: 700;
-                    font-size: 15px;
-                    z-index: 9999999;
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    opacity: 0;
-                    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15), opacity 0.3s ease;
-                    pointer-events: none;
+                    position: absolute; top: 20px; left: 50%; transform: translate3d(-50%, -150%, 0);
+                    background: #ffffff; border: 2px solid #ef4444; box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.2);
+                    border-radius: 50px; padding: 10px 25px; font-family: 'Prompt', sans-serif; color: #0f172a;
+                    font-weight: 700; font-size: 15px; z-index: 9999999; display: flex; align-items: center;
+                    gap: 12px; opacity: 0; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15), opacity 0.3s ease; pointer-events: none;
                 }
-                .lock-custom-toast.show {
-                    transform: translate3d(-50%, 0, 0);
-                    opacity: 1;
-                }
+                .lock-custom-toast.show { transform: translate3d(-50%, 0, 0); opacity: 1; }
             </style>
 
             <div id="lock-screen-toast" class="lock-custom-toast">
@@ -225,7 +352,6 @@ const App = {
             </div>
 
             <div class="text-center" style="width: 100%; max-width: 420px; padding: 40px; background: #ffffff; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); animation: slideDownFadeSafe 0.4s ease forwards; transform: translate3d(0,0,0); position: relative;">
-                
                 <div class="mb-4">
                     <div id="lock-time-display" style="font-size: 3.5rem; font-weight: 800; color: #0f172a; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -1px;">--:--:--</div>
                     <div id="lock-date-display" style="font-size: 1.1rem; font-weight: 600; color: #64748b; margin-top: 5px;">กำลังโหลด...</div>
@@ -320,8 +446,7 @@ const App = {
     },
 
     checkAuth: function() {
-        let overlay = document.getElementById('lock-screen-overlay');
-        if(overlay) overlay.remove();
+        this.clearAllOverlays();
 
         const sessionStr = localStorage.getItem('dialysis_user_session');
         const sidebar = document.getElementById('sidebar');
@@ -339,12 +464,16 @@ const App = {
             return false;
         }
 
+        // ถอนรากถอนโคน CSS ล่องหน
+        document.documentElement.classList.remove('not-logged-in');
+        const ghostStyle = document.getElementById('anti-flash-style');
+        if (ghostStyle) ghostStyle.remove();
+
         if(sidebar) sidebar.style.display = '';
         if(topbar) topbar.style.display = '';
         if(mainContent) mainContent.style.marginLeft = '';
         if(appContent) appContent.style.padding = '';
 
-        // 🚨 ใส่ Try...Catch ป้องกันข้อมูลผู้ใช้พังจนหยุดการทำงาน 🚨
         try {
             this.currentUser = JSON.parse(sessionStr);
             const userInfoName = document.querySelector('.user-info h4');
@@ -386,7 +515,9 @@ const App = {
 };
 
 window.addEventListener('DOMContentLoaded', () => {
-    // 🚨 เปิดสวิตช์นาฬิกาทันทีโดยไม่สนบั๊ก 🚨
+    App.initPages();
+    App.initMobileSidebar(); 
+
     try { App.initClock(); } catch (e) { console.error("Clock Init Error:", e); }
 
     if (!sessionStorage.getItem('dialysis_session_active')) {
@@ -411,3 +542,5 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+window.App = App;
