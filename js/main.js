@@ -154,14 +154,12 @@ const App = {
         this.mainClockInterval = setInterval(updateClock, 1000);
     },
 
-    // 🚨 THE FIX: อัปเกรดระบบ Router แบบกันกระสุน 100% 🚨
     switchPage: function(pageName, element, payload = null) {
         const sidebar = document.getElementById('sidebar');
         const topbar = document.querySelector('.topbar');
         const mainContent = document.querySelector('.main-content');
         let appContent = document.getElementById('app-content');
 
-        // Failsafe 1: สร้างกล่องใหม่ถอยหลัง ถ้าเผลอลบแท็ก HTML ทิ้ง
         if (!appContent && mainContent) {
             appContent = document.createElement('div');
             appContent.id = 'app-content';
@@ -172,7 +170,6 @@ const App = {
         this.toggleSidebar(false);
 
         if (pageName !== 'login') {
-            // 🚨 THE FIX: ฉีกผ้าคลุมล่องหนทิ้งแบบ 100% (ทั้งแบบ Class และแบบ Tag CSS) 🚨
             document.documentElement.classList.remove('not-logged-in');
             const ghostStyle = document.getElementById('anti-flash-style');
             if (ghostStyle) ghostStyle.remove();
@@ -216,7 +213,6 @@ const App = {
         appContent.style.opacity = 0; 
         
         setTimeout(() => {
-            // Failsafe 2: try...catch ป้องกัน Error ทำให้ม่านค้าง
             try {
                 const availablePages = this.getPages();
                 const pageModule = availablePages[pageName];
@@ -250,10 +246,9 @@ const App = {
                         <p class="text-danger mb-0">${fatalError.message}</p>
                     </div>`;
             } finally {
-                // Failsafe 3: ไม่ว่าจะโหลดสำเร็จหรือพัง ต้องเปิดม่านขึ้นมาเสมอ! 100% Guaranteed
                 appContent.style.opacity = 1; 
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                setTimeout(() => this.clearAllOverlays(), 300);
+                // 🚨 THE FIX: ปิดการเคลียร์ Overlay หน่วงเวลาทิ้ง เพื่อไม่ให้มันไปลบกล่อง Alert มั่วซั่ว
             }
             
         }, 150);
@@ -544,3 +539,15 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 window.App = App;
+
+// =========================================================================
+// 🚨 THE FIX: ระบบ Auto-Shutdown เมื่อกากบาทปิดหน้าจอเบราว์เซอร์
+// =========================================================================
+window.addEventListener('beforeunload', function () {
+    const agentUrl = 'http://127.0.0.1:8000/shutdown'; 
+    try {
+        navigator.sendBeacon(agentUrl);
+    } catch (e) {
+        console.warn("ไม่สามารถส่งสัญญาณปิด Agent ได้:", e);
+    }
+});

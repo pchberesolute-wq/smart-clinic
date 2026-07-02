@@ -1,15 +1,15 @@
 // js/pages/login.js
-// 🚀 Enterprise Login Module: Pure HTML/JS (Styling Delegated to Global CSS)
+// 🚀 Enterprise Login Module: Standalone UI, Stacking-Context Escape & Optimized Auth Sync
 
-// 🚨 ระบบป้องกันหน้าเว็บกระพริบแว็บๆ (Anti-Flash Engine) ดักจับตั้งแต่เสี้ยววินาทีแรก
+// 🚨 ระบบป้องกันหน้าเว็บกระพริบ (Anti-Flash Engine) + ทุบกรงขัง CSS
 (function preventFlash() {
     if (!localStorage.getItem('dialysis_user_session')) {
         const antiFlashStyle = document.createElement('style');
         antiFlashStyle.id = 'anti-flash-style';
         antiFlashStyle.innerHTML = `
             #sidebar, .topbar { display: none !important; opacity: 0 !important; visibility: hidden !important; }
-            .main-content { margin-left: 0 !important; background: #f8fafc !important; }
-            body { background: #f8fafc !important; }
+            .main-content { margin: 0 !important; padding: 0 !important; transform: none !important; background: #f8fafc !important; }
+            body { background: #f8fafc !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; }
         `;
         if(document.head) document.head.appendChild(antiFlashStyle);
         else document.documentElement.appendChild(antiFlashStyle);
@@ -32,8 +32,116 @@ class LoginPageComponent {
     }
 
     get html() {
-        // 🚨 ลบแท็ก <style> ออกทั้งหมด ปล่อยให้ไฟล์ css/style.css จัดการความสวยงาม!
         return `
+            <style>
+                /* 🚨 THE KILLER FIX: ทำลายกรงขัง CSS Stacking Context (ทุบกล่องกระจก) 🚨 */
+                .main-content {
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    transform: none !important; /* ปลดล็อก GPU Layer ที่ขังหน้า Login ไว้ */
+                    width: 100vw !important;
+                    min-height: 100vh !important;
+                }
+                #app-content {
+                    margin: 0 !important;
+                    padding: 0 !important;
+                }
+                
+                /* บังคับกางเต็มหน้าจอ 100% ทะลุทุกมิติ */
+                .login-container { 
+                    position: fixed !important; 
+                    top: 0 !important; 
+                    left: 0 !important; 
+                    right: 0 !important;
+                    bottom: 0 !important;
+                    width: 100vw !important; 
+                    height: 100vh !important; 
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    background: #f8fafc; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                    z-index: 999999 !important; /* ดันให้อยู่หน้าสุด */
+                    overflow: hidden; 
+                    font-family: 'Prompt', sans-serif; 
+                }
+
+                /* 🚨 THE FIX: สั่งให้กล่องแจ้งเตือนกระโดดทะลุหน้า Login ขึ้นมาอยู่บนสุดเสมอ 🚨 */
+                .swal2-container { z-index: 9999999 !important; }
+                
+                .login-blob { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.6; animation: floatBlob 10s infinite ease-in-out; pointer-events: none; }
+                .blob-1 { width: 450px; height: 450px; background: #93c5fd; top: -100px; left: -100px; }
+                .blob-2 { width: 550px; height: 550px; background: #c4b5fd; bottom: -150px; right: -150px; animation-delay: -5s; }
+                .blob-3 { width: 350px; height: 350px; background: #67e8f9; bottom: 20%; left: 10%; opacity: 0.4; animation-delay: -2s; }
+                @keyframes floatBlob { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-20px) scale(1.05); } }
+                
+                .login-card {
+                    position: relative; z-index: 10; width: 100%; max-width: 580px; 
+                    background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+                    border: 1px solid rgba(255, 255, 255, 0.6); border-radius: 32px; padding: 50px 40px;
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+                    animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                    margin: 20px; 
+                }
+                @keyframes slideUpFade { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+
+                .brand-logo-wrapper { width: 100px; height: 100px; margin: 0 auto 20px; transform: rotate(-5deg); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; }
+                .login-card:hover .brand-logo-wrapper { transform: rotate(0deg) scale(1.08); }
+                .brand-logo-wrapper img { width: 100%; height: 100%; object-fit: cover; border-radius: 28px; box-shadow: 0 15px 35px -5px rgba(37, 99, 235, 0.4); border: 3px solid #ffffff; background: #ffffff; }
+
+                .login-title-h2 { letter-spacing: -0.5px; white-space: nowrap; overflow: visible; font-size: clamp(18px, 4vw, 26px); }
+
+                .profile-selector-btn {
+                    background: rgba(241, 245, 249, 0.8); border: 2px solid transparent; border-radius: 14px;
+                    padding: 12px 18px; display: flex; align-items: center; justify-content: space-between;
+                    cursor: pointer; transition: all 0.3s ease; box-shadow: inset 0 2px 4px rgba(255,255,255,0.5);
+                }
+                .profile-selector-btn:hover { background: #fff; border-color: #bfdbfe; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1); }
+                
+                .selected-user-info { display: flex; align-items: center; gap: 14px; }
+                .selected-avatar-img { 
+                    width: 42px; height: 42px; border-radius: 50%; object-fit: cover; 
+                    border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                }
+                .selected-text-group { display: flex; flex-direction: column; align-items: flex-start; }
+                .selected-name { font-weight: 700; color: #1e293b; font-size: 15px; font-family: 'Prompt', sans-serif; line-height: 1.2; }
+                .selected-role { font-weight: 600; color: #64748b; font-size: 12px; }
+
+                .custom-options-panel {
+                    display: none; position: absolute; width: 100%; top: calc(100% + 8px); left: 0;
+                    background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+                    border: 1px solid rgba(203, 213, 225, 0.8); border-radius: 16px;
+                    box-shadow: 0 15px 35px -5px rgba(0,0,0,0.15); z-index: 9999;
+                    max-height: 280px; overflow-y: auto; padding: 10px;
+                    animation: slideDownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                }
+                .custom-options-panel::-webkit-scrollbar { width: 6px; }
+                .custom-options-panel::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+                
+                .custom-option-item {
+                    display: flex; align-items: center; padding: 10px 15px;
+                    border-radius: 12px; cursor: pointer; transition: all 0.2s; margin-bottom: 4px; border: 1px solid transparent;
+                }
+                .custom-option-item:hover { background: #f1f5f9; border-color: #e2e8f0; transform: translateX(3px); }
+                
+                .custom-option-avatar { width: 38px; height: 38px; border-radius: 50%; margin-right: 14px; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+                .custom-option-icon { width: 38px; height: 38px; border-radius: 50%; margin-right: 14px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 16px; box-shadow: inset 0 0 0 1px #e2e8f0; }
+                
+                .input-modern-login { background: rgba(241, 245, 249, 0.8); border: 2px solid transparent; border-radius: 14px; padding-left: 15px; font-weight: 600; color: #1e293b; transition: all 0.3s; }
+                .input-modern-login:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15); }
+                .modern-icon-login { background: rgba(241, 245, 249, 0.8); border: 2px solid transparent; border-right: none; border-radius: 14px 0 0 14px; color: #64748b; transition: all 0.3s; }
+                .input-group:focus-within .modern-icon-login { background: #fff; border-color: var(--primary); color: var(--primary); }
+                .input-group:focus-within .input-modern-login { border-left-color: transparent; }
+
+                .swal2-popup.premium-alert { border-radius: 24px !important; padding: 25px 20px !important; border: 1px solid rgba(255,255,255,0.8) !important; background: rgba(255, 255, 255, 0.98) !important; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15) !important; }
+                .swal2-confirm.premium-btn { border-radius: 12px !important; padding: 12px 28px !important; font-family: 'Prompt', sans-serif !important; font-weight: 600 !important; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important; color: white !important; box-shadow: 0 8px 15px -3px rgba(37, 99, 235, 0.3) !important; border: none !important; transition: all 0.3s ease; }
+                .swal2-confirm.premium-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -3px rgba(37, 99, 235, 0.4) !important; }
+                .swal2-cancel.premium-btn-cancel { border-radius: 12px !important; padding: 12px 28px !important; font-family: 'Prompt', sans-serif !important; font-weight: 600 !important; background: #64748b !important; color: white !important; border: none !important; box-shadow: 0 8px 15px -3px rgba(100, 116, 139, 0.2) !important; transition: all 0.3s ease; }
+                .swal2-cancel.premium-btn-cancel:hover { transform: translateY(-2px); background: #475569 !important; }
+                .swal2-confirm.premium-btn-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important; box-shadow: 0 8px 15px -3px rgba(239, 68, 68, 0.3) !important; }
+            </style>
+
             <div class="login-container">
                 <div class="login-blob blob-1"></div>
                 <div class="login-blob blob-2"></div>
@@ -153,13 +261,9 @@ class LoginPageComponent {
             this.renderUserDropdown();
         }
 
-        if (window.location.protocol === 'file:') {
-            Swal.fire({ icon: 'error', title: 'ไม่สามารถรันระบบบน file:// ได้', html: '<p class="text-start">ระบบความปลอดภัยไม่อนุญาตให้เปิดไฟล์ตรงๆ จากเครื่องครับ</p>', allowOutsideClick: false }); return;
-        }
-
         try {
-            await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-            firebase.auth().onAuthStateChanged(async (user) => {
+            // 🚨 อาศัยบารมี Auth จาก firebase-config.js (ไม่ต้องขอ Persistence ซ้ำ)
+            firebase.auth().onAuthStateChanged((user) => {
                 if (user) {
                     const cbUsers = db.ref('clinic_users_v2').on('value', snap => {
                         const data = snap.val();
@@ -176,8 +280,6 @@ class LoginPageComponent {
                         this.renderUserDropdown();
                     });
                     this.firebaseListeners.push({ path: 'clinic_users_v2', callback: cbUsers });
-                } else {
-                    await firebase.auth().signInAnonymously();
                 }
             });
         } catch (err) { console.error("Init Error:", err); }

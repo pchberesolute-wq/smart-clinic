@@ -13,19 +13,9 @@
         }
     </script>
     <style>
-        html.not-logged-in #sidebar, 
-        html.not-logged-in .topbar { 
-            display: none !important; 
-            opacity: 0 !important;
-            visibility: hidden !important;
-        }
-        html.not-logged-in .main-content { 
-            margin-left: 0 !important; 
-            background-color: #f8fafc !important; 
-        }
-        html.not-logged-in body {
-            background-color: #f8fafc !important; 
-        }
+        html.not-logged-in #sidebar, html.not-logged-in .topbar { display: none !important; opacity: 0 !important; visibility: hidden !important; }
+        html.not-logged-in .main-content { margin-left: 0 !important; background-color: #f8fafc !important; }
+        html.not-logged-in body { background-color: #f8fafc !important; }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,199 +25,150 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     
-    <link rel="stylesheet" href="./css/style.css?v=22">
+    <link rel="stylesheet" href="./css/style.css?v=26">
 
     <style id="modern-ui-core">
         :root {
-            --sidebar-width: 300px;
-            --bg-main: #f1f5f9;
-            --color-primary: #3b82f6;
-            --color-primary-dark: #2563eb;
-            --color-surface: #ffffff;
-            --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.08);
-            --shadow-hover: 0 20px 40px -10px rgba(37,99,235,0.15);
+            --sidebar-width: 300px; --bg-main: #f1f5f9; --color-primary: #3b82f6; --color-primary-dark: #2563eb;
+            --color-surface: #ffffff; --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.08); --shadow-hover: 0 20px 40px -10px rgba(37,99,235,0.15);
         }
 
-        body { 
-            background-color: var(--bg-main) !important; 
-            overflow-x: hidden; 
-            font-family: 'Sarabun', sans-serif;
-        }
+        body { background-color: var(--bg-main) !important; overflow-x: hidden; font-family: 'Sarabun', sans-serif; }
 
         /* 🌟 1. Floating Sidebar Design */
         .sidebar {
-            width: var(--sidebar-width);
-            position: fixed;
-            top: 20px; bottom: 20px; left: 20px;
-            background: var(--color-surface);
-            border-radius: 28px;
-            box-shadow: var(--shadow-soft);
-            display: flex; flex-direction: column;
-            z-index: 1050;
+            width: var(--sidebar-width); position: fixed; top: 20px; bottom: 20px; left: 20px;
+            background: var(--color-surface); border-radius: 28px; box-shadow: var(--shadow-soft);
+            display: flex; flex-direction: column; z-index: 1050;
             transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s;
             border: 1px solid rgba(255,255,255,0.8);
         }
 
-        .sidebar-brand {
-            padding: 28px 24px 20px; 
-            display: flex; align-items: center; gap: 16px;
-            border-bottom: 1px solid rgba(226, 232, 240, 0.6);
-        }
-        .sidebar-logo-img { 
-            width: 54px; height: 54px; 
-            border-radius: 16px; object-fit: cover; 
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1); 
-            border: 2px solid #fff;
-        }
-        .brand-text h3 { 
-            font-family: 'Prompt', sans-serif; font-size: 16.5px; 
-            font-weight: 800; margin: 0; color: #0f172a; line-height: 1.3; 
-        }
-        .brand-text p { 
-            font-family: 'Prompt', sans-serif; font-size: 11px; 
-            font-weight: 700; color: var(--color-primary); margin: 0; letter-spacing: 0.5px; 
-        }
+        .sidebar-brand { padding: 28px 24px 20px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid rgba(226, 232, 240, 0.6); }
+        .sidebar-logo-img { width: 54px; height: 54px; border-radius: 16px; object-fit: cover; box-shadow: 0 8px 16px rgba(0,0,0,0.1); border: 2px solid #fff; }
+        .brand-text h3 { font-family: 'Prompt', sans-serif; font-size: 16.5px; font-weight: 800; margin: 0; color: #0f172a; line-height: 1.3; }
+        .brand-text p { font-family: 'Prompt', sans-serif; font-size: 11px; font-weight: 700; color: var(--color-primary); margin: 0; letter-spacing: 0.5px; }
 
-        .sidebar-menu-container {
-            flex: 1; overflow-y: auto; padding: 24px 16px;
-        }
+        .sidebar-menu-container { flex: 1; overflow-y: auto; padding: 24px 16px; }
         .sidebar-menu-container::-webkit-scrollbar { width: 4px; }
         .sidebar-menu-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
         .nav-menu { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
-        .nav-section { 
-            font-family: 'Prompt', sans-serif; font-size: 11.5px; font-weight: 800; 
-            color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; 
-            margin: 20px 0 8px 12px; 
-        }
+        .nav-section { font-family: 'Prompt', sans-serif; font-size: 11.5px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0 8px 12px; }
         
-        .nav-item {
-            display: flex; align-items: center; padding: 13px 18px;
-            border-radius: 16px; color: #475569; font-weight: 600; font-size: 14.5px;
-            cursor: pointer; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); 
-            position: relative; overflow: hidden; border: 1px solid transparent;
-        }
-        .nav-item i { 
-            width: 26px; font-size: 18px; display: flex; justify-content: center; 
-            margin-right: 14px; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-        }
+        .nav-item { display: flex; align-items: center; padding: 13px 18px; border-radius: 16px; color: #475569; font-weight: 600; font-size: 14.5px; cursor: pointer; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); position: relative; overflow: hidden; border: 1px solid transparent; }
+        .nav-item i { width: 26px; font-size: 18px; display: flex; justify-content: center; margin-right: 14px; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .nav-item span { font-family: 'Prompt', sans-serif; }
-        
-        .nav-item:hover { 
-            background: #f8fafc; color: #0f172a; transform: translateX(6px); 
-            border-color: #e2e8f0;
-        }
+        .nav-item:hover { background: #f8fafc; color: #0f172a; transform: translateX(6px); border-color: #e2e8f0; }
         .nav-item:hover i { transform: scale(1.15); color: var(--color-primary); }
-        
-        .nav-item.active {
-            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-            color: #ffffff; box-shadow: 0 10px 20px -6px rgba(37, 99, 235, 0.5);
-            border-color: transparent; font-weight: 700;
-        }
+        .nav-item.active { background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%); color: #ffffff; box-shadow: 0 10px 20px -6px rgba(37, 99, 235, 0.5); border-color: transparent; font-weight: 700; }
         .nav-item.active i { color: #ffffff; transform: scale(1.1); }
 
         .sidebar-footer { padding: 20px 16px; border-top: 1px solid rgba(226, 232, 240, 0.6); }
-        .user-card-wrapper { 
-            cursor: pointer; border-radius: 18px; transition: all 0.3s; 
-            padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; 
-        }
-        .user-card-wrapper:hover { 
-            background: #fef2f2; border-color: #fca5a5; box-shadow: 0 8px 16px rgba(239, 68, 68, 0.1); 
-            transform: translateY(-2px);
-        }
+        .user-card-wrapper { cursor: pointer; border-radius: 18px; transition: all 0.3s; padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; }
+        .user-card-wrapper:hover { background: #fef2f2; border-color: #fca5a5; box-shadow: 0 8px 16px rgba(239, 68, 68, 0.1); transform: translateY(-2px); }
         .user-card-wrapper:hover .user-info p { color: #ef4444 !important; }
         .user-card-wrapper:hover .user-avatar { background: #ef4444; }
         .user-card { display: flex; align-items: center; gap: 14px; }
-        .user-avatar { 
-            width: 44px; height: 44px; background: var(--color-primary); color: #fff; 
-            border-radius: 14px; display: flex; align-items: center; justify-content: center; 
-            font-family: 'Prompt', sans-serif; font-weight: 800; font-size: 16px; transition: 0.3s;
-        }
+        .user-avatar { width: 44px; height: 44px; background: var(--color-primary); color: #fff; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-family: 'Prompt', sans-serif; font-weight: 800; font-size: 16px; transition: 0.3s; }
         .user-info h4 { font-family: 'Prompt', sans-serif; font-size: 14.5px; font-weight: 700; color: #0f172a; margin: 0; }
         .user-info p { font-size: 12px; font-weight: 600; color: #64748b; margin: 0; transition: color 0.3s; }
 
-        /* 🌟 2. Exact Match Topbar (Pill-Shape Design) */
+        /* 🌟 2. Safe-Zone Padding */
         .main-content { 
-            margin-left: calc(var(--sidebar-width) + 40px); 
-            padding: 20px 30px 40px 0; min-height: 100vh; 
-            display: flex; flex-direction: column; transition: margin 0.4s; 
+            margin-left: calc(var(--sidebar-width) + 20px); 
+            padding: 20px 30px 40px 30px; 
+            min-height: 100vh; display: flex; flex-direction: column; transition: margin 0.4s; 
         }
         
         .topbar {
-            background: #ffffff; 
-            border-radius: 24px; padding: 12px 24px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03); 
-            border: 1px solid #e2e8f0; margin-bottom: 30px;
+            background: #ffffff; border-radius: 24px; padding: 12px 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; margin-bottom: 30px;
             position: sticky; top: 20px; z-index: 900;
         }
 
-        .search-box-modern { 
-            background: #f1f5f9; 
-            border-radius: 50px; 
-            padding: 12px 24px; 
-            display: flex; align-items: center; transition: all 0.3s; 
-            border: 1px solid transparent; cursor: pointer;
-        }
+        .search-box-modern { background: #f1f5f9; border-radius: 50px; padding: 12px 24px; display: flex; align-items: center; transition: all 0.3s; border: 1px solid transparent; cursor: pointer; }
         .search-box-modern:hover { background: #e2e8f0; }
-        .search-box-modern:focus-within { 
-            background: #ffffff; border-color: var(--color-primary); 
-            box-shadow: 0 0 0 4px rgba(37,99,235,0.1); cursor: text;
-        }
+        .search-box-modern:focus-within { background: #ffffff; border-color: var(--color-primary); box-shadow: 0 0 0 4px rgba(37,99,235,0.1); cursor: text; }
         .search-box-modern input { font-family: 'Prompt', sans-serif; font-size: 14.5px; font-weight: 600; color: #475569 !important; }
         .search-box-modern input::placeholder { color: #94a3b8; font-weight: 500; }
         .search-box-modern i { font-size: 18px; color: var(--color-primary); }
         
-        .topbar-actions .sync-widget-topbar, .topbar-actions .time-widget {
-            background: #ffffff; border-radius: 50px; 
-            padding: 10px 20px; 
-            border: 1px solid #e2e8f0; display: flex; align-items: center; 
-            font-family: 'Prompt', sans-serif; font-size: 14px; font-weight: 600;
+        .sync-widget-topbar, .time-widget {
+            background: #ffffff; border-radius: 50px; padding: 8px 16px; border: 1px solid #e2e8f0; font-family: 'Prompt', sans-serif; font-size: 13px; font-weight: 600;
         }
 
         .sync-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
         .sync-dot.active { background-color: #10b981; }
 
-        /* 📱 Responsive Design (iPad & Mobile) */
+        /* ==========================================================================
+           🚨 3. Mobile & Tablet Protection (ปกป้องการตกขอบ และ บังคับโชว์เมนู)
+           ========================================================================== */
         @media (max-width: 1024px) {
-            .sidebar { transform: translateX(-120%); box-shadow: 20px 0 50px rgba(0,0,0,0.15); border-radius: 0 28px 28px 0; top: 0; bottom: 0; left: 0; }
+            /* 🚨 THE FIX: บังคับให้ลิ้นชักเมนูกางเต็ม 300px และโชว์ตัวหนังสือ 100% */
+            .sidebar { 
+                transform: translateX(-120%); 
+                box-shadow: 20px 0 50px rgba(0,0,0,0.15); 
+                border-radius: 0 28px 28px 0; 
+                top: 0; bottom: 0; left: 0; 
+                width: 300px !important; /* ห้ามโดนบีบเหลือ 90px */
+            }
             .sidebar.active { transform: translateX(0); }
-            .main-content { margin-left: 0; padding: 20px; }
-            .topbar { top: 0; border-radius: 0 0 24px 24px; margin: -20px -20px 24px -20px; padding: 12px 20px; border-top: none; }
+            
+            /* บังคับโชว์ข้อความทั้งหมดใน Sidebar */
+            .sidebar .brand-text, 
+            .sidebar .nav-section, 
+            .sidebar .nav-item span, 
+            .sidebar .user-info { 
+                display: block !important; 
+            }
+            .sidebar .nav-item { justify-content: flex-start !important; padding: 12px 20px !important; margin: 4px 15px !important; }
+            .sidebar .nav-item i { margin-right: 14px !important; width: 26px !important; }
+            .sidebar .user-card { justify-content: flex-start !important; }
+            .sidebar .user-avatar { margin-right: 14px !important; width: 44px !important; height: 44px !important; }
+            
+            .main-content { margin-left: 0 !important; padding: 20px !important; overflow-x: hidden; }
+            
+            .topbar { 
+                position: relative !important; top: 0 !important; margin: 0 0 20px 0 !important; 
+                width: 100% !important; max-width: 100% !important;
+                border-radius: 24px !important; 
+                box-shadow: 0 4px 15px rgba(0,0,0,0.05) !important;
+                flex-direction: column !important; align-items: stretch !important;
+                padding: 15px 20px !important; gap: 15px !important; height: auto !important; 
+            }
+            
+            #app-content { padding: 0 !important; }
+            
+            .topbar-left-section { width: 100% !important; max-width: 100% !important; display: flex !important; align-items: center !important; gap: 12px !important; }
+            
+            .topbar-actions { 
+                width: 100% !important; display: flex !important; flex-wrap: wrap !important;
+                justify-content: center !important; gap: 8px !important; margin-top: 5px !important; 
+            }
+            
+            .search-box-modern { padding: 10px 18px !important; flex-grow: 1 !important; width: auto !important; }
+            .search-box-modern input { font-size: 14px !important; }
+        }
+
+        @media (max-width: 768px) {
+            .sync-widget-topbar, .time-widget { padding: 8px 12px !important; flex: 1 1 auto; justify-content: center !important; }
+            .time-widget span { width: auto !important; font-size: 12px !important; margin: 0 4px !important; }
+            .time-widget i { font-size: 14px !important; margin-right: 6px !important; }
+            .sync-text { font-size: 12px !important; } 
+            .sync-ping { display: none !important; } 
         }
 
         /* ===================================================
-           🌟 GLOBAL TABLE OVERRIDE (คุมขนาดตารางทั้งเว็บ) 🌟
+           🌟 GLOBAL TABLE OVERRIDE
            =================================================== */
+        table.dataTable, .table { font-size: 14px !important; color: #334155 !important; }
+        table.dataTable th, table.dataTable td, .table th, .table td { padding: 12px 18px !important; vertical-align: middle !important; white-space: nowrap; }
+        table.dataTable thead th, .table thead th { background-color: #f8fafc !important; color: #475569 !important; font-weight: 700 !important; border-bottom: 2px solid #e2e8f0 !important; letter-spacing: 0.5px; }
         
-        table.dataTable, .table {
-            font-size: 14px !important;
-            color: #334155 !important;
-        }
-        
-        table.dataTable th, table.dataTable td, .table th, .table td {
-            padding: 12px 18px !important;
-            vertical-align: middle !important;
-            white-space: nowrap;
-        }
-
-        table.dataTable thead th, .table thead th {
-            background-color: #f8fafc !important;
-            color: #475569 !important;
-            font-weight: 700 !important;
-            border-bottom: 2px solid #e2e8f0 !important;
-            letter-spacing: 0.5px;
-        }
-
-        .dataTables_wrapper .dataTables_filter input {
-            padding: 6px 12px !important;
-            border-radius: 8px !important;
-            border: 1px solid #cbd5e1 !important;
-        }
-        .dataTables_wrapper .dataTables_paginate .paginate_button {
-            padding: 4px 10px !important;
-            border-radius: 6px !important;
-            font-size: 13px !important;
-        }
+        .dataTables_wrapper .d-flex.flex-nowrap { flex-wrap: wrap !important; gap: 15px; }
+        .dataTables_wrapper .dataTables_filter input { padding: 6px 12px !important; border-radius: 8px !important; border: 1px solid #cbd5e1 !important; width: 100% !important; max-width: 250px; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button { padding: 4px 10px !important; border-radius: 6px !important; font-size: 13px !important; }
+        .dataTables_wrapper { min-width: 0 !important; width: 100% !important; overflow-x: auto !important; }
     </style>
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js" defer></script>
@@ -252,9 +193,7 @@
     <script src="./js/pages/visits.js" defer></script>
     <script src="./js/pages/visit_detail.js" defer></script>
     <script src="./js/pages/patients.js" defer></script>
-    
     <script src="./js/pages/patient_form.js" defer></script> 
-    
     <script src="./js/pages/patient_history.js" defer></script>
     <script src="./js/pages/document_center.js" defer></script>
     <script src="./js/pages/patient_status.js" defer></script>
@@ -325,36 +264,39 @@
     </aside> 
     
     <main class="main-content">
-        <nav class="topbar d-flex justify-content-between align-items-center w-100">
-            <div class="d-flex align-items-center gap-3 flex-grow-1" style="max-width: 600px;">
-                <button class="btn d-xl-none" id="btnToggleSidebar" style="background:#f1f5f9; border:1px solid transparent; border-radius: 50px; padding: 10px 16px;" aria-label="Toggle Menu">
+        <nav class="topbar d-flex justify-content-between align-items-center w-100 gap-3">
+            
+            <div class="topbar-left-section d-flex align-items-center gap-3 flex-grow-1" style="max-width: 600px;">
+                <button class="btn d-xl-none shadow-sm" id="btnToggleSidebar" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius: 50px; padding: 10px 16px; flex-shrink: 0;" aria-label="Toggle Menu">
                     <i class="fa-solid fa-bars text-primary fs-5"></i>
                 </button>
-                <div class="search-box-modern w-100" onclick="App.switchPage('search_copy')">
-                    <i class="fa-solid fa-magnifying-glass text-primary me-3"></i>
-                    <input type="text" id="globalTopSearch" class="border-0 bg-transparent w-100" placeholder="พิมพ์ค้นหาคนไข้ด่วน (Ctrl+K)..." readonly style="outline:none;">
+                <div class="search-box-modern w-100 shadow-sm" onclick="App.switchPage('search_copy')">
+                    <i class="fa-solid fa-magnifying-glass text-primary me-2"></i>
+                    <input type="text" id="globalTopSearch" class="border-0 bg-transparent w-100 text-truncate" placeholder="ค้นหาคนไข้ด่วน (Ctrl+K)..." readonly style="outline:none;">
                 </div>
             </div>
             
-            <div class="topbar-actions d-flex align-items-center gap-3">
-                <div class="sync-widget-topbar d-none d-lg-flex align-items-center gap-2 shadow-sm" id="firebase-status-widget" style="padding: 8px 16px;">
-                    <span class="text-secondary fw-bold" style="font-size: 13.5px;">Database Sync</span>
-                    <span class="badge rounded-pill px-3 py-1 d-flex align-items-center" id="firebase-active-badge" style="background-color: #10b981; font-size: 12.5px; border: 1px solid #059669; transition: all 0.3s ease;">
+            <div class="topbar-actions d-flex align-items-center gap-2 mt-2 mt-md-0 w-100 justify-content-end">
+                <div class="sync-widget-topbar shadow-sm" id="firebase-status-widget" style="display: flex !important; align-items: center;">
+                    <span class="badge rounded-pill px-3 py-1 d-flex align-items-center" style="background-color: #10b981; font-size: 12.5px; border: 1px solid #059669; color: white;">
                         <i class="fa-solid fa-database me-2"></i> Firebase Active
                     </span>
                 </div>
-                <div class="sync-widget-topbar shadow-sm" id="topbar-sync-widget">
+
+                <div class="sync-widget-topbar shadow-sm" id="topbar-sync-widget" style="display: flex !important; align-items: center;">
                     <span class="sync-dot offline" id="sync-dot-indicator"></span>
-                    <span class="sync-text text-dark" id="sync-text-indicator">Offline</span>
+                    <span class="sync-text text-dark fw-bold small" id="sync-text-indicator" style="display: inline !important;">Offline</span>
                     <span class="sync-ping small text-muted ms-2" id="sync-ping-indicator">Wait</span>
                 </div>
-                <div class="time-widget shadow-sm" id="clockDisplay">
+                
+                <div class="time-widget shadow-sm" id="clockDisplay" style="display: flex !important; align-items: center;">
                     <i class="fas fa-spinner fa-spin text-primary"></i>
                 </div>
             </div>
+            
         </nav>
-        <div id="app-content" style="transition: opacity 0.3s ease-in-out; width: 100%; min-height: 80vh;"></div>
 
+        <div id="app-content" style="transition: opacity 0.3s ease-in-out; width: 100%; min-height: 80vh;"></div>
     </main>
 </body>
 </html>

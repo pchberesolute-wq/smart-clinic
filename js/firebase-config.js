@@ -1,5 +1,5 @@
 // js/firebase-config.js
-// 🚀 Enterprise Firebase Configuration (with Auto-Bypass Security)
+// 🚀 Enterprise Firebase Configuration (Safe Auth & Persistent Session)
 
 const firebaseConfig = {
     apiKey: "AIzaSyA2cDFLnQJv-j9-1M8NVA1ajeTqJRmZugk",
@@ -12,7 +12,7 @@ const firebaseConfig = {
     measurementId: "G-FN9JM8MC4B"
 };
 
-// 1. Initialize Firebase
+// 1. Initialize Firebase Core
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
@@ -23,11 +23,28 @@ const auth = firebase.auth();
 window.db = db;
 window.auth = auth;
 
-// 🚨 THE MAGIC FIX: ระบบปลดล็อก Dashboard อัตโนมัติ (Anonymous Auth) 🚨
-auth.signInAnonymously()
-  .then(() => {
-    console.log("🟢 [Security] ปลดล็อกสิทธิ์สำเร็จ! ส่งสัญญาณให้ Dashboard ทำงานต่อได้");
-  })
-  .catch((error) => {
-    console.error("🔴 [Security Error]:", error.message);
-  });
+// ==========================================
+// 🚨 THE MAGIC FIX: ระบบจัดการสิทธิ์ฐานข้อมูลอัจฉริยะ (Safe Auth Engine)
+// ==========================================
+// 1. บังคับให้ Firebase จำสิทธิ์ลงในเครื่อง (Local Storage) เพื่อไม่ให้หลุดเวลา Refresh จอ
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+    .then(() => {
+        // 2. ตรวจสอบว่ามีสิทธิ์ค้างอยู่ในเครื่องหรือไม่
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                console.log("🟢 [Firebase Auth] ดึงสิทธิ์เดิมกลับมาสำเร็จ! (Session Restored)");
+            } else {
+                // 3. ถ้าไม่มีสิทธิ์ใดๆ เลย ค่อยทำการขอสิทธิ์ Anonymous เพื่อให้ดึงฐานข้อมูลได้
+                auth.signInAnonymously()
+                    .then(() => {
+                        console.log("🟡 [Firebase Auth] สร้างสิทธิ์ Guest สำเร็จ! (Anonymous Mode)");
+                    })
+                    .catch((error) => {
+                        console.error("🔴 [Firebase Error] ไม่สามารถสร้างสิทธิ์ได้:", error.message);
+                    });
+            }
+        });
+    })
+    .catch((error) => {
+        console.error("🔴 [Firebase Persistence Error]:", error.message);
+    });

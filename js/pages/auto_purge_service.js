@@ -1,8 +1,9 @@
 // js/auto_purge_service.js
-// 🚀 Enterprise FinOps Engine: Distributed Auto-Purge Service
+// 🚀 Enterprise FinOps Engine: Distributed Auto-Purge Service (7-Year Data Retention Compliance)
 
 const AutoPurgeService = {
     isPurging: false,
+    retentionYears: 7, // 🚨 ขยายเวลาเก็บข้อมูลเป็น 7 ปี ตามมาตรฐานเวชระเบียนสากล
 
     init: function() {
         // หน่วงเวลา 10 วินาที เพื่อไม่ให้แย่ง Bandwidth ตอนเปิดหน้าจอ Dashboard ครั้งแรก
@@ -38,7 +39,7 @@ const AutoPurgeService = {
             const deletedCount = await this.runGlobalPurge();
             
             if (deletedCount > 0) {
-                this.showToast(`คืนพื้นที่ให้ Cloud! ลบข้อมูลเก่าเกิน 5 ปี จำนวน ${deletedCount} รายการ`);
+                this.showToast(`คืนพื้นที่ให้ Cloud! ลบข้อมูลเก่าเกิน ${this.retentionYears} ปี จำนวน ${deletedCount} รายการ`);
             }
         } catch (error) {
             console.error("❌ [FinOps] Transaction Lock Error:", error);
@@ -60,10 +61,10 @@ const AutoPurgeService = {
         if (this.isPurging) return 0;
         this.isPurging = true;
 
-        console.log("🚀 [FinOps] เริ่มต้นสแกนหาข้อมูลหมดอายุ (Older than 5 years)...");
+        console.log(`🚀 [FinOps] เริ่มต้นสแกนหาข้อมูลหมดอายุ (Older than ${this.retentionYears} years)...`);
         
         const cutoffDate = new Date();
-        cutoffDate.setFullYear(cutoffDate.getFullYear() - 5);
+        cutoffDate.setFullYear(cutoffDate.getFullYear() - this.retentionYears);
         const cutoffTime = cutoffDate.getTime();
         const cutoffStrDate = cutoffDate.toISOString().split('T')[0];
         const cutoffStrISO = cutoffDate.toISOString();
@@ -83,7 +84,7 @@ const AutoPurgeService = {
                 Object.entries(patients).forEach(([patientId, p]) => {
                     if (!p) return;
                     
-                    // กรณีตาย/ย้าย/จำหน่าย เกิน 5 ปี -> ลบคนไข้ทิ้งทั้งแฟ้ม
+                    // กรณีตาย/ย้าย/จำหน่าย เกิน 7 ปี -> ลบคนไข้ทิ้งทั้งแฟ้ม
                     if ((p.status || 'ปกติ') !== 'ปกติ') {
                         let recordDate = new Date(p.last_updated || p.register_date || "2000-01-01").getTime();
                         if (recordDate < cutoffTime) {

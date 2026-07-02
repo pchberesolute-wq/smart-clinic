@@ -1,5 +1,5 @@
 // js/pages/inventory.js
-// 🚀 Enterprise Inventory Module: Atomic Writes, Custom Barcodes & FinOps Ready
+// 🚀 Enterprise Inventory Module: Atomic Writes, Custom Barcodes, FinOps Ready & Bulk Print
 
 class InventoryPageComponent {
     constructor() {
@@ -26,6 +26,9 @@ class InventoryPageComponent {
                     <p class="text-muted mt-1 mb-0">จัดการรายการพัสดุ รหัสสินค้า บาร์โค้ด และจัดลำดับการแสดงผลเพื่อรองรับระบบ Smart PO</p>
                 </div>
                 <div class="d-flex gap-2 mt-3 mt-md-0 flex-wrap justify-content-md-end">
+                    <button class="btn btn-outline-dark fw-bold shadow-sm rounded-pill px-3" onclick="App.pages.inventory.printAllBarcodes()" title="พิมพ์บาร์โค้ดของพัสดุทั้งหมดในระบบ">
+                        <i class="fa-solid fa-print me-1"></i> พิมพ์บาร์โค้ดทั้งหมด
+                    </button>
                     <button class="btn btn-outline-secondary fw-bold shadow-sm rounded-pill px-3" onclick="App.pages.inventory.openOptionsModal()" title="จัดการตัวเลือกหมวดหมู่และหน่วยนับ">
                         <i class="fa-solid fa-tags me-1"></i> จัดการหมวดหมู่/หน่วยนับ
                     </button>
@@ -523,7 +526,7 @@ class InventoryPageComponent {
         });
     }
 
-    // 🖨️ Printer Integration
+    // 🖨️ Printer Integration (พิมพ์ทีละตัว)
     printBarcode(itemId) { 
         const item = this.allItems.find(i => i.id === itemId);
         if (!item) return;
@@ -589,6 +592,142 @@ class InventoryPageComponent {
                         label.style.boxShadow = originalShadow; 
                     }); 
                 } 
+            </script>
+        </body>
+        </html>`;
+        
+        printWindow.document.write(html); 
+        printWindow.document.close();
+    }
+
+    // 🖨️ 🚨 NEW FIX: พิมพ์บาร์โค้ดทั้งหมด (จัดหน้า A4 อัตโนมัติ)
+    printAllBarcodes() {
+        if (!this.allItems || this.allItems.length === 0) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire('ไม่มีข้อมูล', 'ไม่พบรายการพัสดุสำหรับพิมพ์บาร์โค้ดในระบบ', 'warning');
+            }
+            return;
+        }
+
+        const printWindow = window.open('', '_blank');
+        
+        let labelsHtml = '';
+        let scriptsHtml = '';
+
+        // ดึงของมาเรียงลำดับให้สวยงาม
+        const sortedItems = [...this.allItems].sort((a, b) => {
+            let orderA = a.order !== undefined && a.order !== null && a.order !== "" ? Number(a.order) : 999;
+            let orderB = b.order !== undefined && b.order !== null && b.order !== "" ? Number(b.order) : 999;
+            return orderA - orderB;
+        });
+
+        // สร้าง HTML สำหรับสติ๊กเกอร์แต่ละดวง
+        sortedItems.forEach((item, index) => {
+            if (!item.barcode) return; // ข้ามของที่ไม่มีบาร์โค้ด
+
+            const safeName = this.#escapeHTML(item.name);
+            const safeItemCode = this.#escapeHTML(item.item_code || '-');
+            const safeBarcode = this.#escapeHTML(item.barcode);
+            const canvasId = `barcode-canvas-all-${index}`;
+
+            labelsHtml += `
+                <div class="label-box">
+                    <div class="label-info">
+                        <div class="item-name">${safeName}</div>
+                        <div class="item-cat">รหัส: ${safeItemCode} | บาร์โค้ด: ${safeBarcode}</div>
+                    </div>
+                    <div class="barcode-wrap">
+                        <svg id="${canvasId}"></svg>
+                    </div>
+                </div>
+            `;
+
+            // เตรียม Script ไว้รันสร้างรูปบาร์โค้ด
+            scriptsHtml += `
+                try {
+                    JsBarcode("#${canvasId}", "${safeBarcode}", { 
+                        format: "CODE128", width: 1.8, height: 40, displayValue: true, fontSize: 14, fontOptions: "bold", textMargin: 4, margin: 0 
+                    });
+                } catch(e) { console.error("Error barcode:", e); }
+            `;
+        });
+
+        // วางโครงสร้างหน้า A4
+        const html = `
+        <!DOCTYPE html>
+        <html lang="th">
+        <head>
+            <meta charset="UTF-8">
+            <title>พิมพ์บาร์โค้ดพัสดุทั้งหมด - DIALYSIS PRO</title>
+            <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
+            <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+            <style>
+                body { 
+                    font-family: 'Prompt', sans-serif; background: #f8fafc; margin: 0; padding: 20px;
+                    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+                }
+                .control-panel { margin-bottom: 20px; text-align: center; }
+                .btn-print { 
+                    font-family: 'Prompt', sans-serif; padding: 12px 24px; font-size: 16px; font-weight: 600; 
+                    border-radius: 10px; cursor: pointer; border: none; background: #4361ee; color: white;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-flex; align-items: center; gap: 8px;
+                }
+                
+                /* 🚨 จัดตารางแบบ 2 คอลัมน์ ให้พอดีหน้า A4 */
+                .page-container {
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 15px;
+                    max-width: 210mm; /* ความกว้างมาตรฐาน A4 */
+                    margin: 0 auto;
+                }
+                .label-box { 
+                    background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px;
+                    display: flex; align-items: center; justify-content: space-between; 
+                    padding: 15px; box-sizing: border-box; 
+                    page-break-inside: avoid; /* 🚨 ป้องกันสติ๊กเกอร์โดนตัดครึ่งตอนขึ้นหน้าใหม่ */
+                    height: 120px; 
+                } 
+                .label-info { flex: 1; text-align: left; overflow: hidden; padding-right: 10px; } 
+                .item-name { 
+                    font-size: 16px; font-weight: 700; color: #0f172a; 
+                    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+                    overflow: hidden; line-height: 1.2; margin-bottom: 4px;
+                } 
+                .item-cat { font-size: 11px; color: #64748b; font-weight: 500; } 
+                .barcode-wrap { display: flex; align-items: center; justify-content: center; background: #fff; } 
+                svg { max-width: 100%; height: auto; display: block; } 
+                
+                /* 🚨 ตั้งค่าตอนสั่งปริ้นกระดาษจริง */
+                @media print { 
+                    body { background: #fff; padding: 0; } 
+                    .control-panel { display: none; } 
+                    .page-container { 
+                        gap: 5mm; /* ระยะห่างสติ๊กเกอร์บนกระดาษ */
+                        width: 100%; max-width: none;
+                    }
+                    .label-box { border: 1px dashed #94a3b8; box-shadow: none; } 
+                    @page { size: A4 portrait; margin: 10mm; } 
+                }
+            </style>
+        </head>
+        <body>
+            <div class="control-panel">
+                <button class="btn-print" onclick="window.print()">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg> พิมพ์สติ๊กเกอร์ทั้งหมด
+                </button>
+            </div>
+            
+            <div class="page-container">
+                ${labelsHtml}
+            </div>
+            
+            <script> 
+                window.onload = function() {
+                    ${scriptsHtml}
+                    // สั่งเปิดหน้าต่างปริ้นให้อัตโนมัติเมื่อโหลดบาร์โค้ดเสร็จ (เอา // ออกถ้าต้องการ)
+                    // setTimeout(() => { window.print(); }, 800);
+                };
             </script>
         </body>
         </html>`;
