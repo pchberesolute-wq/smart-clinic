@@ -3,12 +3,12 @@
 
 // 🚨 ระบบป้องกันหน้าเว็บกระพริบ (Anti-Flash Engine) + ทุบกรงขัง CSS
 (function preventFlash() {
-    if (!localStorage.getItem('dialysis_user_session')) {
+    if (!localStorage.getItem('dialysis_user_session') || !sessionStorage.getItem('dialysis_session_active')) {
         const antiFlashStyle = document.createElement('style');
         antiFlashStyle.id = 'anti-flash-style';
         antiFlashStyle.innerHTML = `
-            #sidebar, .topbar { display: none !important; opacity: 0 !important; visibility: hidden !important; }
-            .main-content { margin: 0 !important; padding: 0 !important; transform: none !important; background: #f8fafc !important; }
+            html body #sidebar, html body nav.topbar, html body .topbar { display: none !important; opacity: 0 !important; visibility: hidden !important; z-index: -9999 !important; }
+            html body .main-content { margin: 0 !important; padding: 0 !important; transform: none !important; background: #f8fafc !important; }
             body { background: #f8fafc !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; }
         `;
         if(document.head) document.head.appendChild(antiFlashStyle);
@@ -34,40 +34,21 @@ class LoginPageComponent {
     get html() {
         return `
             <style>
-                /* 🚨 THE KILLER FIX: ทำลายกรงขัง CSS Stacking Context (ทุบกล่องกระจก) 🚨 */
+                html body nav.topbar, html body #sidebar { display: none !important; }
+
                 .main-content {
-                    margin: 0 !important;
-                    padding: 0 !important;
-                    transform: none !important; /* ปลดล็อก GPU Layer ที่ขังหน้า Login ไว้ */
-                    width: 100vw !important;
-                    min-height: 100vh !important;
+                    margin: 0 !important; padding: 0 !important; transform: none !important; 
+                    width: 100vw !important; min-height: 100vh !important;
                 }
-                #app-content {
-                    margin: 0 !important;
-                    padding: 0 !important;
-                }
+                #app-content { margin: 0 !important; padding: 0 !important; }
                 
-                /* บังคับกางเต็มหน้าจอ 100% ทะลุทุกมิติ */
                 .login-container { 
-                    position: fixed !important; 
-                    top: 0 !important; 
-                    left: 0 !important; 
-                    right: 0 !important;
-                    bottom: 0 !important;
-                    width: 100vw !important; 
-                    height: 100vh !important; 
-                    margin: 0 !important;
-                    padding: 0 !important;
-                    background: #f8fafc; 
-                    display: flex; 
-                    align-items: center; 
-                    justify-content: center; 
-                    z-index: 999999 !important; /* ดันให้อยู่หน้าสุด */
-                    overflow: hidden; 
-                    font-family: 'Prompt', sans-serif; 
+                    position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+                    width: 100vw !important; height: 100vh !important; margin: 0 !important; padding: 0 !important;
+                    background: #f8fafc; display: flex; align-items: center; justify-content: center; 
+                    z-index: 999999 !important; overflow: hidden; font-family: 'Prompt', sans-serif; 
                 }
 
-                /* 🚨 THE FIX: สั่งให้กล่องแจ้งเตือนกระโดดทะลุหน้า Login ขึ้นมาอยู่บนสุดเสมอ 🚨 */
                 .swal2-container { z-index: 9999999 !important; }
                 
                 .login-blob { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.6; animation: floatBlob 10s infinite ease-in-out; pointer-events: none; }
@@ -100,10 +81,7 @@ class LoginPageComponent {
                 .profile-selector-btn:hover { background: #fff; border-color: #bfdbfe; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1); }
                 
                 .selected-user-info { display: flex; align-items: center; gap: 14px; }
-                .selected-avatar-img { 
-                    width: 42px; height: 42px; border-radius: 50%; object-fit: cover; 
-                    border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                }
+                .selected-avatar-img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
                 .selected-text-group { display: flex; flex-direction: column; align-items: flex-start; }
                 .selected-name { font-weight: 700; color: #1e293b; font-size: 15px; font-family: 'Prompt', sans-serif; line-height: 1.2; }
                 .selected-role { font-weight: 600; color: #64748b; font-size: 12px; }
@@ -135,11 +113,11 @@ class LoginPageComponent {
                 .input-group:focus-within .input-modern-login { border-left-color: transparent; }
 
                 .swal2-popup.premium-alert { border-radius: 24px !important; padding: 25px 20px !important; border: 1px solid rgba(255,255,255,0.8) !important; background: rgba(255, 255, 255, 0.98) !important; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15) !important; }
-                .swal2-confirm.premium-btn { border-radius: 12px !important; padding: 12px 28px !important; font-family: 'Prompt', sans-serif !important; font-weight: 600 !important; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important; color: white !important; box-shadow: 0 8px 15px -3px rgba(37, 99, 235, 0.3) !important; border: none !important; transition: all 0.3s ease; }
-                .swal2-confirm.premium-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -3px rgba(37, 99, 235, 0.4) !important; }
-                .swal2-cancel.premium-btn-cancel { border-radius: 12px !important; padding: 12px 28px !important; font-family: 'Prompt', sans-serif !important; font-weight: 600 !important; background: #64748b !important; color: white !important; border: none !important; box-shadow: 0 8px 15px -3px rgba(100, 116, 139, 0.2) !important; transition: all 0.3s ease; }
-                .swal2-cancel.premium-btn-cancel:hover { transform: translateY(-2px); background: #475569 !important; }
-                .swal2-confirm.premium-btn-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important; box-shadow: 0 8px 15px -3px rgba(239, 68, 68, 0.3) !important; }
+                .btn-premium-swal { border-radius: 12px !important; padding: 12px 28px !important; font-family: 'Prompt', sans-serif !important; font-weight: 600 !important; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important; color: white !important; box-shadow: 0 8px 15px -3px rgba(37, 99, 235, 0.3) !important; border: none !important; transition: all 0.3s ease; }
+                .btn-premium-swal:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -3px rgba(37, 99, 235, 0.4) !important; }
+                .btn-cancel-swal { border-radius: 12px !important; padding: 12px 28px !important; font-family: 'Prompt', sans-serif !important; font-weight: 600 !important; background: #64748b !important; color: white !important; border: none !important; box-shadow: 0 8px 15px -3px rgba(100, 116, 139, 0.2) !important; transition: all 0.3s ease; }
+                .btn-cancel-swal:hover { transform: translateY(-2px); background: #475569 !important; }
+                .btn-danger-swal { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important; box-shadow: 0 8px 15px -3px rgba(239, 68, 68, 0.3) !important; }
             </style>
 
             <div class="login-container">
@@ -172,7 +150,7 @@ class LoginPageComponent {
                                         <span class="selected-role">กรุณารอสักครู่</span>
                                     </div>
                                 </div>
-                                <i class="fa-solid fa-chevron-down text-secondary ms-2" style="font-size: 14px;"></i>
+                                <i class="fas fa-chevron-down text-secondary ms-2" style="font-family: 'Font Awesome 6 Free', 'FontAwesome', sans-serif !important; font-weight: 900 !important; font-size: 14px; font-style: normal !important;"></i>
                             </div>
 
                             <div id="custom-user-list" class="custom-options-panel"></div>
@@ -221,7 +199,6 @@ class LoginPageComponent {
         `;
     }
 
-    // 🚀 Lifecycle: Mount
     async init() {
         if (!window.customDropdownListenerAdded) {
             document.addEventListener('click', (e) => {
@@ -262,7 +239,6 @@ class LoginPageComponent {
         }
 
         try {
-            // 🚨 อาศัยบารมี Auth จาก firebase-config.js (ไม่ต้องขอ Persistence ซ้ำ)
             firebase.auth().onAuthStateChanged((user) => {
                 if (user) {
                     const cbUsers = db.ref('clinic_users_v2').on('value', snap => {
@@ -285,7 +261,6 @@ class LoginPageComponent {
         } catch (err) { console.error("Init Error:", err); }
     }
 
-    // 🧹 Lifecycle: Unmount
     destroy() {
         this.firebaseListeners.forEach(l => db.ref(l.path).off('value', l.callback));
         this.firebaseListeners = [];
@@ -411,7 +386,7 @@ class LoginPageComponent {
             Swal.fire({ 
                 html: '<div class="mt-2"><i class="fa-solid fa-circle-exclamation fa-4x text-warning mb-3"></i><h4 class="fw-bold text-dark" style="font-family:\'Prompt\';">ข้อมูลไม่ครบถ้วน</h4><p class="text-muted small">กรุณาเลือกบัญชีผู้ใช้และระบุรหัสผ่านให้ครบถ้วนครับ</p></div>', 
                 showConfirmButton: true, confirmButtonText: 'ตกลง', buttonsStyling: false,
-                customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn' }
+                customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal mx-2' }
             }); 
             return; 
         }
@@ -434,7 +409,7 @@ class LoginPageComponent {
 
             if (validUser) {
                 if (validUser.status !== 'active') {
-                    Swal.fire({ html: '<div class="mt-2"><i class="fa-solid fa-user-lock fa-4x text-danger mb-3"></i><h4 class="fw-bold text-dark" style="font-family:\'Prompt\';">บัญชีถูกระงับ</h4><p class="text-muted small">บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ</p></div>', showConfirmButton: true, confirmButtonText: 'ตกลง', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn premium-btn-danger' } });
+                    Swal.fire({ html: '<div class="mt-2"><i class="fa-solid fa-user-lock fa-4x text-danger mb-3"></i><h4 class="fw-bold text-dark" style="font-family:\'Prompt\';">บัญชีถูกระงับ</h4><p class="text-muted small">บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ</p></div>', showConfirmButton: true, confirmButtonText: 'ตกลง', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal btn-danger-swal' } });
                     btnLogin.innerHTML = originalBtnHtml; btnLogin.disabled = false;
                     return;
                 }
@@ -453,7 +428,7 @@ class LoginPageComponent {
                 }).then(() => App.switchPage('dashboard'));
                 
             } else {
-                Swal.fire({ html: '<div class="mt-2"><i class="fa-solid fa-circle-xmark fa-4x text-danger mb-3"></i><h4 class="fw-bold text-dark" style="font-family:\'Prompt\';">ล็อคอินล้มเหลว</h4><p class="text-muted small">รหัสผ่านไม่ถูกต้อง หรือไม่พบชื่อผู้ใช้งานนี้ในระบบ!</p></div>', showConfirmButton: true, confirmButtonText: 'ลองใหม่อีกครั้ง', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn premium-btn-danger' } });
+                Swal.fire({ html: '<div class="mt-2"><i class="fa-solid fa-circle-xmark fa-4x text-danger mb-3"></i><h4 class="fw-bold text-dark" style="font-family:\'Prompt\';">ล็อคอินล้มเหลว</h4><p class="text-muted small">รหัสผ่านไม่ถูกต้อง หรือไม่พบชื่อผู้ใช้งานนี้ในระบบ!</p></div>', showConfirmButton: true, confirmButtonText: 'ลองใหม่อีกครั้ง', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal btn-danger-swal' } });
                 btnLogin.innerHTML = originalBtnHtml; btnLogin.disabled = false;
                 document.getElementById('login-password').value = '';
             }
@@ -464,47 +439,101 @@ class LoginPageComponent {
         Swal.fire({
             title: '<h4 class="fw-bold text-primary mb-0" style="font-family:\'Prompt\';"><i class="fa-solid fa-unlock-keyhole me-2"></i> ขอรีเซ็ตรหัสผ่าน</h4>',
             html: '<div class="text-start mt-3" style="font-family:\'Sarabun\';"><label class="form-label fw-bold small text-secondary">กรุณาระบุ Username (ไอดี) ของคุณ</label><input type="text" id="swal-reset-username" class="form-control input-modern text-center fw-bold fs-5 mt-2" value="admin" onfocus="this.select()" placeholder="กรอก Username"></div>',
-            showCancelButton: true, confirmButtonText: 'ถัดไป <i class="fa-solid fa-arrow-right ms-1"></i>', cancelButtonText: 'ยกเลิก', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn mx-2', cancelButton: 'swal2-cancel premium-btn-cancel mx-2' },
-            preConfirm: () => { const username = document.getElementById('swal-reset-username').value.trim(); if(!username) { Swal.showValidationMessage('กรุณาระบุ Username'); return false; } return username; }
+            showCancelButton: true, 
+            confirmButtonText: 'ถัดไป <i class="fa-solid fa-arrow-right ms-1"></i>', 
+            cancelButtonText: 'ยกเลิก', 
+            buttonsStyling: false, 
+            customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal mx-2', cancelButton: 'btn-cancel-swal mx-2' },
+            preConfirm: () => { 
+                const username = document.getElementById('swal-reset-username').value.trim(); 
+                if(!username) { Swal.showValidationMessage('กรุณาระบุ Username'); return false; } 
+                return username; 
+            }
         }).then(async (result) => {
             if(result.isConfirmed) {
-                const targetUsername = result.value; Swal.fire({title: 'กำลังตรวจสอบ...', didOpen: () => Swal.showLoading(), customClass: { popup: 'premium-alert' }});
+                const targetUsername = result.value; 
+                Swal.fire({title: 'กำลังตรวจสอบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), customClass: { popup: 'premium-alert' }});
+                
                 try {
-                    if(typeof firebase !== 'undefined' && firebase.auth) { if(firebase.auth().currentUser === null) { await firebase.auth().signInAnonymously(); } }
-                    const [usersSnap, settingsSnap] = await Promise.all([ db.ref('clinic_users_v2').once('value'), db.ref('clinic_settings_v2/admin_pin').once('value') ]);
-                    const usersData = usersSnap.val() || []; const adminPin = settingsSnap.val();
+                    if(typeof firebase !== 'undefined' && firebase.auth) { 
+                        if(firebase.auth().currentUser === null) { await firebase.auth().signInAnonymously(); } 
+                    }
+                    const [usersSnap, settingsSnap] = await Promise.all([ 
+                        db.ref('clinic_users_v2').once('value'), 
+                        db.ref('clinic_settings_v2/admin_pin').once('value') 
+                    ]);
+                    
+                    const usersData = usersSnap.val() || []; 
+                    const adminPin = settingsSnap.val();
                     let usersArray = Array.isArray(usersData) ? usersData : Object.keys(usersData).map(k => usersData[k]);
                     let userIndex = usersArray.findIndex(u => u && u.username.toLowerCase() === targetUsername.toLowerCase());
                     
-                    if(userIndex === -1) { Swal.fire({ html: `<div class="mt-2"><i class="fa-solid fa-user-xmark fa-4x text-danger mb-3"></i><h4 class="fw-bold text-dark" style="font-family:'Prompt';">ไม่พบผู้ใช้</h4><p class="text-muted small">ไม่มีไอดี <b>${targetUsername}</b>ในระบบ</p></div>`, showConfirmButton: true, confirmButtonText: 'ตกลง', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn premium-btn-danger' } }); return; }
-                    if(!adminPin) { Swal.fire({ html: '<div class="mt-2"><i class="fa-solid fa-triangle-exclamation fa-4x text-warning mb-3"></i><h4 class="fw-bold text-dark" style="font-family:\'Prompt\';">ระบบยังไม่พร้อม</h4><p class="text-muted small">ผู้ดูแลระบบยังไม่ได้ตั้งค่า <b>Admin PIN</b><br>โปรดไปตั้งค่าที่เมนูตั้งค่าคลินิกก่อนครับ</p></div>', showConfirmButton: true, confirmButtonText: 'ตกลง', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn' } }); return; }
+                    Swal.close();
                     
-                    Swal.fire({
-                        title: '<h4 class="text-danger fw-bold" style="font-family:\'Prompt\';"><i class="fa-solid fa-shield-halved me-2"></i> ยืนยันสิทธิ์ Admin</h4>',
-                        html: `<p class="small text-muted mb-3" style="font-family:'Sarabun';">กรุณาให้ผู้ดูแลระบบกรอก <b>Admin PIN</b> เพื่ออนุมัติการรีเซ็ตรหัสผ่านให้ไอดี <b class="text-primary">${targetUsername}</b></p><input type="password" id="swal-auth-pin" class="form-control input-modern text-center fw-bold text-danger fs-3 tracking-widest" placeholder="******" maxlength="6" oninput="this.value=this.value.replace(/[^0-9]/g,'')">`,
-                        showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-check me-1"></i> ยืนยัน PIN', cancelButtonText: 'ยกเลิก', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn premium-btn-danger mx-2', cancelButton: 'swal2-cancel premium-btn-cancel mx-2' },
-                        preConfirm: () => { const enteredPin = document.getElementById('swal-auth-pin').value; if(enteredPin !== adminPin.toString()) { Swal.showValidationMessage('PIN ไม่ถูกต้อง ไม่อนุญาตให้เปลี่ยนรหัส!'); return false; } return true; }
-                    }).then((pinResult) => {
-                        if(pinResult.isConfirmed) {
-                            Swal.fire({
-                                title: '<h5 class="fw-bold text-success mb-0" style="font-family:\'Prompt\';"><i class="fa-solid fa-key me-2"></i> ตั้งรหัสผ่านใหม่</h5>',
-                                html: '<div class="text-start mt-3" style="font-family:\'Sarabun\';"><label class="form-label small text-secondary fw-bold">รหัสผ่านใหม่ (New Password)</label><input type="password" id="swal-new-pwd" class="form-control input-modern mb-3"><label class="form-label small text-secondary fw-bold">ยืนยันรหัสผ่านใหม่อีกครั้ง</label><input type="password" id="swal-confirm-pwd" class="form-control input-modern"></div>',
-                                showCancelButton: true, confirmButtonText: 'เปลี่ยนรหัสผ่าน', cancelButtonText: 'ยกเลิก', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn mx-2', cancelButton: 'swal2-cancel premium-btn-cancel mx-2' },
-                                preConfirm: () => {
-                                    const p1 = document.getElementById('swal-new-pwd').value; const p2 = document.getElementById('swal-confirm-pwd').value;
-                                    if(p1.length < 6) { Swal.showValidationMessage('รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร'); return false; }
-                                    if(p1 !== p2) { Swal.showValidationMessage('รหัสผ่านไม่ตรงกัน'); return false; } return p1;
-                                }
-                            }).then((pwdResult) => {
-                                if(pwdResult.isConfirmed) {
-                                    Swal.fire({title: 'กำลังอัปเดตระบบ...', didOpen: () => Swal.showLoading(), customClass: { popup: 'premium-alert' }});
-                                    usersArray[userIndex].password = pwdResult.value;
-                                    db.ref('clinic_users_v2').set(usersArray).then(() => { Swal.fire({ html: '<div class="mt-2"><i class="fa-solid fa-check-circle fa-4x text-success mb-3"></i><h4 class="fw-bold text-dark" style="font-family:\'Prompt\';">เปลี่ยนรหัสผ่านสำเร็จ!</h4><p class="text-muted small">กรุณาใช้รหัสผ่านใหม่เพื่อเข้าสู่ระบบ</p></div>', showConfirmButton: true, confirmButtonText: 'กลับไปหน้าล็อคอิน', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'swal2-confirm premium-btn' } }).then(() => { LoginPage.init(); }); });
-                                }
-                            });
-                        }
-                    });
-                } catch(e) { Swal.fire({ title: 'เกิดข้อผิดพลาด', text: 'ระบบถูกล็อคอยู่ กรุณาติดต่อผู้ดูแลระบบ', icon: 'error', customClass: { popup: 'premium-alert' }}); }
+                    if(userIndex === -1) { 
+                        setTimeout(() => {
+                            Swal.fire({ html: `<div class="mt-2"><i class="fa-solid fa-user-xmark fa-4x text-danger mb-3"></i><h4 class="fw-bold text-dark" style="font-family:'Prompt';">ไม่พบผู้ใช้</h4><p class="text-muted small">ไม่มีไอดี <b>${targetUsername}</b> ในระบบ</p></div>`, showConfirmButton: true, confirmButtonText: 'ตกลง', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal btn-danger-swal' } }); 
+                        }, 100);
+                        return; 
+                    }
+                    
+                    if(!adminPin) { 
+                        setTimeout(() => {
+                            Swal.fire({ html: '<div class="mt-2"><i class="fa-solid fa-triangle-exclamation fa-4x text-warning mb-3"></i><h4 class="fw-bold text-dark" style="font-family:\'Prompt\';">ระบบยังไม่พร้อม</h4><p class="text-muted small">ผู้ดูแลระบบยังไม่ได้ตั้งค่า <b>Admin PIN</b><br>โปรดไปตั้งค่าที่เมนูตั้งค่าคลินิกก่อนครับ</p></div>', showConfirmButton: true, confirmButtonText: 'ตกลง', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal' } }); 
+                        }, 100);
+                        return; 
+                    }
+                    
+                    setTimeout(() => {
+                        Swal.fire({
+                            title: '<h4 class="text-danger fw-bold" style="font-family:\'Prompt\';"><i class="fa-solid fa-shield-halved me-2"></i> ยืนยันสิทธิ์ Admin</h4>',
+                            html: `<p class="small text-muted mb-3" style="font-family:'Sarabun';">กรุณาให้ผู้ดูแลระบบกรอก <b>Admin PIN</b> เพื่ออนุมัติการรีเซ็ตรหัสผ่านให้ไอดี <b class="text-primary">${targetUsername}</b></p><input type="password" id="swal-auth-pin" class="form-control input-modern text-center fw-bold text-danger fs-3 tracking-widest" placeholder="******" maxlength="6" oninput="this.value=this.value.replace(/[^0-9]/g,'')">`,
+                            showCancelButton: true, 
+                            confirmButtonText: '<i class="fa-solid fa-check me-1"></i> ยืนยัน PIN', 
+                            cancelButtonText: 'ยกเลิก', 
+                            buttonsStyling: false, 
+                            customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal btn-danger-swal mx-2', cancelButton: 'btn-cancel-swal mx-2' },
+                            preConfirm: () => { 
+                                const enteredPin = document.getElementById('swal-auth-pin').value; 
+                                if(enteredPin !== adminPin.toString()) { 
+                                    Swal.showValidationMessage('PIN ไม่ถูกต้อง ไม่อนุญาตให้เปลี่ยนรหัส!'); 
+                                    return false; 
+                                } 
+                                return true; 
+                            }
+                        }).then((pinResult) => {
+                            if(pinResult.isConfirmed) {
+                                setTimeout(() => {
+                                    Swal.fire({
+                                        title: '<h5 class="fw-bold text-success mb-0" style="font-family:\'Prompt\';"><i class="fa-solid fa-key me-2"></i> ตั้งรหัสผ่านใหม่</h5>',
+                                        html: '<div class="text-start mt-3" style="font-family:\'Sarabun\';"><label class="form-label small text-secondary fw-bold">รหัสผ่านใหม่ (New Password)</label><input type="password" id="swal-new-pwd" class="form-control input-modern mb-3"><label class="form-label small text-secondary fw-bold">ยืนยันรหัสผ่านใหม่อีกครั้ง</label><input type="password" id="swal-confirm-pwd" class="form-control input-modern"></div>',
+                                        showCancelButton: true, 
+                                        confirmButtonText: 'เปลี่ยนรหัสผ่าน', 
+                                        cancelButtonText: 'ยกเลิก', 
+                                        buttonsStyling: false, 
+                                        customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal mx-2', cancelButton: 'btn-cancel-swal mx-2' },
+                                        preConfirm: () => {
+                                            const p1 = document.getElementById('swal-new-pwd').value; const p2 = document.getElementById('swal-confirm-pwd').value;
+                                            if(p1.length < 6) { Swal.showValidationMessage('รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร'); return false; }
+                                            if(p1 !== p2) { Swal.showValidationMessage('รหัสผ่านไม่ตรงกัน'); return false; } 
+                                            return p1;
+                                        }
+                                    }).then((pwdResult) => {
+                                        if(pwdResult.isConfirmed) {
+                                            Swal.fire({title: 'กำลังอัปเดตระบบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), customClass: { popup: 'premium-alert' }});
+                                            usersArray[userIndex].password = pwdResult.value;
+                                            db.ref('clinic_users_v2').set(usersArray).then(() => { 
+                                                Swal.fire({ html: '<div class="mt-2"><i class="fa-solid fa-check-circle fa-4x text-success mb-3"></i><h4 class="fw-bold text-dark" style="font-family:\'Prompt\';">เปลี่ยนรหัสผ่านสำเร็จ!</h4><p class="text-muted small">กรุณาใช้รหัสผ่านใหม่เพื่อเข้าสู่ระบบ</p></div>', showConfirmButton: true, confirmButtonText: 'กลับไปหน้าล็อคอิน', buttonsStyling: false, customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal' } }).then(() => { LoginPage.init(); }); 
+                                            });
+                                        }
+                                    });
+                                }, 100);
+                            }
+                        });
+                    }, 100);
+                } catch(e) { 
+                    Swal.fire({ title: 'เกิดข้อผิดพลาด', text: 'ระบบเครือข่ายขัดข้อง กรุณาลองใหม่', icon: 'error', customClass: { popup: 'premium-alert' }}); 
+                }
             }
         });
     }

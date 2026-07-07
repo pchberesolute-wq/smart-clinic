@@ -1,5 +1,5 @@
 // js/pages/settings.js
-// 🚀 Enterprise Settings Module: Full Component, Memory-Leak Free & XSS Protected
+// 🚀 Enterprise Settings Module: Full Component, Memory-Leak Free, Dynamic RBAC, XSS Protected & Database Management
 
 class SettingsPageComponent {
     constructor() {
@@ -22,11 +22,198 @@ class SettingsPageComponent {
             'stock': { label: 'เจ้าหน้าที่พัสดุ', icon: 'fa-boxes-stacked', color: 'dark' }
         };
 
+        this.pageDescriptions = {
+            'dashboard': 'แดชบอร์ดภาพรวม (Overview)',
+            'visits': 'คิวฟอกไตประจำวัน (Daily Visits)',
+            'visit_detail': 'บันทึกข้อมูลฟอกเลือด (HD Flowsheet)',
+            'patients': 'ทะเบียนผู้ป่วย (Patient Mgt.)',
+            'patient_history': 'แฟ้มประวัติผู้ป่วย (EMR)',
+            'document_center': 'ศูนย์รวมเอกสาร (Gallery)',
+            'patient_status': 'ผู้ป่วยส่งต่อ/จำหน่าย',
+            'inventory': 'คลังน้ำยาและพัสดุ',
+            'stock_manage': 'เบิกจ่ายและนับสต๊อก',
+            'stock_history': 'ประวัติเข้า-ออก สต๊อก',
+            'monthly_requisition': 'ฟอร์มเบิกของประจำเดือน',
+            'stock_forecast': 'คำนวณยอดเบิก',
+            'usage_statistics': 'สถิติการใช้พัสดุและยาฉีด',
+            'finance': 'รายได้และเบิกจ่าย',
+            'department_ledger': 'บัญชีภายในหน่วยงาน',
+            'search_copy': 'ค้นหาและคัดลอกด่วน',
+            'settings': 'ตั้งค่าคลินิก (Admin)',
+            'about': 'เกี่ยวกับระบบ (About)'
+        };
+
         this.firebaseListeners = [];
     }
 
+    switchTab(tabId) {
+        document.querySelectorAll('#settingsTabs .nav-link').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('#settingsTabContent .tab-pane').forEach(pane => pane.classList.remove('show', 'active'));
+        
+        const targetBtn = document.querySelector(`[data-bs-target="#${tabId}"]`);
+        if (targetBtn) targetBtn.classList.add('active');
+        
+        const targetPane = document.getElementById(tabId);
+        if (targetPane) targetPane.classList.add('show', 'active');
+    }
+
+    changeTheme(themeKey) {
+        if (typeof window.ThemeEngine !== 'undefined') {
+            window.ThemeEngine.applyTheme(themeKey);
+        } else {
+            Swal.fire({ title: 'กำลังโหลดระบบธีม...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const script = document.createElement('script');
+            script.src = './js/theme_engine.js'; 
+            script.onload = () => { Swal.close(); if (window.ThemeEngine) window.ThemeEngine.applyTheme(themeKey); };
+            script.onerror = () => { Swal.fire({ icon: 'error', title: 'หาไฟล์ไม่เจอครับ!', html: `โปรแกรมพยายามเปิดไฟล์ <b class="text-danger">js/theme_engine.js</b> แต่ไม่พบครับ` }); };
+            document.body.appendChild(script);
+        }
+    }
+
     get html() {
+        let themeUIHtml = `
+            <div class="modern-panel mb-4 p-4" style="border-top: 4px solid #8b5cf6; border-radius: 16px;">
+                <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                    <div>
+                        <h5 class="fw-bold mb-1" style="color:#8b5cf6!important;"><i class="fa-solid fa-palette me-2"></i> ปรับแต่งหน้าตาโปรแกรม (Theme Engine)</h5>
+                        <p class="small mb-0 text-muted">เปลี่ยนสีสันและดีไซน์ของโปรแกรมทั้งระบบแบบ Realtime</p>
+                    </div>
+                </div>
+                <div class="row g-3 justify-content-center">
+                    <div class="col-12 col-md-6">
+                        <div class="card card-hover-float p-4 text-center h-100 d-flex flex-column align-items-center justify-content-center preview-card-modern" 
+                             onclick="App.pages.settings.changeTheme('modern')" style="cursor:pointer;">
+                            <div class="rounded-circle mb-3 d-flex align-items-center justify-content-center" style="width:48px; height:48px; background:#2563eb; color:white;">
+                                <i class="fa-solid fa-paint-roller fs-5"></i>
+                            </div>
+                            <h6 class="fw-bold mb-0 preview-text-modern" style="font-family:'Prompt';">Modern Blue</h6>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="card card-hover-float p-4 text-center h-100 d-flex flex-column align-items-center justify-content-center preview-card-midnight" 
+                             onclick="App.pages.settings.changeTheme('minimal')" style="cursor:pointer;">
+                            <div class="rounded-circle mb-3 d-flex align-items-center justify-content-center" style="width:48px; height:48px; background:#10b981; color:white;">
+                                <i class="fa-solid fa-paint-roller fs-5"></i>
+                            </div>
+                            <h6 class="fw-bold mb-0 preview-text-midnight" style="font-family:'Prompt';">Midnight Pro</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        let databaseUIHtml = `
+            <div class="modern-panel mb-4 p-4" style="border-top: 4px solid var(--danger); border-radius: 16px;">
+                <div style="position: absolute; top: -30px; right: -30px; opacity: 0.02; font-size: 250px; pointer-events: none;"><i class="fa-solid fa-database"></i></div>
+                
+                <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3 position-relative z-1">
+                    <div>
+                        <h5 class="fw-bold mb-1 text-danger"><i class="fa-solid fa-server me-2"></i> ศูนย์จัดการฐานข้อมูลและเคลียร์พื้นที่ (Data Management)</h5>
+                        <p class="small mb-0 text-muted">ลบข้อมูลประวัติเก่าเพื่อลดขนาดฐานข้อมูล หรือ Factory Reset เพื่อเริ่มต้นใช้งานระบบใหม่</p>
+                    </div>
+                </div>
+
+                <div class="row g-4 position-relative z-1">
+                    <div class="col-xl-6">
+                        <div class="p-4 border rounded-4 bg-white h-100 shadow-sm border-warning-subtle">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-warning text-dark d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 45px; height: 45px;"><i class="fa-solid fa-broom fa-lg"></i></div>
+                                <div><h6 class="fw-bold text-dark mb-0">ลบข้อมูลแบบกำหนดเอง (Custom Purge)</h6><div class="small text-muted">เลือกลบเฉพาะประวัติเก่าตามระยะเวลา</div></div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold small text-secondary">เลือกฐานข้อมูลที่ต้องการลบ</label>
+                                <select id="db-purge-target" class="form-select input-modern">
+                                    <option value="visits">ประวัติการฟอกเลือด (HD Flowsheet & EMR)</option>
+                                    <option value="ledger">บัญชีรายรับ-รายจ่าย (Department Ledger)</option>
+                                    <option value="inventory">ประวัติเข้า-ออกพัสดุ (Inventory History)</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="fw-bold small text-secondary">เลือกระยะเวลา</label>
+                                <select id="db-purge-time" class="form-select input-modern">
+                                    <option value="1">ลบข้อมูลที่เก่ากว่า 1 ปี</option>
+                                    <option value="3">ลบข้อมูลที่เก่ากว่า 3 ปี</option>
+                                    <option value="5" selected>ลบข้อมูลที่เก่ากว่า 5 ปี</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-warning w-100 fw-bold shadow-sm rounded-pill text-dark" onclick="App.pages.settings.promptCustomPurge()">
+                                <i class="fa-solid fa-eraser me-2"></i> สั่งล้างข้อมูลประวัติเก่า
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-6">
+                        <div class="p-4 border rounded-4 h-100 shadow-sm border-danger-subtle" style="background-color: #fef2f2;">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 45px; height: 45px;"><i class="fa-solid fa-skull-crossbones fa-lg"></i></div>
+                                <div><h6 class="fw-bold text-danger mb-0">ล้างระบบแบบละเอียด (Factory Reset)</h6><div class="small text-danger" style="opacity: 0.8;">ระวัง! การทำงานนี้ไม่สามารถกู้คืนข้อมูลได้</div></div>
+                            </div>
+                            <p class="small fw-bold text-dark mb-3">เลือกส่วนที่ต้องการล้างข้อมูล (Tick to wipe):</p>
+                            
+                            <div class="row g-2 mb-4">
+                                <div class="col-12"><label class="perm-check-item" style="background:#fff;"><input type="checkbox" id="wipe-patients" value="patients_database_v2"> <span>ล้างทะเบียนผู้ป่วย และ ประวัติการรักษาทั้งหมด</span></label></div>
+                                <div class="col-12"><label class="perm-check-item" style="background:#fff;"><input type="checkbox" id="wipe-stock-history" value="inventory_transactions"> <span>ล้างประวัติทำรายการเข้า-ออก สต๊อกทั้งหมด</span></label></div>
+                                <div class="col-12"><label class="perm-check-item" style="background:#fff;"><input type="checkbox" id="wipe-inventory-qty" value="inventory_qty"> <span>รีเซ็ตจำนวนสต๊อกพัสดุคงเหลือให้เป็น 0</span></label></div>
+                                <div class="col-12"><label class="perm-check-item" style="background:#fff;"><input type="checkbox" id="wipe-ledger" value="department_ledger_v2"> <span>ล้างบัญชีรายรับ-รายจ่ายหน่วยงานทั้งหมด</span></label></div>
+                                <div class="col-12"><label class="perm-check-item" style="background:#fff;"><input type="checkbox" id="wipe-master" value="master_data"> <span>ล้างรายการตั้งค่า (ยา, แล็บ, เทมเพลต, บัญชีผู้ใช้)</span></label></div>
+                            </div>
+                            
+                            <button class="btn btn-danger w-100 fw-bold shadow-sm rounded-pill" onclick="App.pages.settings.promptFactoryReset()">
+                                <i class="fa-solid fa-radiation me-2"></i> ยืนยันการล้างระบบ (Factory Reset)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
         return `
+            <style>
+                html[data-bs-theme="dark"] .modern-panel { background-color: var(--bg-surface) !important; border-color: var(--border-color) !important; color: var(--text-dark) !important; }
+                html[data-bs-theme="dark"] .modern-panel h5, html[data-bs-theme="dark"] .modern-panel label { color: var(--text-dark) !important; }
+                html[data-bs-theme="dark"] .bg-white { background-color: var(--bg-surface) !important; border-color: var(--border-color) !important; }
+                
+                #app-content .preview-card-modern { border-radius: 16px !important; border: 2px solid #2563eb !important; background-color: #ffffff !important; }
+                #app-content .preview-text-modern { color: #0f172a !important; }
+                #app-content .preview-card-midnight { border-radius: 16px !important; border: 2px solid #10b981 !important; background-color: #0f172a !important; }
+                #app-content .preview-text-midnight { color: #f8fafc !important; }
+
+                html[data-bs-theme="dark"] body #app-content .preview-card-modern { background-color: #ffffff !important; border-color: #2563eb !important; }
+                html[data-bs-theme="dark"] body #app-content .preview-text-modern { color: #0f172a !important; text-shadow: none !important; }
+                html[data-bs-theme="dark"] body #app-content .preview-card-midnight { background-color: #0f172a !important; border-color: #10b981 !important; }
+                html[data-bs-theme="dark"] body #app-content .preview-text-midnight { color: #f8fafc !important; text-shadow: none !important; }
+
+                html[data-bs-theme="dark"] .card:not(.preview-card-modern):not(.preview-card-midnight) { background-color: var(--bg-surface) !important; border-color: var(--border-color) !important; }
+                html[data-bs-theme="dark"] .card:not(.preview-card-modern):not(.preview-card-midnight) h6 { color: var(--text-dark) !important; }
+
+                html[data-bs-theme="dark"] .input-modern { background-color: var(--bg-body) !important; border-color: var(--border-color) !important; color: var(--text-dark) !important; }
+                
+                html[data-bs-theme="dark"] .nav-link { color: var(--text-muted) !important; transition: all 0.2s ease; }
+                html[data-bs-theme="dark"] .nav-link:hover:not(.active) { 
+                    background-color: rgba(255, 255, 255, 0.05) !important; color: #f8fafc !important; border-radius: 12px 12px 0 0; 
+                }
+                html[data-bs-theme="dark"] .nav-link.active { color: var(--primary) !important; background-color: transparent !important; }
+                html[data-bs-theme="dark"] .nav-link.active:hover { background-color: transparent !important; }
+                
+                html[data-bs-theme="dark"] .badge.bg-white { background-color: rgba(255,255,255,0.08) !important; border-color: rgba(255,255,255,0.15) !important; color: var(--text-dark) !important; }
+                html[data-bs-theme="dark"] .badge.bg-light { background-color: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.1) !important; color: #cbd5e1 !important; }
+                html[data-bs-theme="dark"] p.bg-light { background-color: rgba(0,0,0,0.2) !important; border: 1px solid var(--border-color); }
+                
+                .logo-preview-box { width: 100px; height: 100px; border: 2px dashed var(--border-color); display: flex; align-items: center; justify-content: center; border-radius: 12px; }
+                .logo-preview-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+                
+                .perm-check-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 15px; margin-bottom: 8px; transition: all 0.2s; cursor: pointer; display: flex; align-items: center; }
+                .perm-check-item:hover { background: #e0e7ff; border-color: #93c5fd; }
+                html[data-bs-theme="dark"] .perm-check-item { background: rgba(255,255,255,0.02) !important; border-color: rgba(255,255,255,0.05); }
+                html[data-bs-theme="dark"] .perm-check-item:hover { background: rgba(255,255,255,0.08) !important; border-color: #3b82f6; }
+                .perm-check-item input { width: 18px; height: 18px; margin-right: 12px; cursor: pointer; }
+                .perm-check-item span { font-weight: 600; font-size: 14px; color: var(--text-dark); }
+                
+                /* Dark mode support for factory reset panel */
+                html[data-bs-theme="dark"] #database-panel .bg-white { background: rgba(0,0,0,0.2) !important; }
+                html[data-bs-theme="dark"] #database-panel .border-danger-subtle { border-color: rgba(239, 68, 68, 0.3) !important; background: rgba(239, 68, 68, 0.05) !important;}
+            </style>
+
             <div class="page-header mb-4">
                 <div>
                     <h2 class="page-title text-primary"><i class="fa-solid fa-sliders me-2"></i> ตั้งค่าระบบและข้อมูลคลินิก</h2>
@@ -34,10 +221,13 @@ class SettingsPageComponent {
                 </div>
             </div>
 
-            <ul class="nav settings-nav-tabs mb-4" id="settingsTabs" role="tablist">
-                <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#clinic-panel" type="button" role="tab"><i class="fa-solid fa-building-user me-2"></i> ข้อมูลคลินิกและบริษัท</button></li>
-                <li class="nav-item" role="presentation"><button class="nav-link text-info" data-bs-toggle="tab" data-bs-target="#users-panel" type="button" role="tab"><i class="fa-solid fa-users-gear me-2"></i> จัดการไอดีล็อคอิน</button></li>
-                <li class="nav-item" role="presentation"><button class="nav-link text-danger" data-bs-toggle="tab" data-bs-target="#medical-panel" type="button" role="tab"><i class="fa-solid fa-briefcase-medical me-2"></i> ตั้งค่าทางการแพทย์</button></li>
+            <ul class="nav settings-nav-tabs mb-4 position-relative" id="settingsTabs" role="tablist" style="gap: 5px; z-index: 10;">
+                <li class="nav-item" role="presentation"><button class="nav-link active fw-bold px-4 rounded-pill" data-bs-target="#clinic-panel" type="button" role="tab" onclick="App.pages.settings.switchTab('clinic-panel')" style="border:none;"><i class="fa-solid fa-building-user me-2"></i> ข้อมูลคลินิกและบริษัท</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link text-info fw-bold px-4 rounded-pill" data-bs-target="#users-panel" type="button" role="tab" onclick="App.pages.settings.switchTab('users-panel')" style="border:none;"><i class="fa-solid fa-users-gear me-2"></i> จัดการไอดี</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link text-danger fw-bold px-4 rounded-pill" data-bs-target="#medical-panel" type="button" role="tab" onclick="App.pages.settings.switchTab('medical-panel')" style="border:none;"><i class="fa-solid fa-briefcase-medical me-2"></i> ตั้งค่าการแพทย์</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link fw-bold px-4 rounded-pill" style="color:#8b5cf6; border:none;" data-bs-target="#theme-panel" type="button" role="tab" onclick="App.pages.settings.switchTab('theme-panel')"><i class="fa-solid fa-palette me-2"></i> หน้าตา (Theme)</button></li>
+                
+                <li class="nav-item ms-auto" role="presentation"><button class="nav-link text-danger fw-bold px-4 rounded-pill bg-danger-subtle border border-danger-subtle" data-bs-target="#database-panel" type="button" role="tab" onclick="App.pages.settings.switchTab('database-panel')" style="position:relative; z-index: 50;"><i class="fa-solid fa-database me-2"></i> จัดการฐานข้อมูล (DB)</button></li>
             </ul>
 
             <div class="tab-content" id="settingsTabContent">
@@ -45,14 +235,14 @@ class SettingsPageComponent {
                 <div class="tab-pane fade show active" id="clinic-panel" role="tabpanel">
                     <div class="modern-panel p-4 pt-5 mb-4" style="border-top: 4px solid var(--primary); border-radius: 16px;">
                         <div style="position: absolute; top: -20px; right: -20px; opacity: 0.03; font-size: 250px;"><i class="fa-solid fa-hospital-user"></i></div>
-                        <h5 class="fw-bold text-dark mb-4 position-relative"><i class="fa-solid fa-hospital text-primary me-2"></i> ข้อมูลพื้นฐานสถานพยาบาล (Clinic Info)</h5>
+                        <h5 class="fw-bold mb-4 position-relative"><i class="fa-solid fa-hospital text-primary me-2"></i> ข้อมูลพื้นฐานสถานพยาบาล (Clinic Info)</h5>
                         <div class="row g-4 position-relative">
                             
                             <div class="col-md-12">
-                                <label class="form-label fw-bold text-secondary small">โลโก้คลินิก (สำหรับแสดงหน้าระบบและนามบัตร)</label>
+                                <label class="form-label fw-bold small">โลโก้คลินิก (สำหรับแสดงหน้าระบบและนามบัตร)</label>
                                 <div class="d-flex align-items-center gap-3">
                                     <div class="logo-preview-box" id="clinic-logo-preview-container">
-                                        <span class="text-muted small"><i class="fa-solid fa-image fa-2x"></i></span>
+                                        <span class="small"><i class="fa-solid fa-image fa-2x"></i></span>
                                     </div>
                                     <div>
                                         <input type="file" id="file-clinic-logo" class="form-control input-modern mb-2" accept="image/jpeg, image/png, image/webp" onchange="App.pages.settings.handleLogoUpload(event, 'hidden-clinic-logo-base64', 'clinic-logo-preview-container')">
@@ -66,41 +256,41 @@ class SettingsPageComponent {
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label fw-bold text-secondary small">ชื่อคลินิก / สถานพยาบาล</label>
+                                <label class="form-label fw-bold small">ชื่อคลินิก / สถานพยาบาล</label>
                                 <input type="text" id="set-clinic-name" class="form-control input-modern text-primary fw-bold">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-bold text-secondary small">รหัสสถานพยาบาล 11 หลัก</label>
+                                <label class="form-label fw-bold small">รหัสสถานพยาบาล 11 หลัก</label>
                                 <input type="text" id="set-clinic-id" class="form-control input-modern">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-bold text-secondary small">เบอร์โทรศัพท์คลินิก</label>
+                                <label class="form-label fw-bold small">เบอร์โทรศัพท์คลินิก</label>
                                 <input type="text" id="set-clinic-phone" class="form-control input-modern">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-bold text-secondary small">Email คลินิก (ถ้ามี)</label>
+                                <label class="form-label fw-bold small">Email คลินิก (ถ้ามี)</label>
                                 <input type="text" id="set-clinic-email" class="form-control input-modern">
                             </div>
                             <div class="col-12">
-                                <label class="form-label fw-bold text-secondary small">ที่อยู่คลินิก (สำหรับพิมพ์ลงเอกสารใบรับรอง)</label>
+                                <label class="form-label fw-bold small">ที่อยู่คลินิก (สำหรับพิมพ์ลงเอกสารใบรับรอง)</label>
                                 <textarea id="set-clinic-address" class="form-control input-modern" rows="2"></textarea>
                             </div>
                         </div>
                         
                         <hr class="my-5 border-light">
 
-                        <h5 class="fw-bold text-dark mb-4 position-relative"><i class="fa-solid fa-building text-warning me-2"></i> ข้อมูลบริษัทจดทะเบียน (Company & Tax Info)</h5>
+                        <h5 class="fw-bold mb-4 position-relative"><i class="fa-solid fa-building text-warning me-2"></i> ข้อมูลบริษัทจดทะเบียน (Company & Tax Info)</h5>
                         <div class="row g-4 position-relative">
                             <div class="col-md-12">
-                                <label class="form-label fw-bold text-secondary small">โลโก้บริษัท (สำหรับใบเสร็จรับเงิน/ใบกำกับภาษี)</label>
+                                <label class="form-label fw-bold small">โลโก้บริษัท (สำหรับใบเสร็จรับเงิน/ใบกำกับภาษี)</label>
                                 <div class="d-flex align-items-center gap-3">
                                     <div class="logo-preview-box" id="company-logo-preview-container">
-                                        <span class="text-muted small"><i class="fa-solid fa-image fa-2x"></i></span>
+                                        <span class="small"><i class="fa-solid fa-image fa-2x"></i></span>
                                     </div>
                                     <div>
                                         <input type="file" id="file-company-logo" class="form-control input-modern mb-2" accept="image/jpeg, image/png, image/webp" onchange="App.pages.settings.handleLogoUpload(event, 'hidden-company-logo-base64', 'company-logo-preview-container')">
                                         <div class="d-flex gap-2">
-                                            <button class="btn btn-outline-warning text-dark fw-bold btn-sm rounded-pill px-4 shadow-sm" onclick="App.pages.settings.promptPrintCard('company')"><i class="fa-solid fa-print me-2"></i> พิมพ์นามบัตรใบกำกับภาษี</button>
+                                            <button class="btn btn-outline-warning fw-bold btn-sm rounded-pill px-4 shadow-sm" onclick="App.pages.settings.promptPrintCard('company')"><i class="fa-solid fa-print me-2"></i> พิมพ์นามบัตรใบกำกับภาษี</button>
                                             <button class="btn btn-outline-danger fw-bold btn-sm rounded-pill px-3 shadow-sm" onclick="App.pages.settings.deleteLogo('company')"><i class="fa-solid fa-trash me-1"></i> ลบโลโก้</button>
                                         </div>
                                     </div>
@@ -108,15 +298,15 @@ class SettingsPageComponent {
                                 <input type="hidden" id="hidden-company-logo-base64">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-bold text-secondary small">ชื่อบริษัท / นิติบุคคล (Company Name)</label>
+                                <label class="form-label fw-bold small">ชื่อบริษัท / นิติบุคคล (Company Name)</label>
                                 <input type="text" id="set-company-name" class="form-control input-modern fw-bold">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-bold text-secondary small">เลขประจำตัวผู้เสียภาษี (Tax ID)</label>
+                                <label class="form-label fw-bold small">เลขประจำตัวผู้เสียภาษี (Tax ID)</label>
                                 <input type="text" id="set-clinic-tax" class="form-control input-modern text-danger fw-bold" placeholder="เลข 13 หลัก">
                             </div>
                             <div class="col-12">
-                                <label class="form-label fw-bold text-secondary small">ที่อยู่บริษัทจดทะเบียน (สำหรับออกใบกำกับภาษี / ใบเสร็จรับเงิน)</label>
+                                <label class="form-label fw-bold small">ที่อยู่บริษัทจดทะเบียน (สำหรับออกใบกำกับภาษี / ใบเสร็จรับเงิน)</label>
                                 <textarea id="set-company-address" class="form-control input-modern" rows="2"></textarea>
                             </div>
                         </div>
@@ -133,25 +323,25 @@ class SettingsPageComponent {
                     <div class="modern-panel p-4" style="border-top: 4px solid var(--info); border-radius: 16px;">
                         <div style="position: absolute; top: -30px; right: -30px; opacity: 0.02; font-size: 300px; pointer-events: none;"><i class="fa-solid fa-users-gear"></i></div>
                         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 position-relative z-1">
-                            <div><h5 class="fw-bold text-dark mb-1"><i class="fa-solid fa-users-viewfinder text-info me-2"></i> รายชื่อผู้ใช้งานในระบบ</h5><p class="text-muted small mb-0">จัดการไอดีล็อคอิน, สิทธิ์การเข้าถึง (Role) และสถานะบัญชี</p></div>
+                            <div><h5 class="fw-bold mb-1"><i class="fa-solid fa-users-viewfinder text-info me-2"></i> รายชื่อผู้ใช้งานในระบบ</h5><p class="small mb-0">จัดการไอดีล็อคอิน, สิทธิ์การเข้าถึง (Role) และสถานะบัญชี</p></div>
                             <div class="d-flex gap-2">
                                 <button class="btn btn-outline-danger fw-bold shadow-sm rounded-pill px-4" onclick="App.pages.settings.setAdminPin()"><i class="fa-solid fa-key me-2"></i> ตั้งค่า PIN รีเซ็ตรหัส</button>
                                 <button class="btn btn-premium btn-premium-primary text-white fw-bold shadow-sm rounded-pill px-4" onclick="App.pages.settings.openUserModal()"><i class="fa-solid fa-user-plus me-2"></i> เพิ่มผู้ใช้งานใหม่</button>
                             </div>
                         </div>
-                        <div class="table-responsive bg-white rounded-3 shadow-sm border border-light position-relative z-1">
+                        <div class="table-responsive rounded-3 shadow-sm border border-light position-relative z-1">
                             <table class="table table-premium w-100 mb-0">
                                 <thead>
                                     <tr>
-                                        <th style="width: 28%;"><i class="fa-solid fa-user-tag me-2"></i> ผู้ใช้งาน (Name)</th>
-                                        <th style="width: 22%;"><i class="fa-solid fa-fingerprint me-2"></i> ไอดี (Username)</th>
+                                        <th style="width: 25%;"><i class="fa-solid fa-user-tag me-2"></i> ผู้ใช้งาน (Name)</th>
+                                        <th style="width: 20%;"><i class="fa-solid fa-fingerprint me-2"></i> ไอดี (Username)</th>
                                         <th class="text-center" style="width: 15%;"><i class="fa-solid fa-shield-halved me-2"></i> ระดับสิทธิ์</th>
                                         <th class="text-center" style="width: 15%;"><i class="fa-solid fa-toggle-on me-2"></i> สถานะ</th>
-                                        <th class="text-center" style="width: 20%;"><i class="fa-solid fa-gears me-2"></i> จัดการ</th>
+                                        <th class="text-center" style="width: 25%;"><i class="fa-solid fa-gears me-2"></i> จัดการ</th>
                                     </tr>
                                 </thead>
                                 <tbody id="users-table-body">
-                                    <tr><td colspan="5" class="text-center py-5 text-muted"><i class="fas fa-spinner fa-spin fa-2x mb-3"></i><br>กำลังโหลดข้อมูลผู้ใช้งาน...</td></tr>
+                                    <tr><td colspan="5" class="text-center py-5"><i class="fas fa-spinner fa-spin fa-2x mb-3"></i><br>กำลังโหลดข้อมูลผู้ใช้งาน...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -161,17 +351,17 @@ class SettingsPageComponent {
                 <div class="tab-pane fade" id="medical-panel" role="tabpanel">
                     <div class="modern-panel mb-4 p-4" style="border-top: 4px solid var(--danger); border-radius: 16px;">
                         <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-                            <div><h5 class="fw-bold text-dark mb-1"><i class="fa-solid fa-vial-virus text-danger me-2"></i> 1. จัดการชุดผลแล็บ และ ราคา (Lab Sets)</h5><p class="text-muted small mb-0">ตั้งค่าชุดแล็บและราคาเหมาชุด สำหรับดึงข้อมูลในหน้า Flowsheet</p></div>
+                            <div><h5 class="fw-bold mb-1"><i class="fa-solid fa-vial-virus text-danger me-2"></i> 1. จัดการชุดผลแล็บ และ ราคา (Lab Sets)</h5><p class="small mb-0">ตั้งค่าชุดแล็บและราคาเหมาชุด สำหรับดึงข้อมูลในหน้า Flowsheet</p></div>
                             <button class="btn btn-outline-danger fw-bold shadow-sm rounded-pill px-4" onclick="App.pages.settings.openLabSetModal()"><i class="fa-solid fa-plus me-1"></i> สร้างชุดแล็บใหม่</button>
                         </div>
-                        <div class="row g-3" id="lab-sets-container"><div class="col-12 text-center py-4 text-muted"><i class="fas fa-spinner fa-spin"></i> กำลังโหลดข้อมูล...</div></div>
+                        <div class="row g-3" id="lab-sets-container"><div class="col-12 text-center py-4"><i class="fas fa-spinner fa-spin"></i> กำลังโหลดข้อมูล...</div></div>
                     </div>
 
                     <div class="row g-4 mb-4">
                         <div class="col-xl-6">
                             <div class="modern-panel p-4 h-100" style="border-top: 4px solid #8b5cf6; border-radius: 16px;">
                                 <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-                                    <div><h5 class="fw-bold text-dark mb-1" style="color: #8b5cf6 !important;"><i class="fa-solid fa-syringe me-2"></i> 2. ยาฉีด/เวชภัณฑ์ (Meds)</h5></div>
+                                    <div><h5 class="fw-bold mb-1" style="color: #8b5cf6 !important;"><i class="fa-solid fa-syringe me-2"></i> 2. ยาฉีด/เวชภัณฑ์ (Meds)</h5></div>
                                     <button class="btn text-white fw-bold shadow-sm rounded-pill px-3" style="background:#8b5cf6;" onclick="App.pages.settings.openMedListModal()"><i class="fa-solid fa-plus me-1"></i> เพิ่มรายการ</button>
                                 </div>
                                 <div class="d-flex flex-wrap gap-2" id="meds-list-container"></div>
@@ -180,7 +370,7 @@ class SettingsPageComponent {
                         <div class="col-xl-6">
                             <div class="modern-panel p-4 h-100" style="border-top: 4px solid #14b8a6; border-radius: 16px;">
                                 <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-                                    <div><h5 class="fw-bold text-dark mb-1" style="color: #14b8a6 !important;"><i class="fa-solid fa-x-ray me-2"></i> 3. รายการเอ็กซเรย์ (X-Ray)</h5></div>
+                                    <div><h5 class="fw-bold mb-1" style="color: #14b8a6 !important;"><i class="fa-solid fa-x-ray me-2"></i> 3. รายการเอ็กซเรย์ (X-Ray)</h5></div>
                                     <button class="btn text-white fw-bold shadow-sm rounded-pill px-3" style="background:#14b8a6;" onclick="App.pages.settings.openXrayModal()"><i class="fa-solid fa-plus me-1"></i> เพิ่มรายการ</button>
                                 </div>
                                 <div class="d-flex flex-wrap gap-2" id="xrays-list-container"></div>
@@ -190,8 +380,8 @@ class SettingsPageComponent {
 
                     <div class="modern-panel mb-4 p-4" style="border-top: 4px solid var(--warning); border-radius: 16px;">
                         <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-                            <div><h5 class="fw-bold text-dark mb-1"><i class="fa-solid fa-file-signature text-warning me-2"></i> 4. เทมเพลตบันทึกการรักษา (Progress Notes)</h5><p class="text-muted small mb-0">ข้อความมาตรฐานเพื่อช่วยให้พยาบาลบันทึกอาการได้รวดเร็ว</p></div>
-                            <button class="btn btn-outline-warning text-dark fw-bold shadow-sm rounded-pill px-4" onclick="App.pages.settings.openNoteTemplateModal()"><i class="fa-solid fa-plus me-1"></i> สร้างเทมเพลต</button>
+                            <div><h5 class="fw-bold mb-1"><i class="fa-solid fa-file-signature text-warning me-2"></i> 4. เทมเพลตบันทึกการรักษา (Progress Notes)</h5><p class="small mb-0">ข้อความมาตรฐานเพื่อช่วยให้พยาบาลบันทึกอาการได้รวดเร็ว</p></div>
+                            <button class="btn btn-outline-warning fw-bold shadow-sm rounded-pill px-4" onclick="App.pages.settings.openNoteTemplateModal()"><i class="fa-solid fa-plus me-1"></i> สร้างเทมเพลต</button>
                         </div>
                         <ul class="nav nav-pills mb-4 p-2 bg-light rounded-pill flex-wrap" id="note-category-tabs" role="tablist" style="gap: 5px; display: inline-flex;">
                             <li class="nav-item"><button class="nav-link active fw-bold px-4 rounded-pill" onclick="App.pages.settings.filterNotes('all')"><i class="fa-solid fa-layer-group me-1"></i> ทั้งหมด</button></li>
@@ -202,8 +392,16 @@ class SettingsPageComponent {
                         </ul>
                         <div class="row g-3" id="note-templates-container"></div>
                     </div>
-
                 </div>
+
+                <div class="tab-pane fade" id="theme-panel" role="tabpanel">
+                    ${themeUIHtml}
+                </div>
+
+                <div class="tab-pane fade" id="database-panel" role="tabpanel">
+                    ${databaseUIHtml}
+                </div>
+
             </div>
         `;
     }
@@ -303,7 +501,189 @@ class SettingsPageComponent {
     destroy() {
         this.firebaseListeners.forEach(l => db.ref(l.path).off('value', l.callback));
         this.firebaseListeners = [];
-        console.log("🧹 [Settings] Cleaned up listeners.");
+    }
+
+    // ---------------------------------------------------------
+    // ☢️ Database Management (Purge & Factory Reset) 🚨 Triple-Layer Security 🚨
+    // ---------------------------------------------------------
+    
+    // 🚨 THE FIX: เปลี่ยน Data path ของประวัติสต๊อกให้ถูกต้อง 🚨
+    async promptCustomPurge() {
+        const target = document.getElementById('db-purge-target').value;
+        const years = document.getElementById('db-purge-time').value;
+        
+        const labels = {
+            'visits': 'ประวัติการฟอกเลือด (HD Flowsheet & EMR)',
+            'ledger': 'บัญชีรายรับ-รายจ่าย (Department Ledger)',
+            'inventory': 'ประวัติเข้า-ออกพัสดุ (Inventory History)'
+        };
+
+        const targetLabel = labels[target];
+
+        this._verifyAdminPinAndExecute(`คุณกำลังจะลบ <b>${targetLabel}</b> ที่เก่ากว่า <b>${years} ปี</b>`, 'DELETE', () => {
+            this._executeCustomPurge(target, parseInt(years));
+        });
+    }
+
+    async _executeCustomPurge(target, years) {
+        Swal.fire({ title: 'กำลังกวาดล้างข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+        const cutoffDate = new Date();
+        cutoffDate.setFullYear(cutoffDate.getFullYear() - years);
+        const cutoffStr = cutoffDate.toISOString().split('T')[0];
+
+        let path = '';
+        let dateField = 'date'; 
+        
+        // 🚨 THE FIX: อัปเดต Path ประวัติสต๊อกตรงนี้
+        if (target === 'visits') path = 'patients_database_v2/visits';
+        else if (target === 'ledger') path = 'department_ledger_v2';
+        else if (target === 'inventory') path = 'inventory_database_v2/transactions';
+
+        try {
+            const snap = await db.ref(path).orderByChild(dateField).endAt(cutoffStr).once('value');
+            if (snap.exists()) {
+                let updates = {};
+                let count = 0;
+                snap.forEach(child => {
+                    updates[child.key] = null;
+                    count++;
+                });
+                
+                await db.ref(path).update(updates);
+                Swal.fire('ล้างข้อมูลสำเร็จ!', `ระบบทำการลบข้อมูลเก่าไปแล้วจำนวน ${count} รายการ`, 'success');
+            } else {
+                Swal.fire('ไม่มีข้อมูล', 'ไม่พบข้อมูลที่เก่าพอจะเข้าเงื่อนไขการลบครับ', 'info');
+            }
+        } catch (error) {
+            Swal.fire('ข้อผิดพลาด', `เกิดข้อผิดพลาดในการลบข้อมูล: ${error.message}`, 'error');
+        }
+    }
+
+    promptFactoryReset() {
+        const wipePatients = document.getElementById('wipe-patients').checked;
+        const wipeStockHistory = document.getElementById('wipe-stock-history').checked;
+        const wipeInventoryQty = document.getElementById('wipe-inventory-qty').checked;
+        const wipeLedger = document.getElementById('wipe-ledger').checked;
+        const wipeMaster = document.getElementById('wipe-master').checked;
+
+        if (!wipePatients && !wipeStockHistory && !wipeInventoryQty && !wipeLedger && !wipeMaster) {
+            Swal.fire('แจ้งเตือน', 'กรุณาติ๊กเลือกส่วนที่ต้องการล้างข้อมูลอย่างน้อย 1 รายการครับ', 'warning');
+            return;
+        }
+
+        this._verifyAdminPinAndExecute(`คุณกำลังจะ <span class="text-danger fw-bold">ล้างข้อมูลทั้งระบบ (Factory Reset)</span> ข้อมูลที่เลือกจะหายไปตลอดกาล!`, 'FACTORY RESET', () => {
+            this._executeFactoryReset({ wipePatients, wipeStockHistory, wipeInventoryQty, wipeLedger, wipeMaster });
+        });
+    }
+
+    async _executeFactoryReset(targets) {
+        Swal.fire({ title: 'กำลังระเบิดฐานข้อมูล (Factory Reset)...', html: 'กรุณาอย่าปิดหน้าต่างนี้', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+        try {
+            const promises = [];
+
+            if (targets.wipePatients) {
+                promises.push(db.ref('patients_database_v2').remove());
+            }
+            
+            // 🚨 THE FIX: อัปเดต Path ประวัติสต๊อกตรงนี้
+            if (targets.wipeStockHistory) {
+                promises.push(db.ref('inventory_database_v2/transactions').remove());
+            }
+
+            if (targets.wipeInventoryQty) {
+                const itemsSnap = await db.ref('inventory_database_v2/items').once('value');
+                const items = itemsSnap.val();
+                if (items) {
+                    let resets = {};
+                    Object.keys(items).forEach(k => { resets[`${k}/stock`] = 0; });
+                    promises.push(db.ref('inventory_database_v2/items').update(resets));
+                }
+            }
+
+            if (targets.wipeLedger) {
+                promises.push(db.ref('department_ledger_v2').remove());
+                promises.push(db.ref('department_ledger_settings_v2/initial_balance').set(0));
+            }
+
+            if (targets.wipeMaster) {
+                promises.push(db.ref('clinic_lab_sets_v2').remove());
+                promises.push(db.ref('clinic_meds_list_v2').remove());
+                promises.push(db.ref('clinic_xray_list_v2').remove());
+                promises.push(db.ref('clinic_note_templates_v2').remove());
+                
+                const currentAdminUsername = App.currentUser.username;
+                const usersSnap = await db.ref('clinic_users_v2').once('value');
+                const users = usersSnap.val();
+                if (users) {
+                    const remainingAdmin = Object.values(users).filter(u => u.username === currentAdminUsername || u.role === 'admin')[0];
+                    if (remainingAdmin) {
+                        promises.push(db.ref('clinic_users_v2').set([remainingAdmin]));
+                    }
+                }
+            }
+
+            await Promise.all(promises);
+
+            Swal.fire({
+                title: 'ล้างระบบสมบูรณ์!',
+                text: 'ข้อมูลถูกล้างตามที่คุณต้องการแล้ว ระบบจะทำการโหลดใหม่เพื่อเคลียร์ความจำ',
+                icon: 'success',
+                confirmButtonColor: '#10b981'
+            }).then(() => {
+                window.location.reload();
+            });
+
+        } catch (error) {
+            Swal.fire('เกิดข้อผิดพลาดร้ายแรง', `ไม่สามารถล้างข้อมูลได้ครบถ้วน: ${error.message}`, 'error');
+        }
+    }
+
+    async _verifyAdminPinAndExecute(warningHtml, confirmKeyword, executionCallback) {
+        const snap = await db.ref('clinic_settings_v2/admin_pin').once('value');
+        const adminPin = snap.val();
+
+        if (!adminPin) {
+            Swal.fire('ระบบไม่พร้อม', 'ผู้ดูแลระบบยังไม่ได้ตั้งค่า Admin PIN<br>กรุณาตั้งค่า PIN ในแท็บ "จัดการไอดี" ก่อนดำเนินการนี้ครับ', 'warning');
+            return;
+        }
+
+        Swal.fire({
+            title: '<h3 class="text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i> ยืนยันสิทธิ์ขั้นสูงสุด</h3>',
+            html: `
+                <div class="text-start mt-3" style="font-family:'Sarabun';">
+                    <p>${warningHtml}</p>
+                    <label class="fw-bold small text-secondary">1. พิมพ์คำว่า <b class="text-danger">${confirmKeyword}</b> เพื่อยืนยัน</label>
+                    <input type="text" id="swal-confirm-word" class="form-control input-modern mb-3 text-center text-danger fw-bold" placeholder="${confirmKeyword}" autocomplete="off">
+                    
+                    <label class="fw-bold small text-secondary">2. รหัสผ่านผู้ดูแลระบบ (Admin PIN)</label>
+                    <input type="password" id="swal-confirm-pin" class="form-control input-modern text-center fw-bold fs-4 tracking-widest" placeholder="******" maxlength="6" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: '<i class="fa-solid fa-skull me-1"></i> ดำเนินการ',
+            confirmButtonColor: '#ef4444',
+            cancelButtonText: 'ยกเลิก',
+            preConfirm: () => {
+                const word = document.getElementById('swal-confirm-word').value.trim();
+                const pin = document.getElementById('swal-confirm-pin').value;
+
+                if (word !== confirmKeyword) {
+                    Swal.showValidationMessage(`กรุณาพิมพ์คำว่า ${confirmKeyword} ให้ถูกต้อง`);
+                    return false;
+                }
+                if (pin !== adminPin.toString()) {
+                    Swal.showValidationMessage('Admin PIN ไม่ถูกต้อง!');
+                    return false;
+                }
+                return true;
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                executionCallback();
+            }
+        });
     }
 
     // ---------------------------------------------------------
@@ -461,13 +841,13 @@ class SettingsPageComponent {
         
         let logoHtml = logoBase64 
             ? `<div class="logo-wrapper"><img src="${logoBase64}" class="logo-img"></div>` 
-            : `<div class="logo-wrapper placeholder-logo"><i class="fa-solid fa-building text-secondary fa-2x"></i></div>`;
+            : `<div class="logo-wrapper placeholder-logo"><i class="fa-solid fa-building"></i></div>`;
             
         let processedWatermarkBase64 = await this.generateWatermarkImage(logoBase64);
 
         let watermarkHtml = processedWatermarkBase64 
             ? `<div class="watermark-container"><img src="${processedWatermarkBase64}"></div>` 
-            : `<div class="watermark-container" style="opacity: 0.08 !important;"><i class="fa-solid fa-building"></i></div>`;
+            : ``; 
 
         let cardsHtml = '';
         for (let i = 0; i < qty; i++) {
@@ -477,20 +857,25 @@ class SettingsPageComponent {
                 <div class="pattern-overlay"></div>
                 ${watermarkHtml}
                 <div class="content-layer">
-                    <div class="header-section">
+                    <div class="brand-zone">
                         ${logoHtml}
-                        <div class="title-wrapper">
-                            <div class="company-name-container">
-                                <div class="company-name-text">${this.#escapeHTML(cardName)}</div>
-                            </div>
-                            <div class="tax-badge-wrapper">
-                                <div class="tax-badge">${idLabel}: ${this.#escapeHTML(idValue)}</div>
-                            </div>
+                        <div class="text-zone">
+                            <div class="company-name company-name-text">${this._escapeHTML(cardName)}</div>
+                            <div class="tax-id">${idLabel}: ${this._escapeHTML(idValue)}</div>
                         </div>
                     </div>
-                    <div class="contact-info">
-                        <div class="info-row"><div class="info-icon"><i class="fa-solid fa-location-dot"></i></div><div class="info-text">${this.#escapeHTML(cardAddress)}</div></div>
-                        <div class="info-row mt-1"><div class="info-icon"><i class="fa-solid fa-phone"></i></div><div class="info-text">${this.#escapeHTML(cardPhone)}${cardEmail !== '-' ? ' &nbsp;|&nbsp; ' + this.#escapeHTML(cardEmail) : ''}</div></div>
+                    
+                    <div class="divider"></div>
+                    
+                    <div class="contact-zone">
+                        <div class="contact-item">
+                            <i class="fa-solid fa-location-dot contact-icon"></i>
+                            <span>${this._escapeHTML(cardAddress)}</span>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fa-solid fa-phone contact-icon"></i>
+                            <span>${this._escapeHTML(cardPhone)}${cardEmail !== '-' ? ' &nbsp;|&nbsp; <i class="fa-solid fa-envelope contact-icon"></i> ' + this._escapeHTML(cardEmail) : ''}</span>
+                        </div>
                     </div>
                 </div>
             </div>`;
@@ -499,54 +884,74 @@ class SettingsPageComponent {
         const printTitle = type === 'clinic' ? 'พิมพ์นามบัตรสถานพยาบาล' : 'พิมพ์นามบัตรใบกำกับภาษี';
 
         const printContent = `
+        <!DOCTYPE html>
         <html lang="th">
             <head>
                 <meta charset="UTF-8">
                 <title>${printTitle} - ${qty} ใบ</title>
-                <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+                <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;700;800&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
                 <style>
-                    @page { size: A4 portrait; margin: 10mm; } 
-                    body { margin: 0; padding: 0; font-family: 'Sarabun', sans-serif; background: #e2e8f0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; display: flex; flex-direction: column; align-items: center; } 
-                    * { box-sizing: border-box; } 
-                    .instruction { text-align: center; color: #475569; font-size: 14px; margin: 15mm 0; background: #fff; padding: 15px 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); } 
+                    @page { size: A4 portrait; margin: 8mm; } 
+                    * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; } 
+                    
+                    body { margin: 0; padding: 0; font-family: 'Sarabun', sans-serif; background: #e2e8f0; display: flex; flex-direction: column; align-items: center; } 
+                    
+                    .instruction { text-align: center; color: #475569; font-size: 14px; margin: 10mm 0; background: #fff; padding: 15px 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); } 
                     @media print { .instruction { display: none; } body { background: #fff; display: block; } } 
                     
                     .print-grid { display: grid; grid-template-columns: repeat(2, 90mm); gap: 0; margin: 0 auto; justify-content: center; } 
                     
-                    .business-card { width: 90mm; height: 54mm; border: 0.5px dashed #cbd5e1; position: relative; background: #ffffff; overflow: hidden; page-break-inside: avoid; } 
-                    .card-bg-wash { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; background: linear-gradient(90deg, rgba(255,255,255,1) 35%, rgba(255,255,255,0.85) 75%, rgba(255,255,255,0.4) 100%) !important; } 
-                    .pattern-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; } 
-                    .watermark-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 3; display: flex; align-items: center; justify-content: center; pointer-events: none; overflow: hidden; } 
-                    .watermark-container img { width: 85%; height: 85%; object-fit: contain; } 
-                    .watermark-container i { font-size: 100px; color: #64748b; } 
-                    .content-layer { position: relative; z-index: 10; width: 100%; height: 100%; display: flex; flex-direction: column; padding: 5mm 7mm; } 
+                    /* โครงร่างนามบัตรมาตรฐาน (90x54mm) */
+                    .business-card { 
+                        width: 90mm; height: 54mm; 
+                        border: 0.5px dashed #cbd5e1; /* กรอบตัด (Crop marks) */
+                        position: relative; background: #ffffff; 
+                        overflow: hidden; page-break-inside: avoid; 
+                    } 
                     
-                    .theme-clean-white { border-top: 4px solid #cbd5e1 !important; } 
-                    .theme-modern-blue { border-top: 4px solid #2563eb !important; } 
-                    .theme-modern-blue .pattern-overlay { background: linear-gradient(135deg, rgba(37,99,235,0.04) 0%, rgba(37,99,235,0.15) 100%) !important; background-image: linear-gradient(rgba(37,99,235,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,0.08) 1px, transparent 1px) !important; background-size: 15px 15px !important; } 
-                    .theme-elegant-gold { border-top: 4px solid #d97706 !important; } 
-                    .theme-elegant-gold .pattern-overlay { background: radial-gradient(circle at 100% 0%, rgba(217,119,6,0.18) 0%, rgba(253,230,138,0.05) 50%, transparent 80%) !important; } 
-                    .theme-emerald-geo { border-top: 4px solid #10b981 !important; } 
-                    .theme-emerald-geo .pattern-overlay { background: linear-gradient(135deg, rgba(16,185,129,0.08) 25%, transparent 25%) -20px 0, linear-gradient(225deg, rgba(16,185,129,0.08) 25%, transparent 25%) -20px 0, linear-gradient(315deg, rgba(16,185,129,0.08) 25%, transparent 25%), linear-gradient(45deg, rgba(16,185,129,0.08) 25%, transparent 25%) !important; background-size: 40px 40px !important; } 
-                    .theme-rose-wave { border-top: 4px solid #e11d48 !important; } 
-                    .theme-rose-wave .pattern-overlay { background: repeating-radial-gradient(circle at 100% 50%, rgba(225,29,72,0.06) 0, rgba(225,29,72,0.06) 10px, transparent 10px, transparent 20px) !important; } 
+                    .card-bg-wash { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; background: linear-gradient(135deg, rgba(255,255,255,1) 40%, rgba(255,255,255,0.7) 100%); } 
+                    .pattern-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; opacity: 0.8; } 
+                    
+                    .watermark-container { position: absolute; right: 0; bottom: 0; width: 50%; height: 100%; z-index: 3; display: flex; align-items: center; justify-content: flex-end; opacity: 0.04; padding-right: 5mm; } 
+                    .watermark-container img { width: 100%; height: 100%; object-fit: contain; } 
+                    .watermark-container i { font-size: 100px; color: #000; } 
+                    
+                    .content-layer { position: relative; z-index: 10; width: 100%; height: 100%; display: flex; flex-direction: column; padding: 6mm 7mm; } 
+                    
+                    .theme-clean-white { border-left: 4px solid #94a3b8 !important; } 
+                    .theme-clean-white .divider { background: linear-gradient(90deg, #94a3b8, transparent); }
 
-                    .header-section { display: flex; align-items: center; gap: 4mm; margin-bottom: 2mm; width: 100%; } 
-                    .logo-wrapper { flex: 0 0 25mm; width: 25mm; height: 20mm; display: flex; align-items: center; justify-content: center; overflow: hidden; background: transparent; } 
-                    .placeholder-logo { background: #f8fafc; border: 1px dashed #cbd5e1; width: 100%; height: 100%; border-radius: 8px; display: flex; align-items: center; justify-content: center; } 
-                    .logo-img { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.08)); } 
+                    .theme-modern-blue { border-left: 4px solid #2563eb !important; } 
+                    .theme-modern-blue .pattern-overlay { background-image: linear-gradient(rgba(37,99,235,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,0.06) 1px, transparent 1px); background-size: 10px 10px; } 
+                    .theme-modern-blue .divider { background: linear-gradient(90deg, #2563eb, transparent); }
+
+                    .theme-elegant-gold { border-left: 4px solid #d97706 !important; } 
+                    .theme-elegant-gold .pattern-overlay { background: radial-gradient(circle at 100% 0%, rgba(217,119,6,0.12) 0%, transparent 60%); } 
+                    .theme-elegant-gold .divider { background: linear-gradient(90deg, #d97706, transparent); }
+
+                    .theme-emerald-geo { border-left: 4px solid #10b981 !important; } 
+                    .theme-emerald-geo .pattern-overlay { background: linear-gradient(135deg, rgba(16,185,129,0.06) 25%, transparent 25%) -10px 0, linear-gradient(225deg, rgba(16,185,129,0.06) 25%, transparent 25%) -10px 0, linear-gradient(315deg, rgba(16,185,129,0.06) 25%, transparent 25%), linear-gradient(45deg, rgba(16,185,129,0.06) 25%, transparent 25%); background-size: 20px 20px; } 
+                    .theme-emerald-geo .divider { background: linear-gradient(90deg, #10b981, transparent); }
+
+                    .theme-rose-wave { border-left: 4px solid #e11d48 !important; } 
+                    .theme-rose-wave .pattern-overlay { background: repeating-radial-gradient(circle at 100% 50%, rgba(225,29,72,0.04) 0, rgba(225,29,72,0.04) 5px, transparent 5px, transparent 10px); } 
+                    .theme-rose-wave .divider { background: linear-gradient(90deg, #e11d48, transparent); }
+
+                    .brand-zone { display: flex; align-items: center; gap: 4mm; margin-bottom: auto; } 
+                    .logo-wrapper { width: 18mm; height: 18mm; flex-shrink: 0; display: flex; align-items: center; justify-content: center; } 
+                    .logo-img { max-width: 100%; max-height: 100%; object-fit: contain; } 
+                    .placeholder-logo { background: #f1f5f9; border-radius: 4px; color: #94a3b8; font-size: 20px; }
                     
-                    .title-wrapper { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; } 
-                    .company-name-container { width: 100%; height: 14mm; display: flex; align-items: center; } 
-                    .company-name-text { font-size: 15pt; font-weight: 800; color: #0f172a; line-height: 1.1; font-family: 'Prompt', sans-serif; overflow-wrap: break-word; word-break: normal; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; } 
-                    .tax-badge-wrapper { width: 100%; } 
-                    .tax-badge { display: inline-block; background: transparent; color: #1d4ed8; font-size: 8pt; font-weight: 700; padding: 0; margin-top: 2px; font-family: 'Prompt', sans-serif; letter-spacing: 0.3px; } 
+                    .text-zone { display: flex; flex-direction: column; justify-content: center; overflow: hidden; } 
+                    .company-name { font-size: 13pt; font-weight: 800; line-height: 1.15; color: #0f172a; font-family: 'Prompt', sans-serif; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; } 
+                    .tax-id { font-size: 7.5pt; font-weight: 700; color: #64748b; margin-top: 1mm; font-family: 'Prompt', sans-serif; letter-spacing: 0.3px; } 
                     
-                    .contact-info { margin-top: auto; border-top: 1px solid rgba(226,232,240,0.8); padding-top: 2mm; } 
-                    .info-row { display: flex; align-items: flex-start; margin-bottom: 2px; } 
-                    .info-icon { width: 5mm; color: #64748b; font-size: 9pt; margin-top: 1.5px; } 
-                    .info-text { flex: 1; font-size: 9.5pt; color: #1e293b; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 600; text-shadow: 1px 1px 0px #fff; } 
+                    .divider { width: 100%; height: 1px; margin: 2mm 0; opacity: 0.5; }
+                    
+                    .contact-zone { display: grid; gap: 1.5mm; font-size: 8pt; color: #334155; line-height: 1.3; font-weight: 600; } 
+                    .contact-item { display: grid; grid-template-columns: 4mm 1fr; align-items: start; } 
+                    .contact-icon { color: #64748b; font-size: 7.5pt; padding-top: 1px; }
                 </style>
             </head>
             <body>
@@ -558,17 +963,14 @@ class SettingsPageComponent {
                 
                 <script>
                     setTimeout(function() {
-                        const containers = document.querySelectorAll(".company-name-container");
                         const texts = document.querySelectorAll(".company-name-text");
-                        for(let i=0; i<containers.length; i++) {
-                            let currentSize = 16;
-                            let textEl = texts[i];
-                            let containerEl = containers[i];
-                            while(textEl.scrollHeight > containerEl.clientHeight && currentSize > 10) {
+                        texts.forEach(textEl => {
+                            let currentSize = 13; 
+                            while(textEl.scrollHeight > 36 && currentSize > 9) { 
                                 currentSize -= 0.5;
                                 textEl.style.fontSize = currentSize + "pt";
                             }
-                        }
+                        });
                     }, 100);
                 </script>
             </body>
@@ -576,11 +978,27 @@ class SettingsPageComponent {
 
         setTimeout(() => {
             Swal.close();
-            const printWin = window.open('', '_blank');
-            printWin.document.open();
-            printWin.document.write(printContent);
-            printWin.document.close();
-            setTimeout(() => { printWin.print(); }, 800);
+            
+            let oldIframe = document.getElementById('hidden-print-frame'); 
+            if (oldIframe) oldIframe.remove();
+            
+            let iframe = document.createElement('iframe'); 
+            iframe.id = 'hidden-print-frame'; 
+            iframe.style.position = 'fixed'; iframe.style.right = '0'; iframe.style.bottom = '0'; iframe.style.width = '0'; iframe.style.height = '0'; iframe.style.border = '0'; 
+            document.body.appendChild(iframe);
+
+            iframe.contentWindow.document.open();
+            iframe.contentWindow.document.write(printContent);
+            iframe.contentWindow.document.close();
+            
+            iframe.onload = function() {
+                setTimeout(() => { 
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print(); 
+                    setTimeout(() => { iframe.remove(); }, 10000); 
+                }, 800);
+            };
+            
         }, 500);
     }
 
@@ -616,7 +1034,7 @@ class SettingsPageComponent {
             let roleInfo = this.roleConfig[user.role] || { label: 'พนักงานทั่วไป', icon: 'fa-user', color: 'secondary' };
             let roleBadge = `<span class="badge badge-soft-${roleInfo.color} px-3 py-2 rounded-pill shadow-sm"><i class="fa-solid ${roleInfo.icon} me-1"></i> ${roleInfo.label}</span>`;
             let statusBadge = user.status === 'active' ? '<span class="badge badge-soft-success px-2 py-1 shadow-sm"><i class="fa-solid fa-check-circle me-1"></i> ปกติ</span>' : '<span class="badge badge-soft-danger px-2 py-1 shadow-sm"><i class="fa-solid fa-lock me-1"></i> ระงับ</span>';
-            let safeName = this.#escapeHTML(user.name || 'U');
+            let safeName = this._escapeHTML(user.name || 'U');
             let imgSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(safeName)}&background=f8fafc&color=334155&bold=true`;
             
             html += `
@@ -629,22 +1047,84 @@ class SettingsPageComponent {
                         </div>
                         <div>
                             <div class="fw-bold text-dark" style="font-size: 15px;">${safeName}</div>
-                            <div class="small text-muted" style="font-size: 12px;">ID: ${this.#escapeHTML(user.id)}</div>
+                            <div class="small text-muted" style="font-size: 12px;">ID: ${this._escapeHTML(user.id)}</div>
                         </div>
                     </div>
                 </td>
-                <td class="fw-bold text-primary" style="font-size: 14.5px;">${this.#escapeHTML(user.username)}</td>
+                <td class="fw-bold text-primary" style="font-size: 14.5px;">${this._escapeHTML(user.username)}</td>
                 <td class="text-center">${roleBadge}</td>
                 <td class="text-center">${statusBadge}</td>
                 <td class="text-center">
                     <button class="btn btn-sm btn-light border shadow-sm me-1 fw-bold text-dark" onclick="App.pages.settings.openUserModal('${user.id}')" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-sm btn-outline-info shadow-sm me-1 fw-bold" onclick="App.pages.settings.openRolePermissionsModal('${user.role}', '${user.name}')" title="ตั้งค่าการมองเห็นเมนู"><i class="fa-solid fa-shield-halved"></i> แก้ไขสิทธิ์</button>
                     <button class="btn btn-sm btn-outline-danger shadow-sm" onclick="App.pages.settings.deleteUser('${user.id}')" title="ลบ"><i class="fa-solid fa-trash"></i></button>
                 </td>
             </tr>`;
         });
         tbody.innerHTML = html;
     }
-    
+
+    openRolePermissionsModal(roleId, userName) {
+        if (roleId === 'admin') {
+            Swal.fire('สิทธิ์สูดสุด', 'ผู้ดูแลระบบ (Admin) มีสิทธิ์เข้าถึงทุกเมนูโดยอัตโนมัติ ไม่สามารถปิดกั้นสิทธิ์ได้ครับ', 'info');
+            return;
+        }
+
+        const roleInfo = this.roleConfig[roleId];
+        const roleLabel = roleInfo ? roleInfo.label : roleId;
+        
+        const currentPermissions = (typeof App !== 'undefined' && App.rolePermissions && App.rolePermissions[roleId]) ? App.rolePermissions[roleId] : [];
+        
+        let checkboxesHtml = `<div class="row g-2 mt-2" style="max-height: 50vh; overflow-y: auto; padding: 5px;">`;
+        Object.keys(this.pageDescriptions).forEach(pageKey => {
+            const isChecked = currentPermissions.includes(pageKey) ? 'checked' : '';
+            checkboxesHtml += `
+                <div class="col-md-6">
+                    <label class="perm-check-item">
+                        <input type="checkbox" class="role-permission-checkbox" value="${pageKey}" ${isChecked}>
+                        <span>${this.pageDescriptions[pageKey]}</span>
+                    </label>
+                </div>
+            `;
+        });
+        checkboxesHtml += `</div>`;
+
+        Swal.fire({
+            title: `<h4 class="fw-bold text-primary mb-0"><i class="fa-solid fa-shield-halved me-2"></i> จัดการสิทธิ์ของตำแหน่ง <span class="text-danger">${roleLabel}</span></h4>`,
+            html: `
+                <div class="text-start mt-2" style="font-family:'Sarabun';">
+                    <p class="small text-muted mb-3">ติ๊กเลือกเมนูที่ต้องการอนุญาตให้พนักงานในตำแหน่งนี้มองเห็น (ส่งผลกับ <b>${userName}</b> และพนักงานทุกคนที่ใช้ตำแหน่งเดียวกัน)</p>
+                    ${checkboxesHtml}
+                </div>
+            `,
+            width: 700,
+            showCancelButton: true,
+            confirmButtonText: '<i class="fa-solid fa-save me-1"></i> บันทึกการเปลี่ยนแปลง',
+            cancelButtonText: 'ยกเลิก',
+            confirmButtonColor: '#3b82f6',
+            preConfirm: () => {
+                const checkboxes = document.querySelectorAll('.role-permission-checkbox:checked');
+                const selectedPages = Array.from(checkboxes).map(cb => cb.value);
+                
+                if (selectedPages.length === 0) {
+                    Swal.showValidationMessage('ต้องอนุญาตให้เข้าถึงอย่างน้อย 1 เมนูครับ (แนะนำให้เหลือ แดชบอร์ด ไว้)');
+                    return false;
+                }
+                return selectedPages;
+            }
+        }).then(res => {
+            if (res.isConfirmed) {
+                Swal.fire({ title: 'กำลังบันทึกและซิงค์สิทธิ์ไปยังเครื่องอื่นๆ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                
+                db.ref(`clinic_roles_v2/${roleId}`).set(res.value).then(() => {
+                    Swal.fire({ title: 'สำเร็จ!', text: 'อัปเดตสิทธิ์การมองเห็นเมนูเรียบร้อยแล้ว', icon: 'success', timer: 1500, showConfirmButton: false });
+                }).catch(err => {
+                    Swal.fire('ข้อผิดพลาด', err.message, 'error');
+                });
+            }
+        });
+    }
+
     openUserModal(userId = null) {
         let isEdit = !!userId; 
         let user = isEdit ? this.state.allUsers.find(u => u.id === userId) : { status: 'active', role: 'nurse' };
@@ -658,11 +1138,11 @@ class SettingsPageComponent {
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="fw-bold text-secondary small">ชื่อ - นามสกุล <span class="text-danger">*</span></label>
-                            <input type="text" id="swal-user-name" class="form-control input-modern" value="${this.#escapeHTML(user.name || '')}">
+                            <input type="text" id="swal-user-name" class="form-control input-modern" value="${this._escapeHTML(user.name || '')}">
                         </div>
                         <div class="col-6">
                             <label class="fw-bold text-secondary small">Username (ไอดีล็อคอิน) <span class="text-danger">*</span></label>
-                            <input type="text" id="swal-user-username" class="form-control input-modern text-primary" value="${this.#escapeHTML(user.username || '')}" ${isEdit?'readonly':''}>
+                            <input type="text" id="swal-user-username" class="form-control input-modern text-primary" value="${this._escapeHTML(user.username || '')}" ${isEdit?'readonly':''}>
                         </div>
                         <div class="col-6">
                             <label class="fw-bold text-secondary small">รหัสผ่าน ${isEdit?'':'<span class="text-danger">*</span>'}</label>
@@ -735,13 +1215,14 @@ class SettingsPageComponent {
 
         let html = '';
         this.state.labSets.forEach(s => {
-            let tags = s.items.map(i => `<span class="badge bg-light text-dark border px-2 py-1 me-1 mb-1 shadow-sm"><i class="fa-solid fa-droplet text-danger me-1"></i>${this.#escapeHTML(i)}</span>`).join('');
-            let priceLabel = s.price ? `<span class="price-badge"><i class="fa-solid fa-tag"></i> ฿${Number(s.price).toLocaleString()}</span>` : '';
+            let tags = s.items.map(i => `<span class="badge bg-light text-dark border px-2 py-1 me-1 mb-1 shadow-sm"><i class="fa-solid fa-droplet text-danger me-1"></i>${this._escapeHTML(i)}</span>`).join('');
+            
+            let priceLabel = s.price ? `<span class="badge bg-white text-danger border ms-2 px-2 py-1 shadow-sm fs-6"><i class="fa-solid fa-tag"></i> ฿${Number(s.price).toLocaleString()}</span>` : '';
             
             html += `
             <div class="col-md-6 col-lg-4">
                 <div class="modern-panel card-hover-float p-3 h-100 d-flex flex-column position-relative" style="border-left: 4px solid var(--danger);">
-                    <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-folder-open text-danger me-2"></i> ${this.#escapeHTML(s.name)} ${priceLabel}</h6>
+                    <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-folder-open text-danger me-2"></i> ${this._escapeHTML(s.name)} ${priceLabel}</h6>
                     <div class="mb-3">${tags}</div>
                     <div class="mt-auto text-end border-top pt-3">
                         <button class="btn btn-sm btn-light border shadow-sm fw-bold px-3 text-dark me-1" onclick="App.pages.settings.openLabSetModal('${s.id}')">แก้ไข</button>
@@ -762,7 +1243,7 @@ class SettingsPageComponent {
             html: `
                 <div class="text-start mt-3" style="font-family:'Sarabun';">
                     <label class="fw-bold text-secondary small">ชื่อชุดการตรวจ (Set Name)</label>
-                    <input type="text" id="swal-lab-name" class="form-control input-modern mb-3" value="${this.#escapeHTML(set.name || '')}" placeholder="เช่น เจาะเลือดประจำเดือน">
+                    <input type="text" id="swal-lab-name" class="form-control input-modern mb-3" value="${this._escapeHTML(set.name || '')}" placeholder="เช่น เจาะเลือดประจำเดือน">
                     <label class="fw-bold text-secondary small">ราคาเหมาจ่ายชุดนี้ (บาท)</label>
                     <input type="number" id="swal-lab-price" class="form-control input-modern mb-3 text-danger fw-bold" value="${set.price || 0}" min="0">
                     <label class="fw-bold text-secondary small">รายการผลแล็บ (ใช้ลูกน้ำ , คั่นแต่ละรายการ)</label>
@@ -799,7 +1280,7 @@ class SettingsPageComponent {
             html += `
                 <span class="badge bg-light text-dark border border-secondary-subtle px-3 py-2 fs-6 shadow-sm card-hover-float" style="border-radius:12px; font-weight: 600;">
                     <i class="fa-solid fa-pills text-primary me-1"></i> 
-                    <span onclick="App.pages.settings.openMedListModal('${m.id}')" style="cursor:pointer;">${this.#escapeHTML(m.name)}</span> 
+                    <span onclick="App.pages.settings.openMedListModal('${m.id}')" style="cursor:pointer;">${this._escapeHTML(m.name)}</span> 
                     ${priceHtml}
                     <i class="fa-solid fa-times ms-3 text-danger" style="cursor:pointer;" onclick="App.pages.settings.deleteMedItem('${m.id}')" title="ลบรายการ"></i>
                 </span>
@@ -816,7 +1297,7 @@ class SettingsPageComponent {
             html: `
                 <div class="text-start mt-3" style="font-family:'Sarabun';">
                     <label class="form-label fw-bold small text-secondary">ชื่อยา / เวชภัณฑ์</label>
-                    <input type="text" id="swal-med-name" class="form-control input-modern mb-3 fw-bold text-dark" value="${this.#escapeHTML(m.name)}" placeholder="เช่น Heparin 5000U">
+                    <input type="text" id="swal-med-name" class="form-control input-modern mb-3 fw-bold text-dark" value="${this._escapeHTML(m.name)}" placeholder="เช่น Heparin 5000U">
                     <label class="form-label fw-bold small text-secondary">ราคาขายต่อหน่วย (บาท)</label>
                     <input type="number" id="swal-med-price" class="form-control input-modern fw-bold text-primary text-center" value="${m.price}" placeholder="0" min="0">
                 </div>
@@ -849,7 +1330,7 @@ class SettingsPageComponent {
             html += `
                 <span class="badge bg-light text-dark border border-secondary-subtle px-3 py-2 fs-6 shadow-sm card-hover-float" style="border-radius:12px; font-weight: 600;">
                     <i class="fa-solid fa-x-ray text-info me-1"></i> 
-                    <span onclick="App.pages.settings.openXrayModal('${x.id}')" style="cursor:pointer;">${this.#escapeHTML(x.name)}</span> 
+                    <span onclick="App.pages.settings.openXrayModal('${x.id}')" style="cursor:pointer;">${this._escapeHTML(x.name)}</span> 
                     ${priceHtml}
                     <i class="fa-solid fa-times ms-3 text-danger" style="cursor:pointer;" onclick="App.pages.settings.deleteXrayItem('${x.id}')" title="ลบรายการ"></i>
                 </span>
@@ -866,7 +1347,7 @@ class SettingsPageComponent {
             html: `
                 <div class="text-start mt-3" style="font-family:'Sarabun';">
                     <label class="form-label fw-bold small text-secondary">ชื่อการตรวจ (X-Ray Name)</label>
-                    <input type="text" id="swal-xray-name" class="form-control input-modern mb-3 fw-bold text-dark" value="${this.#escapeHTML(x.name)}" placeholder="เช่น Chest X-Ray (CXR)">
+                    <input type="text" id="swal-xray-name" class="form-control input-modern mb-3 fw-bold text-dark" value="${this._escapeHTML(x.name)}" placeholder="เช่น Chest X-Ray (CXR)">
                     <label class="form-label fw-bold small text-secondary">ราคาขายต่อรอบ (บาท)</label>
                     <input type="number" id="swal-xray-price" class="form-control input-modern fw-bold text-info text-center" value="${x.price}" placeholder="0" min="0">
                 </div>
@@ -946,10 +1427,10 @@ class SettingsPageComponent {
             <div class="col-md-6 col-lg-4">
                 <div class="modern-panel card-hover-float p-3 h-100 d-flex flex-column position-relative" style="border-top: 4px solid ${borderColor}; border-radius: 14px;">
                     <div class="d-flex justify-content-between align-items-start mb-3">
-                        <h6 class="fw-bold text-dark mb-0" style="padding-right: 60px; line-height: 1.4;">${iconHtml} ${this.#escapeHTML(t.title)}</h6>
+                        <h6 class="fw-bold text-dark mb-0" style="padding-right: 60px; line-height: 1.4;">${iconHtml} ${this._escapeHTML(t.title)}</h6>
                         <div style="position: absolute; right: 15px; top: 15px;">${catBadge}</div>
                     </div>
-                    <p class="text-muted small mb-3 p-2 bg-light rounded" style="display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; white-space: pre-wrap; font-size: 13px;">${this.#escapeHTML(t.text)}</p>
+                    <p class="text-muted small mb-3 p-2 bg-light rounded" style="display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; white-space: pre-wrap; font-size: 13px;">${this._escapeHTML(t.text)}</p>
                     <div class="text-end mt-auto pt-2">
                         <button class="btn btn-sm btn-light border text-dark fw-bold px-3 shadow-sm me-1" onclick="App.pages.settings.openNoteTemplateModal('${t.id}')">แก้ไข</button>
                         <button class="btn btn-sm btn-outline-danger shadow-sm px-3" onclick="App.pages.settings.deleteNoteTemplate('${t.id}')"><i class="fa-solid fa-trash"></i></button>
@@ -977,9 +1458,9 @@ class SettingsPageComponent {
                         <option value="general" ${t.category==='general'?'selected':''}>⚪ ทั่วไป (General)</option>
                     </select>
                     <label class="fw-bold text-secondary small">ชื่อหัวข้อเทมเพลต (สั้นๆ ให้จำง่าย)</label>
-                    <input type="text" id="swal-note-title" class="form-control input-modern mb-3" value="${this.#escapeHTML(t.title || '')}" placeholder="เช่น ความดันตกให้ NSS">
+                    <input type="text" id="swal-note-title" class="form-control input-modern mb-3" value="${this._escapeHTML(t.title || '')}" placeholder="เช่น ความดันตกให้ NSS">
                     <label class="fw-bold text-secondary small">ข้อความเนื้อหาที่จะบันทึกลงระบบ</label>
-                    <textarea id="swal-note-text" class="form-control input-modern p-3" rows="5" placeholder="พิมพ์ข้อความมาตรฐานที่นี่...">${this.#escapeHTML(t.text || '')}</textarea>
+                    <textarea id="swal-note-text" class="form-control input-modern p-3" rows="5" placeholder="พิมพ์ข้อความมาตรฐานที่นี่...">${this._escapeHTML(t.text || '')}</textarea>
                 </div>
             `,
             showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-save me-1"></i> บันทึก', confirmButtonColor: '#10b981', cancelButtonText: 'ยกเลิก', width: 600,
@@ -1006,7 +1487,7 @@ class SettingsPageComponent {
     }
 
     // 🛡️ Helper
-    #escapeHTML(str) {
+    _escapeHTML(str) {
         if (!str && str !== 0) return '';
         return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
     }

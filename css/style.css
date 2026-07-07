@@ -635,3 +635,33 @@ table.dataTable.dtr-inline.collapsed>tbody>tr>th.dtr-control:before {
 .sync-dot.active { background-color: #10b981; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2); animation: pulse-sync 2s infinite; }
 .sync-dot.offline { background-color: #ef4444; }
 @keyframes pulse-sync { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+
+/* ==========================================================================
+   🚨 28. THEME ENGINE ADAPTER (Dark Mode Hardcode Override)
+   ========================================================================== */
+/* แก้ไขจุดที่ถูก Hardcode สีตัวอักษรไว้ใน CSS ให้สว่างขึ้นเมื่อเปิดโหมดมืด */
+body.theme-dark,
+body.theme-dark .text-dark,
+body.theme-dark h1, body.theme-dark h2, body.theme-dark h3, body.theme-dark h4, body.theme-dark h5, body.theme-dark h6, 
+body.theme-dark p:not(.badge), body.theme-dark span:not(.badge), body.theme-dark label,
+body.theme-dark .brand-text h3, body.theme-dark .company-name-text,
+body.theme-dark table.dataTable, body.theme-dark .table, body.theme-dark .table-premium,
+body.theme-dark table.dataTable *, body.theme-dark .table *, body.theme-dark .table-premium *,
+body.theme-dark .swal2-title, body.theme-dark .swal2-html-container, body.theme-dark .form-label,
+body.theme-dark .nav-item, body.theme-dark .selected-name, body.theme-dark .custom-option-item,
+body.theme-dark #vd-main-screen .form-label, body.theme-dark #vd-main-screen .text-secondary, body.theme-dark #vd-main-screen .text-muted,
+body.theme-dark #vd-main-screen .form-control, body.theme-dark #vd-main-screen .form-select, body.theme-dark #vd-main-screen .input-modern {
+    color: #f8fafc !important;
+}
+
+body.theme-dark .text-muted, body.theme-dark .text-secondary, body.theme-dark .selected-role, body.theme-dark .nav-section {
+    color: #94a3b8 !important;
+}
+
+body.theme-dark .badge, body.theme-dark .badge * {
+    color: inherit !important; /* ปล่อยสีป้ายสถานะตามเดิม */
+}
+
+body.theme-dark .nav-item.active, body.theme-dark .nav-item.active * {
+    color: #ffffff !important;
+}

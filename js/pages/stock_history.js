@@ -1,5 +1,5 @@
 // js/pages/stock_history.js
-// 🚀 Enterprise Stock History Module: Pagination, FinOps Queries & Leak-Free Audit Logs
+// 🚀 Enterprise Stock History Module: Pagination, FinOps Queries & Theme Native Ready
 
 class StockHistoryPageComponent {
     constructor() {
@@ -10,7 +10,7 @@ class StockHistoryPageComponent {
             currentPage: 1,
             itemsPerPage: 30,
             currentLimit: 500,
-            selectedDate: '', // เก็บค่าวันที่ต้องการค้นหา (ว่าง = ดูทั้งหมด)
+            selectedDate: '', 
             hasCleanedUp: false
         };
         this.firebaseListeners = [];
@@ -19,10 +19,9 @@ class StockHistoryPageComponent {
     get html() {
         return `
             <style>
-                .table-premium th { background: #f8fafc; color: #475569; font-weight: 700; text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px; padding: 16px; border-bottom: 2px solid #e2e8f0; }
-                .table-premium td { padding: 16px; vertical-align: middle; border-bottom: 1px solid #f1f5f9; transition: background 0.2s; }
-                .table-premium tr:hover td { background: #f8fafc; }
-                .date-filter-wrapper { position: relative; display: flex; align-items: center; background: #fff; border-radius: 50px; padding: 6px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #cbd5e1; cursor: pointer; transition: all 0.2s; }
+                .table-premium th { color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px; padding: 16px; border-bottom: 2px solid var(--border-color); }
+                .table-premium td { padding: 16px; vertical-align: middle; border-bottom: 1px solid var(--border-color); transition: background 0.2s; }
+                .date-filter-wrapper { position: relative; display: flex; align-items: center; background-color: var(--bg-surface); border-radius: 50px; padding: 6px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s; }
                 .date-filter-wrapper:hover { border-color: var(--primary); box-shadow: 0 4px 6px -1px rgba(37,99,235,0.1); }
                 .date-filter-input { position: absolute; opacity: 0; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer; z-index: 10; }
                 .date-clear-btn { position: relative; z-index: 20; border: none; background: transparent; color: #ef4444; margin-left: 10px; cursor: pointer; display: none; }
@@ -34,21 +33,21 @@ class StockHistoryPageComponent {
                     <p class="text-muted mt-1 mb-0">ตรวจสอบความเคลื่อนไหว (Log) ของคลังพัสดุ ดึงข้อมูลรหัสสินค้า และบาร์โค้ดมาแสดงผลย้อนหลัง</p>
                 </div>
                 <div class="d-flex gap-2 mt-3 mt-md-0 flex-wrap">
-                    <button class="btn btn-premium btn-premium-danger px-4" onclick="App.pages.stock_history.deleteAllHistory()">
+                    <button class="btn btn-premium-danger px-4 shadow-sm rounded-pill fw-bold" onclick="App.pages.stock_history.deleteAllHistory()">
                         <i class="fa-solid fa-dumpster-fire me-1"></i> ล้างประวัติทั้งหมด
                     </button>
-                    <button class="btn btn-light fw-bold shadow-sm rounded-pill px-4 border text-secondary card-hover-float" onclick="App.switchPage('inventory', document.querySelector('.nav-item:nth-child(8)'))">
+                    <button class="btn btn-outline-secondary fw-bold shadow-sm rounded-pill px-4" onclick="App.switchPage('inventory')">
                         <i class="fa-solid fa-arrow-left me-2 text-primary"></i> กลับไปหน้าคลังหลัก
                     </button>
                 </div>
             </div>
 
-            <div class="modern-panel shadow-sm p-4 position-relative overflow-hidden" style="border-top: 5px solid var(--primary); border-radius: 20px;">
-                <div style="position: absolute; top: -30px; right: -30px; opacity: 0.02; font-size: 250px; pointer-events: none;"><i class="fa-solid fa-list-check"></i></div>
+            <div class="modern-panel shadow-sm p-4 position-relative overflow-hidden" style="border-top: 5px solid var(--primary); border-radius: 20px; background-color: var(--bg-surface); border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+                <div style="position: absolute; top: -30px; right: -30px; opacity: 0.02; font-size: 250px; pointer-events: none; color: var(--text-dark);"><i class="fa-solid fa-list-check"></i></div>
                 
                 <div class="row align-items-center mb-4 g-3 position-relative z-1">
                     <div class="col-md-3">
-                        <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-timeline text-primary me-2"></i> รายการเคลื่อนไหว</h5>
+                        <h5 class="fw-bold mb-0" style="color: var(--text-dark);"><i class="fa-solid fa-timeline text-primary me-2"></i> รายการเคลื่อนไหว</h5>
                         <div class="small text-muted mt-1 fw-bold" id="sh-record-count">กำลังโหลดข้อมูล...</div>
                     </div>
                     
@@ -56,27 +55,27 @@ class StockHistoryPageComponent {
                         <div class="date-filter-wrapper">
                             <input type="date" id="sh-date-filter" class="date-filter-input" onchange="App.pages.stock_history.onDateFilterChange(this.value)" onfocus="this.showPicker && this.showPicker()">
                             <i class="fa-solid fa-calendar-day text-primary me-2 position-relative" style="z-index: 1;"></i>
-                            <span id="sh-date-display" class="fw-bold text-dark position-relative" style="font-family:'Prompt'; z-index: 1; font-size: 14px;">ค้นหาตามวันที่...</span>
+                            <span id="sh-date-display" class="fw-bold position-relative" style="font-family:'Prompt'; z-index: 1; font-size: 14px; color: var(--text-dark);">ค้นหาตามวันที่...</span>
                             <button id="sh-date-clear" class="date-clear-btn" onclick="App.pages.stock_history.clearDateFilter()"><i class="fa-solid fa-circle-xmark"></i></button>
                         </div>
 
-                        <div class="search-box-modern shadow-sm" style="width: 180px;">
+                        <div class="search-box-modern shadow-sm" style="width: 180px; background-color: var(--bg-body); border: 1px solid var(--border-color); padding: 6px 15px; border-radius: 50px;">
                             <i class="fa-solid fa-list-ol text-muted me-2"></i>
-                            <select id="sh-limit-select" class="form-select fw-bold text-dark border-0 bg-transparent p-0 m-0 w-100" onchange="App.pages.stock_history.changeLimit(this.value)" style="outline:none; box-shadow:none;">
+                            <select id="sh-limit-select" class="form-select fw-bold border-0 bg-transparent p-0 m-0 w-100 d-inline-block" onchange="App.pages.stock_history.changeLimit(this.value)" style="outline:none; box-shadow:none; color: var(--text-dark);">
                                 <option value="100">100 ล่าสุด</option><option value="500" selected>500 ล่าสุด</option><option value="1000">1,000 ล่าสุด</option><option value="999999">ทั้งหมด</option>
                             </select>
                         </div>
 
-                        <div class="search-box-modern shadow-sm bg-white" style="width: 250px;">
+                        <div class="search-box-modern shadow-sm" style="width: 250px; background-color: var(--bg-body); border: 1px solid var(--border-color); padding: 8px 15px; border-radius: 50px; display: flex; align-items: center;">
                             <i class="fa-solid fa-search text-primary"></i>
-                            <input type="text" id="sh-search" class="border-0 bg-transparent ms-2 w-100 fw-bold text-dark" placeholder="ค้นหาชื่อ, รหัส, บาร์โค้ด..." onkeyup="App.pages.stock_history.filterData()" style="outline:none;">
+                            <input type="text" id="sh-search" class="border-0 bg-transparent ms-2 w-100 fw-bold" placeholder="ค้นหาชื่อ, รหัส, บาร์โค้ด..." onkeyup="App.pages.stock_history.filterData()" style="outline:none; color: var(--text-dark);">
                         </div>
                     </div>
                 </div>
                 
-                <div class="table-responsive bg-white rounded-3 border border-light position-relative z-1" style="min-height: 400px;">
+                <div class="table-responsive rounded-3 border position-relative z-1 shadow-sm" style="min-height: 400px; border-color: var(--border-color) !important; background-color: var(--bg-surface);">
                     <table class="table table-premium w-100 mb-0">
-                        <thead>
+                        <thead style="background-color: var(--bg-body);">
                             <tr>
                                 <th class="text-center text-primary" style="width: 90px;"><i class="fa-solid fa-sort me-1"></i> ลำดับ</th>
                                 <th style="width: 160px;"><i class="fa-regular fa-calendar-days me-2"></i> วันที่-เวลา</th>
@@ -90,17 +89,17 @@ class StockHistoryPageComponent {
                     </table>
                 </div>
 
-                <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top flex-wrap gap-3 position-relative z-1">
+                <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top flex-wrap gap-3 position-relative z-1" style="border-color: var(--border-color) !important;">
                     <div class="text-muted small fw-bold d-flex align-items-center">
                         แสดงหน้าละ 
-                        <select class="form-select input-modern form-select-sm mx-2 fw-bold text-primary shadow-sm p-1 px-3 border-0 bg-light" style="width: 80px;" onchange="App.pages.stock_history.changeItemsPerPage(this.value)">
+                        <select class="form-select input-modern form-select-sm mx-2 fw-bold text-primary shadow-sm p-1 px-3" style="width: 80px; border-color: var(--border-color) !important;" onchange="App.pages.stock_history.changeItemsPerPage(this.value)">
                             <option value="20">20</option><option value="30" selected>30</option><option value="50">50</option><option value="100">100</option>
                         </select> รายการ
                     </div>
                     <div class="d-flex align-items-center gap-2">
-                        <button id="sh-btn-prev" class="btn btn-outline-primary fw-bold px-4 rounded-pill shadow-sm bg-white" onclick="App.pages.stock_history.changePage(-1)"><i class="fa-solid fa-chevron-left me-1"></i> ก่อนหน้า</button>
-                        <div class="badge badge-soft-primary px-4 py-2 fs-6 shadow-sm rounded-pill" id="sh-page-info">หน้า 1 / 1</div>
-                        <button id="sh-btn-next" class="btn btn-outline-primary fw-bold px-4 rounded-pill shadow-sm bg-white" onclick="App.pages.stock_history.changePage(1)">ถัดไป <i class="fa-solid fa-chevron-right ms-1"></i></button>
+                        <button id="sh-btn-prev" class="btn btn-outline-primary fw-bold px-4 rounded-pill shadow-sm" style="background-color: var(--bg-surface);" onclick="App.pages.stock_history.changePage(-1)"><i class="fa-solid fa-chevron-left me-1"></i> ก่อนหน้า</button>
+                        <div class="badge border border-primary text-primary px-4 py-2 fs-6 shadow-sm rounded-pill" style="background-color: var(--bg-body);" id="sh-page-info">หน้า 1 / 1</div>
+                        <button id="sh-btn-next" class="btn btn-outline-primary fw-bold px-4 rounded-pill shadow-sm" style="background-color: var(--bg-surface);" onclick="App.pages.stock_history.changePage(1)">ถัดไป <i class="fa-solid fa-chevron-right ms-1"></i></button>
                     </div>
                 </div>
             </div>
@@ -114,9 +113,7 @@ class StockHistoryPageComponent {
             return;
         }
         
-        // ❌ เอา Auto Purge ออก ให้ระบบกลางจัดการ
-        
-        this.state.selectedDate = ''; // รีเซ็ตการค้นหาวันที่ทุกครั้งที่เข้ามา
+        this.state.selectedDate = ''; 
         this.updateDateDisplay('');
 
         this.#loadData();
@@ -135,7 +132,6 @@ class StockHistoryPageComponent {
     #loadData() {
         document.getElementById('sh-table-body').innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fas fa-spinner fa-spin fa-2x mb-3 text-primary"></i><br>กำลังโหลดข้อมูล...</td></tr>`;
         
-        // โหลดข้อมูล Inventory Items ก่อน เพื่อเอามา Map ค่าย้อนหลัง (กรณี Log เก่าไม่มี Item Code)
         db.ref('inventory_database_v2/items').once('value').then(itemSnap => {
             const itemData = itemSnap.val();
             let rawItems = itemData ? (Array.isArray(itemData) ? itemData : Object.keys(itemData).map(k => itemData[k])) : [];
@@ -216,7 +212,6 @@ class StockHistoryPageComponent {
         }
     }
 
-    // 🚨 ฟิลเตอร์ข้อมูลแบบ Multi-Condition (รองรับรหัสสินค้าและบาร์โค้ด)
     filterData() {
         const searchInput = document.getElementById('sh-search');
         const term = (searchInput ? searchInput.value : "").toLowerCase();
@@ -226,7 +221,6 @@ class StockHistoryPageComponent {
             let matchDate = true;
 
             if(term) {
-                // ค้นหาจากชื่อ, หมายเหตุ, รหัสสินค้า, หรือ บาร์โค้ด
                 matchText = (log.itemName || "").toLowerCase().includes(term) || 
                             (log.note || "").toLowerCase().includes(term) || 
                             (log.itemCode || "").toLowerCase().includes(term) || 
@@ -270,7 +264,7 @@ class StockHistoryPageComponent {
 
         const totalItems = this.state.filteredLogs.length;
         const countEl = document.getElementById('sh-record-count');
-        if(countEl) countEl.innerHTML = `พบข้อมูล <b>${totalItems}</b> รายการ (จากทั้งหมด ${this.state.allLogs.length} รายการที่โหลดมา)`;
+        if(countEl) countEl.innerHTML = `พบข้อมูล <b style="color: var(--text-dark);">${totalItems}</b> รายการ (จากทั้งหมด ${this.state.allLogs.length} รายการที่โหลดมา)`;
 
         if (totalItems === 0) {
             tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fa-solid fa-clock-rotate-left fa-3x mb-3" style="opacity:0.2;"></i><br>ไม่พบประวัติการทำรายการ</td></tr>`;
@@ -304,7 +298,6 @@ class StockHistoryPageComponent {
             const dateStr = d.toLocaleDateString('th-TH', { day:'2-digit', month:'short', year:'2-digit' });
             const timeStr = d.toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit' });
 
-            // 🚨 แมปข้อมูลจากฐานหลัก (กรณี Log เก่าไม่มี Item Code)
             const matchedItem = this.state.inventoryItems.find(i => i.id === log.itemId);
             let itemOrderVal = (matchedItem && matchedItem.order !== undefined && matchedItem.order !== null && matchedItem.order !== "" && matchedItem.order !== 999) ? matchedItem.order : '-';
             let finalItemCode = log.itemCode || (matchedItem ? matchedItem.item_code : '-');
@@ -314,53 +307,54 @@ class StockHistoryPageComponent {
             let detailHtml = ''; 
 
             if(log.mode === 'in_main') {
-                modeHtml = `<span class="badge badge-soft-success px-3 py-1 shadow-sm rounded-pill"><i class="fa-solid fa-arrow-down me-1"></i> รับของเข้า (ใหญ่)</span>`;
+                modeHtml = `<span class="badge border border-success text-success px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-arrow-down me-1"></i> รับของเข้า (ใหญ่)</span>`;
                 detailHtml = `บวกเพิ่ม <b>${log.qty}</b> เข้าสต๊อกใหญ่`;
             }
             else if(log.mode === 'transfer') {
-                modeHtml = `<span class="badge badge-soft-primary px-3 py-1 shadow-sm rounded-pill"><i class="fa-solid fa-truck-ramp-box me-1"></i> โอนย้าย (ใหญ่ ➡️ เล็ก)</span>`;
+                modeHtml = `<span class="badge border border-primary text-primary px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-truck-ramp-box me-1"></i> โอนย้าย (ใหญ่ ➡️ เล็ก)</span>`;
                 detailHtml = `หัก <b>${log.qty}</b> จากสต๊อกใหญ่ ไปเพิ่มในสต๊อกเล็ก`;
             }
             else if(log.mode === 'out_sub') {
-                modeHtml = `<span class="badge badge-soft-danger px-3 py-1 shadow-sm rounded-pill"><i class="fa-solid fa-arrow-up-right-from-square me-1"></i> เบิกใช้งานจริง (เล็ก)</span>`;
+                modeHtml = `<span class="badge border border-danger text-danger px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-arrow-up-right-from-square me-1"></i> เบิกใช้งานจริง (เล็ก)</span>`;
                 detailHtml = `เบิกตัดยอด <b>${log.qty}</b> จากสต๊อกหน้าเคาน์เตอร์ <br><small class="text-muted"><i class="fa-solid fa-tag"></i> ${this.#escapeHTML(log.note || 'ไม่มีหมายเหตุ')}</small>`;
             }
             else if(log.mode === 'audit_main') {
-                modeHtml = `<span class="badge badge-soft-warning px-3 py-1 shadow-sm rounded-pill"><i class="fa-solid fa-clipboard-check me-1"></i> ปรับยอดจริง (ใหญ่)</span>`;
-                detailHtml = `ระบบถูกบังคับอัปเดตยอดคงเหลือ <b class="text-dark">สต๊อกใหญ่</b> เป็น <b class="text-warning-dark">${log.qty}</b>`;
+                modeHtml = `<span class="badge border border-warning text-warning px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-clipboard-check me-1"></i> ปรับยอดจริง (ใหญ่)</span>`;
+                detailHtml = `ระบบถูกบังคับอัปเดตยอดคงเหลือ <b>สต๊อกใหญ่</b> เป็น <b class="text-warning">${log.qty}</b>`;
             }
             else if(log.mode === 'audit_sub') {
-                modeHtml = `<span class="badge badge-soft-warning px-3 py-1 shadow-sm rounded-pill"><i class="fa-solid fa-clipboard-check me-1"></i> ปรับยอดจริง (เล็ก)</span>`;
-                detailHtml = `ระบบถูกบังคับอัปเดตยอดคงเหลือ <b class="text-dark">สต๊อกหน้าเคาน์เตอร์</b> เป็น <b class="text-warning-dark">${log.qty}</b>`;
+                modeHtml = `<span class="badge border border-warning text-warning px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-clipboard-check me-1"></i> ปรับยอดจริง (เล็ก)</span>`;
+                detailHtml = `ระบบถูกบังคับอัปเดตยอดคงเหลือ <b>สต๊อกหน้าเคาน์เตอร์</b> เป็น <b class="text-warning">${log.qty}</b>`;
             }
             else if(log.mode === 'new_register') {
-                modeHtml = `<span class="badge badge-soft-info px-3 py-1 shadow-sm rounded-pill"><i class="fa-solid fa-plus me-1"></i> ลงทะเบียนพัสดุใหม่</span>`;
+                modeHtml = `<span class="badge border border-info text-info px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-plus me-1"></i> ลงทะเบียนพัสดุใหม่</span>`;
                 detailHtml = `สร้างพัสดุชิ้นนี้ขึ้นมาครั้งแรก โดยมียอดยกมาเริ่มต้น <b class="text-info">${log.qty}</b>`;
             }
             else if(log.mode === 'in_sub_restore') {
-                modeHtml = `<span class="badge badge-soft-success px-3 py-1 shadow-sm rounded-pill"><i class="fa-solid fa-rotate-left me-1"></i> ดึงของคืน (เล็ก)</span>`;
+                modeHtml = `<span class="badge border border-success text-success px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-rotate-left me-1"></i> ดึงของคืน (เล็ก)</span>`;
                 detailHtml = `ดึงของคืนกลับเข้าสต๊อกเคาน์เตอร์ <b>${log.qty}</b> หน่วย <br><small class="text-muted"><i class="fa-solid fa-tag"></i> ${this.#escapeHTML(log.note || 'การยกเลิก Flowsheet')}</small>`;
             }
 
             const safeItemName = this.#escapeHTML(log.itemName || 'ไม่ทราบชื่อ');
 
+            // 🚨 THE FIX 2: ปลดคลาสสีสว่างทิ้งทั้งหมด ใช้ Theme Variables
             html += `
             <tr class="align-middle card-hover-float" style="cursor:default;">
-                <td class="text-center fw-bold text-dark" style="font-size: 15px;">${itemOrderVal}</td>
+                <td class="text-center fw-bold" style="font-size: 15px; color: var(--text-dark);">${itemOrderVal}</td>
                 <td>
-                    <span class="badge bg-light border text-dark shadow-sm px-2 py-1"><i class="fa-regular fa-calendar me-1 text-primary"></i> ${dateStr}</span><br>
+                    <span class="badge border shadow-sm px-2 py-1" style="background-color: var(--bg-body); border-color: var(--border-color) !important; color: var(--text-dark);"><i class="fa-regular fa-calendar me-1 text-primary"></i> ${dateStr}</span><br>
                     <span class="small fw-bold text-muted mt-1 d-inline-block"><i class="fa-regular fa-clock me-1"></i> ${timeStr} น.</span>
                 </td>
                 <td>${modeHtml}</td>
                 <td>
-                    <div class="fw-bold text-dark" style="font-family:'Prompt'; font-size:14.5px;">${safeItemName}</div>
+                    <div class="fw-bold" style="font-family:'Prompt'; font-size:14.5px; color: var(--text-dark);">${safeItemName}</div>
                     <div class="mt-1 d-flex gap-2 flex-wrap">
-                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-family: monospace; font-size:11px;">รหัส: ${this.#escapeHTML(finalItemCode)}</span>
-                        <span class="badge bg-light text-secondary border shadow-sm" style="font-family: monospace; font-size:11px;"><i class="fa-solid fa-barcode"></i> ${this.#escapeHTML(finalBarcode)}</span>
+                        <span class="badge border border-primary text-primary" style="font-family: monospace; font-size:11px; background-color: var(--bg-body);">รหัส: ${this.#escapeHTML(finalItemCode)}</span>
+                        <span class="badge border shadow-sm text-secondary" style="font-family: monospace; font-size:11px; background-color: var(--bg-body); border-color: var(--border-color) !important;"><i class="fa-solid fa-barcode"></i> ${this.#escapeHTML(finalBarcode)}</span>
                     </div>
                 </td>
                 <td>
-                    <div class="p-2 bg-light border rounded-3 shadow-sm text-dark" style="font-size: 13px; line-height: 1.4;">
+                    <div class="p-2 border rounded-3 shadow-sm" style="font-size: 13px; line-height: 1.4; background-color: var(--bg-body); border-color: var(--border-color) !important; color: var(--text-dark);">
                         ${detailHtml}
                     </div>
                 </td>

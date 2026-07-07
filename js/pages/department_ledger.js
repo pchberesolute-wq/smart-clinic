@@ -1,5 +1,5 @@
 // js/pages/department_ledger.js
-// 🚀 Enterprise Department Ledger Module: Encapsulated State, Auto-Purge & Statement Printing
+// 🚀 Enterprise Department Ledger Module: Encapsulated State, Auto-Purge, Statement Printing & Theme Native
 
 class DepartmentLedgerPageComponent {
     constructor() {
@@ -20,56 +20,59 @@ class DepartmentLedgerPageComponent {
     get html() {
         return `
             <style>
-                .stat-card-ledger { border-radius: 20px; padding: 20px; position: relative; overflow: hidden; background: #fff; border: 1px solid #e2e8f0; transition: all 0.3s ease; height: 100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-                .stat-card-ledger:hover { transform: translateY(-4px); box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.1); border-color: #cbd5e1; }
+                .stat-card-ledger { border-radius: 20px; padding: 20px; position: relative; overflow: hidden; background: var(--bg-surface); border: 1px solid var(--border-color); transition: all 0.3s ease; height: 100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+                .stat-card-ledger:hover { transform: translateY(-4px); box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.1); border-color: var(--primary); }
                 .stat-icon-bg { position: absolute; top: -20px; right: -20px; opacity: 0.04; font-size: 120px; pointer-events: none; z-index: 0; }
-                .table-ledger th { background: #f8fafc; color: #475569; font-weight: 700; text-transform: uppercase; font-size: 13px; padding: 16px; border-bottom: 2px solid #e2e8f0; border-top: none; white-space: nowrap; }
-                .table-ledger td { padding: 14px 16px; vertical-align: middle; border-bottom: 1px solid #f1f5f9; font-size: 14.5px; }
+                .table-ledger th { background: var(--bg-body); color: var(--text-dark); font-weight: 700; text-transform: uppercase; font-size: 13px; padding: 16px; border-bottom: 2px solid var(--border-color); border-top: none; white-space: nowrap; }
+                .table-ledger td { padding: 14px 16px; vertical-align: middle; border-bottom: 1px solid var(--border-color); font-size: 14.5px; color: var(--text-dark); background: transparent; }
                 
                 /* 🚨 ซ่อน Input Native ป้องกันสี่เหลี่ยมซ้อนทับปฏิทิน 100% 🚨 */
                 .native-date-wrapper {
-                    position: relative; display: inline-flex; align-items: center; background: #ffffff;
-                    border: 2px solid #e2e8f0; border-radius: 50px; padding: 6px 18px; cursor: pointer; overflow: hidden;
+                    position: relative; display: inline-flex; align-items: center; background: var(--bg-surface);
+                    border: 2px solid var(--border-color); border-radius: 50px; padding: 6px 18px; cursor: pointer; overflow: hidden;
                     box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.3s;
                 }
-                .native-date-wrapper:hover { border-color: #3b82f6; background: #f8fafc; }
-                .native-date-wrapper .thai-text { font-family: 'Prompt', sans-serif; font-weight: 700; color: #2563eb; font-size: 15px; pointer-events: none; }
-                .native-date-wrapper i { font-size: 16px; pointer-events: none; }
+                .native-date-wrapper:hover { border-color: var(--primary); background: var(--bg-body); }
+                .native-date-wrapper .thai-text { font-family: 'Prompt', sans-serif; font-weight: 700; color: var(--primary); font-size: 15px; pointer-events: none; }
+                .native-date-wrapper i { font-size: 16px; color: var(--primary); pointer-events: none; }
                 .native-date-wrapper input[type="date"] { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; border: none; background: transparent; color: transparent; }
                 .native-date-wrapper input[type="date"]::-webkit-datetime-edit, .native-date-wrapper input[type="date"]::-webkit-datetime-edit-text, .native-date-wrapper input[type="date"]::-webkit-datetime-edit-month-field, .native-date-wrapper input[type="date"]::-webkit-datetime-edit-day-field, .native-date-wrapper input[type="date"]::-webkit-datetime-edit-year-field { color: transparent !important; background: transparent !important; }
                 .native-date-wrapper input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; margin: 0; padding: 0; cursor: pointer; opacity: 0; }
 
-                .finance-nav-tabs { border-bottom: 2px solid #e2e8f0; gap: 5px; flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; padding-bottom: 2px; }
+                .finance-nav-tabs { border-bottom: 2px solid var(--border-color); gap: 5px; flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; padding-bottom: 2px; }
                 .finance-nav-tabs::-webkit-scrollbar { height: 4px; }
-                .finance-nav-tabs::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
-                .finance-nav-tabs .nav-link { border: none; color: var(--muted); font-weight: 600; padding: 14px 24px; border-radius: 12px 12px 0 0; transition: all 0.3s ease; background: transparent; position: relative; font-family:'Prompt'; font-size:15px; }
-                .finance-nav-tabs .nav-link:hover { color: var(--primary); background: var(--bg-main); }
-                .finance-nav-tabs .nav-link.active { background: #fff; box-shadow: 0 -4px 10px rgba(0,0,0,0.02); color: var(--primary); }
+                .finance-nav-tabs::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 10px; }
+                .finance-nav-tabs .nav-link { border: none; color: var(--text-muted); font-weight: 600; padding: 14px 24px; border-radius: 12px 12px 0 0; transition: all 0.3s ease; background: transparent; position: relative; font-family:'Prompt'; font-size:15px; }
+                .finance-nav-tabs .nav-link:hover { color: var(--primary); background: var(--bg-body); }
+                .finance-nav-tabs .nav-link.active { background: var(--bg-surface); box-shadow: 0 -4px 10px rgba(0,0,0,0.02); color: var(--primary); }
                 .finance-nav-tabs .nav-link.active::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 3px; border-radius: 3px 3px 0 0; background: var(--primary); }
+
+                /* 🚨 THE FIX: ยันต์กันไอคอนเพี้ยน (Force Font Awesome) */
+                .safe-icon { font-family: 'Font Awesome 6 Free', 'FontAwesome', sans-serif !important; font-weight: 900 !important; font-style: normal !important; }
             </style>
 
             <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
                 <div>
                     <h2 class="page-title text-primary" style="font-size: 28px;"><i class="fa-solid fa-wallet me-2"></i> บัญชีภายในหน่วยงาน</h2>
-                    <p class="text-muted mt-1 mb-0" id="dl-date-text">จัดการงบประมาณ เงินสวัสดิการ และค่าใช้จ่ายแผนก</p>
+                    <p class="text-muted mt-1 mb-0" id="dl-date-text" style="color: var(--text-muted) !important;">จัดการงบประมาณ เงินสวัสดิการ และค่าใช้จ่ายแผนก</p>
                 </div>
                 <div class="d-flex gap-2 align-items-center flex-wrap">
-                    <button class="btn btn-outline-secondary fw-bold shadow-sm rounded-pill px-3 bg-white card-hover-float" onclick="DepartmentLedgerPage.manageCategories()">
-                        <i class="fa-solid fa-tags me-1 text-secondary"></i> จัดการหมวดหมู่
+                    <button class="btn btn-outline-secondary fw-bold shadow-sm rounded-pill px-3 card-hover-float" style="background-color: var(--bg-surface);" onclick="DepartmentLedgerPage.manageCategories()">
+                        <i class="fas fa-tags me-1 text-secondary safe-icon"></i> จัดการหมวดหมู่
                     </button>
-                    <button class="btn btn-outline-info fw-bold shadow-sm rounded-pill px-3 bg-white card-hover-float" onclick="DepartmentLedgerPage.setInitialBalance()">
-                        <i class="fa-solid fa-piggy-bank me-1 text-info"></i> ตั้งยอดยกมาเริ่มต้น
+                    <button class="btn btn-outline-info fw-bold shadow-sm rounded-pill px-3 card-hover-float" style="background-color: var(--bg-surface);" onclick="DepartmentLedgerPage.setInitialBalance()">
+                        <i class="fas fa-piggy-bank me-1 text-info safe-icon"></i> ตั้งยอดยกมาเริ่มต้น
                     </button>
                     
-                    <div class="d-flex align-items-center bg-light p-1 rounded-pill shadow-sm border ms-2">
+                    <div class="d-flex align-items-center p-1 rounded-pill shadow-sm ms-2" style="background-color: var(--bg-body); border: 1px solid var(--border-color);">
                         <div class="native-date-wrapper">
-                            <i class="fa-solid fa-calendar-days text-primary me-2"></i>
+                            <i class="fas fa-calendar-days text-primary me-2 safe-icon"></i>
                             <span class="thai-text" id="dl-start-display">กำลังโหลด...</span>
                             <input type="date" id="dl-start-date" onchange="DepartmentLedgerPage.onDateChange()">
                         </div>
-                        <span class="mx-2 text-muted fw-bold small">ถึง</span>
+                        <span class="mx-2 fw-bold small" style="color: var(--text-muted);">ถึง</span>
                         <div class="native-date-wrapper">
-                            <i class="fa-solid fa-calendar-days text-primary me-2"></i>
+                            <i class="fas fa-calendar-days text-primary me-2 safe-icon"></i>
                             <span class="thai-text" id="dl-end-display">กำลังโหลด...</span>
                             <input type="date" id="dl-end-date" onchange="DepartmentLedgerPage.onDateChange()">
                         </div>
@@ -81,36 +84,36 @@ class DepartmentLedgerPageComponent {
             <div class="row g-3 mb-4">
                 <div class="col-md-6 col-xl-3">
                     <div class="stat-card-ledger" style="border-top: 4px solid #64748b;">
-                        <i class="fa-solid fa-clock-rotate-left stat-icon-bg"></i>
+                        <i class="fa-solid fa-clock-rotate-left stat-icon-bg" style="color: var(--text-muted);"></i>
                         <div class="d-flex justify-content-between mb-2 position-relative z-1">
-                            <div class="text-secondary fw-bold small text-uppercase">1. ยอดยกมา (Brought Fwd)</div>
+                            <div class="text-uppercase fw-bold small" style="color: var(--text-muted);">1. ยอดยกมา (Brought Fwd)</div>
                         </div>
-                        <div class="fs-3 fw-bold text-dark position-relative z-1">฿<span id="dl-bf-balance"><i class="fas fa-spinner fa-spin fs-5"></i></span></div>
+                        <div class="fs-3 fw-bold position-relative z-1" style="color: var(--text-dark);">฿<span id="dl-bf-balance"><i class="fas fa-spinner fa-spin fs-5"></i></span></div>
                     </div>
                 </div>
                 <div class="col-md-6 col-xl-3">
                     <div class="stat-card-ledger" style="border-top: 4px solid var(--success);">
-                        <i class="fa-solid fa-arrow-turn-down stat-icon-bg" style="transform: rotate(90deg);"></i>
+                        <i class="fa-solid fa-arrow-turn-down stat-icon-bg" style="transform: rotate(90deg); color: var(--success);"></i>
                         <div class="d-flex justify-content-between mb-2 position-relative z-1">
-                            <div class="text-success-dark fw-bold small text-uppercase">2. รับเข้า (Income)</div>
+                            <div class="fw-bold small text-uppercase" style="color: var(--success);">2. รับเข้า (Income)</div>
                             <div class="badge-soft-success rounded px-2 py-1"><i class="fa-solid fa-plus"></i></div>
                         </div>
-                        <div class="fs-3 fw-bold text-success position-relative z-1">+ ฿<span id="dl-total-in"><i class="fas fa-spinner fa-spin fs-5"></i></span></div>
+                        <div class="fs-3 fw-bold position-relative z-1" style="color: var(--success);">+ ฿<span id="dl-total-in"><i class="fas fa-spinner fa-spin fs-5"></i></span></div>
                     </div>
                 </div>
                 <div class="col-md-6 col-xl-3">
                     <div class="stat-card-ledger" style="border-top: 4px solid var(--danger);">
-                        <i class="fa-solid fa-arrow-turn-up stat-icon-bg" style="transform: rotate(90deg);"></i>
+                        <i class="fa-solid fa-arrow-turn-up stat-icon-bg" style="transform: rotate(90deg); color: var(--danger);"></i>
                         <div class="d-flex justify-content-between mb-2 position-relative z-1">
-                            <div class="text-danger-dark fw-bold small text-uppercase">3. จ่ายออก (Expense)</div>
+                            <div class="fw-bold small text-uppercase" style="color: var(--danger);">3. จ่ายออก (Expense)</div>
                             <div class="badge-soft-danger rounded px-2 py-1"><i class="fa-solid fa-minus"></i></div>
                         </div>
-                        <div class="fs-3 fw-bold text-danger position-relative z-1">- ฿<span id="dl-total-out"><i class="fas fa-spinner fa-spin fs-5"></i></span></div>
+                        <div class="fs-3 fw-bold position-relative z-1" style="color: var(--danger);">- ฿<span id="dl-total-out"><i class="fas fa-spinner fa-spin fs-5"></i></span></div>
                     </div>
                 </div>
                 <div class="col-md-6 col-xl-3">
-                    <div class="stat-card-ledger" style="border-top: 4px solid var(--primary); background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);">
-                        <i class="fa-solid fa-vault stat-icon-bg"></i>
+                    <div class="stat-card-ledger" style="border-top: 4px solid var(--primary); background: var(--primary-light);">
+                        <i class="fa-solid fa-vault stat-icon-bg" style="color: var(--primary);"></i>
                         <div class="d-flex justify-content-between mb-2 position-relative z-1">
                             <div class="text-primary fw-bold small text-uppercase">4. คงเหลือ (Carried Fwd)</div>
                             <div class="badge-soft-primary rounded px-2 py-1"><i class="fa-solid fa-equals"></i></div>
@@ -138,21 +141,21 @@ class DepartmentLedgerPageComponent {
                     <div class="modern-panel shadow-sm p-4 position-relative overflow-hidden" style="border-top: 5px solid var(--primary); border-radius: 20px;">
                         <div style="position: absolute; top: -30px; right: -30px; opacity: 0.02; font-size: 200px; pointer-events: none;"><i class="fa-solid fa-file-lines"></i></div>
                         <div class="d-flex justify-content-between align-items-center mb-4 position-relative z-1 flex-wrap gap-3">
-                            <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> ความเคลื่อนไหวทางบัญชี (Running Ledger)</h5>
+                            <h5 class="fw-bold mb-0" style="color: var(--text-dark);"><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> ความเคลื่อนไหวทางบัญชี (Running Ledger)</h5>
                             <div class="d-flex gap-2">
-                                <button class="btn btn-premium btn-premium-danger px-4 shadow-sm" onclick="DepartmentLedgerPage.openAddModal('OUT')">
-                                    <i class="fa-solid fa-minus-circle me-2"></i> บันทึกจ่ายออก
+                                <button class="btn btn-premium-danger px-4 shadow-sm" onclick="DepartmentLedgerPage.openAddModal('OUT')">
+                                    <i class="fas fa-minus-circle me-2 safe-icon"></i> บันทึกจ่ายออก
                                 </button>
-                                <button class="btn btn-premium btn-premium-success px-4 shadow-sm" onclick="DepartmentLedgerPage.openAddModal('IN')">
-                                    <i class="fa-solid fa-plus-circle me-2"></i> บันทึกรับเข้า
+                                <button class="btn btn-premium-success px-4 shadow-sm" onclick="DepartmentLedgerPage.openAddModal('IN')">
+                                    <i class="fas fa-plus-circle me-2 safe-icon"></i> บันทึกรับเข้า
                                 </button>
                                 <button class="btn btn-dark fw-bold shadow-sm rounded-pill px-4 ms-2" onclick="DepartmentLedgerPage.printLedger()">
-                                    <i class="fa-solid fa-print me-2 text-warning"></i> พิมพ์ Statement
+                                    <i class="fas fa-print me-2 text-warning safe-icon"></i> พิมพ์ Statement
                                 </button>
                             </div>
                         </div>
                         
-                        <div class="table-responsive bg-white rounded-4 border border-light position-relative z-1 shadow-sm" style="max-height: 550px; overflow-y: auto;">
+                        <div class="table-responsive rounded-4 position-relative z-1 shadow-sm" style="background-color: var(--bg-surface); border: 1px solid var(--border-color); max-height: 550px; overflow-y: auto;">
                             <table class="table table-ledger w-100 mb-0">
                                 <thead style="position: sticky; top: 0; z-index: 10;">
                                     <tr>
@@ -167,7 +170,7 @@ class DepartmentLedgerPageComponent {
                                     </tr>
                                 </thead>
                                 <tbody id="dl-table-body">
-                                    <tr><td colspan="8" class="text-center py-5">...กำลังโหลดข้อมูล...</td></tr>
+                                    <tr><td colspan="8" class="text-center py-5" style="color: var(--text-muted);">...กำลังโหลดข้อมูล...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -183,16 +186,16 @@ class DepartmentLedgerPageComponent {
                     <div class="row g-4">
                         <div class="col-lg-5">
                             <div class="modern-panel shadow-sm p-4 h-100 position-relative overflow-hidden" style="border-top: 5px solid var(--info); border-radius: 20px;">
-                                <h5 class="fw-bold text-dark mb-4"><i class="fa-solid fa-chart-pie text-info me-2"></i> สัดส่วนการใช้จ่าย (Expense Breakdown)</h5>
+                                <h5 class="fw-bold mb-4" style="color: var(--text-dark);"><i class="fa-solid fa-chart-pie text-info me-2"></i> สัดส่วนการใช้จ่าย (Expense Breakdown)</h5>
                                 <div style="height: 380px; width: 100%; display: flex; align-items: center; justify-content: center;" id="dl-chart-container">
                                     <canvas id="dlSummaryChart"></canvas>
                                 </div>
                             </div>
                         </div>
                         <div class="col-lg-7">
-                            <div class="modern-panel shadow-sm p-4 h-100 position-relative overflow-hidden" style="border-top: 5px solid var(--secondary); border-radius: 20px;">
-                                <h5 class="fw-bold text-dark mb-4"><i class="fa-solid fa-list-ul text-secondary me-2"></i> สรุปยอดแยกตามหมวดหมู่</h5>
-                                <div class="table-responsive bg-white rounded-4 border border-light shadow-sm">
+                            <div class="modern-panel shadow-sm p-4 h-100 position-relative overflow-hidden" style="border-top: 5px solid #94a3b8; border-radius: 20px;">
+                                <h5 class="fw-bold mb-4" style="color: var(--text-dark);"><i class="fa-solid fa-list-ul text-secondary me-2"></i> สรุปยอดแยกตามหมวดหมู่</h5>
+                                <div class="table-responsive rounded-4 shadow-sm" style="background-color: var(--bg-surface); border: 1px solid var(--border-color);">
                                     <table class="table table-ledger w-100 mb-0">
                                         <thead>
                                             <tr>
@@ -202,7 +205,7 @@ class DepartmentLedgerPageComponent {
                                             </tr>
                                         </thead>
                                         <tbody id="dl-summary-body">
-                                            <tr><td colspan="3" class="text-center py-4">...กำลังโหลดข้อมูล...</td></tr>
+                                            <tr><td colspan="3" class="text-center py-4" style="color: var(--text-muted);">...กำลังโหลดข้อมูล...</td></tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -214,11 +217,9 @@ class DepartmentLedgerPageComponent {
         `;
     }
 
-    // 🚀 Lifecycle: Mount
     init() {
         if (typeof db === 'undefined') return;
 
-        // ทริกเกอร์ 5-Year Auto Purge เพียงครั้งเดียว
         if (!this.state.hasCleanedUp) this.#autoPurgeOldRecords();
 
         if(!this.state.startDate || !this.state.endDate) {
@@ -230,7 +231,6 @@ class DepartmentLedgerPageComponent {
         this.#setupListeners();
     }
 
-    // 🧹 Lifecycle: Unmount
     destroy() {
         this.firebaseListeners.forEach(l => db.ref(l.path).off('value', l.callback));
         this.firebaseListeners = [];
@@ -238,12 +238,8 @@ class DepartmentLedgerPageComponent {
             this.state.summaryChartInstance.destroy();
             this.state.summaryChartInstance = null;
         }
-        console.log("🧹 [Department Ledger] Cleaned up listeners.");
     }
 
-    // ---------------------------------------------------------
-    // 📡 Data Fetching
-    // ---------------------------------------------------------
     #setupListeners() {
         const cbSettings = db.ref('department_ledger_settings_v2').on('value', snap => {
             if (!document.getElementById('dl-bf-balance')) return;
@@ -264,7 +260,6 @@ class DepartmentLedgerPageComponent {
         this.firebaseListeners.push({ path: 'department_ledger_v2', callback: cbLedger });
     }
 
-    // 🚨 ฟังก์ชันล้างประวัติบัญชีหน่วยงานที่เก่ากว่า 5 ปี 🚨
     #autoPurgeOldRecords() {
         this.state.hasCleanedUp = true;
         const cutoffDate = new Date();
@@ -286,9 +281,6 @@ class DepartmentLedgerPageComponent {
         });
     }
 
-    // ---------------------------------------------------------
-    // 🎛️ UI & Filtering
-    // ---------------------------------------------------------
     formatDateLocal(d) {
         let month = '' + (d.getMonth() + 1);
         let day = '' + d.getDate();
@@ -342,9 +334,6 @@ class DepartmentLedgerPageComponent {
         this.processData();
     }
 
-    // ---------------------------------------------------------
-    // 📊 Data Processing
-    // ---------------------------------------------------------
     processData() {
         if (!document.getElementById('dl-table-body')) return;
         if (!this.state.startDate || !this.state.endDate) return;
@@ -392,16 +381,16 @@ class DepartmentLedgerPageComponent {
         }
 
         let html = `
-            <tr style="background-color: #f1f5f9;">
+            <tr style="background-color: var(--bg-body);">
                 <td colspan="4" class="text-end fw-bold text-primary fs-6 py-3">ยอดยกมา (Brought Forward):</td>
                 <td colspan="2"></td>
-                <td class="text-end fw-bold text-primary fs-5 py-3 border-start border-primary-subtle">฿${broughtForward.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                <td class="text-end fw-bold text-primary fs-5 py-3 border-start" style="border-color: var(--border-color) !important;">฿${broughtForward.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                 <td></td>
             </tr>
         `;
 
         if (filtered.length === 0) {
-            html += `<tr><td colspan="8" class="text-center py-5 text-muted"><i class="fa-solid fa-file-invoice fa-3x mb-3" style="opacity:0.2;"></i><br>ไม่มีความเคลื่อนไหวในช่วงเวลานี้</td></tr>`;
+            html += `<tr><td colspan="8" class="text-center py-5" style="color: var(--text-muted);"><i class="fa-solid fa-file-invoice fa-3x mb-3" style="opacity:0.2;"></i><br>ไม่มีความเคลื่อนไหวในช่วงเวลานี้</td></tr>`;
         } else {
             [...filtered].reverse().forEach(t => {
                 let isIncome = t.type === 'IN';
@@ -416,20 +405,20 @@ class DepartmentLedgerPageComponent {
                 html += `
                 <tr class="card-hover-float" style="cursor:default;">
                     <td>
-                        <span class="badge bg-light border text-dark shadow-sm px-2 py-1"><i class="fa-regular fa-calendar text-primary me-1"></i> ${this.formatDateTh(t.date)}</span>
-                        <div class="small fw-bold text-muted mt-1 ms-1"><i class="fa-regular fa-clock me-1"></i> ${timeStr} น.</div>
+                        <span class="badge shadow-sm px-2 py-1" style="background-color: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-dark) !important;"><i class="fa-regular fa-calendar text-primary me-1"></i> ${this.formatDateTh(t.date)}</span>
+                        <div class="small fw-bold mt-1 ms-1" style="color: var(--text-muted);"><i class="fa-regular fa-clock me-1"></i> ${timeStr} น.</div>
                     </td>
                     <td class="text-center">${badge}</td>
                     <td>
-                        <div class="fw-bold text-dark" style="font-family:'Prompt'; font-size:14.5px;">${this.#escapeHTML(t.description)}</div>
-                        <div class="small text-muted mt-1"><span class="badge bg-secondary me-1">${this.#escapeHTML(t.category)}</span> ผู้บันทึก: ${this.#escapeHTML(t.recorded_by || 'Admin')}</div>
+                        <div class="fw-bold" style="font-family:'Prompt'; font-size:14.5px; color: var(--text-dark);">${this.#escapeHTML(t.description)}</div>
+                        <div class="small mt-1" style="color: var(--text-muted);"><span class="badge bg-secondary me-1">${this.#escapeHTML(t.category)}</span> ผู้บันทึก: ${this.#escapeHTML(t.recorded_by || 'Admin')}</div>
                     </td>
                     <td>
-                        <div class="text-muted small" style="white-space:pre-wrap; max-width:200px; font-size:13px; line-height:1.4;">${this.#escapeHTML(t.remark || '-')}</div>
+                        <div class="small" style="white-space:pre-wrap; max-width:200px; font-size:13px; line-height:1.4; color: var(--text-muted);">${this.#escapeHTML(t.remark || '-')}</div>
                     </td>
                     <td class="text-end fw-bold text-success" style="font-size:15px;">${inAmt}</td>
                     <td class="text-end fw-bold text-danger" style="font-size:15px;">${outAmt}</td>
-                    <td class="text-end fw-bold text-dark border-start border-light" style="font-size:15px;">฿${t.runningBalance.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    <td class="text-end fw-bold border-start" style="font-size:15px; color: var(--text-dark); border-color: var(--border-color) !important;">฿${t.runningBalance.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                     <td class="text-center">
                         <button class="btn btn-sm text-danger px-2" onclick="DepartmentLedgerPage.deleteTransaction('${t.id}')" title="ลบรายการนี้"><i class="fa-solid fa-trash"></i></button>
                     </td>
@@ -438,10 +427,10 @@ class DepartmentLedgerPageComponent {
         }
 
         html += `
-            <tr style="background-color: #f8fafc;">
-                <td colspan="4" class="text-end fw-bold text-secondary py-3">ยอดยกไป (Carried Forward):</td>
+            <tr style="background-color: var(--bg-body);">
+                <td colspan="4" class="text-end fw-bold py-3" style="color: var(--text-muted);">ยอดยกไป (Carried Forward):</td>
                 <td colspan="2"></td>
-                <td class="text-end fw-bold text-secondary fs-6 py-3 border-start border-secondary-subtle">฿${currentBalance.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                <td class="text-end fw-bold fs-6 py-3 border-start" style="color: var(--text-muted); border-color: var(--border-color) !important;">฿${currentBalance.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                 <td></td>
             </tr>
         `;
@@ -461,7 +450,7 @@ class DepartmentLedgerPageComponent {
         Object.keys(summaryIn).sort((a,b) => summaryIn[b] - summaryIn[a]).forEach(cat => { 
             sumHtml += `
             <tr>
-                <td><span class="fw-bold text-dark">${this.#escapeHTML(cat)}</span></td>
+                <td><span class="fw-bold" style="color: var(--text-dark);">${this.#escapeHTML(cat)}</span></td>
                 <td class="text-center"><span class="badge badge-soft-success">รับเข้า</span></td>
                 <td class="text-end fw-bold text-success">+ ${summaryIn[cat].toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
             </tr>`; 
@@ -470,7 +459,7 @@ class DepartmentLedgerPageComponent {
         Object.keys(summaryOut).sort((a,b) => summaryOut[b] - summaryOut[a]).forEach(cat => { 
             sumHtml += `
             <tr>
-                <td><span class="fw-bold text-dark">${this.#escapeHTML(cat)}</span></td>
+                <td><span class="fw-bold" style="color: var(--text-dark);">${this.#escapeHTML(cat)}</span></td>
                 <td class="text-center"><span class="badge badge-soft-danger">จ่ายออก</span></td>
                 <td class="text-end fw-bold text-danger">- ${summaryOut[cat].toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
             </tr>`; 
@@ -479,7 +468,7 @@ class DepartmentLedgerPageComponent {
         });
 
         if(!sumHtml) {
-            sumHtml = `<tr><td colspan="3" class="text-center py-4 text-muted">ไม่มีข้อมูลสรุปในช่วงเวลานี้</td></tr>`;
+            sumHtml = `<tr><td colspan="3" class="text-center py-4" style="color: var(--text-muted);">ไม่มีข้อมูลสรุปในช่วงเวลานี้</td></tr>`;
         }
         
         document.getElementById('dl-summary-body').innerHTML = sumHtml;
@@ -496,7 +485,7 @@ class DepartmentLedgerPageComponent {
             const { labels, data, colors, totalOut } = this.state._pendingChartData;
 
             if (data.length === 0) { 
-                document.getElementById('dl-chart-container').innerHTML = `<div class="text-muted text-center"><i class="fa-solid fa-chart-pie fa-3x mb-3" style="opacity:0.2;"></i><br>ไม่มีรายจ่ายให้วิเคราะห์</div>`; 
+                document.getElementById('dl-chart-container').innerHTML = `<div class="text-center" style="color: var(--text-muted);"><i class="fa-solid fa-chart-pie fa-3x mb-3" style="opacity:0.2;"></i><br>ไม่มีรายจ่ายให้วิเคราะห์</div>`; 
                 return; 
             } else { 
                 document.getElementById('dl-chart-container').innerHTML = `<canvas id="dlSummaryChart"></canvas>`; 
@@ -506,18 +495,20 @@ class DepartmentLedgerPageComponent {
             const ChartLib = window.Chart;
             if(!ChartLib) return;
 
+            const themeTextColor = getComputedStyle(document.documentElement).getPropertyValue('--text-dark').trim() || '#334155';
+
             this.state.summaryChartInstance = new ChartLib(newCtx, {
                 type: 'doughnut',
                 data: { 
                     labels: labels, 
-                    datasets: [{ data: data, backgroundColor: colors.slice(0, data.length), borderWidth: 2, borderColor: '#fff' }] 
+                    datasets: [{ data: data, backgroundColor: colors.slice(0, data.length), borderWidth: 2, borderColor: 'var(--bg-surface)' }] 
                 },
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false, 
                     cutout: '60%', 
                     plugins: { 
-                        legend: { position: 'bottom', labels: { font: { family: 'Prompt', size: 14 }, padding: 15 } } 
+                        legend: { position: 'bottom', labels: { color: themeTextColor, font: { family: 'Prompt', size: 14 }, padding: 15 } } 
                     }, 
                     animation: { duration: 0 } 
                 },
@@ -530,7 +521,7 @@ class DepartmentLedgerPageComponent {
                         var fontSize = (height / 200).toFixed(2); 
                         ctx.font = "bold " + fontSize + "em Prompt"; 
                         ctx.textBaseline = "middle"; 
-                        ctx.fillStyle = "#334155"; 
+                        ctx.fillStyle = themeTextColor; 
                         
                         var text = "฿" + totalOut.toLocaleString(undefined, {minimumFractionDigits: 2}); 
                         var textX = Math.round((width - ctx.measureText(text).width) / 2);
@@ -546,17 +537,14 @@ class DepartmentLedgerPageComponent {
         }
     }
 
-    // ---------------------------------------------------------
-    // 🛡️ Data Mutation & Settings
-    // ---------------------------------------------------------
     setInitialBalance() {
         Swal.fire({
             title: '<h5 class="fw-bold text-info mb-0"><i class="fa-solid fa-piggy-bank me-2"></i> ตั้งยอดยกมาเริ่มต้น</h5>',
             html: `
                 <div class="text-start mt-3" style="font-family:'Sarabun';">
                     <label class="form-label fw-bold small text-secondary">กำหนดเงินตั้งต้นของแผนก (บาท)</label>
-                    <input type="number" id="swal-init-bal" class="form-control text-info fw-bold text-center" style="border-radius:8px;" value="${this.state.initialBalance}">
-                    <p class="text-muted small mt-2">ยอดนี้จะถูกนำไปตั้งเป็น <b class="text-dark">ยอดยกมา (Brought Forward)</b> ก่อนรวมกับประวัติรับจ่ายทั้งหมด</p>
+                    <input type="number" id="swal-init-bal" class="form-control text-info fw-bold text-center input-modern" style="border-radius:8px;" value="${this.state.initialBalance}">
+                    <p class="small mt-2" style="color: var(--text-muted);">ยอดนี้จะถูกนำไปตั้งเป็น <b style="color: var(--text-dark);">ยอดยกมา (Brought Forward)</b> ก่อนรวมกับประวัติรับจ่ายทั้งหมด</p>
                 </div>
             `,
             showCancelButton: true, confirmButtonText: 'บันทึกยอด', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#0ea5e9',
@@ -575,29 +563,29 @@ class DepartmentLedgerPageComponent {
     }
 
     manageCategories() {
-        let inHtml = this.state.categoriesIn.map((c, i) => `<span class="badge bg-success-subtle text-success-emphasis m-1 fs-6 border border-success-subtle py-2 px-3 shadow-sm rounded-pill">${this.#escapeHTML(c)} <i class="fa-solid fa-times ms-2" style="cursor:pointer;" onclick="Swal.close(); setTimeout(()=>DepartmentLedgerPage.removeCategory('IN', ${i}),300)"></i></span>`).join('');
-        let outHtml = this.state.categoriesOut.map((c, i) => `<span class="badge bg-danger-subtle text-danger-emphasis m-1 fs-6 border border-danger-subtle py-2 px-3 shadow-sm rounded-pill">${this.#escapeHTML(c)} <i class="fa-solid fa-times ms-2" style="cursor:pointer;" onclick="Swal.close(); setTimeout(()=>DepartmentLedgerPage.removeCategory('OUT', ${i}),300)"></i></span>`).join('');
+        let inHtml = this.state.categoriesIn.map((c, i) => `<span class="badge bg-success-subtle text-success-emphasis m-1 fs-6 border border-success-subtle py-2 px-3 shadow-sm rounded-pill">${this.#escapeHTML(c)} <i class="fa-solid fa-times ms-2 safe-icon" style="cursor:pointer;" onclick="Swal.close(); setTimeout(()=>DepartmentLedgerPage.removeCategory('IN', ${i}),300)"></i></span>`).join('');
+        let outHtml = this.state.categoriesOut.map((c, i) => `<span class="badge bg-danger-subtle text-danger-emphasis m-1 fs-6 border border-danger-subtle py-2 px-3 shadow-sm rounded-pill">${this.#escapeHTML(c)} <i class="fa-solid fa-times ms-2 safe-icon" style="cursor:pointer;" onclick="Swal.close(); setTimeout(()=>DepartmentLedgerPage.removeCategory('OUT', ${i}),300)"></i></span>`).join('');
 
         Swal.fire({
-            title: '<h4 class="fw-bold text-dark mb-0"><i class="fa-solid fa-tags text-secondary me-2"></i> จัดการหมวดหมู่รับ-จ่าย</h4>', 
+            title: '<h4 class="fw-bold mb-0" style="color: var(--text-dark);"><i class="fa-solid fa-tags text-secondary me-2"></i> จัดการหมวดหมู่รับ-จ่าย</h4>', 
             width: 700,
             html: `
                 <div class="row text-start mt-3" style="font-family:'Sarabun';">
-                    <div class="col-md-6 border-end">
-                        <h6 class="fw-bold text-success mb-3"><i class="fa-solid fa-arrow-turn-down me-1" style="transform:rotate(90deg);"></i> หมวดหมู่รายรับ</h6>
+                    <div class="col-md-6 border-end" style="border-color: var(--border-color) !important;">
+                        <h6 class="fw-bold text-success mb-3"><i class="fa-solid fa-arrow-turn-down me-1 safe-icon" style="transform:rotate(90deg);"></i> หมวดหมู่รายรับ</h6>
                         <div class="input-group mb-3 shadow-sm" style="border-radius:8px; overflow:hidden;">
-                            <input type="text" id="new-cat-in" class="form-control" placeholder="พิมพ์หมวดหมู่ใหม่...">
+                            <input type="text" id="new-cat-in" class="form-control input-modern" placeholder="พิมพ์หมวดหมู่ใหม่...">
                             <button class="btn btn-success fw-bold" onclick="Swal.close(); setTimeout(()=>DepartmentLedgerPage.addCategory('IN'),300)">เพิ่ม</button>
                         </div>
-                        <div class="p-3 bg-light border" style="min-height: 150px; border-radius: 12px;">${inHtml || '<div class="text-muted small">ไม่มีข้อมูล</div>'}</div>
+                        <div class="p-3" style="background-color: var(--bg-body); border: 1px solid var(--border-color); min-height: 150px; border-radius: 12px;">${inHtml || '<div class="small" style="color: var(--text-muted);">ไม่มีข้อมูล</div>'}</div>
                     </div>
                     <div class="col-md-6">
-                        <h6 class="fw-bold text-danger mb-3"><i class="fa-solid fa-arrow-turn-up me-1" style="transform:rotate(90deg);"></i> หมวดหมู่รายจ่าย</h6>
+                        <h6 class="fw-bold text-danger mb-3"><i class="fa-solid fa-arrow-turn-up me-1 safe-icon" style="transform:rotate(90deg);"></i> หมวดหมู่รายจ่าย</h6>
                         <div class="input-group mb-3 shadow-sm" style="border-radius:8px; overflow:hidden;">
-                            <input type="text" id="new-cat-out" class="form-control" placeholder="พิมพ์หมวดหมู่ใหม่...">
+                            <input type="text" id="new-cat-out" class="form-control input-modern" placeholder="พิมพ์หมวดหมู่ใหม่...">
                             <button class="btn btn-danger fw-bold" onclick="Swal.close(); setTimeout(()=>DepartmentLedgerPage.addCategory('OUT'),300)">เพิ่ม</button>
                         </div>
-                        <div class="p-3 bg-light border" style="min-height: 150px; border-radius: 12px;">${outHtml || '<div class="text-muted small">ไม่มีข้อมูล</div>'}</div>
+                        <div class="p-3" style="background-color: var(--bg-body); border: 1px solid var(--border-color); min-height: 150px; border-radius: 12px;">${outHtml || '<div class="small" style="color: var(--text-muted);">ไม่มีข้อมูล</div>'}</div>
                     </div>
                 </div>
             `,
@@ -635,29 +623,29 @@ class DepartmentLedgerPageComponent {
         let catOptions = activeArr.map(c => `<option value="${this.#escapeHTML(c)}">${this.#escapeHTML(c)}</option>`).join('');
 
         Swal.fire({
-            title: `<h4 class="fw-bold text-${color} mb-0" style="font-family:'Prompt';"><i class="fa-solid ${icon} me-2"></i> ${title}</h4>`,
+            title: `<h4 class="fw-bold text-${color} mb-0" style="font-family:'Prompt';"><i class="fas ${icon} me-2 safe-icon"></i> ${title}</h4>`,
             html: `
                 <div class="text-start mt-3" style="font-family:'Sarabun';">
                     <div class="row g-3 mb-3">
                         <div class="col-6">
-                            <label class="form-label fw-bold text-secondary small">วันที่ทำรายการ</label>
-                            <input type="date" id="swal-lg-date" class="form-control" style="border-radius:8px;" value="${todayStr}">
+                            <label class="form-label fw-bold small" style="color: var(--text-muted);">วันที่ทำรายการ</label>
+                            <input type="date" id="swal-lg-date" class="form-control input-modern" style="border-radius:8px;" value="${todayStr}">
                         </div>
                         <div class="col-6">
-                            <label class="form-label fw-bold text-secondary small">หมวดหมู่</label>
-                            <select id="swal-lg-category" class="form-select" style="border-radius:8px;">${catOptions}</select>
+                            <label class="form-label fw-bold small" style="color: var(--text-muted);">หมวดหมู่</label>
+                            <select id="swal-lg-category" class="form-select input-modern" style="border-radius:8px;">${catOptions}</select>
                         </div>
                     </div>
-                    <label class="form-label fw-bold text-secondary small">รายละเอียดรายการ <span class="text-danger">*</span></label>
-                    <input type="text" id="swal-lg-desc" class="form-control fw-bold text-dark mb-3" style="border-radius:8px;" placeholder="เช่น ค่าเครื่องเขียน">
+                    <label class="form-label fw-bold small" style="color: var(--text-muted);">รายละเอียดรายการ <span class="text-danger">*</span></label>
+                    <input type="text" id="swal-lg-desc" class="form-control input-modern fw-bold mb-3" style="color: var(--text-dark); border-radius:8px;" placeholder="เช่น ค่าเครื่องเขียน">
                     
                     <label class="form-label fw-bold text-${color} small">จำนวนเงิน (บาท) <span class="text-danger">*</span></label>
-                    <div class="input-group shadow-sm mb-3" style="border-radius:12px; overflow:hidden;">
-                        <input type="number" id="swal-lg-amount" class="form-control form-control-lg fw-bold text-end" placeholder="0.00" min="0" style="font-size:22px;">
+                    <div class="input-group shadow-sm mb-3" style="border-radius:12px; overflow:hidden; border: 1px solid var(--border-color); background-color: var(--bg-body);">
+                        <input type="number" id="swal-lg-amount" class="form-control input-modern form-control-lg fw-bold text-end border-0" placeholder="0.00" min="0" style="font-size:22px; border-radius:0 !important; box-shadow:none !important;">
                     </div>
                     
-                    <label class="form-label fw-bold text-secondary small">หมายเหตุ (ข้อมูลเพิ่มเติม/เลขที่โอน)</label>
-                    <textarea id="swal-lg-remark" class="form-control" rows="2" style="border-radius:8px;" placeholder="เช่น โอนเข้าบัญชีคลินิก..."></textarea>
+                    <label class="form-label fw-bold small" style="color: var(--text-muted);">หมายเหตุ (ข้อมูลเพิ่มเติม/เลขที่โอน)</label>
+                    <textarea id="swal-lg-remark" class="form-control input-modern" rows="2" style="border-radius:8px;" placeholder="เช่น โอนเข้าบัญชีคลินิก..."></textarea>
                 </div>
             `,
             showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: isIncome ? '#10b981' : '#ef4444', width: 500,
@@ -708,9 +696,6 @@ class DepartmentLedgerPageComponent {
         }); 
     }
 
-    // ---------------------------------------------------------
-    // 🖨️ Statement Printing
-    // ---------------------------------------------------------
     _executePrint(htmlContent) {
         Swal.fire({ title: 'กำลังเตรียมเอกสาร...', html: 'กรุณารอสักครู่ ระบบกำลังจัดหน้ากระดาษ', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
         
@@ -937,6 +922,5 @@ class DepartmentLedgerPageComponent {
     }
 }
 
-// 🌐 Expose Component สู่ระบบ Router
 const DepartmentLedgerPage = new DepartmentLedgerPageComponent();
 window.DepartmentLedgerPage = DepartmentLedgerPage;

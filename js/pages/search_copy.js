@@ -64,7 +64,7 @@ class SearchCopyPageComponent {
                         <label class="form-label fw-bold text-primary mb-2" style="font-size: 15px;"><i class="fa-solid fa-keyboard me-2"></i>พิมพ์คำค้นหา (ชื่อ, นามสกุล, HN, หรือ เลข ปชช.)</label>
                         <div class="search-box-modern w-100 shadow-sm bg-white" style="border-radius: 14px; overflow: hidden;">
                             <i class="fa-solid fa-magnifying-glass text-primary ms-2 me-2"></i>
-                            <input type="text" id="scMainSearch" class="border-0 bg-transparent w-100 fw-bold text-dark py-2" placeholder="ตัวอย่าง: สมชาย, 11005xxxxxxxx, HN-69xxxx" style="outline: none; font-size: 16px;">
+                            <input type="text" id="scMainSearch" class="border-0 bg-transparent w-100 fw-bold text-dark py-2" placeholder="ตัวอย่าง: สมชาย, 11005xxxxxxxx, HN-69xxxx" style="outline: none; font-size: 16px;" autocomplete="off" spellcheck="false" data-lpignore="true" data-form-type="other">
                         </div>
                     </div>
                     <div class="col-md-3 text-md-end mt-md-5">
@@ -158,7 +158,6 @@ class SearchCopyPageComponent {
             
             let imgSrc = p.photo_base64 ? (p.photo_base64.startsWith('data:image') ? p.photo_base64 : 'data:image/jpeg;base64,' + p.photo_base64) : 'https://ui-avatars.com/api/?name='+ encodeURIComponent(safeNameTh||'X') +'&background=f1f5f9&color=64748b&bold=true';
 
-            // 🚨 THE FIX: เพิ่มปุ่ม "เปิดแฟ้มประวัติ (EMR)" สีฟ้า ต่อท้ายสุด 🚨
             html += `
             <div class="col-md-6 col-xl-4 fade-in-up">
                 <div class="modern-panel card-hover-float h-100 p-4 shadow-sm" style="border-radius: 20px;">

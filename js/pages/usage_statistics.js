@@ -29,6 +29,7 @@ class UsageStatisticsPageComponent {
                 .table-analytics th{background:#f8fafc;color:#475569;font-weight:700;text-transform:uppercase;font-size:13px;padding:16px;border-bottom:2px solid #e2e8f0;border-top:none;white-space:nowrap;}
                 .table-analytics td{padding:14px 16px;vertical-align:middle;border-bottom:1px solid #f1f5f9;font-size:14.5px;}
                 
+                /* โครงสร้างกล่องตัวกรองสถิติ */
                 .view-btn-group { display: flex; flex-wrap: wrap; background: #f8fafc; padding: 4px; border-radius: 50px; border: 1px solid #e2e8f0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); gap: 4px; }
                 .view-btn-group .btn{font-family:'Prompt';font-weight:600;font-size:13px;padding:6px 16px;border-radius:50px;transition:all 0.2s;border:none;background:transparent;color:#64748b;}
                 .view-btn-group .btn.active{background:var(--primary);color:#fff;box-shadow:0 4px 10px rgba(37,99,235,0.2);}
@@ -36,17 +37,29 @@ class UsageStatisticsPageComponent {
                 .badge-fluid{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;font-weight:700;border-radius:50px;padding:4px 12px;}
                 .badge-med{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;font-weight:700;border-radius:50px;padding:4px 12px;}
                 
+                /* โครงสร้างกล่องเลือกวันที่ */
                 .date-filter-container { display: flex; align-items: center; background: #ffffff; padding: 4px 8px; border-radius: 50px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); flex-wrap: wrap; gap: 8px; }
                 
-                /* 🚨 ซ่อน Input Native 100% 🚨 */
                 .native-date-wrapper { position: relative; display: inline-flex; align-items: center; justify-content: center; padding: 6px 14px; cursor: pointer; min-width: 145px; border-radius: 50px; background: #f8fafc; border: 1px solid transparent; transition: 0.2s; overflow: hidden; }
                 .native-date-wrapper:hover { border-color: #cbd5e1; background: #f1f5f9; }
                 .native-date-wrapper input[type="date"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; border: none; background: transparent; color: transparent; }
                 .native-date-wrapper input[type="date"]::-webkit-calendar-picker-indicator { width: 100%; height: 100%; opacity: 0; cursor: pointer; position: absolute; left: 0; top: 0; }
                 
-                /* 🚨 THE FIX: แต่งสีไอคอนให้เป็นสีน้ำเงินสดใส และฟอนต์หนา 🚨 */
                 .native-date-wrapper span { position: relative; z-index: 1; font-family: 'Prompt'; font-weight: 800; color: #2563eb; font-size: 14px; pointer-events: none; }
                 .native-date-wrapper i { position: relative; z-index: 1; margin-right: 8px; font-size: 16px; color: #2563eb; pointer-events: none; }
+
+                /* 🚨 THE FIX: บังคับแก้ไขสีสว่างให้เป็นโหมดมืด (Dark Mode Support) แบบตายตัว 🚨 */
+                html[data-bs-theme="dark"] .stat-card-analytics { background-color: var(--bg-surface) !important; border-color: var(--border-color) !important; }
+                html[data-bs-theme="dark"] .stat-card-analytics .text-dark { color: var(--text-dark) !important; }
+                html[data-bs-theme="dark"] .view-btn-group { background-color: var(--bg-surface) !important; border-color: var(--border-color) !important; }
+                html[data-bs-theme="dark"] .view-btn-group .btn { color: var(--text-muted); }
+                html[data-bs-theme="dark"] .view-btn-group .btn.active { color: #fff; }
+                html[data-bs-theme="dark"] .date-filter-container { background-color: var(--bg-surface) !important; border-color: var(--border-color) !important; }
+                html[data-bs-theme="dark"] .native-date-wrapper { background-color: rgba(255,255,255,0.05) !important; }
+                html[data-bs-theme="dark"] .native-date-wrapper:hover { border-color: var(--border-color) !important; background-color: rgba(255,255,255,0.1) !important; }
+                html[data-bs-theme="dark"] .table-analytics th { background-color: var(--bg-body) !important; color: var(--text-muted) !important; border-color: var(--border-color) !important; }
+                html[data-bs-theme="dark"] .table-analytics td { border-color: var(--border-color) !important; color: var(--text-dark) !important; }
+                html[data-bs-theme="dark"] .table-responsive.bg-white { background-color: transparent !important; border-color: var(--border-color) !important; }
             </style>
 
             <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
@@ -109,23 +122,23 @@ class UsageStatisticsPageComponent {
 
             <div class="row g-4 mb-4">
                 <div class="col-xl-8">
-                    <div class="modern-panel shadow-sm p-4 h-100" style="border-radius:20px; background:#fff; border:1px solid #e2e8f0; border-top:5px solid var(--info);">
-                        <h5 class="fw-bold text-dark mb-4"><i class="fa-solid fa-chart-column text-info me-2"></i> กราฟเปรียบเทียบแนวโน้มปริมาณการเบิกใช้รายหมวดหมู่</h5>
+                    <div class="modern-panel shadow-sm p-4 h-100" style="border-radius:20px; background:var(--bg-surface); border:1px solid var(--border-color); border-top:5px solid var(--info);">
+                        <h5 class="fw-bold mb-4" style="color:var(--text-dark);"><i class="fa-solid fa-chart-column text-info me-2"></i> กราฟเปรียบเทียบแนวโน้มปริมาณการเบิกใช้รายหมวดหมู่</h5>
                         <div style="height:320px; width:100%; display:flex; justify-content:center; align-items:center;" id="stat-chart-container"><canvas id="usageStatisticsChart"></canvas></div>
                     </div>
                 </div>
                 <div class="col-xl-4">
-                    <div class="modern-panel shadow-sm p-4 h-100" style="border-radius:20px; background:#fff; border:1px solid #e2e8f0; border-top:5px solid #8b5cf6;">
-                        <h5 class="fw-bold text-dark mb-4"><i class="fa-solid fa-chart-pie text-primary me-2"></i> สัดส่วน Top 5 รายการยอดฮิต</h5>
+                    <div class="modern-panel shadow-sm p-4 h-100" style="border-radius:20px; background:var(--bg-surface); border:1px solid var(--border-color); border-top:5px solid #8b5cf6;">
+                        <h5 class="fw-bold mb-4" style="color:var(--text-dark);"><i class="fa-solid fa-chart-pie text-primary me-2"></i> สัดส่วน Top 5 รายการยอดฮิต</h5>
                         <div style="height:320px; width:100%; display:flex; justify-content:center; align-items:center;" id="stat-pie-container"><canvas id="topItemsPieChart"></canvas></div>
                     </div>
                 </div>
             </div>
 
-            <div class="modern-panel shadow-sm p-4 position-relative overflow-hidden" style="border-top:5px solid var(--secondary); border-radius:20px; background:#fff; border:1px solid #e2e8f0;">
+            <div class="modern-panel shadow-sm p-4 position-relative overflow-hidden" style="border-top:5px solid var(--secondary); border-radius:20px; background:var(--bg-surface); border:1px solid var(--border-color);">
                 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-                    <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-table text-secondary me-2"></i> ตารางวิเคราะห์สรุปยอดแยกประเภทรายการเบิกใช้</h5>
-                    <div class="search-box-modern shadow-sm bg-light" style="width: 250px;">
+                    <h5 class="fw-bold text-dark mb-0" style="color:var(--text-dark) !important;"><i class="fa-solid fa-table text-secondary me-2"></i> ตารางวิเคราะห์สรุปยอดแยกประเภทรายการเบิกใช้</h5>
+                    <div class="search-box-modern shadow-sm" style="width: 250px; background-color:var(--bg-body); border: 1px solid var(--border-color); border-radius: 50px; padding: 6px 15px;">
                         <i class="fa-solid fa-search text-primary"></i>
                         <input type="text" id="stat-search-inp" class="border-0 bg-transparent ms-2 w-100 fw-bold text-dark" placeholder="ค้นหาชื่อ, รหัส..." onkeyup="App.pages.usage_statistics.filterTable()" style="outline:none;">
                     </div>
@@ -454,6 +467,10 @@ class UsageStatisticsPageComponent {
         const ChartLib = window.Chart;
         if (!ChartLib) return;
 
+        // ดึงสีตาม Theme ปัจจุบันให้กราฟ (Dark Mode Support)
+        const themeTextColor = getComputedStyle(document.documentElement).getPropertyValue('--text-dark').trim() || '#334155';
+        const themeGridColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim() || '#e2e8f0';
+
         const ctxBar = document.getElementById('usageStatisticsChart');
         if (ctxBar) {
             if (this.state.chartInstance) this.state.chartInstance.destroy();
@@ -466,7 +483,16 @@ class UsageStatisticsPageComponent {
                         { label: 'ยาและเวชภัณฑ์ (Vial/ชิ้น)', data: this.state._chartPayload.meds, backgroundColor: 'rgba(239, 68, 68, 0.85)', borderColor: '#ef4444', borderWidth: 2, borderRadius: 6 }
                     ]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { font: { family: 'Prompt', size: 14 } } } }, scales: { y: { beginAtZero: true, ticks: { font: { family: 'Prompt' } } }, x: { ticks: { font: { family: 'Prompt', size: 13 } } } }, animation: { duration: 0 } }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { position: 'top', labels: { color: themeTextColor, font: { family: 'Prompt', size: 14 } } } }, 
+                    scales: { 
+                        y: { beginAtZero: true, grid: { color: themeGridColor }, ticks: { color: themeTextColor, font: { family: 'Prompt' } } }, 
+                        x: { grid: { color: themeGridColor }, ticks: { color: themeTextColor, font: { family: 'Prompt', size: 13 } } } 
+                    }, 
+                    animation: { duration: 0 } 
+                }
             });
         }
 
@@ -477,9 +503,9 @@ class UsageStatisticsPageComponent {
                 type: 'doughnut',
                 data: {
                     labels: this.state._piePayload.labels,
-                    datasets: [{ data: this.state._piePayload.data, backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'], hoverOffset: 4 }]
+                    datasets: [{ data: this.state._piePayload.data, backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'], hoverOffset: 4, borderColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-surface').trim() || '#ffffff' }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Prompt', size: 12 } } } }, cutout: '65%', animation: { duration: 0 } }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: themeTextColor, font: { family: 'Prompt', size: 12 } } } }, cutout: '65%', animation: { duration: 0 } }
             });
         }
     }

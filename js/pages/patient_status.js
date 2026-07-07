@@ -1,5 +1,5 @@
 // js/pages/patient_status.js
-// 🚀 โมดูลทะเบียนผู้ป่วยส่งต่อ/จำหน่าย (Enterprise ES6 Class Ready - 100% Stable)
+// 🚀 โมดูลทะเบียนผู้ป่วยส่งต่อ/จำหน่าย (Enterprise ES6 Class Ready - Tab Active Bug Fixed & Theme Native)
 
 class PatientStatusPageComponent {
     constructor() {
@@ -21,16 +21,17 @@ class PatientStatusPageComponent {
                     <p class="text-muted mt-2 mb-0 fw-bold" id="ps-count-text">กำลังซิงค์ข้อมูลจากระบบคลาวด์...</p>
                 </div>
                 <div class="d-flex gap-2 align-items-center flex-wrap">
-                    <div class="search-box-modern shadow-sm bg-white" style="width: 320px; border-radius: 50px;">
+                    <div class="search-box-modern shadow-sm" style="width: 320px; padding: 10px 20px; border-radius: 50px; background-color: var(--bg-surface); border: 1px solid var(--border-color);">
                         <i class="fa-solid fa-search text-danger"></i>
-                        <input type="text" id="psSearch" class="border-0 bg-transparent ms-2 w-100 fw-bold text-dark" placeholder="ค้นหา HN, ชื่อ..." style="outline: none; font-family:'Prompt';">
+                        <input type="text" id="psSearch" class="border-0 bg-transparent ms-2 w-100 fw-bold" placeholder="ค้นหา HN, ชื่อ..." style="outline: none; font-family:'Prompt'; color: var(--text-dark);">
                     </div>
                 </div>
             </div>
 
-            <ul class="nav finance-nav-tabs mb-4" id="statusTabs" role="tablist" style="border-bottom: 2px solid #e2e8f0; gap: 10px; display: flex;">
+            <ul class="nav finance-nav-tabs mb-4" id="statusTabs" role="tablist" style="border-bottom: 2px solid var(--border-color); gap: 10px; display: flex;">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active fw-bold px-4 py-3" id="tab-admit" onclick="PatientStatusPage.switchTab('Admit รพ.')" style="border: none; border-radius: 12px 12px 0 0; color: var(--danger); font-size: 16px; background: #fff; box-shadow: 0 -4px 10px rgba(0,0,0,0.02); border-bottom: 3px solid var(--danger);">
+                    <!-- แท็บแรกมีคลาส active เป็นค่าเริ่มต้น -->
+                    <button class="nav-link active fw-bold px-4 py-3" id="tab-admit" onclick="PatientStatusPage.switchTab('Admit รพ.')" style="border: none; border-radius: 12px 12px 0 0; color: var(--danger); font-size: 16px; background: var(--bg-surface); box-shadow: 0 -4px 10px rgba(0,0,0,0.02); border-bottom: 3px solid var(--danger);">
                         <i class="fa-solid fa-hospital me-2"></i> Admit รพ. (<span id="count-admit">0</span>)
                     </button>
                 </li>
@@ -46,17 +47,17 @@ class PatientStatusPageComponent {
                 </li>
             </ul>
             
-            <div class="modern-panel shadow-sm p-4 position-relative overflow-hidden" style="border-top: 5px solid var(--danger);">
-                <div style="position: absolute; top: -30px; right: -30px; opacity: 0.02; font-size: 300px; pointer-events: none;"><i class="fa-solid fa-truck-medical"></i></div>
+            <div class="modern-panel shadow-sm p-4 position-relative overflow-hidden" style="border-top: 5px solid var(--danger); background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 20px;">
+                <div style="position: absolute; top: -30px; right: -30px; opacity: 0.02; font-size: 300px; pointer-events: none; color: var(--text-dark);"><i class="fa-solid fa-truck-medical"></i></div>
                 
-                <div class="table-responsive bg-white rounded-4 border border-light position-relative z-1 shadow-sm pb-2">
+                <div class="table-responsive rounded-4 border position-relative z-1 shadow-sm pb-2" style="background-color: var(--bg-surface); border-color: var(--border-color) !important;">
                     <table class="table table-premium w-100 mb-0">
                         <thead>
                             <tr>
                                 <th style="width: 30%;"><i class="fa-solid fa-id-card-clip text-primary me-2"></i> ผู้ป่วย (HN & ชื่อ)</th>
                                 <th style="width: 25%;"><i class="fa-solid fa-phone text-info me-2"></i> ข้อมูลติดต่อ</th>
                                 <th style="width: 15%;"><i class="fa-solid fa-shield-heart text-success me-2"></i> สิทธิรักษา</th>
-                                <th class="text-center" style="width: 10%;"><i class="fa-solid fa-chart-simple text-warning me-2"></i> สถานะ</th>
+                                <th class="text-center" style="width: 10%;"><i class="fa-solid fa-chart-simple text-warning me-2"></i> Status</th>
                                 <th class="text-center" style="width: 20%;"><i class="fa-solid fa-gears text-secondary me-2"></i> จัดการ / ดึงกลับ</th>
                             </tr>
                         </thead>
@@ -72,7 +73,6 @@ class PatientStatusPageComponent {
     init() {
         if (typeof db === 'undefined') return;
 
-        // รันฟังก์ชันล้างข้อมูล (Auto-Purge) ทันทีที่เปิดหน้า
         if (!this.hasCleanedUp) {
             this.autoCleanUpOldArchives();
         }
@@ -97,7 +97,6 @@ class PatientStatusPageComponent {
     }
 
     destroy() {
-        // เคลียร์ Listener เมื่อย้ายหน้าเพื่อไม่ให้เว็บอืด
         db.ref('patients_database_v2/patients').off('value');
         console.log("🧹 [Patient Status] Unmounted and cleared listeners.");
     }
@@ -128,10 +127,11 @@ class PatientStatusPageComponent {
                     const Toast = Swal.mixin({ 
                         toast: true, position: 'bottom-end', showConfirmButton: false, timer: 6000,
                         didOpen: (toast) => {
-                            toast.style.background = '#ffffff';
+                            toast.style.background = 'var(--bg-surface)';
                             toast.style.border = '2px solid #ef4444';
                             toast.style.borderRadius = '16px';
                             toast.style.fontFamily = "'Prompt', sans-serif";
+                            toast.style.color = 'var(--text-dark)';
                         }
                     });
                     Toast.fire({ icon: 'info', title: `♻️ ล้างประวัติ Archive เก่าเกิน 5 ปี สำเร็จ (${deletedCount} รายการ)` });
@@ -154,32 +154,51 @@ class PatientStatusPageComponent {
         if(document.getElementById('ps-count-text')) document.getElementById('ps-count-text').innerText = `พบรายชื่อผู้ป่วยที่ถูกแยกไว้ทั้งหมด ${this.allData.length} ราย`;
     }
 
+    // 🚨 THE FIX: อัปเกรดลอจิกการสลับแท็บ เคลียร์คลาส 'active' ออกให้หมด 100%
     switchTab(tabName) {
         this.currentTab = tabName;
         
+        // 1. CLEAR ALL TABS (ถอดหมวก VIP ออกจากทุกคน)
         ['tab-admit', 'tab-transfer', 'tab-deceased'].forEach(id => {
             let el = document.getElementById(id);
             if(el) {
                 el.style.background = 'transparent';
                 el.style.borderBottom = '3px solid transparent';
-                el.classList.remove('text-danger', 'text-secondary', 'text-dark');
+                el.style.boxShadow = 'none';
+                // 🚨 หัวใจสำคัญ: ต้อง remove คลาส 'active' ออกด้วย!
+                el.classList.remove('active', 'text-danger', 'text-secondary', 'text-dark', 'text-white');
                 el.classList.add('text-secondary');
             }
         });
 
+        // 2. SET ACTIVE TAB (สวมหมวก VIP ให้แท็บที่ถูกเลือก)
         let activeEl = null;
         let activeColor = '';
-        if(tabName === 'Admit รพ.') { activeEl = document.getElementById('tab-admit'); activeColor = 'var(--danger)'; activeEl.classList.add('text-danger'); }
-        if(tabName === 'ย้ายคลินิก') { activeEl = document.getElementById('tab-transfer'); activeColor = '#64748b'; activeEl.classList.add('text-secondary');}
-        if(tabName === 'เสียชีวิต') { activeEl = document.getElementById('tab-deceased'); activeColor = '#0f172a'; activeEl.classList.add('text-dark');}
-
-        if(activeEl) {
-            activeEl.classList.remove('text-secondary');
-            activeEl.style.background = '#fff';
-            activeEl.style.borderBottom = `3px solid ${activeColor}`;
-            activeEl.style.boxShadow = '0 -4px 10px rgba(0,0,0,0.02)';
+        
+        if(tabName === 'Admit รพ.') { 
+            activeEl = document.getElementById('tab-admit'); 
+            activeColor = 'var(--danger)'; 
+            activeEl.classList.add('text-danger', 'active'); 
+        }
+        else if(tabName === 'ย้ายคลินิก') { 
+            activeEl = document.getElementById('tab-transfer'); 
+            activeColor = '#64748b'; 
+            activeEl.classList.add('text-secondary', 'active');
+        }
+        else if(tabName === 'เสียชีวิต') { 
+            activeEl = document.getElementById('tab-deceased'); 
+            activeColor = 'var(--text-dark)'; 
+            activeEl.classList.add('text-dark', 'active');
         }
 
+        if(activeEl) {
+            activeEl.classList.remove('text-secondary'); // เอาสีจางตอนแรกออก
+            activeEl.style.background = 'var(--bg-surface)'; 
+            activeEl.style.borderBottom = `3px solid ${activeColor}`;
+            activeEl.style.boxShadow = '0 -4px 10px rgba(0,0,0,0.05)';
+        }
+
+        // รีโหลดตาราง
         this.renderTable(document.getElementById('psSearch') ? document.getElementById('psSearch').value.toLowerCase() : "");
     }
 
@@ -246,7 +265,7 @@ class PatientStatusPageComponent {
             else if (p.status === "ย้ายคลินิก") statusBadge = `<span class="badge bg-secondary px-3 py-2 rounded-pill shadow-sm" style="font-size:12px;"><i class="fa-solid fa-right-left me-1"></i> ${p.status}</span>`;
             else if (p.status === "เสียชีวิต") statusBadge = `<span class="badge bg-dark px-3 py-2 rounded-pill shadow-sm" style="font-size:12px;"><i class="fa-solid fa-book-skull me-1"></i> ${p.status}</span>`;
 
-            let imgSrc = p.photo_base64 ? (p.photo_base64.startsWith('data:image') ? p.photo_base64 : 'data:image/jpeg;base64,' + p.photo_base64) : `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name_th||'X')}&background=e2e8f0&color=64748b&bold=true`;
+            let imgSrc = p.photo_base64 ? (p.photo_base64.startsWith('data:image') ? p.photo_base64 : 'data:image/jpeg;base64,' + p.photo_base64) : `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name_th||'X')}&background=334155&color=fff&bold=true`;
             let fullName = `${p.title || ''}${p.name_th || 'ไม่ระบุชื่อ'}`;
             
             let formattedDate = 'ไม่ระบุวันที่';
@@ -263,10 +282,10 @@ class PatientStatusPageComponent {
             <tr class="card-hover-float" style="cursor: default;">
                 <td>
                     <div class="d-flex align-items-center">
-                        <img src="${imgSrc}" class="me-3 shadow-sm border border-3 border-light" style="width: 55px; height: 55px; border-radius: 14px; object-fit: cover; filter: grayscale(50%);">
+                        <img src="${imgSrc}" class="me-3 shadow-sm border border-3 border-dark" style="width: 55px; height: 55px; border-radius: 14px; object-fit: cover; filter: grayscale(20%);">
                         <div>
                             <div class="fw-bold text-dark" style="font-size:15.5px; font-family:'Prompt';">${fullName}</div>
-                            <div class="text-muted fw-bold mt-1" style="font-size:13px;"><i class="fa-solid fa-id-card-clip me-1"></i> ${p.hn || '-'} <span class="ms-2 text-muted fw-normal">| อายุ: ${p.age || '-'}</span></div>
+                            <div class="text-muted fw-bold mt-1" style="font-size:13px;"><i class="fa-solid fa-id-card-clip me-1"></i> ${p.hn || '-'} <span class="ms-2 text-muted fw-normal">| อายุ: ${p.age || '-'} ปี</span></div>
                             <div class="small text-danger fw-bold mt-1" style="font-size:11px;"><i class="fa-solid fa-clock me-1"></i> จำหน่ายเมื่อ: ${formattedDate}</div>
                         </div>
                     </div>
@@ -280,7 +299,7 @@ class PatientStatusPageComponent {
                 <td class="text-center">
                     <div class="d-flex justify-content-center gap-2">
                         <button class="btn btn-sm btn-primary shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0;" onclick="App.switchPage('patient_history', null, '${p.hn}')" title="แฟ้มประวัติ (EMR)"><i class="fa-solid fa-folder-open"></i></button>
-                        <button class="btn btn-sm btn-success text-white shadow-sm" style="border-radius:10px; px-3; height:34px; font-size:13px; display:inline-flex; align-items:center; gap:5px;" onclick="PatientStatusPage.restorePatient('${p.hn}', '${fullName}')" title="ดึงกลับเป็นผู้ป่วยปกติ"><i class="fa-solid fa-rotate-left"></i> ดึงกลับ</button>
+                        <button class="btn btn-sm btn-success text-white shadow-sm" style="border-radius:10px; padding: 0 15px; height:34px; font-size:13px; display:inline-flex; align-items:center; gap:5px;" onclick="PatientStatusPage.restorePatient('${p.hn}', '${fullName}')" title="ดึงกลับเป็นผู้ป่วยปกติ"><i class="fa-solid fa-rotate-left"></i> ดึงกลับ</button>
                     </div>
                 </td>
             </tr>`;
@@ -289,6 +308,5 @@ class PatientStatusPageComponent {
     }
 }
 
-// 🌐 สถาปัตยกรรมเปิดเผยตัวแปรเพื่อให้ Router วิ่งมาหาหน้าต่างนี้เจอ 100%
 const PatientStatusPage = new PatientStatusPageComponent();
 window.PatientStatusPage = PatientStatusPage;

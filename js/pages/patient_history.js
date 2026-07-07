@@ -46,18 +46,24 @@ class PatientHistoryPageComponent {
 
             .emr-nav-tabs .nav-link { 
                 flex: 0 0 auto; 
-                color: var(--muted); border: none; background: transparent; 
+                color: var(--text-muted); border: none; background: transparent; 
                 transition: all 0.2s ease; padding: 10px 20px; font-size: 14.5px; 
                 border-radius: 14px; font-family: 'Prompt'; font-weight: 700;
             }
             .emr-nav-tabs .nav-link:hover { background: var(--bg-main); color: var(--text-dark); }
-            .emr-nav-tabs .nav-link.active { background: var(--primary-light); color: var(--primary); border: 1px solid #bfdbfe; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1); }
             
-            .emr-nav-tabs .nav-link.active[data-bs-target="#tab-vitals"] { background: var(--success-light); color: var(--success-dark); border-color: #bbf7d0; box-shadow: 0 2px 4px rgba(34, 197, 94, 0.1); }
-            .emr-nav-tabs .nav-link.active[data-bs-target="#tab-labs"] { background: var(--danger-light); color: var(--danger-dark); border-color: #fecaca; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.1); }
-            .emr-nav-tabs .nav-link.active[data-bs-target="#tab-xrays"] { background: var(--info-light); color: var(--info-dark); border-color: #bae6fd; box-shadow: 0 2px 4px rgba(14, 165, 233, 0.1); }
-            .emr-nav-tabs .nav-link.active[data-bs-target="#tab-docs"] { background: var(--primary); color: white; border-color: var(--primary-dark); box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2); }
-            .emr-nav-tabs .nav-link.active[data-bs-target="#tab-meds"] { background: var(--warning-light); color: var(--warning-dark); border-color: #fde68a; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.1); }
+            /* 🚨 THE FIX 1: กฎเหล็กสำหรับ Hover ของ EMR Tabs ใน Dark Mode 🚨 */
+            html[data-bs-theme="dark"] .emr-nav-tabs-container { background-color: var(--bg-surface) !important; border-color: var(--border-color) !important; }
+            html[data-bs-theme="dark"] .emr-nav-tabs .nav-link { color: #94a3b8 !important; }
+            html[data-bs-theme="dark"] .emr-nav-tabs .nav-link:hover:not(.active) { background-color: rgba(255, 255, 255, 0.05) !important; color: #f8fafc !important; }
+
+            .emr-nav-tabs .nav-link.active { background: var(--primary-light); color: var(--primary) !important; border: 1px solid #bfdbfe; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1); }
+            
+            .emr-nav-tabs .nav-link.active[data-bs-target="#tab-vitals"] { background: var(--success-light); color: var(--success-dark) !important; border-color: #bbf7d0; box-shadow: 0 2px 4px rgba(34, 197, 94, 0.1); }
+            .emr-nav-tabs .nav-link.active[data-bs-target="#tab-labs"] { background: var(--danger-light); color: var(--danger-dark) !important; border-color: #fecaca; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.1); }
+            .emr-nav-tabs .nav-link.active[data-bs-target="#tab-xrays"] { background: var(--info-light); color: var(--info-dark) !important; border-color: #bae6fd; box-shadow: 0 2px 4px rgba(14, 165, 233, 0.1); }
+            .emr-nav-tabs .nav-link.active[data-bs-target="#tab-docs"] { background: var(--primary); color: white !important; border-color: var(--primary-dark); box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2); }
+            .emr-nav-tabs .nav-link.active[data-bs-target="#tab-meds"] { background: var(--warning-light); color: var(--warning-dark) !important; border-color: #fde68a; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.1); }
             
             .timeline-point { position: absolute; left: -36px; top: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--primary-gradient); border: 4px solid #fff; box-shadow: 0 0 0 3px #bfdbfe; }
             
@@ -71,6 +77,16 @@ class PatientHistoryPageComponent {
             .emr-scroll-area::-webkit-scrollbar-track { background: #f8fafc; border-radius: 10px; }
             .emr-scroll-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
             .emr-scroll-area::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+            /* 🚨 THE FIX 2: จัดการปุ่มแก้ไข/ลบ ในตารางแล็บให้กลมกลืนกับโหมดมืด (แทนการใส่ bg-white ตรงๆ ใน inline-style) 🚨 */
+            .btn-table-edit { background: #fffbeb !important; color: #d97706 !important; border: 1px solid #fde68a !important; }
+            .btn-table-delete { background: #fef2f2 !important; color: #e11d48 !important; border: 1px solid #fecdd3 !important; }
+            
+            html[data-bs-theme="dark"] .btn-table-edit { background: rgba(217, 119, 6, 0.1) !important; border-color: rgba(217, 119, 6, 0.3) !important; color: #fbbf24 !important; }
+            html[data-bs-theme="dark"] .btn-table-delete { background: rgba(225, 29, 72, 0.1) !important; border-color: rgba(225, 29, 72, 0.3) !important; color: #fb7185 !important; }
+            html[data-bs-theme="dark"] .btn-table-edit:hover { background: rgba(217, 119, 6, 0.2) !important; }
+            html[data-bs-theme="dark"] .btn-table-delete:hover { background: rgba(225, 29, 72, 0.2) !important; }
+
         </style>
 
         <div id="ph-search-screen" style="display: none; max-width: 800px; margin: 40px auto;">
@@ -557,7 +573,6 @@ class PatientHistoryPageComponent {
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
                             <h5 class="fw-bold text-dark mb-1" style="font-family:'Prompt';"><i class="fa-regular fa-calendar me-2 text-primary"></i>${dateStr}</h5>
-                            <!-- 🚨 THE FIX: อัปเดตคำศัพท์เป็น ผู้ทำรายการ 🚨 -->
                             <div class="text-primary fw-bold" style="font-size:13px;"><i class="fa-solid fa-user-pen me-2"></i> ${historyRow.doctor || 'ไม่ระบุผู้ทำรายการ'}</div>
                         </div>
                         <div class="d-flex gap-2">
@@ -573,7 +588,7 @@ class PatientHistoryPageComponent {
                     
                     ${medsContainer}
                     
-                    <div class="p-4 rounded-4 shadow-sm border border-light" style="background: #ffffff;">
+                    <div class="p-4 rounded-4 shadow-sm border border-light" style="background: var(--bg-surface);">
                         <div class="fw-bold text-primary mb-1" style="font-size:14px;"><i class="fa-solid fa-comment-medical me-2"></i> อาการสำคัญ (Chief Complaint):</div>
                         <div class="mb-3 text-dark ps-4 fw-medium">${visit.cc || historyRow.cc || '-'}</div>
                         
@@ -627,7 +642,6 @@ class PatientHistoryPageComponent {
                             </div>
                             <div>
                                 <div class="fw-bold text-dark" style="font-size:15px; font-family:'Prompt';">${dateStr}</div>
-                                <!-- 🚨 THE FIX: อัปเดตคำศัพท์เป็น ผู้ทำรายการ 🚨 -->
                                 <div class="text-info fw-bold" style="font-size:12px;">ผู้ทำรายการ: ${historyRow.doctor || '-'}</div>
                             </div>
                         </div>
@@ -683,7 +697,7 @@ class PatientHistoryPageComponent {
                     <div class="doc-img-container">
                         ${previewContent}
                     </div>
-                    <div class="p-3">
+                    <div class="p-3" style="background: var(--bg-surface);">
                         <div class="fw-bold text-dark text-truncate" style="font-size:13px; margin-bottom: 4px;" title="${doc.name || 'เอกสารแนบ'}">${doc.name || 'เอกสารแนบ'}</div>
                         <div class="text-primary fw-bold" style="font-size:11px;"><i class="fa-regular fa-calendar me-1"></i> ${displayDate}</div>
                     </div>
@@ -722,12 +736,12 @@ class PatientHistoryPageComponent {
             const dateStr = new Date(lab.date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
             const getVal = (val) => val ? `<span class="fw-bold text-dark">${val}</span>` : '<span class="text-muted">-</span>';
             html += `
-            <tr style="background:#fff;">
+            <tr style="background: var(--bg-surface);">
                 <td class="fw-bold text-primary">${dateStr}</td>
                 <td>${getVal(lab.bun)}</td><td>${getVal(lab.cr)}</td><td>${getVal(lab.k)}</td><td>${getVal(lab.ca)}</td><td>${getVal(lab.p)}</td><td>${getVal(lab.hct)}</td>
                 <td class="text-center">
-                    <button class="btn btn-sm shadow-sm px-2 py-1 me-1" style="background:#fffbeb; color:#d97706; border:1px solid #fde68a; border-radius:8px;" onclick="PatientHistoryPage.editLab('${lab.id || index}')" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
-                    <button class="btn btn-sm shadow-sm px-2 py-1" style="background:#fef2f2; color:#e11d48; border:1px solid #fecdd3; border-radius:8px;" onclick="PatientHistoryPage.deleteLab('${lab.id || index}')" title="ลบ"><i class="fa-solid fa-trash"></i></button>
+                    <button class="btn btn-sm btn-table-edit shadow-sm px-2 py-1 me-1" onclick="PatientHistoryPage.editLab('${lab.id || index}')" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-sm btn-table-delete shadow-sm px-2 py-1" onclick="PatientHistoryPage.deleteLab('${lab.id || index}')" title="ลบ"><i class="fa-solid fa-trash"></i></button>
                 </td>
             </tr>`;
         });
@@ -776,10 +790,11 @@ class PatientHistoryPageComponent {
             let nameLower = (med.name || '').toLowerCase();
             let isMain = nameLower.includes('น้ำยาไต') || nameLower.includes('dialysate') || nameLower.includes('nss') || nameLower.includes('น้ำเกลือ') || nameLower.includes('heparin');
 
+            // 🚨 THE FIX 3: นำ inline bg-white ทิ้งในส่วนของปุ่มแก้ไข/ลบยา
             let actionBtns = `
                 <div class="ms-auto d-flex flex-column gap-2">
-                    <button class="btn btn-sm shadow-sm px-2 py-1" style="background:#fffbeb; color:#d97706; border:1px solid #fde68a; border-radius:8px;" onclick="PatientHistoryPage.editMed(${index})" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
-                    <button class="btn btn-sm shadow-sm px-2 py-1" style="background:#fef2f2; color:#e11d48; border:1px solid #fecdd3; border-radius:8px;" onclick="PatientHistoryPage.deleteMed(${index})" title="ลบ"><i class="fa-solid fa-trash"></i></button>
+                    <button class="btn btn-sm btn-table-edit shadow-sm px-2 py-1" onclick="PatientHistoryPage.editMed(${index})" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-sm btn-table-delete shadow-sm px-2 py-1" onclick="PatientHistoryPage.deleteMed(${index})" title="ลบ"><i class="fa-solid fa-trash"></i></button>
                 </div>
             `;
 
@@ -920,7 +935,6 @@ class PatientHistoryPageComponent {
                     date: document.getElementById('add-rec-date').value,
                     bp: document.getElementById('add-rec-bp').value || '-', weight: document.getElementById('add-rec-wt').value || '-',
                     cc: document.getElementById('add-rec-cc').value || '-', note: document.getElementById('add-rec-note').value,
-                    // 🚨 THE FIX: อัปเดตคำศัพท์เป็น ผู้ทำรายการ 🚨
                     doctor: isEdit ? record.doctor : (App.currentUser ? App.currentUser.name : 'ผู้ทำรายการ')
                 };
                 if (isEdit) this.patientData.history[index] = newData; else this.patientData.history.push(newData);
@@ -1070,7 +1084,6 @@ class PatientHistoryPageComponent {
                 if(visit.hd_saline_item) medsText.push(`NSS: ${this.getMedNameFromId(visit.hd_saline_item)}${visit.hd_saline_qty ? `(${visit.hd_saline_qty})` : ''}`);
                 if(visit.hd_heparin_item) medsText.push(`Heparin: ${this.getMedNameFromId(visit.hd_heparin_item)}${visit.hd_heparin_qty ? `(${visit.hd_heparin_qty})` : ''}`);
 
-                // 🚨 THE FIX: อัปเดตคำศัพท์เป็น ผู้ทำรายการ 🚨
                 return `
                 <div style="border-bottom: 1px dashed #ccc; padding: 12px 0; page-break-inside: avoid;">
                     <div style="font-weight:bold; font-size: 16px;">วันที่: ${new Date(h.date).toLocaleDateString('th-TH')} <span style="font-weight:normal; font-size: 14px; color:#555;">(ผู้ทำรายการ: ${h.doctor || '-'})</span></div>

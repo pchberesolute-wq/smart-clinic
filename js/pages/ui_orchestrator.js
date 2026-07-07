@@ -8,12 +8,38 @@ class UIOrchestratorService {
 
     init() {
         this._injectAbsoluteStyles();
-        this._hijackDataTables(); // 🚨 เปลี่ยนมาใช้ระบบดักปล้นคำสั่ง (Hijack)
+        this._hijackDataTables(); 
+        this._setupRotationEngine(); // 🚨 NEW: เปิดใช้งานระบบรองรับการหมุนหน้าจออัตโนมัติ
         console.log("👑 [UI Orchestrator] TRUE GOD-MODE Activated (100% Override)");
     }
 
     // ==========================================
-    // 1. ⚔️ ระบบยึดอำนาจ DataTables (ดักจับทุกการเรียกใช้ในทุกไฟล์)
+    // 🔄 1. ระบบดักจับการหมุนหน้าจอ (Orientation Change Engine)
+    // ==========================================
+    _setupRotationEngine() {
+        const adjustLayout = () => {
+            // สั่งให้ตาราง DataTables ทุกตัวที่กำลังเปิดอยู่ คำนวณความกว้างใหม่ทันที!
+            if (typeof $ !== 'undefined' && $.fn.DataTable) {
+                $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
+                console.log("🔄 [UI Orchestrator] Screen Rotated -> Tables Re-calculated");
+            }
+        };
+
+        // 📱 ดักฟังเซนเซอร์เมื่อมีการหมุนเครื่อง (Portrait <-> Landscape)
+        window.addEventListener('orientationchange', () => {
+            setTimeout(adjustLayout, 200); // หน่วง 0.2s รอให้เบราว์เซอร์วาดจอแนวนอนเสร็จก่อน
+            setTimeout(adjustLayout, 500); // ย้ำอีกรอบเพื่อความชัวร์ 100%
+        });
+
+        // 💻 ดักฟังเมื่อมีการลากย่อ-ขยายหน้าต่างเบราว์เซอร์บนคอมพิวเตอร์
+        window.addEventListener('resize', () => {
+            clearTimeout(this._resizeTimer);
+            this._resizeTimer = setTimeout(adjustLayout, 150); // Debounce ป้องกันเครื่องกระตุก
+        });
+    }
+
+    // ==========================================
+    // ⚔️ 2. ระบบยึดอำนาจ DataTables (ดักจับทุกการเรียกใช้ในทุกไฟล์)
     // ==========================================
     _hijackDataTables() {
         let retries = 0;
@@ -30,37 +56,33 @@ class UIOrchestratorService {
                     }
                 });
 
-                // 🚨 2. The Hijacker: ยึดฟังก์ชันหลักของ DataTables!
+                // 2. The Hijacker: ยึดฟังก์ชันหลักของ DataTables!
                 const originalDataTable = $.fn.dataTable;
                 
                 $.fn.dataTable = function(options, ...args) {
-                    // ถ้าไฟล์ลูกส่ง Options มาสร้างตาราง เราจะทำการ "บังคับแก้" ก่อนปล่อยผ่าน
                     if (options && typeof options === 'object') {
                         options.destroy = true;
                         options.autoWidth = false;
-                        options.responsive = false; // 🚫 สั่งปิด Responsive (การพับตาราง) แบบเด็ดขาด
+                        options.responsive = false; // 🚫 สั่งปิด Responsive เดิม (การพับตาราง) แบบเด็ดขาด
                         options.scrollX = false; // 🚫 ปิด JS scrollX เพราะเราจะใช้ CSS scrollX แทน (กันกระตุก)
                         
-                        // บังคับ Layout ให้หน้าตาเหมือนกันเป๊ะทุกไฟล์ ห้ามพับซ้อน (flex-nowrap)
-                        options.dom = '<"d-flex flex-nowrap justify-content-between align-items-center mb-3 w-100"lf>rt<"d-flex flex-nowrap justify-content-between align-items-center mt-3 w-100"ip>';
+                        // อัปเกรด DOM Layout ให้รองรับ Flex-Wrap (หักบรรทัดบนจอมือถือ)
+                        options.dom = '<"d-flex flex-wrap justify-content-between align-items-center mb-3 w-100 gap-2"lf>rt<"d-flex flex-wrap justify-content-between align-items-center mt-3 w-100 gap-2"ip>';
                     }
-                    
-                    // ปล่อยให้มันสร้างตารางต่อไปด้วย Options ที่เราแก้แล้ว
                     return originalDataTable.apply(this, [options, ...args]);
                 };
 
-                // นำคุณสมบัติต่างๆ ของ DataTables เดิมกลับมาใส่ตัวที่ยึดอำนาจแล้ว ป้องกันไลบรารีพัง
                 Object.assign($.fn.dataTable, originalDataTable);
                 $.fn.DataTable = $.fn.dataTable;
-                $.fn.dataTable.__godModeStatus = true; // ฝังชิปยืนยันว่าโดนยึดแล้ว
+                $.fn.dataTable.__godModeStatus = true; 
 
-                // 3. สายลับตามแต่งหน้าตาปุ่มค้นหาและแบ่งหน้า (ทำงานทุกครั้งที่วาดตารางเสร็จ)
+                // 3. สายลับตามแต่งหน้าตาปุ่ม
                 $(document).on('draw.dt', function(e, settings) {
                     $('.dataTables_filter input').addClass('form-control shadow-sm').css({
-                        'border-radius': '50px', 'padding': '6px 16px', 'background': '#f8fafc', 'width': '250px', 'outline': 'none'
+                        'border-radius': '50px', 'padding': '6px 16px', 'background': '#f8fafc', 'width': '100%', 'max-width': '250px', 'outline': 'none'
                     });
                     $('.dataTables_length select').addClass('form-select shadow-sm').css({'border-radius': '12px'});
-                    $('.dataTables_paginate > .pagination').addClass('pagination-sm mb-0 shadow-sm');
+                    $('.dataTables_paginate > .pagination').addClass('pagination-sm mb-0 shadow-sm flex-wrap');
                 });
 
             } else if (retries < 100) {
@@ -72,28 +94,32 @@ class UIOrchestratorService {
     }
 
     // ==========================================
-    // 2. 💉 CSS Absolute Hard-Lock (ล็อคขั้นเด็ดขาด)
+    // 💉 3. CSS Absolute Hard-Lock (ล็อคขั้นเด็ดขาด รองรับมือถือ 100%)
     // ==========================================
     _injectAbsoluteStyles() {
         if (document.getElementById('orchestrator-absolute-styles')) return;
         const style = document.createElement('style');
         style.id = 'orchestrator-absolute-styles';
         style.innerHTML = `
-            /* 👑 1. บังคับกล่องนอกสุด (Card/Panel) ห้ามล้นจอเด็ดขาด */
+            /* 👑 บังคับกล่องนอกสุดห้ามล้นจอเด็ดขาด */
             .modern-panel, .card { 
                 overflow: hidden !important; 
                 width: 100% !important; 
                 max-width: 100% !important;
+                box-sizing: border-box !important;
             }
 
-            /* 👑 2. เปลี่ยน DataTables Wrapper ให้เป็นกรอบเลื่อนซ้ายขวา แทนที่ scrollX ของ JS */
+            /* 👑 DataTables Wrapper ให้เป็นกรอบเลื่อนซ้ายขวาอย่างสมบูรณ์แบบ */
             .dataTables_wrapper { 
                 width: 100% !important; 
+                max-width: 100vw !important;
                 overflow-x: auto !important; 
+                overflow-y: hidden !important;
                 -webkit-overflow-scrolling: touch !important; 
+                padding-bottom: 5px !important;
             }
             
-            /* 👑 3. ล็อคตารางให้กว้าง 900px ทุกหน้า ทุกไฟล์! */
+            /* 👑 ล็อคตารางให้กว้าง 900px */
             table.dataTable, table.table { 
                 min-width: 900px !important; 
                 width: 100% !important; 
@@ -102,7 +128,6 @@ class UIOrchestratorService {
                 margin-bottom: 10px !important; 
             }
             
-            /* 👑 4. บังคับหน้าตาช่องตาราง (Cell) ห้ามข้อความตกบรรทัด */
             table.dataTable th, table.dataTable td, table.table th, table.table td {
                 padding: 12px 16px !important;
                 white-space: nowrap !important;
@@ -111,7 +136,6 @@ class UIOrchestratorService {
                 border-bottom: 1px solid #f1f5f9 !important;
             }
             
-            /* 👑 5. หัวตาราง (Header) */
             table.dataTable thead th, table.table thead th {
                 background: #f8fafc !important; 
                 color: #475569 !important; 
@@ -122,24 +146,20 @@ class UIOrchestratorService {
                 font-size: 13px !important;
             }
 
-            /* 👑 6. สีเวลาเอาเมาส์ชี้ */
             table.dataTable tbody tr:hover td, table.table tbody tr:hover td {
                 background-color: #f1f5f9 !important;
             }
 
-            /* 👑 7. แต่งช่องค้นหาเวลาถูก Focus */
             .dataTables_filter input:focus { 
                 background: #ffffff !important; 
                 border-color: #3b82f6 !important; 
                 box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important; 
             }
             
-            /* 👑 8. แต่งปุ่มแบ่งหน้า (Pagination) */
             .dataTables_paginate .paginate_button { padding: 0 !important; margin: 0 !important; border: none !important; background: transparent !important; }
             .page-item .page-link { border-radius: 8px !important; color: #475569 !important; font-weight: 700 !important; font-family: 'Prompt' !important; padding: 6px 12px !important; background: #f8fafc; margin: 0 2px; border: none; }
             .page-item.active .page-link { background: #3b82f6 !important; color: white !important; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3) !important; border-color: #2563eb !important; }
             
-            /* 👑 9. ปิดไอคอนบวก (+) ของระบบ Mobile เดิมทิ้งอย่างถาวร */
             table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control:before, 
             table.dataTable.dtr-inline.collapsed>tbody>tr>th.dtr-control:before {
                 display: none !important;
@@ -149,7 +169,7 @@ class UIOrchestratorService {
     }
 
     // ==========================================
-    // 3. 🛠️ เครื่องมืออเนกประสงค์ให้ไฟล์ลูกเรียกใช้
+    // 🛠️ 4. เครื่องมืออเนกประสงค์ให้ไฟล์ลูกเรียกใช้
     // ==========================================
     applyTableStandard(tableId, customOptions = {}) {
         if (typeof $ === 'undefined' || !$('#' + tableId).length) return null;

@@ -1,5 +1,5 @@
 // js/main.js
-// 🚀 Enterprise Core Router: Bulletproof Rendering, Zero-Freeze, Memory-Leak Prevention & Ghost CSS Terminator
+// 🚀 Enterprise Core Router: Bulletproof Rendering, Zero-Freeze, Dynamic Real-time RBAC & Ghost CSS Terminator
 
 const App = {
     currentUser: null,
@@ -12,6 +12,20 @@ const App = {
     mobileBackdrop: null, 
     
     pages: {}, 
+
+    // 🚨 THE FIX: ตั้งค่า Default Fallback เผื่อกรณีอินเทอร์เน็ตหลุดหรือฐานข้อมูลว่างเปล่า 🚨
+    defaultRolePermissions: {
+        'admin': ['*'],
+        'doctor': ['dashboard', 'visits', 'visit_detail', 'patients', 'patient_history', 'document_center', 'search_copy', 'about'],
+        'head_nurse': ['dashboard', 'visits', 'visit_detail', 'patients', 'patient_history', 'document_center', 'patient_status', 'inventory', 'stock_manage', 'stock_history', 'monthly_requisition', 'stock_forecast', 'usage_statistics', 'search_copy', 'about'],
+        'nurse': ['dashboard', 'visits', 'visit_detail', 'patients', 'patient_history', 'document_center', 'patient_status', 'monthly_requisition', 'search_copy', 'about'],
+        'assistant': ['dashboard', 'visits', 'patient_history', 'document_center', 'search_copy', 'about'],
+        'finance': ['dashboard', 'finance', 'department_ledger', 'search_copy', 'about'],
+        'stock': ['dashboard', 'inventory', 'stock_manage', 'stock_history', 'monthly_requisition', 'stock_forecast', 'usage_statistics', 'search_copy', 'about']
+    },
+
+    // ตัวแปรเก็บสิทธิ์ที่ดึงมาจาก Firebase
+    rolePermissions: {},
 
     initPages: function() {
         this.pages = {
@@ -43,9 +57,6 @@ const App = {
         return this.pages;
     },
 
-    // =========================================================================
-    // 📱 ระบบจัดการเมนูมือถือที่เสถียรที่สุด (Zero-Freeze & Resize-Aware)
-    // =========================================================================
     initMobileSidebar: function() {
         const btnToggle = document.getElementById('btnToggleSidebar');
         
@@ -104,18 +115,19 @@ const App = {
             document.body.style.overflow = ''; 
         }
     },
-    // =========================================================================
 
     clearAllOverlays: function() {
         try {
-            const lockOverlay = document.getElementById('lock-screen-overlay');
-            if (lockOverlay) lockOverlay.remove();
+            if (!this.isLocked) {
+                const lockOverlay = document.getElementById('lock-screen-overlay');
+                if (lockOverlay) lockOverlay.remove();
+                document.body.style.pointerEvents = 'auto';
+            }
 
             if (typeof Swal !== 'undefined' && Swal.isVisible()) {
                 Swal.close();
             }
 
-            document.body.style.pointerEvents = 'auto';
             document.body.classList.remove('swal2-shown', 'swal2-height-auto');
             document.querySelectorAll('.swal2-container').forEach(el => el.remove());
             
@@ -141,8 +153,8 @@ const App = {
                 clockEl.innerHTML = `
                     <div style="display: flex; align-items: center; white-space: nowrap;">
                         <i class="fa-regular fa-clock" style="color:var(--primary); font-size:16.5px; margin-right: 10px;"></i> 
-                        <span style="color: #0f172a; font-size: 14px; font-weight: 700; width: 80px; text-align: right; display: inline-block;">${dateStr}</span> 
-                        <span style="color: #cbd5e1; margin: 0 12px; font-weight: 400;">|</span> 
+                        <span style="color: var(--text-dark); font-size: 14px; font-weight: 700; width: 80px; text-align: right; display: inline-block;">${dateStr}</span> 
+                        <span style="color: var(--border-color); margin: 0 12px; font-weight: 400;">|</span> 
                         <span style="color: var(--primary); font-weight: 800; font-size: 15px; letter-spacing: 0.5px; font-variant-numeric: tabular-nums; width: 75px; text-align: center; display: inline-block;">${timeStr}</span>
                         <span style="color: var(--primary); font-weight: 800; font-size: 15px; margin-left: 2px;">น.</span>
                     </div>
@@ -154,11 +166,83 @@ const App = {
         this.mainClockInterval = setInterval(updateClock, 1000);
     },
 
+    // 🚨 THE FIX: อัปเกรดระบบ RBAC ให้ฟังคำสั่งจาก Firebase แบบ Real-time 🚨
+    applyRBAC: function() {
+        if (!this.currentUser) return;
+        const role = this.currentUser.role || 'nurse'; 
+        
+        // เช็คก่อนว่าโหลดมาจาก Firebase หรือยัง ถ้ายังให้ใช้ Default ไปก่อน
+        const permissionsSrc = Object.keys(this.rolePermissions).length > 0 ? this.rolePermissions : this.defaultRolePermissions;
+        const allowedPages = permissionsSrc[role] || [];
+        const isAdmin = allowedPages.includes('*');
+
+        // 1. ซ่อน/แสดง เมนูซ้ายมือ (Sidebar Nav Items)
+        const navItems = document.querySelectorAll('#mainNavigation .nav-item');
+        navItems.forEach(item => {
+            const pageName = item.getAttribute('data-page');
+            if (!pageName) return;
+
+            if (isAdmin || allowedPages.includes(pageName)) {
+                item.style.display = 'flex'; 
+                item.classList.remove('d-none');
+            } else {
+                item.style.display = 'none'; 
+                item.classList.add('d-none');
+            }
+        });
+
+        // 2. ซ่อนหมวดหมู่หลัก (Nav Sections) หากเมนูย่อยถูกปิดหมด
+        let currentSection = null;
+        let visibleCount = 0;
+        
+        const navElements = document.querySelectorAll('#mainNavigation > li');
+        navElements.forEach((li) => {
+            if (li.classList.contains('nav-section')) {
+                if (currentSection && visibleCount === 0) currentSection.style.display = 'none';
+                currentSection = li; 
+                visibleCount = 0;
+                currentSection.style.display = ''; 
+            } else if (li.classList.contains('nav-item')) {
+                if (!li.classList.contains('d-none') && li.style.display !== 'none') visibleCount++;
+            }
+        });
+        if (currentSection && visibleCount === 0) currentSection.style.display = 'none';
+
+        // 3. เตะออกจากหน้าจอทันที! ถ้าระหว่างที่ใช้งานอยู่โดนถอดสิทธิ์
+        const currentPageEl = document.querySelector('.nav-item.active');
+        if (currentPageEl) {
+            const currentPage = currentPageEl.getAttribute('data-page');
+            if (currentPage !== 'login' && !isAdmin && !allowedPages.includes(currentPage)) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'สิทธิ์ถูกเปลี่ยนแปลง',
+                    text: 'สิทธิ์การเข้าถึงหน้านี้ของคุณถูกเพิกถอนโดยผู้ดูแลระบบแล้ว',
+                    confirmButtonColor: '#ef4444'
+                }).then(() => {
+                    let defaultPage = allowedPages.length > 0 ? allowedPages[0] : 'login';
+                    this.switchPage(defaultPage);
+                });
+            }
+        }
+    },
+
     switchPage: function(pageName, element, payload = null) {
         const sidebar = document.getElementById('sidebar');
         const topbar = document.querySelector('.topbar');
         const mainContent = document.querySelector('.main-content');
         let appContent = document.getElementById('app-content');
+
+        // 🚨 บล็อกการเปิดหน้าจาก Console หากไม่มีสิทธิ์
+        if (pageName !== 'login' && this.currentUser) {
+            const role = this.currentUser.role || 'nurse';
+            const permissionsSrc = Object.keys(this.rolePermissions).length > 0 ? this.rolePermissions : this.defaultRolePermissions;
+            const allowedPages = permissionsSrc[role] || [];
+            
+            if (!allowedPages.includes('*') && !allowedPages.includes(pageName)) {
+                Swal.fire({ icon: 'error', title: 'ปฏิเสธการเข้าถึง (Access Denied)', text: 'บัญชีของคุณไม่มีสิทธิ์เข้าถึงหน้าจอนี้ครับ', confirmButtonColor: '#ef4444' });
+                return; 
+            }
+        }
 
         if (!appContent && mainContent) {
             appContent = document.createElement('div');
@@ -230,17 +314,17 @@ const App = {
                     }
                 } else {
                     appContent.innerHTML = `
-                        <div class="text-center py-5 shadow-sm mx-auto mt-5" style="max-width: 600px; background:#fff; border-radius:16px; border:1px solid #e2e8f0;">
+                        <div class="text-center py-5 shadow-sm mx-auto mt-5" style="max-width: 600px; background:var(--bg-surface); border-radius:16px; border:1px solid var(--border-color);">
                             <i class="fa-solid fa-triangle-exclamation fa-4x text-warning mb-4"></i>
-                            <h3 class="fw-bold text-dark" style="font-family:'Prompt';">ฟังก์ชัน [${pageName}] ยังไม่พร้อมใช้งาน</h3>
-                            <p class="text-muted mb-0">โปรดตรวจสอบการเชื่อมต่อไฟล์โมดูล</p>
+                            <h3 class="fw-bold" style="font-family:'Prompt'; color:var(--text-dark);">ฟังก์ชัน [${pageName}] ยังไม่พร้อมใช้งาน</h3>
+                            <p class="mb-0" style="color:var(--text-muted);">โปรดตรวจสอบการเชื่อมต่อไฟล์โมดูล</p>
                         </div>`;
                     this.activePageModule = null;
                 }
             } catch (fatalError) {
                 console.error("[Router] Fatal Crash:", fatalError);
                 appContent.innerHTML = `
-                    <div class="text-center py-5 shadow-sm mx-auto mt-5" style="max-width: 600px; background:#fef2f2; border-radius:16px; border:1px solid #fecaca;">
+                    <div class="text-center py-5 shadow-sm mx-auto mt-5" style="max-width: 600px; background:var(--bg-surface); border-radius:16px; border:1px solid #fecaca;">
                         <i class="fa-solid fa-bug fa-4x text-danger mb-4"></i>
                         <h3 class="fw-bold text-danger" style="font-family:'Prompt';">เกิดข้อผิดพลาดในการแสดงผล</h3>
                         <p class="text-danger mb-0">${fatalError.message}</p>
@@ -248,7 +332,6 @@ const App = {
             } finally {
                 appContent.style.opacity = 1; 
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                // 🚨 THE FIX: ปิดการเคลียร์ Overlay หน่วงเวลาทิ้ง เพื่อไม่ให้มันไปลบกล่อง Alert มั่วซั่ว
             }
             
         }, 150);
@@ -331,8 +414,8 @@ const App = {
                 
                 .lock-custom-toast {
                     position: absolute; top: 20px; left: 50%; transform: translate3d(-50%, -150%, 0);
-                    background: #ffffff; border: 2px solid #ef4444; box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.2);
-                    border-radius: 50px; padding: 10px 25px; font-family: 'Prompt', sans-serif; color: #0f172a;
+                    background: var(--bg-surface); border: 2px solid #ef4444; box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.2);
+                    border-radius: 50px; padding: 10px 25px; font-family: 'Prompt', sans-serif; color: var(--text-dark);
                     font-weight: 700; font-size: 15px; z-index: 9999999; display: flex; align-items: center;
                     gap: 12px; opacity: 0; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15), opacity 0.3s ease; pointer-events: none;
                 }
@@ -346,25 +429,25 @@ const App = {
                 <span id="lock-screen-toast-text">ข้อความแจ้งเตือน</span>
             </div>
 
-            <div class="text-center" style="width: 100%; max-width: 420px; padding: 40px; background: #ffffff; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); animation: slideDownFadeSafe 0.4s ease forwards; transform: translate3d(0,0,0); position: relative;">
+            <div class="text-center" style="width: 100%; max-width: 420px; padding: 40px; background: var(--bg-surface); border-radius: 24px; border: 1px solid var(--border-color); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); animation: slideDownFadeSafe 0.4s ease forwards; transform: translate3d(0,0,0); position: relative;">
                 <div class="mb-4">
-                    <div id="lock-time-display" style="font-size: 3.5rem; font-weight: 800; color: #0f172a; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -1px;">--:--:--</div>
-                    <div id="lock-date-display" style="font-size: 1.1rem; font-weight: 600; color: #64748b; margin-top: 5px;">กำลังโหลด...</div>
+                    <div id="lock-time-display" style="font-size: 3.5rem; font-weight: 800; color: var(--text-dark); line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -1px;">--:--:--</div>
+                    <div id="lock-date-display" style="font-size: 1.1rem; font-weight: 600; color: var(--text-muted); margin-top: 5px;">กำลังโหลด...</div>
                 </div>
 
-                <img src="${userImg}" class="rounded-circle mb-3 border border-3 border-white" style="width: 80px; height: 80px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                <h4 class="fw-bold text-dark mb-1" style="font-family:'Prompt';">${safeName}</h4>
-                <p class="text-muted small mb-4"><i class="fa-solid fa-lock text-warning me-1"></i> หน้าจอถูกล็อคเนื่องจากไม่มีการใช้งาน</p>
+                <img src="${userImg}" class="rounded-circle mb-3" style="width: 80px; height: 80px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 3px solid var(--bg-surface);">
+                <h4 class="fw-bold mb-1" style="font-family:'Prompt'; color: var(--text-dark);">${safeName}</h4>
+                <p class="small mb-4" style="color: var(--text-muted);"><i class="fa-solid fa-lock text-warning me-1"></i> หน้าจอถูกล็อคเนื่องจากไม่มีการใช้งาน</p>
                 
-                <div class="input-group mb-4" style="border-radius: 14px; overflow:hidden; background: #fff; border: 1px solid #cbd5e1; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-                    <span class="input-group-text bg-light border-0"><i class="fa-solid fa-key text-secondary"></i></span>
-                    <input type="password" id="unlock-password" class="form-control form-control-lg border-0 fw-bold text-dark" placeholder="กรอกรหัสผ่านเพื่อปลดล็อค" onkeypress="if(event.key === 'Enter') App.unlockScreen()" style="outline:none; box-shadow:none; background:transparent;">
+                <div class="input-group mb-4" style="border-radius: 14px; overflow:hidden; background: var(--bg-body); border: 1px solid var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                    <span class="input-group-text border-0" style="background: var(--bg-body);"><i class="fa-solid fa-key" style="color: var(--text-muted);"></i></span>
+                    <input type="password" id="unlock-password" class="form-control form-control-lg border-0 fw-bold" placeholder="กรอกรหัสผ่านเพื่อปลดล็อค" onkeypress="if(event.key === 'Enter') App.unlockScreen()" style="outline:none; box-shadow:none; background:transparent; color: var(--text-dark);">
                 </div>
 
-                <button class="btn btn-primary btn-lg w-100 mb-3 fw-bold rounded-pill" id="btn-unlock" style="box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);" onclick="App.unlockScreen()">
+                <button class="btn btn-premium-primary btn-lg w-100 mb-3 fw-bold rounded-pill" id="btn-unlock" style="box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);" onclick="App.unlockScreen()">
                     <i class="fa-solid fa-unlock-keyhole me-2"></i> ปลดล็อคหน้าจอ
                 </button>
-                <button class="btn btn-light w-100 fw-bold rounded-pill text-danger border shadow-sm" onclick="App.logout()">
+                <button class="btn w-100 fw-bold rounded-pill text-danger shadow-sm" style="background: var(--bg-body); border: 1px solid var(--border-color);" onclick="App.logout()">
                     <i class="fa-solid fa-sign-out-alt me-1"></i> สลับบัญชีผู้ใช้ (Logout)
                 </button>
             </div>
@@ -441,6 +524,11 @@ const App = {
     },
 
     checkAuth: function() {
+        const isLockedFromStorage = localStorage.getItem('dialysis_is_locked') === 'true';
+        if (isLockedFromStorage) {
+            this.isLocked = true;
+        }
+
         this.clearAllOverlays();
 
         const sessionStr = localStorage.getItem('dialysis_user_session');
@@ -459,7 +547,6 @@ const App = {
             return false;
         }
 
-        // ถอนรากถอนโคน CSS ล่องหน
         document.documentElement.classList.remove('not-logged-in');
         const ghostStyle = document.getElementById('anti-flash-style');
         if (ghostStyle) ghostStyle.remove();
@@ -501,7 +588,7 @@ const App = {
 
         this.setupIdleTimer();
 
-        if (localStorage.getItem('dialysis_is_locked') === 'true') {
+        if (this.isLocked) {
             this.lockScreen();
         }
 
@@ -521,13 +608,21 @@ window.addEventListener('DOMContentLoaded', () => {
         sessionStorage.setItem('dialysis_session_active', 'true');
     }
 
-    const isAuthenticated = App.checkAuth();
-    if (!isAuthenticated) return; 
-
-    const defaultMenu = document.querySelector('.nav-item.active') || document.querySelector('.nav-item');
-    App.switchPage('dashboard', defaultMenu);
-
+    // 🚨 THE FIX: เปิดท่อดึงสิทธิ์จาก Firebase ทันทีที่โหลดโปรแกรม (Real-time RBAC Hook)
     if (typeof db !== 'undefined') {
+        db.ref('clinic_roles_v2').on('value', snap => {
+            const data = snap.val();
+            if (data) {
+                App.rolePermissions = data; // อัปเดตสิทธิ์ใหม่ล่าสุด
+            } else {
+                // ถ้าในฐานข้อมูลว่างเปล่า (ยังไม่เคยตั้งค่า) ให้สร้างครั้งแรกอัตโนมัติ
+                App.rolePermissions = App.defaultRolePermissions;
+                db.ref('clinic_roles_v2').set(App.defaultRolePermissions);
+            }
+            // ถ้ายูสเซอร์ล็อกอินอยู่ ให้สับสวิตช์อัปเดตเมนูทันที!
+            if (App.currentUser) App.applyRBAC();
+        });
+
         db.ref('clinic_settings_v2').on('value', snap => {
             const data = snap.val();
             if (data && data.clinic_name) {
@@ -536,13 +631,26 @@ window.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    const isAuthenticated = App.checkAuth();
+    if (!isAuthenticated) return; 
+
+    // เช็คสิทธิ์และหาหน้าแรก (Default Page) ที่พนักงานคนนั้นเข้าได้
+    const role = App.currentUser ? App.currentUser.role : 'nurse';
+    const permissionsSrc = Object.keys(App.rolePermissions).length > 0 ? App.rolePermissions : App.defaultRolePermissions;
+    const allowed = permissionsSrc[role] || [];
+    let defaultPage = 'dashboard';
+    
+    if (!allowed.includes('*') && !allowed.includes('dashboard')) {
+        defaultPage = allowed.length > 0 ? allowed[0] : 'login';
+    }
+    
+    const defaultMenu = document.querySelector(`.nav-item[data-page="${defaultPage}"]`);
+    App.switchPage(defaultPage, defaultMenu);
 });
 
 window.App = App;
 
-// =========================================================================
-// 🚨 THE FIX: ระบบ Auto-Shutdown เมื่อกากบาทปิดหน้าจอเบราว์เซอร์
-// =========================================================================
 window.addEventListener('beforeunload', function () {
     const agentUrl = 'http://127.0.0.1:8000/shutdown'; 
     try {

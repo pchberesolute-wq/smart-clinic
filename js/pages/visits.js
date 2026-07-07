@@ -1,5 +1,5 @@
 // js/pages/visits.js
-// 🚀 Enterprise Kanban Board Module: Atomic Checkouts, Leak-Free Intervals & Zero-Trust UI
+// 🚀 Enterprise Kanban Board Module: Atomic Checkouts, Leak-Free Intervals & Theme Native
 
 class VisitsPageComponent {
     constructor() {
@@ -18,18 +18,17 @@ class VisitsPageComponent {
     }
 
     get html() {
-        // [คง HTML แบบฟอร์มเดิมของคุณหมอไว้ ลบแค่ <style> ออก และเปลี่ยน onclick ให้ชี้มาที่ App.pages]
         return `
             <div class="page-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
                 <div>
                     <h2 class="page-title text-primary"><i class="fa-solid fa-bed-pulse me-2"></i> คิวฟอกไตประจำวัน</h2>
-                    <p class="text-muted mt-1 mb-0" id="visit-date-text">กำลังโหลดข้อมูล...</p>
+                    <p class="mt-1 mb-0" id="visit-date-text" style="color: var(--text-muted);">กำลังโหลดข้อมูล...</p>
                 </div>
                 <div class="d-flex gap-2 flex-wrap">
-                    <div class="search-box-modern shadow-sm p-1 ps-3 bg-white d-flex align-items-center position-relative" style="width: auto; border-radius: 50px;">
+                    <div class="search-box-modern shadow-sm p-1 ps-3 d-flex align-items-center position-relative" style="width: auto; border-radius: 50px; background-color: var(--bg-surface); border: 1px solid var(--border-color);">
                         <input type="date" id="visitDateSelector" class="position-absolute" style="opacity: 0; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer; z-index: 10;" onfocus="this.showPicker && this.showPicker()">
                         <i class="fa-solid fa-calendar-day text-primary me-2 position-relative" style="z-index: 1; pointer-events: none;"></i>
-                        <span id="visitDateDisplay" class="fw-bold text-dark position-relative" style="font-family:'Prompt'; min-width: 90px; text-align: center; z-index: 1; pointer-events: none;">กำลังโหลด...</span>
+                        <span id="visitDateDisplay" class="fw-bold position-relative" style="font-family:'Prompt'; min-width: 90px; text-align: center; z-index: 1; pointer-events: none; color: var(--text-dark);">กำลังโหลด...</span>
                         <button class="btn btn-premium-primary ms-3 py-1 px-3 shadow-sm position-relative" style="border-radius: 50px; font-size:14px; z-index: 20;" onclick="App.pages.visits.setToday()" title="กลับมาวันที่ปัจจุบัน">วันนี้</button>
                     </div>
                     <button class="btn btn-premium btn-premium-danger" onclick="App.pages.visits.quickSwipeCheckOut()">
@@ -43,7 +42,7 @@ class VisitsPageComponent {
             
             <div class="row g-4 mb-4" id="visit-stats-container"></div>
 
-            <div class="modern-panel mb-4 shadow-sm p-4" style="border-radius: 20px;">
+            <div class="modern-panel mb-4 shadow-sm p-4" style="border-radius: 20px; background-color: var(--bg-surface); border: 1px solid var(--border-color);">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <ul class="nav nav-pills" role="tablist">
                         <li class="nav-item me-2">
@@ -52,44 +51,46 @@ class VisitsPageComponent {
                             </button>
                         </li>
                         <li class="nav-item">
-                            <button type="button" id="tab-completed" class="btn btn-light rounded-pill fw-bold text-muted px-4 border shadow-sm" onclick="App.pages.visits.switchTab('completed')">
+                            <button type="button" id="tab-completed" class="btn rounded-pill fw-bold px-4 border shadow-sm" style="background-color: var(--bg-body); color: var(--text-muted); border-color: var(--border-color) !important;" onclick="App.pages.visits.switchTab('completed')">
                                 <i class="fa-solid fa-check-circle me-1"></i> ประวัติฟอกเสร็จแล้ว
                             </button>
                         </li>
                     </ul>
 
-                    <div class="search-box-modern shadow-sm bg-white" style="width: 280px; padding: 10px 20px; border-radius: 50px;">
+                    <div class="search-box-modern shadow-sm" style="width: 280px; padding: 10px 20px; border-radius: 50px; background-color: var(--bg-surface); border: 1px solid var(--border-color);">
                         <i class="fa-solid fa-search text-primary"></i>
-                        <input type="text" id="visitSearch" class="border-0 bg-transparent fw-bold ms-2 w-100 text-dark" placeholder="ค้นหาชื่อ, HN, เตียง..." style="outline:none;">
+                        <input type="text" id="visitSearch" class="border-0 bg-transparent fw-bold ms-2 w-100" placeholder="ค้นหาชื่อ, HN, เตียง..." style="outline:none; color: var(--text-dark);">
                     </div>
                 </div>
             </div>
 
             <div class="row g-4 flex-nowrap overflow-auto pb-4">
                 <div class="col-md-4 min-w-300">
-                    <div class="modern-panel p-0 h-100 d-flex flex-column border-0 shadow-sm overflow-hidden" style="border-top: 4px solid var(--info); border-radius: 20px;">
-                        <div class="p-3 bg-info-light border-bottom border-info-subtle">
+                    <div class="modern-panel p-0 h-100 d-flex flex-column shadow-sm overflow-hidden" style="border-radius: 20px; border: 1px solid var(--border-color); border-top: 4px solid var(--info); background-color: var(--bg-surface);">
+                        <div class="p-3 border-bottom" style="background-color: var(--bg-body); border-color: var(--border-color) !important;">
                             <h6 class="fw-bold mb-0 text-info" style="font-family:'Prompt';"><i class="fa-regular fa-sun me-2"></i> รอบเช้า (06:00 - 10:00)</h6>
                         </div>
-                        <div class="p-3 bg-white flex-grow-1" id="board-morning" style="min-height: 300px;"><div class="text-center py-5 text-muted"><i class="fas fa-spinner fa-spin fa-2x"></i></div></div>
+                        <div class="p-3 flex-grow-1" id="board-morning" style="min-height: 300px; background-color: var(--bg-surface);">
+                            <div class="text-center py-5" style="color: var(--text-muted);"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="col-md-4 min-w-300">
-                    <div class="modern-panel p-0 h-100 d-flex flex-column border-0 shadow-sm overflow-hidden" style="border-top: 4px solid var(--warning); border-radius: 20px;">
-                        <div class="p-3 bg-warning-light border-bottom border-warning-subtle">
-                            <h6 class="fw-bold mb-0 text-warning-dark" style="font-family:'Prompt';"><i class="fa-solid fa-cloud-sun me-2"></i> รอบบ่าย (10:00 - 14:00)</h6>
+                    <div class="modern-panel p-0 h-100 d-flex flex-column shadow-sm overflow-hidden" style="border-radius: 20px; border: 1px solid var(--border-color); border-top: 4px solid var(--warning); background-color: var(--bg-surface);">
+                        <div class="p-3 border-bottom" style="background-color: var(--bg-body); border-color: var(--border-color) !important;">
+                            <h6 class="fw-bold mb-0" style="color: var(--warning); font-family:'Prompt';"><i class="fa-solid fa-cloud-sun me-2"></i> รอบบ่าย (10:00 - 14:00)</h6>
                         </div>
-                        <div class="p-3 bg-white flex-grow-1" id="board-afternoon" style="min-height: 300px;"></div>
+                        <div class="p-3 flex-grow-1" id="board-afternoon" style="min-height: 300px; background-color: var(--bg-surface);"></div>
                     </div>
                 </div>
 
                 <div class="col-md-4 min-w-300">
-                    <div class="modern-panel p-0 h-100 d-flex flex-column border-0 shadow-sm overflow-hidden" style="border-top: 4px solid var(--muted); border-radius: 20px;">
-                        <div class="p-3 bg-light border-bottom">
-                            <h6 class="fw-bold mb-0 text-muted" style="font-family:'Prompt';"><i class="fa-solid fa-moon me-2"></i> รอบเย็น (14:00 เป็นต้นไป)</h6>
+                    <div class="modern-panel p-0 h-100 d-flex flex-column shadow-sm overflow-hidden" style="border-radius: 20px; border: 1px solid var(--border-color); border-top: 4px solid #94a3b8; background-color: var(--bg-surface);">
+                        <div class="p-3 border-bottom" style="background-color: var(--bg-body); border-color: var(--border-color) !important;">
+                            <h6 class="fw-bold mb-0" style="color: #94a3b8; font-family:'Prompt';"><i class="fa-solid fa-moon me-2"></i> รอบเย็น (14:00 เป็นต้นไป)</h6>
                         </div>
-                        <div class="p-3 bg-white flex-grow-1" id="board-evening" style="min-height: 300px;"></div>
+                        <div class="p-3 flex-grow-1" id="board-evening" style="min-height: 300px; background-color: var(--bg-surface);"></div>
                     </div>
                 </div>
             </div>
@@ -99,8 +100,6 @@ class VisitsPageComponent {
     // 🚀 Lifecycle: Mount
     init() {
         if (typeof db === 'undefined' || typeof firebase === 'undefined') return;
-
-        // ❌ นำ autoCleanUpOldRecords ทิ้งไป! เรามี AutoPurgeService ตรงกลางแล้ว 
 
         this.#bindEvents();
 
@@ -166,12 +165,11 @@ class VisitsPageComponent {
         const refPt = db.ref('patients_database_v2/patients');
         const cbPt = refPt.on('value', snap => {
             const data = snap.val() || {};
-            // เก็บข้อมูลคนไข้ พร้อม Key ไว้ในตัว
             this.state.patientsList = Object.keys(data).map(k => ({ firebaseKey: k, ...data[k] })).filter(p => p !== null);
         });
         this.firebaseListeners.push({ path: 'patients_database_v2/patients', callback: cbPt });
 
-        this.setToday(); // 🌟 จะเป็นตัวเรียก #loadVisitsData() ด้วย
+        this.setToday(); 
         
         // 2. เริ่มวงจร Auto Update แบบปลอดภัย
         if (this.autoUpdateInterval) clearInterval(this.autoUpdateInterval);
@@ -185,10 +183,8 @@ class VisitsPageComponent {
         const dObj = new Date(dateStr); 
         const thaiDate = `${String(dObj.getDate()).padStart(2,'0')}/${String(dObj.getMonth() + 1).padStart(2,'0')}/${dObj.getFullYear() + 543}`;
         const dateTextEl = document.getElementById('visit-date-text');
-        if(dateTextEl) dateTextEl.innerHTML = `<i class="fa-regular fa-calendar-check text-success me-1"></i> แสดงคิวประจำวันที่ <b class="text-dark">${thaiDate}</b>`;
+        if(dateTextEl) dateTextEl.innerHTML = `<i class="fa-regular fa-calendar-check text-success me-1"></i> แสดงคิวประจำวันที่ <b style="color: var(--text-dark);">${thaiDate}</b>`;
 
-        // 🚨 FinOps: โหลดเฉพาะคิวของวันที่เลือกเท่านั้น!
-        // (ยกเลิก Listener ตัวเก่าก่อนถ้ามี ป้องกันโหลดทับซ้อน)
         const oldVisitListener = this.firebaseListeners.findIndex(l => l.id === 'visits');
         if (oldVisitListener > -1) {
             db.ref(this.firebaseListeners[oldVisitListener].path).off('value', this.firebaseListeners[oldVisitListener].callback);
@@ -199,7 +195,6 @@ class VisitsPageComponent {
         const cbVisits = refVisits.on('value', snap => {
             try {
                 const data = snap.val() || {};
-                // 🔥 จัดเก็บ Firebase Key ของ Visit ด้วย! สำคัญมากสำหรับ Atomic Update
                 let todayVisits = Object.keys(data).map(k => ({ firebaseKey: k, ...data[k] })).filter(Boolean);
                 this.state.allVisits = todayVisits;
 
@@ -237,10 +232,9 @@ class VisitsPageComponent {
         const tzo = now.getTimezoneOffset() * 60000;
         const todayStr = new Date(now.getTime() - tzo).toISOString().split('T')[0];
         
-        let updates = {}; // 🛒 ตะกร้าสำหรับเก็บข้อมูล Atomic Update
+        let updates = {}; 
 
         this.state.allVisits.forEach(v => {
-            // เช็คเฉพาะคิววันนี้ และสถานะรอตรวจเท่านั้น
             if (v.date === todayStr && v.status === "รอตรวจ" && v.time) {
                 const parts = String(v.time).split(':');
                 if (parts.length === 2) {
@@ -251,7 +245,6 @@ class VisitsPageComponent {
                     
                     const diffMins = (now - scheduledTime) / 60000;
                     
-                    // ถ้าเลยเวลานัดไปแล้ว 5 นาที ให้สั่งอัปเดต!
                     if (diffMins >= 5 && v.firebaseKey) { 
                         updates[`patients_database_v2/visits/${v.firebaseKey}/status`] = "กำลังฟอกไต";
                     }
@@ -259,7 +252,6 @@ class VisitsPageComponent {
             }
         });
 
-        // 🚨 ยิงคำสั่งอัปเดต (ถ้ามี) แบบเฉพาะเจาะจงระดับ Field ปลอดภัย ไม่ทับคิวของเครื่องอื่น
         if (Object.keys(updates).length > 0) {
             db.ref().update(updates);
         }
@@ -268,12 +260,11 @@ class VisitsPageComponent {
     async quickSwipeCheckOut() {
         Swal.fire({
             title: '🔌 ระบบดึงคิวออกด้วยบัตรประชาชน',
-            html: `<div class="py-3 text-center"><i class="fa-solid fa-id-card fa-4x text-primary mb-3 fa-beat"></i><h5 class="fw-bold" style="font-family:'Prompt';">กรุณาเสียบบัตรประชาชนของคนไข้</h5><p class="text-muted small mb-0">ระบบจะดึงคนไข้คนนี้ออกจากกระดานคิวและปิดสถานะเป็นเสร็จสิ้นทันที</p></div>`,
+            html: `<div class="py-3 text-center"><i class="fa-solid fa-id-card fa-4x text-primary mb-3 fa-beat"></i><h5 class="fw-bold" style="font-family:'Prompt'; color: var(--text-dark);">กรุณาเสียบบัตรประชาชนของคนไข้</h5><p class="small mb-0" style="color: var(--text-muted);">ระบบจะดึงคนไข้คนนี้ออกจากกระดานคิวและปิดสถานะเป็นเสร็จสิ้นทันที</p></div>`,
             showCancelButton: true, cancelButtonText: 'ยกเลิก', allowOutsideClick: false, width: 500,
             didOpen: async () => {
                 Swal.showLoading(Swal.getCancelButton());
                 try {
-                    // ใช้ timeout กัน Python agent ค้าง
                     const response = await fetch('http://localhost:8000/read-card', { signal: AbortSignal.timeout(10000) });
                     if (!response.ok) throw new Error("Agent Offline");
                     
@@ -288,12 +279,10 @@ class VisitsPageComponent {
                     if(!ptObj) { Swal.fire('ไม่พบคนไข้', 'ไม่พบประวัติเลขบัตรนี้ในฐานข้อมูลเวชระเบียน', 'warning'); return; }
 
                     const currentDate = this.state.selectedDate;
-                    const activeVisit = this.state.allVisits.find(v => v.hn === ptObj.hn && v.status !== "เสร็จสิ้น"); // ค้นหาจากคิววันนี้
+                    const activeVisit = this.state.allVisits.find(v => v.hn === ptObj.hn && v.status !== "เสร็จสิ้น"); 
 
                     if(activeVisit && activeVisit.firebaseKey) {
-                        // 🚨 THE FIX: อัปเดตเฉพาะคิวของคนไข้คนนั้นแบบ Atomic Update!
                         await db.ref(`patients_database_v2/visits/${activeVisit.firebaseKey}`).update({ status: "เสร็จสิ้น" });
-                        
                         Swal.fire({ title: 'เช็คเอาท์สำเร็จ! 🎉', html: `ปิด Visit และย้ายการ์ดเตียง <b>${activeVisit.bed}</b> ของ <b>${this.#escapeHTML(activeVisit.name)}</b> ไปที่ประวัติเรียบร้อย`, icon: 'success', timer: 2500 });
                     } else { 
                         Swal.fire('ไม่พบข้อมูลคิว', `ไม่พบข้อมูลคิวฟอกไตที่กำลังทำงานอยู่ของ <b>${this.#escapeHTML(ptObj.name_th)}</b> ในวันนี้ครับ`, 'info'); 
@@ -305,40 +294,38 @@ class VisitsPageComponent {
         });
     }
 
-    manageVisit(firebaseKey) { // 🚨 รับ Parameter เป็น Firebase Key แล้ว!
+    manageVisit(firebaseKey) { 
         const v = this.state.allVisits.find(x => x.firebaseKey === firebaseKey); 
         if(!v) return;
         
         Swal.fire({
-            title: `<h5 class="fw-bold mb-0 text-dark" style="font-family:'Prompt';"><i class="fa-solid fa-gears text-primary me-2"></i>จัดการคิว: เตียง ${v.bed}</h5>`,
+            title: `<h5 class="fw-bold mb-0" style="font-family:'Prompt'; color: var(--text-dark);"><i class="fa-solid fa-gears text-primary me-2"></i>จัดการคิว: เตียง ${v.bed}</h5>`,
             html: `
                 <div class="text-start mt-3" style="font-family:'Sarabun';">
-                    <div class="p-3 bg-light rounded-4 border mb-4 text-center shadow-sm">
+                    <div class="p-3 rounded-4 border mb-4 text-center shadow-sm" style="background-color: var(--bg-body); border-color: var(--border-color) !important;">
                         <h5 class="fw-bold text-primary mb-1">${this.#escapeHTML(v.name)}</h5>
-                        <div class="text-muted small fw-bold">HN: ${this.#escapeHTML(v.hn)} <span class="mx-2">|</span> รอบเวลา: ${v.time} น.</div>
+                        <div class="small fw-bold" style="color: var(--text-muted);">HN: ${this.#escapeHTML(v.hn)} <span class="mx-2">|</span> รอบเวลา: ${v.time} น.</div>
                     </div>
                     <button class="btn btn-premium-primary btn-lg w-100 mb-4 fw-bold shadow-sm rounded-pill" onclick="Swal.close(); App.switchPage('visit_detail', null, '${v.id}')"><i class="fa-solid fa-file-medical me-2"></i> บันทึกข้อมูลฟอกไตเชิงลึก (HD Flowsheet)</button>
-                    <hr class="mb-4 border-light">
-                    <label class="form-label fw-bold text-secondary small">อัปเดตสถานะคิวด่วน</label>
-                    <select id="swal-update-status" class="form-select form-select-lg mb-3 shadow-sm fw-bold text-dark input-modern">
+                    <hr class="mb-4" style="border-color: var(--border-color);">
+                    <label class="form-label fw-bold small" style="color: var(--text-muted);">อัปเดตสถานะคิวด่วน</label>
+                    <select id="swal-update-status" class="form-select form-select-lg mb-3 shadow-sm fw-bold input-modern" style="color: var(--text-dark);">
                         <option value="รอตรวจ" ${v.status === 'รอตรวจ' ? 'selected' : ''}>🔵 รอตรวจ</option>
                         <option value="กำลังฟอกไต" ${v.status === 'กำลังฟอกไต' ? 'selected' : ''}>🟠 กำลังฟอกไต</option>
                         <option value="เสร็จสิ้น" ${v.status === 'เสร็จสิ้น' ? 'selected' : ''}>🟢 เสร็จสิ้น / ดึงการ์ดออก</option>
                     </select>
                 </div>
             `,
-            showCancelButton: true, showDenyButton: true, width: 500, confirmButtonText: '<i class="fa-solid fa-save me-1"></i> บันทึกสถานะ', cancelButtonText: 'ปิดหน้าต่าง', denyButtonText: '<i class="fa-solid fa-trash me-1"></i> ลบคิว', confirmButtonColor: '#2563eb', denyButtonColor: '#ef4444',
+            showCancelButton: true, showDenyButton: true, width: 500, confirmButtonText: '<i class="fa-solid fa-save me-1"></i> บันทึกสถานะ', cancelButtonText: 'ปิด', denyButtonText: '<i class="fa-solid fa-trash me-1"></i> ลบคิว', confirmButtonColor: '#2563eb', denyButtonColor: '#ef4444',
             preConfirm: () => { return document.getElementById('swal-update-status').value; }
         }).then((result) => {
             if (result.isConfirmed) {
                 let newStatus = result.value; 
-                // 🚨 THE FIX: Atomic Status Update
                 db.ref(`patients_database_v2/visits/${firebaseKey}`).update({ status: newStatus }).then(() => { 
                     Swal.fire({ title: 'อัปเดตสถานะคิวสำเร็จ', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
                 });
             } else if (result.isDenied) {
                 Swal.fire({ title: 'ยืนยันการลบ?', text: `ต้องการยกเลิกคิวเตียง ${v.bed} ของ ${this.#escapeHTML(v.name)} ใช่หรือไม่?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'ใช่, ยกเลิกคิว' }).then((delRes) => {
-                    // 🚨 THE FIX: Atomic Delete
                     if (delRes.isConfirmed) { 
                         db.ref(`patients_database_v2/visits/${firebaseKey}`).remove().then(() => Swal.fire('ลบแล้ว!', 'คิวถูกยกเลิกออกจากกระดาน', 'success')); 
                     }
@@ -378,13 +365,15 @@ class VisitsPageComponent {
         
         if(tabName === 'active') { 
             btnActive.className = "btn btn-premium-primary rounded-pill fw-bold px-4 shadow-sm"; 
-            btnCompleted.className = "btn btn-light rounded-pill fw-bold text-muted px-4 border shadow-sm"; 
+            btnCompleted.className = "btn rounded-pill fw-bold px-4 border shadow-sm"; 
+            btnCompleted.style.cssText = "background-color: var(--bg-body); color: var(--text-muted); border-color: var(--border-color) !important;";
         } else { 
-            btnActive.className = "btn btn-light rounded-pill fw-bold text-muted px-4 border shadow-sm"; 
+            btnActive.className = "btn rounded-pill fw-bold px-4 border shadow-sm"; 
+            btnActive.style.cssText = "background-color: var(--bg-body); color: var(--text-muted); border-color: var(--border-color) !important;";
             btnCompleted.className = "btn btn-premium-success rounded-pill fw-bold px-4 shadow-sm"; 
+            btnCompleted.style.cssText = "";
         }
         
-        // กรองข้อมูลในเครื่องใหม่โดยไม่ต้องโหลดจาก DB ซ้ำ
         this.#loadVisitsData(); 
     }
 
@@ -394,10 +383,10 @@ class VisitsPageComponent {
 
         const statContainer = document.getElementById('visit-stats-container'); if(!statContainer) return;
         statContainer.innerHTML = `
-            <div class="col-md-3 col-sm-6"><div class="modern-panel p-4 h-100 position-relative overflow-hidden card-hover-float" style="border-top: 4px solid var(--muted); border-radius: 20px;"><div class="text-muted fw-bold small text-uppercase mb-2">คิวทั้งหมด</div><h2 class="fw-bold text-dark mb-0">${tTotal} <span class="fs-6 text-muted fw-normal">ราย</span></h2></div></div>
-            <div class="col-md-3 col-sm-6"><div class="modern-panel p-4 h-100 position-relative overflow-hidden card-hover-float" style="border-top: 4px solid var(--primary); border-radius: 20px;"><div class="text-primary fw-bold small text-uppercase mb-2">รอตรวจ</div><h2 class="fw-bold text-primary mb-0">${tWait} <span class="fs-6 text-muted fw-normal">ราย</span></h2></div></div>
-            <div class="col-md-3 col-sm-6"><div class="modern-panel p-4 h-100 position-relative overflow-hidden card-hover-float bg-warning-light" style="border-top: 4px solid var(--warning); border-radius: 20px;"><div class="text-warning-dark fw-bold small text-uppercase mb-2">กำลังฟอกไต</div><h2 class="fw-bold text-warning-dark mb-0">${tDialysis} <span class="fs-6 fw-normal">ราย</span></h2></div></div>
-            <div class="col-md-3 col-sm-6"><div class="modern-panel p-4 h-100 position-relative overflow-hidden card-hover-float bg-success-light" style="border-top: 4px solid var(--success); border-radius: 20px;"><div class="text-success-dark fw-bold small text-uppercase mb-2">เสร็จสิ้น</div><h2 class="fw-bold text-success mb-0">${tDone} <span class="fs-6 text-success fw-normal opacity-75">ราย</span></h2></div></div>
+            <div class="col-md-3 col-sm-6"><div class="modern-panel p-4 h-100 position-relative overflow-hidden card-hover-float" style="background-color: var(--bg-surface); border: 1px solid var(--border-color); border-top: 4px solid var(--muted); border-radius: 20px;"><div class="fw-bold small text-uppercase mb-2" style="color: var(--text-muted);">คิวทั้งหมด</div><h2 class="fw-bold mb-0" style="color: var(--text-dark);">${tTotal} <span class="fs-6 fw-normal" style="color: var(--text-muted);">ราย</span></h2></div></div>
+            <div class="col-md-3 col-sm-6"><div class="modern-panel p-4 h-100 position-relative overflow-hidden card-hover-float" style="background-color: var(--bg-surface); border: 1px solid var(--border-color); border-top: 4px solid var(--primary); border-radius: 20px;"><div class="text-primary fw-bold small text-uppercase mb-2">รอตรวจ</div><h2 class="fw-bold text-primary mb-0">${tWait} <span class="fs-6 fw-normal" style="color: var(--text-muted);">ราย</span></h2></div></div>
+            <div class="col-md-3 col-sm-6"><div class="modern-panel p-4 h-100 position-relative overflow-hidden card-hover-float" style="background-color: var(--bg-surface); border: 1px solid var(--border-color); border-top: 4px solid var(--warning); border-radius: 20px;"><div class="fw-bold small text-uppercase mb-2" style="color: var(--warning);">กำลังฟอกไต</div><h2 class="fw-bold mb-0" style="color: var(--warning);">${tDialysis} <span class="fs-6 fw-normal" style="color: var(--text-muted);">ราย</span></h2></div></div>
+            <div class="col-md-3 col-sm-6"><div class="modern-panel p-4 h-100 position-relative overflow-hidden card-hover-float" style="background-color: var(--bg-surface); border: 1px solid var(--border-color); border-top: 4px solid var(--success); border-radius: 20px;"><div class="text-success fw-bold small text-uppercase mb-2">เสร็จสิ้น</div><h2 class="fw-bold text-success mb-0">${tDone} <span class="fs-6 fw-normal opacity-75" style="color: var(--text-muted);">ราย</span></h2></div></div>
         `;
     }
 
@@ -406,7 +395,7 @@ class VisitsPageComponent {
         visitList.sort((a, b) => String(a.time || "00:00").localeCompare(String(b.time || "00:00")));
 
         if(visitList.length === 0) {
-            el.innerHTML = `<div class="text-center p-4 border border-dashed rounded-4 text-muted h-100 d-flex flex-column align-items-center justify-content-center" style="background: var(--bg-main); border-color: #cbd5e1 !important;"><i class="fa-solid fa-bed text-light fa-3x mb-3" style="color:#cbd5e1!important;"></i><p class="mb-0 fw-bold" style="font-size:14px; font-family:'Prompt';">${shiftName} ยังไม่มีข้อมูลคิว</p></div>`;
+            el.innerHTML = `<div class="text-center p-4 border border-dashed rounded-4 h-100 d-flex flex-column align-items-center justify-content-center" style="background-color: var(--bg-body); border-color: var(--border-color) !important; color: var(--text-muted);"><i class="fa-solid fa-bed fa-3x mb-3" style="color: var(--border-color) !important;"></i><p class="mb-0 fw-bold" style="font-size:14px; font-family:'Prompt';">${shiftName} ยังไม่มีข้อมูลคิว</p></div>`;
             return;
         }
 
@@ -414,22 +403,24 @@ class VisitsPageComponent {
         visitList.forEach(v => {
             let status = v.status || "รอตรวจ"; let bColor = "var(--info)"; let badgeClass = "badge-soft-info"; let opacityStyle = "";
             if(status.includes("กำลังฟอก")) { bColor = "var(--warning)"; badgeClass = "badge-soft-warning"; }
-            if(status.includes("เสร็จสิ้น")) { bColor = "var(--success)"; badgeClass = "badge-soft-success"; opacityStyle = "opacity: 0.8; background: var(--bg-main);"; }
+            if(status.includes("เสร็จสิ้น")) { bColor = "var(--success)"; badgeClass = "badge-soft-success"; opacityStyle = "opacity: 0.8;"; }
             
-            // XSS Security
             const safeName = this.#escapeHTML(v.name);
 
-            // 🚨 ผ่านค่า firebaseKey ไปที่ปุ่มคลิกแทน v.id
+            // 🚨 THE FIX: นำคลาส .visit-bed และ .bg-white ออก ใช้ Component ที่อิงกับ CSS Variables
             html += `
-            <div class="visit-card shadow-sm mb-3 p-3 border" style="border-left: 5px solid ${bColor}; ${opacityStyle}" onclick="App.pages.visits.manageVisit('${v.firebaseKey}')">
+            <div class="visit-card shadow-sm mb-3 p-3 border card-hover-float" style="background-color: var(--bg-surface); border-color: var(--border-color) !important; border-left: 5px solid ${bColor} !important; ${opacityStyle}" onclick="App.pages.visits.manageVisit('${v.firebaseKey}')">
                 <div class="d-flex justify-content-between align-items-start w-100 mb-2">
-                    <div><span class="visit-bed shadow-sm"><i class="fa-solid fa-bed me-1 text-primary"></i> เตียง ${this.#escapeHTML(v.bed || '-')}</span><span class="ms-2 fw-bold text-primary" style="font-size:13px;">⏰ ${v.time || '-'}</span></div>
+                    <div>
+                        <span class="badge border shadow-sm px-3 py-2 rounded-pill" style="background-color: var(--bg-body); color: var(--text-dark); border-color: var(--border-color) !important; font-size: 12px;"><i class="fa-solid fa-bed me-1 text-primary"></i> เตียง ${this.#escapeHTML(v.bed || '-')}</span>
+                        <span class="ms-2 fw-bold text-primary" style="font-size:13px;">⏰ ${v.time || '-'}</span>
+                    </div>
                     <div class="text-end"><span class="badge ${badgeClass} shadow-sm rounded-pill px-2 py-1" style="font-size:11px; font-family:'Prompt';">${status}</span></div>
                 </div>
-                <div class="fw-bold text-dark mt-2 mb-1" style="font-size:15px; font-family:'Prompt';">${safeName || 'ไม่ระบุชื่อ'}</div>
+                <div class="fw-bold mt-2 mb-1" style="font-size:15px; font-family:'Prompt'; color: var(--text-dark);">${safeName || 'ไม่ระบุชื่อ'}</div>
                 <div class="d-flex justify-content-between align-items-center">
-                    <div class="text-muted fw-bold" style="font-size:12px;"><i class="fa-solid fa-id-card text-secondary me-1"></i> HN: ${this.#escapeHTML(v.hn || '-')}</div>
-                    <div class="text-muted fw-bold" style="font-size:12px;"><i class="fa-solid fa-shield-heart text-success me-1"></i> ${this.#escapeHTML(v.right || '-')}</div>
+                    <div class="fw-bold" style="font-size:12px; color: var(--text-muted);"><i class="fa-solid fa-id-card text-secondary me-1"></i> HN: ${this.#escapeHTML(v.hn || '-')}</div>
+                    <div class="fw-bold" style="font-size:12px; color: var(--text-muted);"><i class="fa-solid fa-shield-heart text-success me-1"></i> ${this.#escapeHTML(v.right || '-')}</div>
                 </div>
             </div>`;
         });
@@ -452,21 +443,21 @@ class VisitsPageComponent {
             title: `<h4 class="fw-bold mb-0 text-primary" style="font-family:'Prompt';"><i class="fa-solid fa-bed-pulse me-2"></i> เปิดคิวฟอกไตใหม่</h4>`,
             html: `
                 <div class="text-start mt-3" style="font-family:'Sarabun';">
-                    <button type="button" class="btn btn-outline-primary w-100 fw-bold shadow-sm mb-4 py-3 bg-white" style="border-radius:14px; border-style:dashed;" id="btn-visit-read-card" onclick="App.pages.visits.readCardForVisit()">
-                        <i class="fa-solid fa-id-card me-2"></i> เสียบบัตร ปชช. ดึงประวัติคนไข้
+                    <button type="button" class="btn w-100 fw-bold shadow-sm mb-4 py-3" style="background-color: var(--bg-surface); color: var(--text-dark); border: 2px dashed var(--primary); border-radius:14px;" id="btn-visit-read-card" onclick="App.pages.visits.readCardForVisit()">
+                        <i class="fa-solid fa-id-card me-2 text-primary"></i> เสียบบัตร ปชช. ดึงประวัติคนไข้
                     </button>
-                    <label class="form-label fw-bold text-secondary small">เลือกผู้ป่วย (พิมพ์ค้นหาชื่อ หรือ HN)</label>
+                    <label class="form-label fw-bold small" style="color: var(--text-muted);">เลือกผู้ป่วย (พิมพ์ค้นหาชื่อ หรือ HN)</label>
                     <input list="visit-pt-datalist" id="swal-v-patient" class="input-modern w-100 mb-3 shadow-sm" placeholder="พิมพ์ค้นหา หรือเสียบบัตร...">
                     <datalist id="visit-pt-datalist">${optionsHtml}</datalist>
                     
                     <div class="row g-3">
                         <div class="col-7">
-                            <label class="form-label fw-bold text-secondary small">เวลานัดหมาย (ชม. : นาที)</label>
+                            <label class="form-label fw-bold small" style="color: var(--text-muted);">เวลานัดหมาย (ชม. : นาที)</label>
                             <div class="d-flex align-items-center gap-1">
                                 <select id="swal-v-time-hour" class="form-select input-modern shadow-sm fw-bold text-primary text-center" style="cursor:pointer; height: 45px; padding-right:10px;">${hourOptions}</select>
-                                <span class="fw-bold text-dark">:</span>
+                                <span class="fw-bold" style="color: var(--text-dark);">:</span>
                                 <select id="swal-v-time-minute" class="form-select input-modern shadow-sm fw-bold text-primary text-center" style="cursor:pointer; height: 45px; padding-right:10px;">${minuteOptions}</select>
-                                <span class="fw-bold text-secondary ms-1 small">น.</span>
+                                <span class="fw-bold ms-1 small" style="color: var(--text-muted);">น.</span>
                             </div>
                         </div>
                         <div class="col-5">
@@ -504,7 +495,6 @@ class VisitsPageComponent {
                 Swal.fire({ title: 'กำลังจัดคิว (Atomic)...', didOpen: () => Swal.showLoading() });
                 
                 try {
-                    // 🚨 THE FIX: Atomic Creation
                     await db.ref('patients_database_v2/visits').push(newVisit);
                     Swal.fire({ title: 'สำเร็จ', text: `ลงคิวเตียง ${newVisit.bed} ให้ ${newVisit.name} เรียบร้อย`, icon: 'success', timer: 1500, showConfirmButton: false });
                 } catch (err) {
@@ -544,7 +534,6 @@ class VisitsPageComponent {
         } catch (err) { Swal.showValidationMessage('เปิดโปรแกรมอ่านบัตรไว้แล้วหรือไม่? (Agent Offline)'); btn.innerHTML = originalHtml; btn.disabled = false; }
     }
 
-    // 🛡️ Helpers
     #escapeHTML(str) {
         if (!str && str !== 0) return '';
         return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
@@ -552,5 +541,3 @@ class VisitsPageComponent {
 }
 const VisitsPage = new VisitsPageComponent();
 window.VisitsPage = VisitsPage;
-// 🌐 Expose Component
-// const VisitsPage = new VisitsPageComponent();
