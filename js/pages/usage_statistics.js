@@ -48,7 +48,10 @@ class UsageStatisticsPageComponent {
                 .native-date-wrapper span { position: relative; z-index: 1; font-family: 'Prompt'; font-weight: 800; color: #2563eb; font-size: 14px; pointer-events: none; }
                 .native-date-wrapper i { position: relative; z-index: 1; margin-right: 8px; font-size: 16px; color: #2563eb; pointer-events: none; }
 
-                /* 🚨 THE FIX: บังคับแก้ไขสีสว่างให้เป็นโหมดมืด (Dark Mode Support) แบบตายตัว 🚨 */
+                /* 🚨 THE FIX: ยันต์กันไอคอนเพี้ยน (Force Font Awesome) 🚨 */
+                .safe-icon { font-family: 'Font Awesome 6 Free', 'FontAwesome', sans-serif !important; font-weight: 900 !important; font-style: normal !important; }
+
+                /* บังคับแก้ไขสีสว่างให้เป็นโหมดมืด (Dark Mode Support) แบบตายตัว */
                 html[data-bs-theme="dark"] .stat-card-analytics { background-color: var(--bg-surface) !important; border-color: var(--border-color) !important; }
                 html[data-bs-theme="dark"] .stat-card-analytics .text-dark { color: var(--text-dark) !important; }
                 html[data-bs-theme="dark"] .view-btn-group { background-color: var(--bg-surface) !important; border-color: var(--border-color) !important; }
@@ -64,7 +67,7 @@ class UsageStatisticsPageComponent {
 
             <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
                 <div>
-                    <h2 class="page-title text-primary" style="font-size:28px;"><i class="fa-solid fa-chart-line me-2"></i> สถิติการเบิกใช้น้ำยาและยาฉีด</h2>
+                    <h2 class="page-title text-primary" style="font-size:28px;"><i class="fa-solid fa-chart-line me-2 safe-icon"></i> สถิติการเบิกใช้น้ำยาและยาฉีด</h2>
                     <p class="text-muted mt-1 mb-0" id="stat-date-text">ประมวลผลสรุปปริมาณการใช้พัสดุและแสดงรหัสสินค้าอ้างอิง</p>
                 </div>
                 
@@ -78,41 +81,41 @@ class UsageStatisticsPageComponent {
                     
                     <div class="date-filter-container">
                         <div class="native-date-wrapper" onclick="this.querySelector('input').showPicker ? this.querySelector('input').showPicker() : null">
-                            <i class="fa-solid fa-calendar-days"></i><span id="stat-start-display">กำลังโหลด...</span>
+                            <i class="fa-solid fa-calendar-days safe-icon"></i><span id="stat-start-display">กำลังโหลด...</span>
                             <input type="date" id="stat-start-date" onchange="App.pages.usage_statistics.onDateChange()">
                         </div>
                         <span class="text-muted fw-bold small mx-1">ถึง</span>
                         <div class="native-date-wrapper" onclick="this.querySelector('input').showPicker ? this.querySelector('input').showPicker() : null">
-                            <i class="fa-solid fa-calendar-days"></i><span id="stat-end-display">กำลังโหลด...</span>
+                            <i class="fa-solid fa-calendar-days safe-icon"></i><span id="stat-end-display">กำลังโหลด...</span>
                             <input type="date" id="stat-end-date" onchange="App.pages.usage_statistics.onDateChange()">
                         </div>
                         <button class="btn btn-primary rounded-pill px-3 fw-bold shadow-sm" style="z-index:15; font-size: 13px; margin-left: 4px;" onclick="App.pages.usage_statistics.setThisMonth()">เดือนนี้</button>
                     </div>
                     
-                    <button class="btn btn-dark fw-bold shadow-sm rounded-pill px-4 card-hover-float" onclick="App.pages.usage_statistics.printReport()"><i class="fa-solid fa-print me-2 text-warning"></i> พิมพ์เอกสาร</button>
+                    <button class="btn btn-dark fw-bold shadow-sm rounded-pill px-4 card-hover-float" onclick="App.pages.usage_statistics.printReport()"><i class="fa-solid fa-print me-2 text-warning safe-icon"></i> พิมพ์เอกสาร</button>
                 </div>
             </div>
 
             <div class="row g-3 mb-4">
                 <div class="col-md-4">
                     <div class="stat-card-analytics" style="border-top:5px solid #10b981;">
-                        <i class="fa-solid fa-faucet-drip analytics-icon-bg"></i>
+                        <i class="fa-solid fa-faucet-drip analytics-icon-bg safe-icon"></i>
                         <div class="d-flex justify-content-between mb-2"><div class="text-success fw-bold small text-uppercase">น้ำยาไตเทียม (Dialysate)</div></div>
-                        <div class="fs-2 fw-bold text-dark"><span id="lbl-total-fluid"><i class="fas fa-spinner fa-spin fs-4"></i></span> <span class="fs-6 text-muted fw-normal">แกลลอน/ชิ้น</span></div>
+                        <div class="fs-2 fw-bold text-dark"><span id="lbl-total-fluid"><i class="fas fa-spinner fa-spin fs-4 safe-icon"></i></span> <span class="fs-6 text-muted fw-normal">แกลลอน/ชิ้น</span></div>
                         <p class="text-muted small mt-1 mb-0">น้ำยาพาร์ท A, B และ Concentrates ทุกสูตร</p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="stat-card-analytics" style="border-top:5px solid #ef4444;">
-                        <i class="fa-solid fa-syringe analytics-icon-bg" style="font-size:110px;"></i>
+                        <i class="fa-solid fa-syringe analytics-icon-bg safe-icon" style="font-size:110px;"></i>
                         <div class="d-flex justify-content-between mb-2"><div class="text-danger fw-bold small text-uppercase">ยาฉีดและเวชภัณฑ์ (Medications)</div></div>
-                        <div class="fs-2 fw-bold text-dark"><span id="lbl-total-meds"><i class="fas fa-spinner fa-spin fs-4"></i></span> <span class="fs-6 text-muted fw-normal">Vial/ชิ้น</span></div>
+                        <div class="fs-2 fw-bold text-dark"><span id="lbl-total-meds"><i class="fas fa-spinner fa-spin fs-4 safe-icon"></i></span> <span class="fs-6 text-muted fw-normal">Vial/ชิ้น</span></div>
                         <p class="text-muted small mt-1 mb-0">Heparin, EPO และเวชภัณฑ์สิ้นเปลือง</p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="stat-card-analytics" style="border-top:5px solid #3b82f6;">
-                        <i class="fa-solid fa-star analytics-icon-bg"></i>
+                        <i class="fa-solid fa-star analytics-icon-bg safe-icon"></i>
                         <div class="d-flex justify-content-between mb-2"><div class="text-primary fw-bold small text-uppercase">รายการพัสดุที่เบิกใช้สูงสุด</div></div>
                         <div class="fs-4 fw-bold text-dark text-truncate" id="lbl-top-item" style="font-family:'Prompt';">กำลังคำนวณ...</div>
                         <p class="text-muted small mt-1 mb-0">ไอเทมพัสดุที่มีจำนวนการใช้สูงสุดในช่วงเวลานี้</p>
@@ -123,13 +126,13 @@ class UsageStatisticsPageComponent {
             <div class="row g-4 mb-4">
                 <div class="col-xl-8">
                     <div class="modern-panel shadow-sm p-4 h-100" style="border-radius:20px; background:var(--bg-surface); border:1px solid var(--border-color); border-top:5px solid var(--info);">
-                        <h5 class="fw-bold mb-4" style="color:var(--text-dark);"><i class="fa-solid fa-chart-column text-info me-2"></i> กราฟเปรียบเทียบแนวโน้มปริมาณการเบิกใช้รายหมวดหมู่</h5>
+                        <h5 class="fw-bold mb-4" style="color:var(--text-dark);"><i class="fa-solid fa-chart-column text-info me-2 safe-icon"></i> กราฟเปรียบเทียบแนวโน้มปริมาณการเบิกใช้รายหมวดหมู่</h5>
                         <div style="height:320px; width:100%; display:flex; justify-content:center; align-items:center;" id="stat-chart-container"><canvas id="usageStatisticsChart"></canvas></div>
                     </div>
                 </div>
                 <div class="col-xl-4">
                     <div class="modern-panel shadow-sm p-4 h-100" style="border-radius:20px; background:var(--bg-surface); border:1px solid var(--border-color); border-top:5px solid #8b5cf6;">
-                        <h5 class="fw-bold mb-4" style="color:var(--text-dark);"><i class="fa-solid fa-chart-pie text-primary me-2"></i> สัดส่วน Top 5 รายการยอดฮิต</h5>
+                        <h5 class="fw-bold mb-4" style="color:var(--text-dark);"><i class="fa-solid fa-chart-pie text-primary me-2 safe-icon"></i> สัดส่วน Top 5 รายการยอดฮิต</h5>
                         <div style="height:320px; width:100%; display:flex; justify-content:center; align-items:center;" id="stat-pie-container"><canvas id="topItemsPieChart"></canvas></div>
                     </div>
                 </div>
@@ -137,9 +140,9 @@ class UsageStatisticsPageComponent {
 
             <div class="modern-panel shadow-sm p-4 position-relative overflow-hidden" style="border-top:5px solid var(--secondary); border-radius:20px; background:var(--bg-surface); border:1px solid var(--border-color);">
                 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-                    <h5 class="fw-bold text-dark mb-0" style="color:var(--text-dark) !important;"><i class="fa-solid fa-table text-secondary me-2"></i> ตารางวิเคราะห์สรุปยอดแยกประเภทรายการเบิกใช้</h5>
+                    <h5 class="fw-bold text-dark mb-0" style="color:var(--text-dark) !important;"><i class="fa-solid fa-table text-secondary me-2 safe-icon"></i> ตารางวิเคราะห์สรุปยอดแยกประเภทรายการเบิกใช้</h5>
                     <div class="search-box-modern shadow-sm" style="width: 250px; background-color:var(--bg-body); border: 1px solid var(--border-color); border-radius: 50px; padding: 6px 15px;">
-                        <i class="fa-solid fa-search text-primary"></i>
+                        <i class="fa-solid fa-search text-primary safe-icon"></i>
                         <input type="text" id="stat-search-inp" class="border-0 bg-transparent ms-2 w-100 fw-bold text-dark" placeholder="ค้นหาชื่อ, รหัส..." onkeyup="App.pages.usage_statistics.filterTable()" style="outline:none;">
                     </div>
                 </div>
@@ -214,28 +217,6 @@ class UsageStatisticsPageComponent {
             });
             this.firebaseListeners.push({ path: 'inventory_database_v2/transactions', callback: cbTrans });
         });
-    }
-
-    // 🚨 ระบบกวาดล้างข้อมูลเก่าเกิน 5 ปี (Auto-Purge 5 Years) 🚨
-    #autoPurgeOldRecords() { 
-        this.state.hasCleanedUp = true; 
-        const cutoffDate = new Date(); 
-        cutoffDate.setFullYear(cutoffDate.getFullYear() - 5); 
-        const cutoffStr = cutoffDate.toISOString(); 
-        
-        db.ref('inventory_database_v2/transactions').orderByChild('timestamp').endAt(cutoffStr).once('value').then(snap => { 
-            if(snap.exists()) { 
-                let updates = {}; 
-                let deletedCount = 0;
-                snap.forEach(child => { 
-                    updates[child.key] = null; 
-                    deletedCount++;
-                }); 
-                db.ref('inventory_database_v2/transactions').update(updates).then(() => {
-                    console.log(`[Auto-Purge] ล้างประวัติสถิติเบิกจ่ายพัสดุที่เก่าเกิน 5 ปี สำเร็จ จำนวน ${deletedCount} รายการ`);
-                }); 
-            } 
-        }); 
     }
 
     // ---------------------------------------------------------
@@ -409,7 +390,8 @@ class UsageStatisticsPageComponent {
             let itemsInPeriod = periodGroups[pKey];
             Object.keys(itemsInPeriod).forEach(iId => {
                 let d = itemsInPeriod[iId]; 
-                let badge = d.cat === 'น้ำยาไตเทียม' ? '<span class="badge-fluid"><i class="fa-solid fa-faucet-drip me-1"></i> น้ำยา</span>' : '<span class="badge-med"><i class="fa-solid fa-syringe me-1"></i> เวชภัณฑ์</span>';
+                // 🚨 THE FIX: เติม safe-icon ให้หยดน้ำและเข็มฉีดยา
+                let badge = d.cat === 'น้ำยาไตเทียม' ? '<span class="badge-fluid"><i class="fa-solid fa-faucet-drip me-1 safe-icon"></i> น้ำยา</span>' : '<span class="badge-med"><i class="fa-solid fa-syringe me-1 safe-icon"></i> เวชภัณฑ์</span>';
                 
                 let dp = pKey;
                 if(this.state.selectedView === 'monthly') { 
@@ -419,10 +401,11 @@ class UsageStatisticsPageComponent {
                 else if(this.state.selectedView === 'yearly') { dp = 'ปี พ.ศ. ' + (Number(pKey)+543); } 
                 else if(this.state.selectedView === 'daily') { dp = this.formatDateTh(pKey); }
                 
+                // 🚨 THE FIX: เติม safe-icon ให้บาร์โค้ด
                 tableHtml += '<tr class="card-hover-float stat-row">' +
                              '<td><span class="badge bg-dark text-white fw-bold px-3 py-1 rounded-pill small">' + this.#escapeHTML(dp) + '</span></td>' +
                              '<td class="text-center">' + badge + '</td>' +
-                             '<td><span class="badge bg-primary-subtle text-primary border border-primary-subtle me-1">' + this.#escapeHTML(d.itemCode) + '</span> <span class="badge bg-light text-secondary border"><i class="fa-solid fa-barcode"></i> ' + this.#escapeHTML(d.barcode) + '</span></td>' +
+                             '<td><span class="badge bg-primary-subtle text-primary border border-primary-subtle me-1">' + this.#escapeHTML(d.itemCode) + '</span> <span class="badge bg-light text-secondary border"><i class="fa-solid fa-barcode safe-icon"></i> ' + this.#escapeHTML(d.barcode) + '</span></td>' +
                              '<td><span class="fw-bold text-dark row-search-name" style="font-family:\'Prompt\';">' + this.#escapeHTML(d.name) + '</span></td>' +
                              '<td class="text-end fw-bold text-dark" style="font-size:15px;">' + d.qty.toLocaleString() + '</td>' +
                              '<td class="text-end fw-bold text-primary" style="font-size:15px;">฿' + d.cost.toLocaleString(undefined, {minimumFractionDigits: 2}) + '</td>' +
@@ -431,7 +414,8 @@ class UsageStatisticsPageComponent {
         });
 
         if(!tableHtml) {
-            tableHtml = '<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fa-solid fa-chart-pie fa-3x mb-3" style="opacity:0.2;"></i><br>ไม่พบประวัติข้อมูลเบิกพัสดุในช่วงเวลาที่เลือก</td></tr>';
+            // 🚨 THE FIX: เติม safe-icon ให้ชาร์ตพายของ Empty State
+            tableHtml = '<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fa-solid fa-chart-pie fa-3x mb-3 safe-icon" style="opacity:0.2;"></i><br>ไม่พบประวัติข้อมูลเบิกพัสดุในช่วงเวลาที่เลือก</td></tr>';
         }
         document.getElementById('stat-table-body').innerHTML = tableHtml;
 

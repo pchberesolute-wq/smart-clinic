@@ -25,6 +25,9 @@ class StockHistoryPageComponent {
                 .date-filter-wrapper:hover { border-color: var(--primary); box-shadow: 0 4px 6px -1px rgba(37,99,235,0.1); }
                 .date-filter-input { position: absolute; opacity: 0; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer; z-index: 10; }
                 .date-clear-btn { position: relative; z-index: 20; border: none; background: transparent; color: #ef4444; margin-left: 10px; cursor: pointer; display: none; }
+                
+                /* 🚨 THE FIX: ยันต์เกราะเพชรป้องกันไอคอนโดนฟอนต์อื่นกลืนกลายเป็นสี่เหลี่ยม 🚨 */
+                .safe-icon { font-family: 'Font Awesome 6 Free', 'FontAwesome', sans-serif !important; font-weight: 900 !important; font-style: normal !important; }
             </style>
 
             <div class="page-header mb-4">
@@ -54,20 +57,23 @@ class StockHistoryPageComponent {
                     <div class="col-md-9 d-flex justify-content-md-end gap-3 flex-wrap align-items-center">
                         <div class="date-filter-wrapper">
                             <input type="date" id="sh-date-filter" class="date-filter-input" onchange="App.pages.stock_history.onDateFilterChange(this.value)" onfocus="this.showPicker && this.showPicker()">
-                            <i class="fa-solid fa-calendar-day text-primary me-2 position-relative" style="z-index: 1;"></i>
+                            <!-- 🚨 เติมคลาส safe-icon -->
+                            <i class="fa-solid fa-calendar-day text-primary me-2 position-relative safe-icon" style="z-index: 1;"></i>
                             <span id="sh-date-display" class="fw-bold position-relative" style="font-family:'Prompt'; z-index: 1; font-size: 14px; color: var(--text-dark);">ค้นหาตามวันที่...</span>
-                            <button id="sh-date-clear" class="date-clear-btn" onclick="App.pages.stock_history.clearDateFilter()"><i class="fa-solid fa-circle-xmark"></i></button>
+                            <button id="sh-date-clear" class="date-clear-btn" onclick="App.pages.stock_history.clearDateFilter()"><i class="fa-solid fa-circle-xmark safe-icon"></i></button>
                         </div>
 
                         <div class="search-box-modern shadow-sm" style="width: 180px; background-color: var(--bg-body); border: 1px solid var(--border-color); padding: 6px 15px; border-radius: 50px;">
-                            <i class="fa-solid fa-list-ol text-muted me-2"></i>
+                            <!-- 🚨 THE FIX: เติมคลาส safe-icon ป้องกันสี่เหลี่ยมกากบาท -->
+                            <i class="fa-solid fa-list-ol text-muted me-2 safe-icon"></i>
                             <select id="sh-limit-select" class="form-select fw-bold border-0 bg-transparent p-0 m-0 w-100 d-inline-block" onchange="App.pages.stock_history.changeLimit(this.value)" style="outline:none; box-shadow:none; color: var(--text-dark);">
                                 <option value="100">100 ล่าสุด</option><option value="500" selected>500 ล่าสุด</option><option value="1000">1,000 ล่าสุด</option><option value="999999">ทั้งหมด</option>
                             </select>
                         </div>
 
                         <div class="search-box-modern shadow-sm" style="width: 250px; background-color: var(--bg-body); border: 1px solid var(--border-color); padding: 8px 15px; border-radius: 50px; display: flex; align-items: center;">
-                            <i class="fa-solid fa-search text-primary"></i>
+                            <!-- 🚨 เติมคลาส safe-icon -->
+                            <i class="fa-solid fa-search text-primary safe-icon"></i>
                             <input type="text" id="sh-search" class="border-0 bg-transparent ms-2 w-100 fw-bold" placeholder="ค้นหาชื่อ, รหัส, บาร์โค้ด..." onkeyup="App.pages.stock_history.filterData()" style="outline:none; color: var(--text-dark);">
                         </div>
                     </div>
@@ -77,12 +83,12 @@ class StockHistoryPageComponent {
                     <table class="table table-premium w-100 mb-0">
                         <thead style="background-color: var(--bg-body);">
                             <tr>
-                                <th class="text-center text-primary" style="width: 90px;"><i class="fa-solid fa-sort me-1"></i> ลำดับ</th>
-                                <th style="width: 160px;"><i class="fa-regular fa-calendar-days me-2"></i> วันที่-เวลา</th>
-                                <th style="width: 200px;"><i class="fa-solid fa-tag me-2"></i> ประเภทรายการ</th>
-                                <th style="width: 280px;"><i class="fa-solid fa-box me-2"></i> รายการพัสดุที่ถูกแก้ไข</th>
-                                <th><i class="fa-solid fa-file-lines me-2"></i> รายละเอียด / จำนวนสุทธิ</th>
-                                <th class="text-center" style="width: 150px;"><i class="fa-solid fa-user-pen me-2"></i> ผู้บันทึก</th>
+                                <th class="text-center text-primary" style="width: 90px;"><i class="fa-solid fa-sort me-1 safe-icon"></i> ลำดับ</th>
+                                <th style="width: 160px;"><i class="fa-regular fa-calendar-days me-2 safe-icon"></i> วันที่-เวลา</th>
+                                <th style="width: 200px;"><i class="fa-solid fa-tag me-2 safe-icon"></i> ประเภทรายการ</th>
+                                <th style="width: 280px;"><i class="fa-solid fa-box me-2 safe-icon"></i> รายการพัสดุที่ถูกแก้ไข</th>
+                                <th><i class="fa-solid fa-file-lines me-2 safe-icon"></i> รายละเอียด / จำนวนสุทธิ</th>
+                                <th class="text-center" style="width: 150px;"><i class="fa-solid fa-user-pen me-2 safe-icon"></i> ผู้บันทึก</th>
                             </tr>
                         </thead>
                         <tbody id="sh-table-body"><tr><td colspan="6" class="text-center py-5 text-muted"><i class="fas fa-spinner fa-spin fa-2x mb-3 text-primary"></i><br>กำลังดึงข้อมูลประวัติ...</td></tr></tbody>
@@ -97,9 +103,9 @@ class StockHistoryPageComponent {
                         </select> รายการ
                     </div>
                     <div class="d-flex align-items-center gap-2">
-                        <button id="sh-btn-prev" class="btn btn-outline-primary fw-bold px-4 rounded-pill shadow-sm" style="background-color: var(--bg-surface);" onclick="App.pages.stock_history.changePage(-1)"><i class="fa-solid fa-chevron-left me-1"></i> ก่อนหน้า</button>
+                        <button id="sh-btn-prev" class="btn btn-outline-primary fw-bold px-4 rounded-pill shadow-sm" style="background-color: var(--bg-surface);" onclick="App.pages.stock_history.changePage(-1)"><i class="fa-solid fa-chevron-left me-1 safe-icon"></i> ก่อนหน้า</button>
                         <div class="badge border border-primary text-primary px-4 py-2 fs-6 shadow-sm rounded-pill" style="background-color: var(--bg-body);" id="sh-page-info">หน้า 1 / 1</div>
-                        <button id="sh-btn-next" class="btn btn-outline-primary fw-bold px-4 rounded-pill shadow-sm" style="background-color: var(--bg-surface);" onclick="App.pages.stock_history.changePage(1)">ถัดไป <i class="fa-solid fa-chevron-right ms-1"></i></button>
+                        <button id="sh-btn-next" class="btn btn-outline-primary fw-bold px-4 rounded-pill shadow-sm" style="background-color: var(--bg-surface);" onclick="App.pages.stock_history.changePage(1)">ถัดไป <i class="fa-solid fa-chevron-right ms-1 safe-icon"></i></button>
                     </div>
                 </div>
             </div>
@@ -307,50 +313,49 @@ class StockHistoryPageComponent {
             let detailHtml = ''; 
 
             if(log.mode === 'in_main') {
-                modeHtml = `<span class="badge border border-success text-success px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-arrow-down me-1"></i> รับของเข้า (ใหญ่)</span>`;
+                modeHtml = `<span class="badge border border-success text-success px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-arrow-down me-1 safe-icon"></i> รับของเข้า (ใหญ่)</span>`;
                 detailHtml = `บวกเพิ่ม <b>${log.qty}</b> เข้าสต๊อกใหญ่`;
             }
             else if(log.mode === 'transfer') {
-                modeHtml = `<span class="badge border border-primary text-primary px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-truck-ramp-box me-1"></i> โอนย้าย (ใหญ่ ➡️ เล็ก)</span>`;
+                modeHtml = `<span class="badge border border-primary text-primary px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-truck-ramp-box me-1 safe-icon"></i> โอนย้าย (ใหญ่ ➡️ เล็ก)</span>`;
                 detailHtml = `หัก <b>${log.qty}</b> จากสต๊อกใหญ่ ไปเพิ่มในสต๊อกเล็ก`;
             }
             else if(log.mode === 'out_sub') {
-                modeHtml = `<span class="badge border border-danger text-danger px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-arrow-up-right-from-square me-1"></i> เบิกใช้งานจริง (เล็ก)</span>`;
-                detailHtml = `เบิกตัดยอด <b>${log.qty}</b> จากสต๊อกหน้าเคาน์เตอร์ <br><small class="text-muted"><i class="fa-solid fa-tag"></i> ${this.#escapeHTML(log.note || 'ไม่มีหมายเหตุ')}</small>`;
+                modeHtml = `<span class="badge border border-danger text-danger px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-arrow-up-right-from-square me-1 safe-icon"></i> เบิกใช้งานจริง (เล็ก)</span>`;
+                detailHtml = `เบิกตัดยอด <b>${log.qty}</b> จากสต๊อกหน้าเคาน์เตอร์ <br><small class="text-muted"><i class="fa-solid fa-tag safe-icon"></i> ${this.#escapeHTML(log.note || 'ไม่มีหมายเหตุ')}</small>`;
             }
             else if(log.mode === 'audit_main') {
-                modeHtml = `<span class="badge border border-warning text-warning px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-clipboard-check me-1"></i> ปรับยอดจริง (ใหญ่)</span>`;
+                modeHtml = `<span class="badge border border-warning text-warning px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-clipboard-check me-1 safe-icon"></i> ปรับยอดจริง (ใหญ่)</span>`;
                 detailHtml = `ระบบถูกบังคับอัปเดตยอดคงเหลือ <b>สต๊อกใหญ่</b> เป็น <b class="text-warning">${log.qty}</b>`;
             }
             else if(log.mode === 'audit_sub') {
-                modeHtml = `<span class="badge border border-warning text-warning px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-clipboard-check me-1"></i> ปรับยอดจริง (เล็ก)</span>`;
+                modeHtml = `<span class="badge border border-warning text-warning px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-clipboard-check me-1 safe-icon"></i> ปรับยอดจริง (เล็ก)</span>`;
                 detailHtml = `ระบบถูกบังคับอัปเดตยอดคงเหลือ <b>สต๊อกหน้าเคาน์เตอร์</b> เป็น <b class="text-warning">${log.qty}</b>`;
             }
             else if(log.mode === 'new_register') {
-                modeHtml = `<span class="badge border border-info text-info px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-plus me-1"></i> ลงทะเบียนพัสดุใหม่</span>`;
+                modeHtml = `<span class="badge border border-info text-info px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-plus me-1 safe-icon"></i> ลงทะเบียนพัสดุใหม่</span>`;
                 detailHtml = `สร้างพัสดุชิ้นนี้ขึ้นมาครั้งแรก โดยมียอดยกมาเริ่มต้น <b class="text-info">${log.qty}</b>`;
             }
             else if(log.mode === 'in_sub_restore') {
-                modeHtml = `<span class="badge border border-success text-success px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-rotate-left me-1"></i> ดึงของคืน (เล็ก)</span>`;
-                detailHtml = `ดึงของคืนกลับเข้าสต๊อกเคาน์เตอร์ <b>${log.qty}</b> หน่วย <br><small class="text-muted"><i class="fa-solid fa-tag"></i> ${this.#escapeHTML(log.note || 'การยกเลิก Flowsheet')}</small>`;
+                modeHtml = `<span class="badge border border-success text-success px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-rotate-left me-1 safe-icon"></i> ดึงของคืน (เล็ก)</span>`;
+                detailHtml = `ดึงของคืนกลับเข้าสต๊อกเคาน์เตอร์ <b>${log.qty}</b> หน่วย <br><small class="text-muted"><i class="fa-solid fa-tag safe-icon"></i> ${this.#escapeHTML(log.note || 'การยกเลิก Flowsheet')}</small>`;
             }
 
             const safeItemName = this.#escapeHTML(log.itemName || 'ไม่ทราบชื่อ');
 
-            // 🚨 THE FIX 2: ปลดคลาสสีสว่างทิ้งทั้งหมด ใช้ Theme Variables
             html += `
             <tr class="align-middle card-hover-float" style="cursor:default;">
                 <td class="text-center fw-bold" style="font-size: 15px; color: var(--text-dark);">${itemOrderVal}</td>
                 <td>
-                    <span class="badge border shadow-sm px-2 py-1" style="background-color: var(--bg-body); border-color: var(--border-color) !important; color: var(--text-dark);"><i class="fa-regular fa-calendar me-1 text-primary"></i> ${dateStr}</span><br>
-                    <span class="small fw-bold text-muted mt-1 d-inline-block"><i class="fa-regular fa-clock me-1"></i> ${timeStr} น.</span>
+                    <span class="badge border shadow-sm px-2 py-1" style="background-color: var(--bg-body); border-color: var(--border-color) !important; color: var(--text-dark);"><i class="fa-regular fa-calendar me-1 text-primary safe-icon"></i> ${dateStr}</span><br>
+                    <span class="small fw-bold text-muted mt-1 d-inline-block"><i class="fa-regular fa-clock me-1 safe-icon"></i> ${timeStr} น.</span>
                 </td>
                 <td>${modeHtml}</td>
                 <td>
                     <div class="fw-bold" style="font-family:'Prompt'; font-size:14.5px; color: var(--text-dark);">${safeItemName}</div>
                     <div class="mt-1 d-flex gap-2 flex-wrap">
                         <span class="badge border border-primary text-primary" style="font-family: monospace; font-size:11px; background-color: var(--bg-body);">รหัส: ${this.#escapeHTML(finalItemCode)}</span>
-                        <span class="badge border shadow-sm text-secondary" style="font-family: monospace; font-size:11px; background-color: var(--bg-body); border-color: var(--border-color) !important;"><i class="fa-solid fa-barcode"></i> ${this.#escapeHTML(finalBarcode)}</span>
+                        <span class="badge border shadow-sm text-secondary" style="font-family: monospace; font-size:11px; background-color: var(--bg-body); border-color: var(--border-color) !important;"><i class="fa-solid fa-barcode safe-icon"></i> ${this.#escapeHTML(finalBarcode)}</span>
                     </div>
                 </td>
                 <td>
@@ -359,7 +364,7 @@ class StockHistoryPageComponent {
                     </div>
                 </td>
                 
-                <td class="text-center text-muted small fw-bold"><i class="fa-solid fa-user-nurse me-1 text-primary"></i> ${this.#escapeHTML(log.user || 'Admin')}</td>
+                <td class="text-center text-muted small fw-bold"><i class="fa-solid fa-user-nurse me-1 text-primary safe-icon"></i> ${this.#escapeHTML(log.user || 'Admin')}</td>
             </tr>`;
         });
         tbody.innerHTML = html;

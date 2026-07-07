@@ -152,8 +152,8 @@ class SettingsPageComponent {
                             
                             <div class="row g-2 mb-4">
                                 <div class="col-12"><label class="perm-check-item" style="background:#fff;"><input type="checkbox" id="wipe-patients" value="patients_database_v2"> <span>ล้างทะเบียนผู้ป่วย และ ประวัติการรักษาทั้งหมด</span></label></div>
+                                <div class="col-12"><label class="perm-check-item" style="background:#fff;"><input type="checkbox" id="wipe-inventory-items" value="inventory_items"> <span>ล้างรายการคลังพัสดุทั้งหมด (ลบชื่อสินค้าออกจากระบบ)</span></label></div>
                                 <div class="col-12"><label class="perm-check-item" style="background:#fff;"><input type="checkbox" id="wipe-stock-history" value="inventory_transactions"> <span>ล้างประวัติทำรายการเข้า-ออก สต๊อกทั้งหมด</span></label></div>
-                                <div class="col-12"><label class="perm-check-item" style="background:#fff;"><input type="checkbox" id="wipe-inventory-qty" value="inventory_qty"> <span>รีเซ็ตจำนวนสต๊อกพัสดุคงเหลือให้เป็น 0</span></label></div>
                                 <div class="col-12"><label class="perm-check-item" style="background:#fff;"><input type="checkbox" id="wipe-ledger" value="department_ledger_v2"> <span>ล้างบัญชีรายรับ-รายจ่ายหน่วยงานทั้งหมด</span></label></div>
                                 <div class="col-12"><label class="perm-check-item" style="background:#fff;"><input type="checkbox" id="wipe-master" value="master_data"> <span>ล้างรายการตั้งค่า (ยา, แล็บ, เทมเพลต, บัญชีผู้ใช้)</span></label></div>
                             </div>
@@ -199,8 +199,9 @@ class SettingsPageComponent {
                 html[data-bs-theme="dark"] .badge.bg-light { background-color: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.1) !important; color: #cbd5e1 !important; }
                 html[data-bs-theme="dark"] p.bg-light { background-color: rgba(0,0,0,0.2) !important; border: 1px solid var(--border-color); }
                 
-                .logo-preview-box { width: 100px; height: 100px; border: 2px dashed var(--border-color); display: flex; align-items: center; justify-content: center; border-radius: 12px; }
-                .logo-preview-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+                .logo-preview-box { width: 100px; height: 100px; border: 2px dashed var(--border-color); display: flex; align-items: center; justify-content: center; border-radius: 12px; background: transparent; transition: all 0.3s ease; }
+                html[data-bs-theme="dark"] .logo-preview-box { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.15); }
+                .logo-preview-box img { max-width: 100%; max-height: 100%; object-fit: contain; padding: 5px; }
                 
                 .perm-check-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 15px; margin-bottom: 8px; transition: all 0.2s; cursor: pointer; display: flex; align-items: center; }
                 .perm-check-item:hover { background: #e0e7ff; border-color: #93c5fd; }
@@ -209,7 +210,6 @@ class SettingsPageComponent {
                 .perm-check-item input { width: 18px; height: 18px; margin-right: 12px; cursor: pointer; }
                 .perm-check-item span { font-weight: 600; font-size: 14px; color: var(--text-dark); }
                 
-                /* Dark mode support for factory reset panel */
                 html[data-bs-theme="dark"] #database-panel .bg-white { background: rgba(0,0,0,0.2) !important; }
                 html[data-bs-theme="dark"] #database-panel .border-danger-subtle { border-color: rgba(239, 68, 68, 0.3) !important; background: rgba(239, 68, 68, 0.05) !important;}
             </style>
@@ -507,7 +507,6 @@ class SettingsPageComponent {
     // ☢️ Database Management (Purge & Factory Reset) 🚨 Triple-Layer Security 🚨
     // ---------------------------------------------------------
     
-    // 🚨 THE FIX: เปลี่ยน Data path ของประวัติสต๊อกให้ถูกต้อง 🚨
     async promptCustomPurge() {
         const target = document.getElementById('db-purge-target').value;
         const years = document.getElementById('db-purge-time').value;
@@ -534,8 +533,7 @@ class SettingsPageComponent {
 
         let path = '';
         let dateField = 'date'; 
-        
-        // 🚨 THE FIX: อัปเดต Path ประวัติสต๊อกตรงนี้
+
         if (target === 'visits') path = 'patients_database_v2/visits';
         else if (target === 'ledger') path = 'department_ledger_v2';
         else if (target === 'inventory') path = 'inventory_database_v2/transactions';
@@ -563,17 +561,17 @@ class SettingsPageComponent {
     promptFactoryReset() {
         const wipePatients = document.getElementById('wipe-patients').checked;
         const wipeStockHistory = document.getElementById('wipe-stock-history').checked;
-        const wipeInventoryQty = document.getElementById('wipe-inventory-qty').checked;
+        const wipeInventoryItems = document.getElementById('wipe-inventory-items').checked;
         const wipeLedger = document.getElementById('wipe-ledger').checked;
         const wipeMaster = document.getElementById('wipe-master').checked;
 
-        if (!wipePatients && !wipeStockHistory && !wipeInventoryQty && !wipeLedger && !wipeMaster) {
+        if (!wipePatients && !wipeStockHistory && !wipeInventoryItems && !wipeLedger && !wipeMaster) {
             Swal.fire('แจ้งเตือน', 'กรุณาติ๊กเลือกส่วนที่ต้องการล้างข้อมูลอย่างน้อย 1 รายการครับ', 'warning');
             return;
         }
 
         this._verifyAdminPinAndExecute(`คุณกำลังจะ <span class="text-danger fw-bold">ล้างข้อมูลทั้งระบบ (Factory Reset)</span> ข้อมูลที่เลือกจะหายไปตลอดกาล!`, 'FACTORY RESET', () => {
-            this._executeFactoryReset({ wipePatients, wipeStockHistory, wipeInventoryQty, wipeLedger, wipeMaster });
+            this._executeFactoryReset({ wipePatients, wipeStockHistory, wipeInventoryItems, wipeLedger, wipeMaster });
         });
     }
 
@@ -587,19 +585,12 @@ class SettingsPageComponent {
                 promises.push(db.ref('patients_database_v2').remove());
             }
             
-            // 🚨 THE FIX: อัปเดต Path ประวัติสต๊อกตรงนี้
             if (targets.wipeStockHistory) {
                 promises.push(db.ref('inventory_database_v2/transactions').remove());
             }
 
-            if (targets.wipeInventoryQty) {
-                const itemsSnap = await db.ref('inventory_database_v2/items').once('value');
-                const items = itemsSnap.val();
-                if (items) {
-                    let resets = {};
-                    Object.keys(items).forEach(k => { resets[`${k}/stock`] = 0; });
-                    promises.push(db.ref('inventory_database_v2/items').update(resets));
-                }
+            if (targets.wipeInventoryItems) {
+                promises.push(db.ref('inventory_database_v2/items').remove());
             }
 
             if (targets.wipeLedger) {
@@ -721,6 +712,7 @@ class SettingsPageComponent {
         Swal.fire({ title: 'ลบรูปโลโก้เตรียมพร้อม', text: 'กรุณากดปุ่ม "บันทึกข้อมูลบริษัทและคลินิก" เพื่อยืนยันการลบออกจากระบบครับ', icon: 'success', timer: 2000, showConfirmButton: false });
     }
 
+    // 🚨 THE FIX: เปลี่ยน image/jpeg เป็น image/png เพื่อรักษาสีใส (Transparency) ของโลโก้
     handleLogoUpload(event, hiddenInputId, previewContainerId) {
         const file = event.target.files[0];
         if(!file) return;
@@ -731,7 +723,7 @@ class SettingsPageComponent {
             return; 
         }
         
-        Swal.fire({ title: 'กำลังบีบอัดภาพโลโก้...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        Swal.fire({ title: 'กำลังจัดเตรียมภาพโลโก้...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -748,7 +740,8 @@ class SettingsPageComponent {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
                 
-                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+                // แปลงรูปเป็น PNG เพื่อไม่ให้พื้นหลังกลายเป็นสีดำ
+                const compressedBase64 = canvas.toDataURL('image/png');
                 
                 document.getElementById(previewContainerId).innerHTML = `<img src="${compressedBase64}">`;
                 document.getElementById(hiddenInputId).value = compressedBase64;
@@ -787,10 +780,10 @@ class SettingsPageComponent {
                     <div class="alert alert-warning border-warning shadow-sm small py-2 px-3 mb-3"><i class="fa-solid fa-triangle-exclamation me-1"></i> <b>อย่าลืม!</b> ตอนหน้าต่าง Print เด้งขึ้นมา ให้ติ๊ก <b>"Background graphics"</b> เพื่อให้สีและธีมแสดงผลครับ</div>
                     <label class="fw-bold text-secondary small">เลือกธีมสี (Card Theme)</label>
                     <select id="print-theme" class="form-select input-modern mb-3 shadow-sm" style="font-family:'Prompt'; font-weight: 600;">
-                        <option value="theme-modern-blue">🔵 Modern Blue (แถบฟ้า + ลายเรขาคณิต)</option>
-                        <option value="theme-elegant-gold">🟡 Elegant Gold (แถบทอง + หรูหรา)</option>
-                        <option value="theme-emerald-geo">🟢 Emerald Geo (แถบเขียว + ลายตารางเพชร)</option>
-                        <option value="theme-rose-wave">🔴 Rose Wave (แถบชมพู + ลายคลื่น)</option>
+                        <option value="theme-modern-blue">🔵 Modern Blue (บลูโอเชียน + ลายคลื่นไอที)</option>
+                        <option value="theme-elegant-gold">🟡 Elegant Gold (พรีเมียมแบล็ค + สีทองหรูหรา)</option>
+                        <option value="theme-emerald-geo">🟢 Emerald Geo (มินต์สดใส + ลายตัดเหลี่ยม)</option>
+                        <option value="theme-rose-wave">🔴 Rose Wave (โรสโกลด์ + อบอุ่นซอฟต์)</option>
                         <option value="theme-clean-white" selected>⚪ Clean White (เรียบหรู มินิมอล)</option>
                     </select>
                     <label class="fw-bold text-secondary small">ระบุจำนวนใบที่ต้องการพิมพ์</label>
@@ -850,35 +843,55 @@ class SettingsPageComponent {
             : ``; 
 
         let cardsHtml = '';
+        
         for (let i = 0; i < qty; i++) {
-            cardsHtml += `
-            <div class="business-card ${themeClass}">
-                <div class="card-bg-wash"></div>
-                <div class="pattern-overlay"></div>
-                ${watermarkHtml}
-                <div class="content-layer">
-                    <div class="brand-zone">
-                        ${logoHtml}
-                        <div class="text-zone">
-                            <div class="company-name company-name-text">${this._escapeHTML(cardName)}</div>
-                            <div class="tax-id">${idLabel}: ${this._escapeHTML(idValue)}</div>
+            if (type === 'clinic') {
+                cardsHtml += `
+                <div class="business-card clinic-card ${themeClass}">
+                    <div class="card-bg-wash"></div>
+                    <div class="accent-shape"></div>
+                    <div class="pattern-overlay"></div>
+                    ${watermarkHtml}
+                    <div class="content-layer">
+                        <div class="brand-zone clinic-brand">
+                            ${logoHtml}
+                            <div class="text-zone">
+                                <div class="company-name company-name-text">${this._escapeHTML(cardName)}</div>
+                                <div class="tax-id clinic-id"><i class="fa-solid fa-hospital-user me-1"></i> ${idLabel}: ${this._escapeHTML(idValue)}</div>
+                            </div>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="contact-zone clinic-contact">
+                            <div class="contact-item"><i class="fa-solid fa-location-dot contact-icon"></i><span>${this._escapeHTML(cardAddress)}</span></div>
+                            <div class="contact-item"><i class="fa-solid fa-phone contact-icon"></i><span>${this._escapeHTML(cardPhone)}${cardEmail !== '-' ? ' &nbsp;|&nbsp; <i class="fa-solid fa-envelope contact-icon"></i> ' + this._escapeHTML(cardEmail) : ''}</span></div>
                         </div>
                     </div>
-                    
-                    <div class="divider"></div>
-                    
-                    <div class="contact-zone">
-                        <div class="contact-item">
-                            <i class="fa-solid fa-location-dot contact-icon"></i>
-                            <span>${this._escapeHTML(cardAddress)}</span>
+                </div>`;
+            } else {
+                cardsHtml += `
+                <div class="business-card company-card ${themeClass}">
+                    <div class="card-bg-wash"></div>
+                    <div class="accent-shape"></div>
+                    <div class="pattern-overlay"></div>
+                    ${watermarkHtml}
+                    <div class="content-layer" style="padding: 5mm 6mm;">
+                        <div class="corp-header">
+                            <div class="corp-badge"><i class="fa-solid fa-file-invoice-dollar me-1"></i> OFFICIAL CORPORATE & TAX INFO</div>
                         </div>
-                        <div class="contact-item">
-                            <i class="fa-solid fa-phone contact-icon"></i>
-                            <span>${this._escapeHTML(cardPhone)}${cardEmail !== '-' ? ' &nbsp;|&nbsp; <i class="fa-solid fa-envelope contact-icon"></i> ' + this._escapeHTML(cardEmail) : ''}</span>
+                        <div class="corp-brand">
+                            ${logoHtml}
+                            <div class="text-zone">
+                                <div class="company-name company-name-text">${this._escapeHTML(cardName)}</div>
+                                <div class="tax-id-box">${idLabel}: ${this._escapeHTML(idValue)}</div>
+                            </div>
+                        </div>
+                        <div class="corp-contact">
+                            <div class="contact-item mb-1"><i class="fa-solid fa-building contact-icon"></i> <span>${this._escapeHTML(cardAddress)}</span></div>
+                            <div class="contact-item"><i class="fa-solid fa-phone contact-icon"></i> <span>${this._escapeHTML(cardPhone)}${cardEmail !== '-' ? ' &nbsp;|&nbsp; <i class="fa-solid fa-envelope contact-icon"></i> ' + this._escapeHTML(cardEmail) : ''}</span></div>
                         </div>
                     </div>
-                </div>
-            </div>`;
+                </div>`;
+            }
         }
 
         const printTitle = type === 'clinic' ? 'พิมพ์นามบัตรสถานพยาบาล' : 'พิมพ์นามบัตรใบกำกับภาษี';
@@ -889,7 +902,7 @@ class SettingsPageComponent {
             <head>
                 <meta charset="UTF-8">
                 <title>${printTitle} - ${qty} ใบ</title>
-                <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;700;800&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+                <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;700;800&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
                 <style>
                     @page { size: A4 portrait; margin: 8mm; } 
@@ -905,59 +918,102 @@ class SettingsPageComponent {
                     /* โครงร่างนามบัตรมาตรฐาน (90x54mm) */
                     .business-card { 
                         width: 90mm; height: 54mm; 
-                        border: 0.5px dashed #cbd5e1; /* กรอบตัด (Crop marks) */
                         position: relative; background: #ffffff; 
                         overflow: hidden; page-break-inside: avoid; 
+                        border: 0.5px dashed #cbd5e1; /* กรอบตัด (Crop marks) */
+                        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.02); /* ขอบบางๆ ด้านในให้ดูคม */
                     } 
                     
-                    .card-bg-wash { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; background: linear-gradient(135deg, rgba(255,255,255,1) 40%, rgba(255,255,255,0.7) 100%); } 
-                    .pattern-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; opacity: 0.8; } 
+                    .card-bg-wash { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; } 
+                    .accent-shape { position: absolute; z-index: 2; pointer-events: none; } /* สีกราฟิกเด่นๆ */
+                    .pattern-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 3; opacity: 0.8; } 
                     
-                    .watermark-container { position: absolute; right: 0; bottom: 0; width: 50%; height: 100%; z-index: 3; display: flex; align-items: center; justify-content: flex-end; opacity: 0.04; padding-right: 5mm; } 
-                    .watermark-container img { width: 100%; height: 100%; object-fit: contain; } 
-                    .watermark-container i { font-size: 100px; color: #000; } 
+                    .watermark-container { position: absolute; right: 0; bottom: 0; width: 50%; height: 100%; z-index: 4; display: flex; align-items: center; justify-content: flex-end; opacity: 0.05; padding-right: 5mm; } 
+                    .watermark-container img { width: 100%; height: 100%; object-fit: contain; filter: grayscale(100%); } 
                     
                     .content-layer { position: relative; z-index: 10; width: 100%; height: 100%; display: flex; flex-direction: column; padding: 6mm 7mm; } 
                     
-                    .theme-clean-white { border-left: 4px solid #94a3b8 !important; } 
+                    /* -------------------------------------- */
+                    /* 🎨 THEME ENGINE 2.0 (Vibrant Colors) */
+                    /* -------------------------------------- */
+
+                    /* ⚪ Clean White */
+                    .theme-clean-white.clinic-card { border-left: 4px solid #94a3b8 !important; } 
+                    .theme-clean-white.company-card { border-top: 4px solid #94a3b8 !important; }
+                    .theme-clean-white .card-bg-wash { background: linear-gradient(135deg, #ffffff 40%, #f8fafc 100%); }
                     .theme-clean-white .divider { background: linear-gradient(90deg, #94a3b8, transparent); }
 
-                    .theme-modern-blue { border-left: 4px solid #2563eb !important; } 
-                    .theme-modern-blue .pattern-overlay { background-image: linear-gradient(rgba(37,99,235,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,0.06) 1px, transparent 1px); background-size: 10px 10px; } 
-                    .theme-modern-blue .divider { background: linear-gradient(90deg, #2563eb, transparent); }
+                    /* 🔵 Modern Blue (Ocean Wave) */
+                    .theme-modern-blue.clinic-card { border-left: 4px solid #2563eb !important; } 
+                    .theme-modern-blue.company-card { border-top: 4px solid #2563eb !important; }
+                    .theme-modern-blue .card-bg-wash { background: linear-gradient(120deg, #ffffff 50%, #eff6ff 100%); }
+                    .theme-modern-blue .accent-shape { right: -15mm; top: -15mm; width: 50mm; height: 50mm; background: linear-gradient(135deg, #3b82f6, #1d4ed8); border-radius: 50%; opacity: 0.15; filter: blur(4px); }
+                    .theme-modern-blue .pattern-overlay { background-image: linear-gradient(rgba(37,99,235,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,0.08) 1px, transparent 1px); background-size: 15px 15px; opacity: 0.5; } 
+                    .theme-modern-blue .divider { background: linear-gradient(90deg, #2563eb, transparent); height: 1.5px; }
+                    .theme-modern-blue .tax-id-box { background: linear-gradient(135deg, #2563eb, #1e40af) !important; box-shadow: 0 2px 4px rgba(37,99,235,0.2); }
 
-                    .theme-elegant-gold { border-left: 4px solid #d97706 !important; } 
-                    .theme-elegant-gold .pattern-overlay { background: radial-gradient(circle at 100% 0%, rgba(217,119,6,0.12) 0%, transparent 60%); } 
-                    .theme-elegant-gold .divider { background: linear-gradient(90deg, #d97706, transparent); }
+                    /* 🟡 Elegant Gold (Dark Premium Mode) */
+                    .theme-elegant-gold { border: none !important; background: #0f172a !important; color: #f8fafc !important; }
+                    .theme-elegant-gold.business-card { border: 0.5px dashed #475569; }
+                    .theme-elegant-gold .card-bg-wash { background: linear-gradient(135deg, #0f172a 30%, #1e293b 100%); }
+                    .theme-elegant-gold .accent-shape { right: -10mm; bottom: -10mm; width: 60mm; height: 60mm; background: radial-gradient(circle, rgba(217,119,6,0.3) 0%, transparent 70%); }
+                    .theme-elegant-gold .pattern-overlay { background: repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 2px, transparent 2px, transparent 8px); }
+                    .theme-elegant-gold .company-name { color: #fbbf24 !important; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+                    .theme-elegant-gold .contact-icon, .theme-elegant-gold .clinic-id, .theme-elegant-gold .contact-item span { color: #cbd5e1 !important; }
+                    .theme-elegant-gold .corp-badge { color: #94a3b8 !important; }
+                    .theme-elegant-gold .divider { background: linear-gradient(90deg, #fbbf24, transparent); height: 1px; opacity: 0.7; }
+                    .theme-elegant-gold .tax-id-box { background: linear-gradient(135deg, #d97706, #92400e) !important; color: #fff !important; box-shadow: 0 2px 4px rgba(0,0,0,0.5); border: 1px solid #fbbf24; }
 
-                    .theme-emerald-geo { border-left: 4px solid #10b981 !important; } 
-                    .theme-emerald-geo .pattern-overlay { background: linear-gradient(135deg, rgba(16,185,129,0.06) 25%, transparent 25%) -10px 0, linear-gradient(225deg, rgba(16,185,129,0.06) 25%, transparent 25%) -10px 0, linear-gradient(315deg, rgba(16,185,129,0.06) 25%, transparent 25%), linear-gradient(45deg, rgba(16,185,129,0.06) 25%, transparent 25%); background-size: 20px 20px; } 
-                    .theme-emerald-geo .divider { background: linear-gradient(90deg, #10b981, transparent); }
+                    /* 🟢 Emerald Geo (Mint Tech) */
+                    .theme-emerald-geo.clinic-card { border-left: 4px solid #10b981 !important; } 
+                    .theme-emerald-geo.company-card { border-top: 4px solid #10b981 !important; }
+                    .theme-emerald-geo .card-bg-wash { background: linear-gradient(110deg, #ffffff 40%, #ecfdf5 100%); }
+                    .theme-emerald-geo .accent-shape { left: -10mm; bottom: -15mm; width: 45mm; height: 45mm; background: linear-gradient(135deg, #34d399, #059669); transform: rotate(45deg); opacity: 0.1; }
+                    .theme-emerald-geo .pattern-overlay { background: radial-gradient(circle at 100% 0%, rgba(16,185,129,0.08) 0%, transparent 50%); } 
+                    .theme-emerald-geo .divider { background: linear-gradient(90deg, #10b981, transparent); height: 1.5px; }
+                    .theme-emerald-geo .tax-id-box { background: linear-gradient(135deg, #10b981, #047857) !important; box-shadow: 0 2px 4px rgba(16,185,129,0.2); }
 
-                    .theme-rose-wave { border-left: 4px solid #e11d48 !important; } 
-                    .theme-rose-wave .pattern-overlay { background: repeating-radial-gradient(circle at 100% 50%, rgba(225,29,72,0.04) 0, rgba(225,29,72,0.04) 5px, transparent 5px, transparent 10px); } 
-                    .theme-rose-wave .divider { background: linear-gradient(90deg, #e11d48, transparent); }
+                    /* 🔴 Rose Wave (Soft Crimson) */
+                    .theme-rose-wave.clinic-card { border-left: 4px solid #e11d48 !important; } 
+                    .theme-rose-wave.company-card { border-top: 4px solid #e11d48 !important; }
+                    .theme-rose-wave .card-bg-wash { background: linear-gradient(130deg, #ffffff 50%, #fff1f2 100%); }
+                    .theme-rose-wave .accent-shape { right: -5mm; top: -5mm; width: 25mm; height: 60mm; background: #be123c; border-radius: 40px; transform: rotate(20deg); opacity: 0.06; }
+                    .theme-rose-wave .divider { background: linear-gradient(90deg, #e11d48, transparent); height: 1.5px; }
+                    .theme-rose-wave .tax-id-box { background: linear-gradient(135deg, #e11d48, #9f1239) !important; box-shadow: 0 2px 4px rgba(225,29,72,0.2); }
 
-                    .brand-zone { display: flex; align-items: center; gap: 4mm; margin-bottom: auto; } 
-                    .logo-wrapper { width: 18mm; height: 18mm; flex-shrink: 0; display: flex; align-items: center; justify-content: center; } 
-                    .logo-img { max-width: 100%; max-height: 100%; object-fit: contain; } 
-                    .placeholder-logo { background: #f1f5f9; border-radius: 4px; color: #94a3b8; font-size: 20px; }
-                    
+                    /* Common elements */
+                    .logo-wrapper { height: 16mm; max-width: 40mm; min-width: 16mm; flex-shrink: 0; display: flex; align-items: center; justify-content: flex-start; } 
+                    .logo-img { max-width: 100%; max-height: 100%; width: auto; object-fit: contain; object-position: left center; } 
+                    .placeholder-logo { background: rgba(0,0,0,0.05); border-radius: 8px; color: #94a3b8; font-size: 20px; justify-content: center; width: 16mm; }
                     .text-zone { display: flex; flex-direction: column; justify-content: center; overflow: hidden; } 
-                    .company-name { font-size: 13pt; font-weight: 800; line-height: 1.15; color: #0f172a; font-family: 'Prompt', sans-serif; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; } 
-                    .tax-id { font-size: 7.5pt; font-weight: 700; color: #64748b; margin-top: 1mm; font-family: 'Prompt', sans-serif; letter-spacing: 0.3px; } 
-                    
-                    .divider { width: 100%; height: 1px; margin: 2mm 0; opacity: 0.5; }
-                    
-                    .contact-zone { display: grid; gap: 1.5mm; font-size: 8pt; color: #334155; line-height: 1.3; font-weight: 600; } 
-                    .contact-item { display: grid; grid-template-columns: 4mm 1fr; align-items: start; } 
-                    .contact-icon { color: #64748b; font-size: 7.5pt; padding-top: 1px; }
+                    .company-name { font-size: 13.5pt; font-weight: 800; line-height: 1.2; color: #0f172a; font-family: 'Prompt', sans-serif; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; letter-spacing: -0.2px; } 
+                    .contact-icon { color: #64748b; font-size: 7.5pt; padding-top: 2px; text-align: center; }
+
+                    /* -------------------------------------- */
+                    /* Layout A: CLINIC CARD (Patient-facing) */
+                    /* -------------------------------------- */
+                    .clinic-card .brand-zone { display: flex; align-items: center; gap: 4mm; margin-bottom: auto; } 
+                    .clinic-card .logo-wrapper { height: 18mm; max-width: 35mm; min-width: 18mm; }
+                    .clinic-card .clinic-id { font-size: 7.5pt; font-weight: 700; color: #64748b; margin-top: 1mm; font-family: 'Prompt', sans-serif; letter-spacing: 0.3px; } 
+                    .clinic-card .divider { width: 100%; margin: 2mm 0; }
+                    .clinic-card .clinic-contact { display: grid; gap: 1.5mm; font-size: 8pt; color: #334155; line-height: 1.3; font-weight: 600; } 
+                    .clinic-card .contact-item { display: grid; grid-template-columns: 4mm 1fr; align-items: start; } 
+
+                    /* -------------------------------------- */
+                    /* Layout B: COMPANY CARD (Corporate Tax) */
+                    /* -------------------------------------- */
+                    .company-card .corp-header { text-align: right; margin-bottom: 2mm; border-bottom: 1px solid rgba(128,128,128,0.15); padding-bottom: 1mm; }
+                    .company-card .corp-badge { font-size: 5.5pt; font-weight: 800; letter-spacing: 0.5px; color: #64748b; text-transform: uppercase; }
+                    .company-card .corp-brand { display: flex; align-items: center; gap: 4mm; margin-bottom: auto; }
+                    .company-card .tax-id-box { display: inline-block; background: #0f172a; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 7.5pt; margin-top: 1.5mm; font-weight: 700; font-family: 'Prompt', sans-serif; letter-spacing: 0.5px; }
+                    .company-card .corp-contact { font-size: 7.5pt; color: #334155; line-height: 1.3; font-weight: 600; padding-top: 2mm; border-top: 1px dashed rgba(128,128,128,0.25); display: grid; gap: 1mm; }
+                    .company-card .contact-item { display: grid; grid-template-columns: 4mm 1fr; align-items: start; } 
                 </style>
             </head>
             <body>
                 <div class="instruction">
-                    <h4 style="margin:0 0 5px 0; color:#0f172a;"><i class="fa-solid fa-print text-primary"></i> โหมดพรีวิวการพิมพ์</h4>
-                    <span style="color:#ef4444; font-weight:bold;">🚨 คำเตือน:</span> ก่อนกดพิมพ์ ให้ดูที่การตั้งค่าเครื่องพิมพ์ แล้วติ๊กถูกที่ช่อง <b>"พิมพ์กราฟิกพื้นหลัง" (Background graphics)</b> ด้วยนะครับ 🖨️ (ปรับ Scale = 100%)
+                    <h4 style="margin:0 0 5px 0; color:#0f172a;"><i class="fa-solid fa-print text-primary"></i> โหมดพรีวิวการพิมพ์ระดับ Enterprise</h4>
+                    <span style="color:#ef4444; font-weight:bold;">🚨 คำเตือน:</span> ก่อนกดพิมพ์ ให้ดูที่การตั้งค่าเครื่องพิมพ์ แล้วติ๊กถูกที่ช่อง <b>"พิมพ์กราฟิกพื้นหลัง" (Background graphics)</b> ด้วยนะครับ เพื่อให้สี ลวดลายกราฟิก และเฉดเงาแสดงผลสมบูรณ์ที่สุด! 🖨️
                 </div>
                 <div class="print-grid">${cardsHtml}</div>
                 
@@ -965,7 +1021,7 @@ class SettingsPageComponent {
                     setTimeout(function() {
                         const texts = document.querySelectorAll(".company-name-text");
                         texts.forEach(textEl => {
-                            let currentSize = 13; 
+                            let currentSize = 13.5; 
                             while(textEl.scrollHeight > 36 && currentSize > 9) { 
                                 currentSize -= 0.5;
                                 textEl.style.fontSize = currentSize + "pt";

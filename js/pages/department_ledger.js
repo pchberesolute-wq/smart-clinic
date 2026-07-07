@@ -53,7 +53,7 @@ class DepartmentLedgerPageComponent {
 
             <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
                 <div>
-                    <h2 class="page-title text-primary" style="font-size: 28px;"><i class="fa-solid fa-wallet me-2"></i> บัญชีภายในหน่วยงาน</h2>
+                    <h2 class="page-title text-primary" style="font-size: 28px;"><i class="fa-solid fa-wallet me-2 safe-icon"></i> บัญชีภายในหน่วยงาน</h2>
                     <p class="text-muted mt-1 mb-0" id="dl-date-text" style="color: var(--text-muted) !important;">จัดการงบประมาณ เงินสวัสดิการ และค่าใช้จ่ายแผนก</p>
                 </div>
                 <div class="d-flex gap-2 align-items-center flex-wrap">
@@ -84,41 +84,41 @@ class DepartmentLedgerPageComponent {
             <div class="row g-3 mb-4">
                 <div class="col-md-6 col-xl-3">
                     <div class="stat-card-ledger" style="border-top: 4px solid #64748b;">
-                        <i class="fa-solid fa-clock-rotate-left stat-icon-bg" style="color: var(--text-muted);"></i>
+                        <i class="fa-solid fa-clock-rotate-left stat-icon-bg safe-icon" style="color: var(--text-muted);"></i>
                         <div class="d-flex justify-content-between mb-2 position-relative z-1">
                             <div class="text-uppercase fw-bold small" style="color: var(--text-muted);">1. ยอดยกมา (Brought Fwd)</div>
                         </div>
-                        <div class="fs-3 fw-bold position-relative z-1" style="color: var(--text-dark);">฿<span id="dl-bf-balance"><i class="fas fa-spinner fa-spin fs-5"></i></span></div>
+                        <div class="fs-3 fw-bold position-relative z-1" style="color: var(--text-dark);">฿<span id="dl-bf-balance"><i class="fas fa-spinner fa-spin fs-5 safe-icon"></i></span></div>
                     </div>
                 </div>
                 <div class="col-md-6 col-xl-3">
                     <div class="stat-card-ledger" style="border-top: 4px solid var(--success);">
-                        <i class="fa-solid fa-arrow-turn-down stat-icon-bg" style="transform: rotate(90deg); color: var(--success);"></i>
+                        <i class="fa-solid fa-arrow-turn-down stat-icon-bg safe-icon" style="transform: rotate(90deg); color: var(--success);"></i>
                         <div class="d-flex justify-content-between mb-2 position-relative z-1">
                             <div class="fw-bold small text-uppercase" style="color: var(--success);">2. รับเข้า (Income)</div>
-                            <div class="badge-soft-success rounded px-2 py-1"><i class="fa-solid fa-plus"></i></div>
+                            <div class="badge-soft-success rounded px-2 py-1"><i class="fa-solid fa-plus safe-icon"></i></div>
                         </div>
-                        <div class="fs-3 fw-bold position-relative z-1" style="color: var(--success);">+ ฿<span id="dl-total-in"><i class="fas fa-spinner fa-spin fs-5"></i></span></div>
+                        <div class="fs-3 fw-bold position-relative z-1" style="color: var(--success);">+ ฿<span id="dl-total-in"><i class="fas fa-spinner fa-spin fs-5 safe-icon"></i></span></div>
                     </div>
                 </div>
                 <div class="col-md-6 col-xl-3">
                     <div class="stat-card-ledger" style="border-top: 4px solid var(--danger);">
-                        <i class="fa-solid fa-arrow-turn-up stat-icon-bg" style="transform: rotate(90deg); color: var(--danger);"></i>
+                        <i class="fa-solid fa-arrow-turn-up stat-icon-bg safe-icon" style="transform: rotate(90deg); color: var(--danger);"></i>
                         <div class="d-flex justify-content-between mb-2 position-relative z-1">
                             <div class="fw-bold small text-uppercase" style="color: var(--danger);">3. จ่ายออก (Expense)</div>
-                            <div class="badge-soft-danger rounded px-2 py-1"><i class="fa-solid fa-minus"></i></div>
+                            <div class="badge-soft-danger rounded px-2 py-1"><i class="fa-solid fa-minus safe-icon"></i></div>
                         </div>
-                        <div class="fs-3 fw-bold position-relative z-1" style="color: var(--danger);">- ฿<span id="dl-total-out"><i class="fas fa-spinner fa-spin fs-5"></i></span></div>
+                        <div class="fs-3 fw-bold position-relative z-1" style="color: var(--danger);">- ฿<span id="dl-total-out"><i class="fas fa-spinner fa-spin fs-5 safe-icon"></i></span></div>
                     </div>
                 </div>
                 <div class="col-md-6 col-xl-3">
                     <div class="stat-card-ledger" style="border-top: 4px solid var(--primary); background: var(--primary-light);">
-                        <i class="fa-solid fa-vault stat-icon-bg" style="color: var(--primary);"></i>
+                        <i class="fa-solid fa-vault stat-icon-bg safe-icon" style="color: var(--primary);"></i>
                         <div class="d-flex justify-content-between mb-2 position-relative z-1">
                             <div class="text-primary fw-bold small text-uppercase">4. คงเหลือ (Carried Fwd)</div>
-                            <div class="badge-soft-primary rounded px-2 py-1"><i class="fa-solid fa-equals"></i></div>
+                            <div class="badge-soft-primary rounded px-2 py-1"><i class="fa-solid fa-equals safe-icon"></i></div>
                         </div>
-                        <div class="fs-3 fw-bold position-relative z-1" id="dl-net-balance"><i class="fas fa-spinner fa-spin fs-5"></i></div>
+                        <div class="fs-3 fw-bold position-relative z-1" id="dl-net-balance"><i class="fas fa-spinner fa-spin fs-5 safe-icon"></i></div>
                     </div>
                 </div>
             </div>
@@ -126,12 +126,12 @@ class DepartmentLedgerPageComponent {
             <ul class="nav finance-nav-tabs mb-4" id="ledgerTabs" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#ledger-panel" type="button" role="tab">
-                        <i class="fa-solid fa-book-open me-2"></i> สมุดบัญชีรวม (Statement)
+                        <i class="fa-solid fa-book-open me-2 safe-icon"></i> สมุดบัญชีรวม (Statement)
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link text-info" data-bs-toggle="tab" data-bs-target="#summary-panel" type="button" role="tab" onclick="setTimeout(()=>DepartmentLedgerPage.renderSummaryChart(), 200)">
-                        <i class="fa-solid fa-chart-pie me-2"></i> สรุปรายงานการใช้จ่าย (Summary)
+                        <i class="fa-solid fa-chart-pie me-2 safe-icon"></i> สรุปรายงานการใช้จ่าย (Summary)
                     </button>
                 </li>
             </ul>
@@ -139,9 +139,9 @@ class DepartmentLedgerPageComponent {
             <div class="tab-content" id="ledgerTabContent">
                 <div class="tab-pane fade show active" id="ledger-panel" role="tabpanel">
                     <div class="modern-panel shadow-sm p-4 position-relative overflow-hidden" style="border-top: 5px solid var(--primary); border-radius: 20px;">
-                        <div style="position: absolute; top: -30px; right: -30px; opacity: 0.02; font-size: 200px; pointer-events: none;"><i class="fa-solid fa-file-lines"></i></div>
+                        <div style="position: absolute; top: -30px; right: -30px; opacity: 0.02; font-size: 200px; pointer-events: none;"><i class="fa-solid fa-file-lines safe-icon"></i></div>
                         <div class="d-flex justify-content-between align-items-center mb-4 position-relative z-1 flex-wrap gap-3">
-                            <h5 class="fw-bold mb-0" style="color: var(--text-dark);"><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> ความเคลื่อนไหวทางบัญชี (Running Ledger)</h5>
+                            <h5 class="fw-bold mb-0" style="color: var(--text-dark);"><i class="fa-solid fa-clock-rotate-left text-primary me-2 safe-icon"></i> ความเคลื่อนไหวทางบัญชี (Running Ledger)</h5>
                             <div class="d-flex gap-2">
                                 <button class="btn btn-premium-danger px-4 shadow-sm" onclick="DepartmentLedgerPage.openAddModal('OUT')">
                                     <i class="fas fa-minus-circle me-2 safe-icon"></i> บันทึกจ่ายออก
@@ -159,14 +159,14 @@ class DepartmentLedgerPageComponent {
                             <table class="table table-ledger w-100 mb-0">
                                 <thead style="position: sticky; top: 0; z-index: 10;">
                                     <tr>
-                                        <th style="width: 14%;"><i class="fa-regular fa-calendar me-1"></i> วัน/เวลาที่ทำรายการ</th>
+                                        <th style="width: 14%;"><i class="fa-regular fa-calendar me-1 safe-icon"></i> วัน/เวลาที่ทำรายการ</th>
                                         <th style="width: 10%;">ประเภท</th>
                                         <th style="width: 20%;">รายละเอียดรายการ</th>
-                                        <th style="width: 18%;"><i class="fa-regular fa-comment-dots me-1"></i> หมายเหตุ</th>
+                                        <th style="width: 18%;"><i class="fa-regular fa-comment-dots me-1 safe-icon"></i> หมายเหตุ</th>
                                         <th class="text-end text-success" style="width: 10%;">เงินเข้า (IN)</th>
                                         <th class="text-end text-danger" style="width: 10%;">เงินออก (OUT)</th>
                                         <th class="text-end text-primary" style="width: 13%;">คงเหลือ (BAL)</th>
-                                        <th class="text-center no-print" style="width: 5%;"></th>
+                                        <th class="text-center no-print" style="width: 10%;"><i class="fa-solid fa-gears safe-icon"></i></th>
                                     </tr>
                                 </thead>
                                 <tbody id="dl-table-body">
@@ -180,13 +180,15 @@ class DepartmentLedgerPageComponent {
                 <div class="tab-pane fade" id="summary-panel" role="tabpanel">
                     <div class="d-flex justify-content-end mb-3">
                         <button class="btn btn-primary fw-bold shadow-sm rounded-pill px-4" onclick="DepartmentLedgerPage.printSummary()">
-                            <i class="fa-solid fa-print me-2 text-white"></i> พิมพ์สรุปยอด
+                            <!-- 🚨 THE FIX: ป้องกันไอคอนพิมพ์ในแท็บ Summary เพี้ยน -->
+                            <i class="fa-solid fa-print me-2 text-white safe-icon"></i> พิมพ์สรุปยอด
                         </button>
                     </div>
                     <div class="row g-4">
                         <div class="col-lg-5">
                             <div class="modern-panel shadow-sm p-4 h-100 position-relative overflow-hidden" style="border-top: 5px solid var(--info); border-radius: 20px;">
-                                <h5 class="fw-bold mb-4" style="color: var(--text-dark);"><i class="fa-solid fa-chart-pie text-info me-2"></i> สัดส่วนการใช้จ่าย (Expense Breakdown)</h5>
+                                <!-- 🚨 THE FIX: ป้องกันไอคอนกราฟในแท็บ Summary เพี้ยน -->
+                                <h5 class="fw-bold mb-4" style="color: var(--text-dark);"><i class="fa-solid fa-chart-pie text-info me-2 safe-icon"></i> สัดส่วนการใช้จ่าย (Expense Breakdown)</h5>
                                 <div style="height: 380px; width: 100%; display: flex; align-items: center; justify-content: center;" id="dl-chart-container">
                                     <canvas id="dlSummaryChart"></canvas>
                                 </div>
@@ -194,7 +196,8 @@ class DepartmentLedgerPageComponent {
                         </div>
                         <div class="col-lg-7">
                             <div class="modern-panel shadow-sm p-4 h-100 position-relative overflow-hidden" style="border-top: 5px solid #94a3b8; border-radius: 20px;">
-                                <h5 class="fw-bold mb-4" style="color: var(--text-dark);"><i class="fa-solid fa-list-ul text-secondary me-2"></i> สรุปยอดแยกตามหมวดหมู่</h5>
+                                <!-- 🚨 THE FIX: ป้องกันไอคอน List-ul ในแท็บ Summary เพี้ยน 🚨 -->
+                                <h5 class="fw-bold mb-4" style="color: var(--text-dark);"><i class="fa-solid fa-list-ul text-secondary me-2 safe-icon"></i> สรุปยอดแยกตามหมวดหมู่</h5>
                                 <div class="table-responsive rounded-4 shadow-sm" style="background-color: var(--bg-surface); border: 1px solid var(--border-color);">
                                     <table class="table table-ledger w-100 mb-0">
                                         <thead>
@@ -390,13 +393,13 @@ class DepartmentLedgerPageComponent {
         `;
 
         if (filtered.length === 0) {
-            html += `<tr><td colspan="8" class="text-center py-5" style="color: var(--text-muted);"><i class="fa-solid fa-file-invoice fa-3x mb-3" style="opacity:0.2;"></i><br>ไม่มีความเคลื่อนไหวในช่วงเวลานี้</td></tr>`;
+            html += `<tr><td colspan="8" class="text-center py-5" style="color: var(--text-muted);"><i class="fa-solid fa-file-invoice fa-3x mb-3 safe-icon" style="opacity:0.2;"></i><br>ไม่มีความเคลื่อนไหวในช่วงเวลานี้</td></tr>`;
         } else {
             [...filtered].reverse().forEach(t => {
                 let isIncome = t.type === 'IN';
                 let badge = isIncome 
-                    ? `<span class="badge badge-soft-success px-3 py-1 rounded-pill w-100"><i class="fa-solid fa-arrow-turn-down me-1" style="transform:rotate(90deg);"></i> รับเข้า</span>` 
-                    : `<span class="badge badge-soft-danger px-3 py-1 rounded-pill w-100"><i class="fa-solid fa-arrow-turn-up me-1" style="transform:rotate(90deg);"></i> จ่ายออก</span>`;
+                    ? `<span class="badge badge-soft-success px-3 py-1 rounded-pill w-100"><i class="fa-solid fa-arrow-turn-down me-1 safe-icon" style="transform:rotate(90deg);"></i> รับเข้า</span>` 
+                    : `<span class="badge badge-soft-danger px-3 py-1 rounded-pill w-100"><i class="fa-solid fa-arrow-turn-up me-1 safe-icon" style="transform:rotate(90deg);"></i> จ่ายออก</span>`;
                 
                 let inAmt = isIncome ? `+ ${Number(t.amount).toLocaleString(undefined, {minimumFractionDigits: 2})}` : '-';
                 let outAmt = !isIncome ? `- ${Number(t.amount).toLocaleString(undefined, {minimumFractionDigits: 2})}` : '-';
@@ -405,8 +408,8 @@ class DepartmentLedgerPageComponent {
                 html += `
                 <tr class="card-hover-float" style="cursor:default;">
                     <td>
-                        <span class="badge shadow-sm px-2 py-1" style="background-color: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-dark) !important;"><i class="fa-regular fa-calendar text-primary me-1"></i> ${this.formatDateTh(t.date)}</span>
-                        <div class="small fw-bold mt-1 ms-1" style="color: var(--text-muted);"><i class="fa-regular fa-clock me-1"></i> ${timeStr} น.</div>
+                        <span class="badge shadow-sm px-2 py-1" style="background-color: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-dark) !important;"><i class="fa-regular fa-calendar text-primary me-1 safe-icon"></i> ${this.formatDateTh(t.date)}</span>
+                        <div class="small fw-bold mt-1 ms-1" style="color: var(--text-muted);"><i class="fa-regular fa-clock me-1 safe-icon"></i> ${timeStr} น.</div>
                     </td>
                     <td class="text-center">${badge}</td>
                     <td>
@@ -420,7 +423,10 @@ class DepartmentLedgerPageComponent {
                     <td class="text-end fw-bold text-danger" style="font-size:15px;">${outAmt}</td>
                     <td class="text-end fw-bold border-start" style="font-size:15px; color: var(--text-dark); border-color: var(--border-color) !important;">฿${t.runningBalance.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                     <td class="text-center">
-                        <button class="btn btn-sm text-danger px-2" onclick="DepartmentLedgerPage.deleteTransaction('${t.id}')" title="ลบรายการนี้"><i class="fa-solid fa-trash"></i></button>
+                        <div class="d-flex justify-content-center gap-2">
+                            <button class="btn btn-sm btn-warning shadow-sm px-2" style="border-radius: 8px;" onclick="DepartmentLedgerPage.editTransaction('${t.id}')" title="แก้ไขรายการนี้"><i class="fa-solid fa-pen safe-icon"></i></button>
+                            <button class="btn btn-sm btn-danger shadow-sm px-2 text-white" style="border-radius: 8px;" onclick="DepartmentLedgerPage.deleteTransaction('${t.id}')" title="ลบรายการนี้"><i class="fa-solid fa-trash safe-icon"></i></button>
+                        </div>
                     </td>
                 </tr>`;
             });
@@ -485,7 +491,7 @@ class DepartmentLedgerPageComponent {
             const { labels, data, colors, totalOut } = this.state._pendingChartData;
 
             if (data.length === 0) { 
-                document.getElementById('dl-chart-container').innerHTML = `<div class="text-center" style="color: var(--text-muted);"><i class="fa-solid fa-chart-pie fa-3x mb-3" style="opacity:0.2;"></i><br>ไม่มีรายจ่ายให้วิเคราะห์</div>`; 
+                document.getElementById('dl-chart-container').innerHTML = `<div class="text-center" style="color: var(--text-muted);"><i class="fa-solid fa-chart-pie fa-3x mb-3 safe-icon" style="opacity:0.2;"></i><br>ไม่มีรายจ่ายให้วิเคราะห์</div>`; 
                 return; 
             } else { 
                 document.getElementById('dl-chart-container').innerHTML = `<canvas id="dlSummaryChart"></canvas>`; 
@@ -539,7 +545,7 @@ class DepartmentLedgerPageComponent {
 
     setInitialBalance() {
         Swal.fire({
-            title: '<h5 class="fw-bold text-info mb-0"><i class="fa-solid fa-piggy-bank me-2"></i> ตั้งยอดยกมาเริ่มต้น</h5>',
+            title: '<h5 class="fw-bold text-info mb-0"><i class="fa-solid fa-piggy-bank me-2 safe-icon"></i> ตั้งยอดยกมาเริ่มต้น</h5>',
             html: `
                 <div class="text-start mt-3" style="font-family:'Sarabun';">
                     <label class="form-label fw-bold small text-secondary">กำหนดเงินตั้งต้นของแผนก (บาท)</label>
@@ -567,7 +573,7 @@ class DepartmentLedgerPageComponent {
         let outHtml = this.state.categoriesOut.map((c, i) => `<span class="badge bg-danger-subtle text-danger-emphasis m-1 fs-6 border border-danger-subtle py-2 px-3 shadow-sm rounded-pill">${this.#escapeHTML(c)} <i class="fa-solid fa-times ms-2 safe-icon" style="cursor:pointer;" onclick="Swal.close(); setTimeout(()=>DepartmentLedgerPage.removeCategory('OUT', ${i}),300)"></i></span>`).join('');
 
         Swal.fire({
-            title: '<h4 class="fw-bold mb-0" style="color: var(--text-dark);"><i class="fa-solid fa-tags text-secondary me-2"></i> จัดการหมวดหมู่รับ-จ่าย</h4>', 
+            title: '<h4 class="fw-bold mb-0" style="color: var(--text-dark);"><i class="fa-solid fa-tags text-secondary me-2 safe-icon"></i> จัดการหมวดหมู่รับ-จ่าย</h4>', 
             width: 700,
             html: `
                 <div class="row text-start mt-3" style="font-family:'Sarabun';">
@@ -681,13 +687,93 @@ class DepartmentLedgerPageComponent {
         });
     }
 
+    editTransaction(id) {
+        const item = this.state.allTransactions.find(t => t.id === id);
+        if (!item) {
+            Swal.fire('ข้อผิดพลาด', 'ไม่พบรายการที่ต้องการแก้ไข', 'error');
+            return;
+        }
+
+        const isIncome = item.type === 'IN';
+        const title = 'แก้ไขรายการบัญชี'; 
+        const color = 'warning'; 
+        
+        let activeArr = isIncome ? this.state.categoriesIn : this.state.categoriesOut; 
+        let catOptions = activeArr.map(c => `<option value="${this.#escapeHTML(c)}" ${item.category === c ? 'selected' : ''}>${this.#escapeHTML(c)}</option>`).join('');
+        if (!activeArr.includes(item.category)) {
+            catOptions += `<option value="${this.#escapeHTML(item.category)}" selected>${this.#escapeHTML(item.category)}</option>`;
+        }
+
+        Swal.fire({
+            title: `<h4 class="fw-bold text-${color} mb-0" style="font-family:'Prompt';"><i class="fas fa-pen me-2 safe-icon"></i> ${title}</h4>`,
+            html: `
+                <div class="text-start mt-3" style="font-family:'Sarabun';">
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold small" style="color: var(--text-muted);">วันที่ทำรายการ</label>
+                            <input type="date" id="swal-lg-date" class="form-control input-modern" style="border-radius:8px;" value="${item.date}">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold small" style="color: var(--text-muted);">หมวดหมู่</label>
+                            <select id="swal-lg-category" class="form-select input-modern" style="border-radius:8px;">${catOptions}</select>
+                        </div>
+                    </div>
+                    <label class="form-label fw-bold small" style="color: var(--text-muted);">รายละเอียดรายการ <span class="text-danger">*</span></label>
+                    <input type="text" id="swal-lg-desc" class="form-control input-modern fw-bold mb-3" style="color: var(--text-dark); border-radius:8px;" placeholder="เช่น ค่าเครื่องเขียน" value="${this.#escapeHTML(item.description)}">
+                    
+                    <label class="form-label fw-bold text-${isIncome ? 'success' : 'danger'} small">จำนวนเงิน (บาท) <span class="text-danger">*</span></label>
+                    <div class="input-group shadow-sm mb-3" style="border-radius:12px; overflow:hidden; border: 1px solid var(--border-color); background-color: var(--bg-body);">
+                        <input type="number" id="swal-lg-amount" class="form-control input-modern form-control-lg fw-bold text-end border-0" placeholder="0.00" min="0" value="${item.amount}" style="font-size:22px; border-radius:0 !important; box-shadow:none !important;">
+                    </div>
+                    
+                    <label class="form-label fw-bold small" style="color: var(--text-muted);">หมายเหตุ (ข้อมูลเพิ่มเติม/เลขที่โอน)</label>
+                    <textarea id="swal-lg-remark" class="form-control input-modern" rows="2" style="border-radius:8px;" placeholder="เช่น โอนเข้าบัญชีคลินิก...">${this.#escapeHTML(item.remark || '')}</textarea>
+                </div>
+            `,
+            showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-save me-1 safe-icon"></i> บันทึกการแก้ไข', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#f59e0b', width: 500,
+            preConfirm: () => {
+                const date = document.getElementById('swal-lg-date').value; 
+                const category = document.getElementById('swal-lg-category').value; 
+                const desc = document.getElementById('swal-lg-desc').value.trim(); 
+                const amount = document.getElementById('swal-lg-amount').value;
+                const remark = document.getElementById('swal-lg-remark').value.trim();
+                
+                if (!date || !desc || !amount || Number(amount) <= 0) { 
+                    Swal.showValidationMessage('กรุณากรอกรายละเอียดและจำนวนเงินให้ครบถ้วน'); 
+                    return false; 
+                }
+                
+                return { 
+                    ...item,
+                    date: date, 
+                    category: category, 
+                    description: desc, 
+                    remark: remark,
+                    amount: Number(amount), 
+                    last_edited_by: App.currentUser ? App.currentUser.name : 'Admin', 
+                    last_edited_timestamp: new Date().toISOString() 
+                };
+            }
+        }).then((result) => { 
+            if (result.isConfirmed) {
+                Swal.fire({ title: 'กำลังปรับปรุงบัญชี...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                db.ref('department_ledger_v2/' + item.id).update(result.value).then(() => {
+                    Swal.fire({ title: 'สำเร็จ', text: 'แก้ไขรายการบัญชีและคำนวณยอดคงเหลือใหม่เรียบร้อยแล้ว', icon: 'success', timer: 1500, showConfirmButton: false });
+                }).catch(err => {
+                    Swal.fire('ข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้: ' + err.message, 'error');
+                });
+            }
+        });
+    }
+
     deleteTransaction(id) { 
         Swal.fire({ 
             title: 'ยืนยันการลบรายการ?', 
+            html: 'การลบรายการนี้ <b class="text-danger">จะทำให้ยอดคงเหลือถูกคำนวณใหม่ทั้งหมด</b><br>คุณแน่ใจหรือไม่?',
             icon: 'warning', 
             showCancelButton: true, 
             confirmButtonColor: '#ef4444', 
-            confirmButtonText: 'ลบรายการ', 
+            confirmButtonText: '<i class="fa-solid fa-trash safe-icon"></i> ลบรายการ', 
             cancelButtonText: 'ยกเลิก' 
         }).then((result) => { 
             if (result.isConfirmed) {

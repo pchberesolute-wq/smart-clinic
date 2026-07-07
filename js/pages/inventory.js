@@ -15,8 +15,45 @@ class InventoryPageComponent {
             <style>
                 .table-premium th { color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px; padding: 14px 10px; border-bottom: 2px solid var(--border-color); }
                 .table-premium td { padding: 14px 10px; vertical-align: middle; border-bottom: 1px solid var(--border-color); transition: background 0.2s; }
-                .btn-action-icon { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.2s ease; }
-                .btn-action-icon:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+                
+                .btn-action-icon { width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; transition: all 0.2s ease; border: none; }
+                .btn-action-icon i { font-size: 15px; }
+                
+                /* ยันต์กันไอคอนเพี้ยน (Force Font Awesome) */
+                .safe-icon { font-family: 'Font Awesome 6 Free', 'FontAwesome', sans-serif !important; font-weight: 900 !important; font-style: normal !important; }
+
+                /* 🚨 THE FIX: เกราะป้องกันสีระดับ MAX ฝ่าทะลวง Dark Mode (CSS Specificity War Winner) 🚨 */
+                /* ใช้ Selector ยาวๆ เพื่อให้พลังชนะ Global CSS ของ Bootstrap 100% */
+                
+                html[data-bs-theme="dark"] body .table .btn-action-icon.btn-primary,
+                body .table .btn-action-icon.btn-primary { 
+                    background-color: #3b82f6 !important; border: 1px solid #3b82f6 !important; color: #ffffff !important; 
+                    opacity: 1 !important; filter: none !important; box-shadow: 0 4px 6px rgba(0,0,0,0.2) !important;
+                }
+                html[data-bs-theme="dark"] body .table .btn-action-icon.btn-primary:hover,
+                body .table .btn-action-icon.btn-primary:hover { 
+                    background-color: #2563eb !important; transform: translateY(-3px) !important; filter: brightness(1.2) !important; 
+                }
+
+                html[data-bs-theme="dark"] body .table .btn-action-icon.btn-warning,
+                body .table .btn-action-icon.btn-warning { 
+                    background-color: #f59e0b !important; border: 1px solid #f59e0b !important; color: #0f172a !important; 
+                    opacity: 1 !important; filter: none !important; box-shadow: 0 4px 6px rgba(0,0,0,0.2) !important;
+                }
+                html[data-bs-theme="dark"] body .table .btn-action-icon.btn-warning:hover,
+                body .table .btn-action-icon.btn-warning:hover { 
+                    background-color: #d97706 !important; transform: translateY(-3px) !important; filter: brightness(1.2) !important; 
+                }
+
+                html[data-bs-theme="dark"] body .table .btn-action-icon.btn-danger,
+                body .table .btn-action-icon.btn-danger { 
+                    background-color: #ef4444 !important; border: 1px solid #ef4444 !important; color: #ffffff !important; 
+                    opacity: 1 !important; filter: none !important; box-shadow: 0 4px 6px rgba(0,0,0,0.2) !important;
+                }
+                html[data-bs-theme="dark"] body .table .btn-action-icon.btn-danger:hover,
+                body .table .btn-action-icon.btn-danger:hover { 
+                    background-color: #dc2626 !important; transform: translateY(-3px) !important; filter: brightness(1.2) !important; 
+                }
             </style>
 
             <div class="page-header mb-4">
@@ -26,18 +63,18 @@ class InventoryPageComponent {
                 </div>
                 <div class="d-flex gap-2 mt-3 mt-md-0 flex-wrap justify-content-md-end">
                     <button class="btn btn-outline-dark fw-bold shadow-sm rounded-pill px-3" onclick="App.pages.inventory.printAllBarcodes()" title="พิมพ์บาร์โค้ดของพัสดุทั้งหมดในระบบ" style="color: var(--text-dark); border-color: var(--border-color);">
-                        <i class="fa-solid fa-print me-1 text-warning"></i> พิมพ์บาร์โค้ดทั้งหมด
+                        <i class="fa-solid fa-print me-1 text-warning safe-icon"></i> พิมพ์บาร์โค้ดทั้งหมด
                     </button>
                     <button class="btn btn-outline-secondary fw-bold shadow-sm rounded-pill px-3" onclick="App.pages.inventory.openOptionsModal()" title="จัดการตัวเลือกหมวดหมู่และหน่วยนับ">
-                        <i class="fa-solid fa-tags me-1"></i> จัดการหมวดหมู่/หน่วยนับ
+                        <i class="fa-solid fa-tags me-1 safe-icon"></i> จัดการหมวดหมู่/หน่วยนับ
                     </button>
                     
                     <button class="btn btn-outline-primary fw-bold shadow-sm rounded-pill px-4" onclick="App.switchPage('stock_manage')">
-                        <i class="fa-solid fa-truck-ramp-box me-2"></i> ไปหน้าเบิกจ่าย / โอนย้าย
+                        <i class="fa-solid fa-truck-ramp-box me-2 safe-icon"></i> ไปหน้าเบิกจ่าย / โอนย้าย
                     </button>
 
                     <button class="btn btn-premium-primary fw-bold shadow-sm rounded-pill px-4" onclick="App.pages.inventory.openItemModal()">
-                        <i class="fa-solid fa-plus me-2"></i> ลงทะเบียนพัสดุใหม่
+                        <i class="fa-solid fa-plus me-2 safe-icon"></i> ลงทะเบียนพัสดุใหม่
                     </button>
                 </div>
             </div>
@@ -87,7 +124,7 @@ class InventoryPageComponent {
                 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 position-relative z-1">
                     <h5 class="fw-bold mb-0" style="color: var(--text-dark);"><i class="fa-solid fa-box-open text-primary me-2"></i> รายการพัสดุคงเหลือในระบบ</h5>
                     <div class="search-box-modern shadow-sm" style="width: 300px; max-width: 100%; border-radius: 12px; background-color: var(--bg-body); border: 1px solid var(--border-color); padding: 10px 15px; display: flex; align-items: center;">
-                        <i class="fa-solid fa-search text-primary"></i>
+                        <i class="fa-solid fa-search text-primary safe-icon"></i>
                         <input type="text" id="inv-search" class="fw-bold border-0 bg-transparent ms-2 w-100" style="outline:none; color: var(--text-dark);" placeholder="ค้นหาชื่อ, รหัสสินค้า, บาร์โค้ด...">
                     </div>
                 </div>
@@ -97,14 +134,14 @@ class InventoryPageComponent {
                         <thead style="background-color: var(--bg-body);">
                             <tr>
                                 <th class="text-center text-primary" style="width: 5%;">ลำดับ</th>
-                                <th class="text-center" style="width: 12%;"><i class="fa-solid fa-hashtag me-1"></i> รหัสสินค้า</th>
-                                <th style="width: 12%;"><i class="fa-solid fa-barcode me-1"></i> บาร์โค้ด</th>
-                                <th style="width: 22%;"><i class="fa-solid fa-box me-1"></i> ชื่อรายการพัสดุ</th>
+                                <th class="text-center" style="width: 12%;"><i class="fa-solid fa-hashtag me-1 safe-icon"></i> รหัสสินค้า</th>
+                                <th style="width: 12%;"><i class="fa-solid fa-barcode me-1 safe-icon"></i> บาร์โค้ด</th>
+                                <th style="width: 22%;"><i class="fa-solid fa-box me-1 safe-icon"></i> ชื่อรายการพัสดุ</th>
                                 <th class="text-center text-primary" style="width: 9%;">ตั้งต้นเบิก<br><small>(/สัปดาห์)</small></th>
                                 <th class="text-center text-primary" style="width: 10%; border-radius: 8px 0 0 0;">📦 ใหญ่</th>
                                 <th class="text-center text-info" style="width: 10%; border-radius: 0 8px 0 0;">🛒 เล็ก</th>
                                 <th class="text-center" style="width: 7%;">หน่วย</th>
-                                <th class="text-center" style="width: 13%;"><i class="fa-solid fa-gears me-1"></i> จัดการ</th>
+                                <th class="text-center" style="width: 13%;"><i class="fa-solid fa-gears me-1 safe-icon"></i> จัดการ</th>
                             </tr>
                         </thead>
                         <tbody id="inv-table-body">
@@ -250,18 +287,18 @@ class InventoryPageComponent {
             <tr class="align-middle card-hover-float" style="cursor: default;">
                 <td class="text-center fw-bold text-secondary" style="font-size: 15px;">${orderVal}</td>
                 <td class="text-center"><span class="badge border shadow-sm px-2 py-1 text-primary" style="font-family: monospace; font-size:13px; border-radius:6px; background: var(--bg-body); border-color: var(--primary) !important;">${safeItemCode}</span></td>
-                <td><span class="badge border shadow-sm px-2 py-1" style="font-family: monospace; font-size:12px; border-radius:6px; background: var(--bg-body); color: var(--text-dark); border-color: var(--border-color) !important;"><i class="fa-solid fa-barcode text-secondary me-1"></i> ${safeBarcode}</span></td>
+                <td><span class="badge border shadow-sm px-2 py-1" style="font-family: monospace; font-size:12px; border-radius:6px; background: var(--bg-body); color: var(--text-dark); border-color: var(--border-color) !important;"><i class="fa-solid fa-barcode text-secondary me-1 safe-icon"></i> ${safeBarcode}</span></td>
                 
-                <td><div class="fw-bold" style="font-size:14.5px; color: var(--text-dark);">${safeName}</div><div class="small text-muted mt-1"><i class="fa-solid fa-tag me-1 text-secondary"></i> ${safeCategory}</div></td>
+                <td><div class="fw-bold" style="font-size:14.5px; color: var(--text-dark);">${safeName}</div><div class="small text-muted mt-1"><i class="fa-solid fa-tag me-1 text-secondary safe-icon"></i> ${safeCategory}</div></td>
                 <td class="text-center text-primary fw-bold fs-6">${bReq > 0 ? bReq : '-'}</td>
                 <td class="text-center border-start border-end" style="border-color: var(--border-color) !important; color: var(--text-dark);">${mainHtml}</td>
                 <td class="text-center border-end" style="border-color: var(--border-color) !important; color: var(--text-dark);">${subHtml}</td>
                 <td class="text-center text-muted small fw-bold">${safeUnit}</td>
                 <td class="text-center">
-                    <div class="d-flex justify-content-center gap-1">
-                        <button class="btn btn-sm border shadow-sm px-2 py-1 fw-bold text-primary" style="border-radius:10px; background: var(--bg-body); border-color: var(--border-color) !important;" onclick="App.pages.inventory.printBarcode('${i.id}')" title="พิมพ์สติ๊กเกอร์บาร์โค้ด"><i class="fa-solid fa-barcode"></i></button>
-                        <button class="btn btn-sm btn-warning px-2 py-1 shadow-sm text-dark" style="border-radius:10px;" onclick="App.pages.inventory.openItemModal('${i.id}')" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
-                        <button class="btn btn-sm btn-danger px-2 py-1 shadow-sm text-white" style="border-radius:10px;" onclick="App.pages.inventory.deleteItem('${i.firebaseKey || i.id}', '${safeName}')" title="ลบพัสดุ"><i class="fa-solid fa-trash"></i></button>
+                    <div class="d-flex justify-content-center gap-2">
+                        <button class="btn btn-action-icon btn-primary" onclick="App.pages.inventory.printBarcode('${i.id}')" title="พิมพ์สติ๊กเกอร์บาร์โค้ด"><i class="fa-solid fa-barcode safe-icon"></i></button>
+                        <button class="btn btn-action-icon btn-warning" onclick="App.pages.inventory.openItemModal('${i.id}')" title="แก้ไข"><i class="fa-solid fa-pen safe-icon"></i></button>
+                        <button class="btn btn-action-icon btn-danger" onclick="App.pages.inventory.deleteItem('${i.firebaseKey || i.id}', '${safeName}')" title="ลบพัสดุ"><i class="fa-solid fa-trash safe-icon"></i></button>
                     </div>
                 </td>
             </tr>`;
@@ -275,11 +312,11 @@ class InventoryPageComponent {
     openOptionsModal() { 
         window.renderInvOptions = () => {
             let catHtml = this.savedCategories.length === 0 ? '<div class="text-muted small mt-2">ไม่มีข้อมูล</div>' : this.savedCategories.map((c, i) => `
-                <span class="badge m-1 fs-6 border py-2 px-3 shadow-sm rounded-pill text-primary" style="background: var(--bg-body); border-color: var(--primary) !important;">${this.#escapeHTML(c)} <i class="fa-solid fa-times ms-2 text-danger" style="cursor:pointer;" onclick="App.pages.inventory.removeOption('cat', ${i})"></i></span>
+                <span class="badge m-1 fs-6 border py-2 px-3 shadow-sm rounded-pill text-primary" style="background: var(--bg-body); border-color: var(--primary) !important;">${this.#escapeHTML(c)} <i class="fa-solid fa-times ms-2 text-danger safe-icon" style="cursor:pointer;" onclick="App.pages.inventory.removeOption('cat', ${i})"></i></span>
             `).join('');
             
             let unitHtml = this.savedUnits.length === 0 ? '<div class="text-muted small mt-2">ไม่มีข้อมูล</div>' : this.savedUnits.map((u, i) => `
-                <span class="badge m-1 fs-6 border py-2 px-3 shadow-sm rounded-pill text-info" style="background: var(--bg-body); border-color: var(--info) !important;">${this.#escapeHTML(u)} <i class="fa-solid fa-times ms-2 text-danger" style="cursor:pointer;" onclick="App.pages.inventory.removeOption('unit', ${i})"></i></span>
+                <span class="badge m-1 fs-6 border py-2 px-3 shadow-sm rounded-pill text-info" style="background: var(--bg-body); border-color: var(--info) !important;">${this.#escapeHTML(u)} <i class="fa-solid fa-times ms-2 text-danger safe-icon" style="cursor:pointer;" onclick="App.pages.inventory.removeOption('unit', ${i})"></i></span>
             `).join('');
 
             const catEl = document.getElementById('swal-cat-container');
@@ -289,12 +326,12 @@ class InventoryPageComponent {
         };
 
         Swal.fire({
-            title: '<h4 class="fw-bold mb-0" style="color: var(--text-dark);"><i class="fa-solid fa-tags text-primary me-2"></i>ตั้งค่าหมวดหมู่ และ หน่วยนับ</h4>',
+            title: '<h4 class="fw-bold mb-0" style="color: var(--text-dark);"><i class="fa-solid fa-tags text-primary me-2 safe-icon"></i>ตั้งค่าหมวดหมู่ และ หน่วยนับ</h4>',
             width: 700,
             html: `
                 <div class="row text-start mt-3" style="font-family:'Sarabun';">
                     <div class="col-md-6 border-end" style="border-color: var(--border-color) !important;">
-                        <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-folder-tree me-1"></i> หมวดหมู่พัสดุ</h6>
+                        <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-folder-tree me-1 safe-icon"></i> หมวดหมู่พัสดุ</h6>
                         <div class="input-group mb-3 shadow-sm" style="border-radius:8px; overflow:hidden;">
                             <input type="text" id="new-cat-input" class="form-control" placeholder="พิมพ์หมวดหมู่ใหม่..." onkeypress="if(event.key==='Enter') App.pages.inventory.addOption('cat')" style="border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-dark);">
                             <button class="btn btn-primary fw-bold" onclick="App.pages.inventory.addOption('cat')">เพิ่ม</button>
@@ -302,7 +339,7 @@ class InventoryPageComponent {
                         <div id="swal-cat-container" class="p-3 border" style="min-height: 150px; border-radius: 12px; background: var(--bg-surface); border-color: var(--border-color) !important;"></div>
                     </div>
                     <div class="col-md-6">
-                        <h6 class="fw-bold text-info mb-3"><i class="fa-solid fa-ruler me-1"></i> หน่วยนับ</h6>
+                        <h6 class="fw-bold text-info mb-3"><i class="fa-solid fa-ruler me-1 safe-icon"></i> หน่วยนับ</h6>
                         <div class="input-group mb-3 shadow-sm" style="border-radius:8px; overflow:hidden;">
                             <input type="text" id="new-unit-input" class="form-control" placeholder="พิมพ์หน่วยนับใหม่..." onkeypress="if(event.key==='Enter') App.pages.inventory.addOption('unit')" style="border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-dark);">
                             <button class="btn btn-info text-white fw-bold" onclick="App.pages.inventory.addOption('unit')">เพิ่ม</button>
@@ -357,7 +394,7 @@ class InventoryPageComponent {
         let unitOptions = this.savedUnits.map(u => `<option value="${this.#escapeHTML(u)}"></option>`).join('');
 
         Swal.fire({
-            title: `<h4 class="text-primary fw-bold mb-0"><i class="fa-solid fa-box-open me-2"></i> ${isEdit ? 'แก้ไขข้อมูลพัสดุ' : 'ลงทะเบียนพัสดุใหม่'}</h4>`,
+            title: `<h4 class="text-primary fw-bold mb-0"><i class="fa-solid fa-box-open me-2 safe-icon"></i> ${isEdit ? 'แก้ไขข้อมูลพัสดุ' : 'ลงทะเบียนพัสดุใหม่'}</h4>`,
             html: `
                 <div class="text-start px-2 mt-3" style="font-family:'Sarabun';">
                     
@@ -371,7 +408,7 @@ class InventoryPageComponent {
                             ${!isEdit ? `
                             <div class="input-group shadow-sm" style="border-radius:8px; overflow:hidden;">
                                 <input type="text" id="swal-inv-barcode" class="form-control fw-bold input-modern" placeholder="ยิงบาร์โค้ด" value="" style="border-right: none;">
-                                <button class="btn btn-primary fw-bold px-2" type="button" onclick="window.InventoryGenBarcode()" title="สุ่ม" style="border: 1px solid var(--primary);"><i class="fa-solid fa-shuffle"></i></button>
+                                <button class="btn btn-primary fw-bold px-2" type="button" onclick="window.InventoryGenBarcode()" title="สุ่ม" style="border: 1px solid var(--primary);"><i class="fa-solid fa-shuffle safe-icon"></i></button>
                             </div>
                             ` : `
                             <input type="text" id="swal-inv-barcode" class="form-control fw-bold shadow-sm input-modern" value="${this.#escapeHTML(item.barcode || '')}" readonly style="opacity: 0.7; cursor: not-allowed;">
@@ -400,13 +437,13 @@ class InventoryPageComponent {
                     </div>
 
                     <div class="p-3 rounded-4 shadow-sm mb-3 border" style="background-color: var(--bg-body); border-color: var(--border-color) !important;">
-                        <h6 class="fw-bold text-primary mb-2"><i class="fa-solid fa-bullseye me-2"></i>ตั้งค่ายอดตั้งต้นเบิก (Smart PO)</h6>
+                        <h6 class="fw-bold text-primary mb-2"><i class="fa-solid fa-bullseye me-2 safe-icon"></i>ตั้งค่ายอดตั้งต้นเบิก (Smart PO)</h6>
                         <label class="form-label fw-bold text-secondary small mb-2">คาดการณ์ใช้พัสดุชิ้นนี้กี่ชิ้น / สัปดาห์:</label>
                         <input type="number" id="swal-inv-base-req" class="form-control fw-bold text-primary shadow-sm input-modern" value="${bReq}" placeholder="ระบุเป็นจำนวนเต็ม" min="0" style="border-color: var(--primary) !important;">
                     </div>
 
                     <div class="p-3 rounded-4 shadow-sm border" style="background-color: var(--bg-body); border-color: var(--border-color) !important;">
-                        <h6 class="fw-bold text-secondary mb-3"><i class="fa-solid fa-boxes-stacked me-2"></i>จุดสั่งซื้อเผื่อฉุกเฉิน (Min-Stock)</h6>
+                        <h6 class="fw-bold text-secondary mb-3"><i class="fa-solid fa-boxes-stacked me-2 safe-icon"></i>จุดสั่งซื้อเผื่อฉุกเฉิน (Min-Stock)</h6>
                         <div class="row g-3">
                             <div class="col-6">
                                 <label class="form-label fw-bold text-secondary small">สต๊อกใหญ่เตือนเมื่อต่ำกว่า:</label>
@@ -421,7 +458,7 @@ class InventoryPageComponent {
 
                     ${!isEdit ? `
                     <div class="mt-3 p-3 rounded-4 border shadow-sm" style="background-color: var(--bg-body); border-color: var(--success) !important;">
-                        <h6 class="fw-bold text-success mb-2"><i class="fa-solid fa-boxes-packing me-2"></i>ยอดยกมาเริ่มต้น (Initial Stock)</h6>
+                        <h6 class="fw-bold text-success mb-2"><i class="fa-solid fa-boxes-packing me-2 safe-icon"></i>ยอดยกมาเริ่มต้น (Initial Stock)</h6>
                         <div class="row g-3">
                             <div class="col-6">
                                 <label class="form-label fw-bold text-success small">จำนวนใน สต๊อกใหญ่</label>
@@ -519,7 +556,6 @@ class InventoryPageComponent {
         });
     }
 
-    // 🖨️ Printer Integration (พิมพ์ทีละตัว)
     printBarcode(itemId) { 
         const item = this.allItems.find(i => i.id === itemId);
         if (!item) return;
@@ -536,19 +572,31 @@ class InventoryPageComponent {
             <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
             <style>
                 body { font-family: 'Prompt', sans-serif; background: #f8fafc; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; margin: 0; } 
-                .control-panel { margin-bottom: 40px; display: flex; gap: 15px; } 
+                .control-panel { margin-bottom: 40px; display: flex; gap: 15px; justify-content: center; } 
                 button { font-family: 'Prompt', sans-serif; padding: 12px 24px; font-size: 16px; font-weight: 600; border-radius: 10px; cursor: pointer; border: none; transition: 0.2s; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); } 
                 .btn-save { background: #10b981; color: white; } 
                 .btn-save:hover { background: #059669; transform: translateY(-2px); } 
                 .btn-print { background: #4361ee; color: white; } 
                 .btn-print:hover { background: #3730a3; transform: translateY(-2px); } 
-                .label-box { width: 565px; height: 100px; background: #ffffff; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-sizing: border-box; box-shadow: 0 10px 25px rgba(0,0,0,0.08); position: relative; } 
-                .label-info { flex: 1; text-align: left; overflow: hidden; padding-right: 15px; } 
-                .item-name { font-size: 24px; font-weight: 700; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; } 
-                .item-cat { font-size: 14px; color: #64748b; margin-top: 4px; font-weight: 500; } 
-                .barcode-wrap { display: flex; align-items: center; justify-content: center; height: 100%; } 
+                
+                .label-box { 
+                    width: 520px; height: 100px; background: #ffffff; 
+                    display: flex; align-items: center; justify-content: space-between; 
+                    padding: 0 15px; box-sizing: border-box; box-shadow: 0 10px 25px rgba(0,0,0,0.08); 
+                    position: relative; border: 1px dashed #cbd5e1; border-radius: 8px;
+                } 
+                .label-info { flex: 1; text-align: left; overflow: hidden; padding-right: 10px; min-width: 0; } 
+                .item-name { font-size: 20px; font-weight: 700; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; margin-bottom: 4px; } 
+                .item-cat { font-size: 12px; color: #64748b; font-weight: 500; } 
+                .barcode-wrap { display: flex; align-items: center; justify-content: center; height: 100%; flex-shrink: 0; background: #fff; } 
                 svg { max-width: 100%; height: auto; display: block; } 
-                @media print { body { background: #fff; padding: 0; margin: 0; display: block; } .control-panel { display: none; } .label-box { box-shadow: none; margin: 0; width: 565px !important; height: 100px !important; page-break-inside: avoid; } @page { size: auto; margin: 0; } }
+                
+                @media print { 
+                    body { background: #fff; padding: 0; margin: 0; display: block; align-items: flex-start; } 
+                    .control-panel { display: none; } 
+                    .label-box { box-shadow: none; margin: 0; width: 520px !important; height: 100px !important; page-break-inside: avoid; border: 1px dashed #94a3b8; } 
+                    @page { size: auto; margin: 5mm; } 
+                }
             </style>
         </head>
         <body>
@@ -576,13 +624,16 @@ class InventoryPageComponent {
                 function downloadLabel() { 
                     const label = document.getElementById('label-export'); 
                     const originalShadow = label.style.boxShadow; 
+                    const originalBorder = label.style.border;
                     label.style.boxShadow = 'none'; 
-                    html2canvas(label, { scale: 3, backgroundColor: "#ffffff", width: 565, height: 100 }).then(canvas => { 
+                    label.style.border = 'none';
+                    html2canvas(label, { scale: 3, backgroundColor: "#ffffff", width: 520, height: 100 }).then(canvas => { 
                         let link = document.createElement('a'); 
                         link.download = 'Barcode_${item.name.replace(/\s+/g, '_')}.png'; 
                         link.href = canvas.toDataURL('image/png'); 
                         link.click(); 
                         label.style.boxShadow = originalShadow; 
+                        label.style.border = originalBorder;
                     }); 
                 } 
             </script>
@@ -635,7 +686,7 @@ class InventoryPageComponent {
             scriptsHtml += `
                 try {
                     JsBarcode("#${canvasId}", "${safeBarcode}", { 
-                        format: "CODE128", width: 1.8, height: 40, displayValue: true, fontSize: 14, fontOptions: "bold", textMargin: 4, margin: 0 
+                        format: "CODE128", width: 2.2, height: 50, displayValue: true, fontSize: 16, fontOptions: "bold", textMargin: 4, margin: 0 
                     });
                 } catch(e) { console.error("Error barcode:", e); }
             `;
@@ -654,45 +705,46 @@ class InventoryPageComponent {
                     font-family: 'Prompt', sans-serif; background: #f8fafc; margin: 0; padding: 20px;
                     -webkit-print-color-adjust: exact; print-color-adjust: exact;
                 }
-                .control-panel { margin-bottom: 20px; text-align: center; }
+                .control-panel { margin-bottom: 30px; text-align: center; }
                 .btn-print { 
                     font-family: 'Prompt', sans-serif; padding: 12px 24px; font-size: 16px; font-weight: 600; 
                     border-radius: 10px; cursor: pointer; border: none; background: #4361ee; color: white;
                     box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-flex; align-items: center; gap: 8px;
                 }
+                
                 .page-container {
                     display: grid;
-                    grid-template-columns: repeat(2, 1fr);
-                    gap: 15px;
-                    max-width: 210mm; 
+                    grid-template-columns: 1fr 1fr;
+                    gap: 15px; 
+                    width: 100%;
+                    max-width: 297mm;
                     margin: 0 auto;
+                    box-sizing: border-box;
                 }
+                
                 .label-box { 
-                    background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px;
+                    width: 100%; height: 100px;
+                    background: #ffffff; border: 1px dashed #cbd5e1; border-radius: 8px;
                     display: flex; align-items: center; justify-content: space-between; 
-                    padding: 15px; box-sizing: border-box; 
+                    padding: 0 15px; box-sizing: border-box; 
                     page-break-inside: avoid; 
-                    height: 120px; 
                 } 
-                .label-info { flex: 1; text-align: left; overflow: hidden; padding-right: 10px; } 
+                .label-info { flex: 1; text-align: left; overflow: hidden; padding-right: 10px; min-width: 0; } 
                 .item-name { 
-                    font-size: 16px; font-weight: 700; color: #0f172a; 
-                    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-                    overflow: hidden; line-height: 1.2; margin-bottom: 4px;
+                    font-size: 20px; font-weight: 700; color: #0f172a; 
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;
+                    margin-bottom: 4px;
                 } 
-                .item-cat { font-size: 11px; color: #64748b; font-weight: 500; } 
-                .barcode-wrap { display: flex; align-items: center; justify-content: center; background: #fff; } 
+                .item-cat { font-size: 12px; color: #64748b; font-weight: 500; } 
+                .barcode-wrap { display: flex; align-items: center; justify-content: center; height: 100%; background: #fff; flex-shrink: 0; } 
                 svg { max-width: 100%; height: auto; display: block; } 
                 
                 @media print { 
-                    body { background: #fff; padding: 0; } 
+                    body { background: #fff; padding: 0; margin: 0; } 
                     .control-panel { display: none; } 
-                    .page-container { 
-                        gap: 5mm; 
-                        width: 100%; max-width: none;
-                    }
-                    .label-box { border: 1px dashed #94a3b8; box-shadow: none; } 
-                    @page { size: A4 portrait; margin: 10mm; } 
+                    .page-container { max-width: 100%; gap: 10px; }
+                    .label-box { border: 1px dashed #94a3b8; width: 100% !important; } 
+                    @page { size: A4 landscape; margin: 5mm 8mm; } 
                 }
             </style>
         </head>

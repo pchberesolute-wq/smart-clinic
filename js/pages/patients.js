@@ -15,11 +15,16 @@ class PatientsPageComponent {
 
     get html() {
         return `
+            <style>
+                /* 🚨 THE FIX: ยันต์เกราะเพชรป้องกันไอคอนโดนฟอนต์อื่นกลืนกลายเป็นสี่เหลี่ยม 🚨 */
+                .safe-icon { font-family: 'Font Awesome 6 Free', 'FontAwesome', sans-serif !important; font-weight: 900 !important; font-style: normal !important; }
+            </style>
+            
             <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
                 <div>
                     <h2 class="page-title text-dark" style="font-weight: 800;">
                         <div class="d-inline-flex align-items-center justify-content-center rounded-4 shadow-sm me-2" style="width: 45px; height: 45px; background: var(--primary-gradient); color: white;">
-                            <i class="fa-solid fa-hospital-user"></i>
+                            <i class="fa-solid fa-hospital-user safe-icon"></i>
                         </div>
                         ทะเบียนผู้ป่วย <span class="text-muted fw-normal" style="font-size: 20px;">(Active Patients)</span>
                     </h2>
@@ -27,17 +32,17 @@ class PatientsPageComponent {
                 </div>
                 <div class="d-flex gap-2 align-items-center flex-wrap">
                     <div class="search-box-modern shadow-sm" style="width: 320px;">
-                        <i class="fa-solid fa-search text-primary"></i>
+                        <i class="fa-solid fa-search text-primary safe-icon"></i>
                         <input type="text" id="ptSearch" class="border-0 bg-transparent ms-2 w-100 fw-bold text-dark" placeholder="ค้นหา HN, ชื่อ, เลข ปชช..." style="outline: none; font-family:'Prompt';">
                     </div>
                     <button class="btn btn-success fw-bold shadow-sm rounded-pill px-4 text-white card-hover-float" onclick="App.pages.patients.openExportModal()" title="ส่งออกทะเบียนผู้ป่วย">
-                        <i class="fa-solid fa-file-excel fa-lg me-2"></i> Export Excel
+                        <i class="fa-solid fa-file-excel fa-lg me-2 safe-icon"></i> Export Excel
                     </button>
                     <button class="btn btn-dark fw-bold shadow-sm rounded-pill px-4 text-white card-hover-float" onclick="App.pages.patients.openScanner()" title="สแกนบัตรผู้ป่วย">
-                        <i class="fa-solid fa-barcode fa-lg me-2 text-warning"></i> สแกนบาร์โค้ด
+                        <i class="fa-solid fa-barcode fa-lg me-2 text-warning safe-icon"></i> สแกนบาร์โค้ด
                     </button>
                     <button class="btn btn-premium btn-premium-primary px-4 card-hover-float" onclick="App.pages.patients.openAddForm()">
-                        <i class="fas fa-user-plus me-2"></i> ลงทะเบียนใหม่
+                        <i class="fas fa-user-plus me-2 safe-icon"></i> ลงทะเบียนใหม่
                     </button>
                 </div>
             </div>
@@ -47,16 +52,16 @@ class PatientsPageComponent {
                     <table class="table table-premium w-100 mb-0">
                         <thead>
                             <tr>
-                                <th style="width: 25%;"><i class="fa-solid fa-id-card-clip text-primary me-2"></i> ผู้ป่วย (HN & ชื่อ)</th>
-                                <th style="width: 20%;"><i class="fa-solid fa-clock-rotate-left text-info me-2"></i> ข้อมูลเวร/ติดต่อ</th>
-                                <th style="width: 15%;"><i class="fa-solid fa-shield-heart text-success me-2"></i> สิทธิรักษา</th>
-                                <th style="width: 15%;"><i class="fa-solid fa-virus text-danger me-2"></i> ผลเลือด (Infection)</th>
-                                <th class="text-center" style="width: 10%;"><i class="fa-solid fa-chart-simple text-warning me-2"></i> สถานะ</th>
-                                <th class="text-center" style="width: 15%;"><i class="fa-solid fa-gears text-secondary me-2"></i> จัดการ</th>
+                                <th style="width: 25%;"><i class="fa-solid fa-id-card-clip text-primary me-2 safe-icon"></i> ผู้ป่วย (HN & ชื่อ)</th>
+                                <th style="width: 20%;"><i class="fa-solid fa-clock-rotate-left text-info me-2 safe-icon"></i> ข้อมูลเวร/ติดต่อ</th>
+                                <th style="width: 15%;"><i class="fa-solid fa-shield-heart text-success me-2 safe-icon"></i> สิทธิรักษา</th>
+                                <th style="width: 15%;"><i class="fa-solid fa-virus text-danger me-2 safe-icon"></i> ผลเลือด (Infection)</th>
+                                <th class="text-center" style="width: 10%;"><i class="fa-solid fa-chart-simple text-warning me-2 safe-icon"></i> สถานะ</th>
+                                <th class="text-center" style="width: 15%;"><i class="fa-solid fa-gears text-secondary me-2 safe-icon"></i> จัดการ</th>
                             </tr>
                         </thead>
                         <tbody id="pt-table-body">
-                            <tr><td colspan="6" class="text-center py-5 text-primary"><i class="fas fa-spinner fa-spin fa-3x mb-3 drop-shadow"></i><br>กำลังดึงข้อมูลเวชระเบียน...</td></tr>
+                            <tr><td colspan="6" class="text-center py-5 text-primary"><i class="fas fa-spinner fa-spin fa-3x mb-3 drop-shadow safe-icon"></i><br>กำลังดึงข้อมูลเวชระเบียน...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -82,7 +87,7 @@ class PatientsPageComponent {
                     unsub();
                     this.#loadData();
                 } else {
-                    document.getElementById('pt-table-body').innerHTML = '<tr><td colspan="6" class="text-center py-5 text-warning"><i class="fa-solid fa-lock fa-3x mb-3"></i><br>กำลังตรวจสอบสิทธิ์การเข้าถึง...</td></tr>';
+                    document.getElementById('pt-table-body').innerHTML = '<tr><td colspan="6" class="text-center py-5 text-warning"><i class="fa-solid fa-lock fa-3x mb-3 safe-icon"></i><br>กำลังตรวจสอบสิทธิ์การเข้าถึง...</td></tr>';
                 }
             });
         }
@@ -151,7 +156,7 @@ class PatientsPageComponent {
 
     #renderErrorState(msg) {
         const tbody = document.getElementById('pt-table-body');
-        if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-danger"><i class="fa-solid fa-triangle-exclamation fa-3x mb-3"></i><br>${msg}</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-danger"><i class="fa-solid fa-triangle-exclamation fa-3x mb-3 safe-icon"></i><br>${msg}</td></tr>`;
     }
 
     // ---------------------------------------------------------
@@ -162,7 +167,7 @@ class PatientsPageComponent {
         if (!tbody) return;
 
         if (dataList.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fa-regular fa-folder-open fa-3x mb-3" style="opacity:0.2;"></i><br>ไม่พบข้อมูลผู้ป่วยในระบบ</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fa-regular fa-folder-open fa-3x mb-3 safe-icon" style="opacity:0.2;"></i><br>ไม่พบข้อมูลผู้ป่วยในระบบ</td></tr>';
             return;
         }
 
@@ -173,9 +178,9 @@ class PatientsPageComponent {
             let statusBadge = '<span class="badge bg-success px-3 py-2 rounded-pill shadow-sm" style="font-size:12px;">ปกติ (Active)</span>';
             let infHtml = '<span class="badge bg-light text-secondary border px-3 py-2 rounded-pill shadow-sm" style="font-size:11px;">ปลอดภัย</span>';
             let inf = p.infection || "ไม่มี";
-            if (inf === "HCV") infHtml = '<span class="badge bg-warning text-dark px-3 py-2 shadow-sm rounded-pill" style="font-size:11px;"><i class="fa-solid fa-virus me-1"></i> HCV +</span>';
-            if (inf === "HIV") infHtml = '<span class="badge bg-danger px-3 py-2 shadow-sm rounded-pill" style="font-size:11px;"><i class="fa-solid fa-virus me-1"></i> HIV +</span>';
-            if (inf === "HBV") infHtml = '<span class="badge bg-warning text-dark px-3 py-2 shadow-sm rounded-pill" style="font-size:11px;"><i class="fa-solid fa-virus me-1"></i> HBV +</span>';
+            if (inf === "HCV") infHtml = '<span class="badge bg-warning text-dark px-3 py-2 shadow-sm rounded-pill" style="font-size:11px;"><i class="fa-solid fa-virus me-1 safe-icon"></i> HCV +</span>';
+            if (inf === "HIV") infHtml = '<span class="badge bg-danger px-3 py-2 shadow-sm rounded-pill" style="font-size:11px;"><i class="fa-solid fa-virus me-1 safe-icon"></i> HIV +</span>';
+            if (inf === "HBV") infHtml = '<span class="badge bg-warning text-dark px-3 py-2 shadow-sm rounded-pill" style="font-size:11px;"><i class="fa-solid fa-virus me-1 safe-icon"></i> HBV +</span>';
 
             const safeName = this.#escapeHTML(`${p.title || ''}${p.name_th || 'ไม่ระบุชื่อ'}`);
             let imgSrc = p.photo_base64 && typeof p.photo_base64 === 'string' ? (p.photo_base64.startsWith('data:image') ? p.photo_base64 : 'data:image/jpeg;base64,' + p.photo_base64) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(safeName||'X') + '&background=3b82f6&color=fff&bold=true';
@@ -186,24 +191,24 @@ class PatientsPageComponent {
                         <img src="${imgSrc}" class="me-3 shadow-sm border border-3 border-white" style="width: 55px; height: 55px; border-radius: 14px; object-fit: cover;">
                         <div>
                             <div class="fw-bold text-dark" style="font-size:15.5px; font-family:'Prompt';">${safeName}</div>
-                            <div class="text-primary fw-bold mt-1" style="font-size:13px;"><i class="fa-solid fa-id-card me-1"></i> ${this.#escapeHTML(p.hn || '-')} <span class="ms-2 text-muted fw-normal">| อายุ: ${this.#escapeHTML(p.age || '-')}</span></div>
+                            <div class="text-primary fw-bold mt-1" style="font-size:13px;"><i class="fa-solid fa-id-card me-1 safe-icon"></i> ${this.#escapeHTML(p.hn || '-')} <span class="ms-2 text-muted fw-normal">| อายุ: ${this.#escapeHTML(p.age || '-')}</span></div>
                         </div>
                     </div>
                 </td>
                 <td onclick="App.pages.patients.viewHistory('${p.hn}')">
-                    <div class="fw-bold text-dark" style="font-size:14px;"><i class="fa-solid fa-clock text-info me-2"></i> ${this.#escapeHTML(p.shift || 'ไม่ได้ระบุเวร')}</div>
-                    <div class="text-muted fw-bold mt-2" style="font-size:12px;"><i class="fa-solid fa-phone text-secondary me-2"></i> ${this.#escapeHTML(p.phone || '-')}</div>
+                    <div class="fw-bold text-dark" style="font-size:14px;"><i class="fa-solid fa-clock text-info me-2 safe-icon"></i> ${this.#escapeHTML(p.shift || 'ไม่ได้ระบุเวร')}</div>
+                    <div class="text-muted fw-bold mt-2" style="font-size:12px;"><i class="fa-solid fa-phone text-secondary me-2 safe-icon"></i> ${this.#escapeHTML(p.phone || '-')}</div>
                 </td>
                 <td class="fw-bold text-secondary" onclick="App.pages.patients.viewHistory('${p.hn}')" style="font-size:14px;">${this.#escapeHTML(p.right || '-')}</td>
                 <td onclick="App.pages.patients.viewHistory('${p.hn}')">${infHtml}</td>
                 <td class="text-center" onclick="App.pages.patients.viewHistory('${p.hn}')">${statusBadge}</td>
                 <td class="text-center">
                     <div class="d-flex justify-content-center gap-2">
-                        <button class="btn btn-sm btn-primary shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0;" onclick="event.stopPropagation(); App.pages.patients.viewHistory('${p.hn}')" title="แฟ้มประวัติ (EMR)"><i class="fa-solid fa-folder-open"></i></button>
-                        <button class="btn btn-sm btn-warning text-dark shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0;" onclick="event.stopPropagation(); App.pages.patients.editPatient('${p.firebaseKey}')" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
-                        <button class="btn btn-sm btn-info text-white shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0;" onclick="event.stopPropagation(); App.pages.patients.printOPDCard('${p.hn}')" title="พิมพ์บัตร OPD"><i class="fa-solid fa-print"></i></button>
+                        <button class="btn btn-sm btn-primary shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0;" onclick="event.stopPropagation(); App.pages.patients.viewHistory('${p.hn}')" title="แฟ้มประวัติ (EMR)"><i class="fa-solid fa-folder-open safe-icon"></i></button>
+                        <button class="btn btn-sm btn-warning text-dark shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0;" onclick="event.stopPropagation(); App.pages.patients.editPatient('${p.firebaseKey}')" title="แก้ไข"><i class="fa-solid fa-pen safe-icon"></i></button>
+                        <button class="btn btn-sm btn-info text-white shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0;" onclick="event.stopPropagation(); App.pages.patients.printOPDCard('${p.hn}')" title="พิมพ์บัตร OPD"><i class="fa-solid fa-print safe-icon"></i></button>
                         
-                        <button class="btn btn-sm btn-danger text-white shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0;" onclick="event.stopPropagation(); App.pages.patients.changeStatus('${p.firebaseKey}', '${safeName}')" title="เปลี่ยนสถานะ/จำหน่ายผู้ป่วย"><i class="fa-solid fa-user-minus"></i></button>
+                        <button class="btn btn-sm btn-danger text-white shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0;" onclick="event.stopPropagation(); App.pages.patients.changeStatus('${p.firebaseKey}', '${safeName}')" title="เปลี่ยนสถานะ/จำหน่ายผู้ป่วย"><i class="fa-solid fa-user-minus safe-icon"></i></button>
                     </div>
                 </td>
             </tr>`;
@@ -250,21 +255,21 @@ class PatientsPageComponent {
         this.state.isScanningModalOpen = true;
         let scannerHtml = `
             <div class="d-flex justify-content-center gap-2 mb-3 mt-3">
-                <button id="btn-scan-usb" class="btn btn-premium btn-premium-primary flex-fill" onclick="App.pages.patients.switchScanMode('usb')"><i class="fa-solid fa-gun me-2"></i> ปืนสแกน (USB)</button>
-                <button id="btn-scan-cam" class="btn btn-light fw-bold flex-fill border shadow-sm rounded-pill text-secondary" onclick="App.pages.patients.switchScanMode('cam')"><i class="fa-solid fa-mobile-screen-button me-2"></i> กล้องมือถือ</button>
+                <button id="btn-scan-usb" class="btn btn-premium btn-premium-primary flex-fill" onclick="App.pages.patients.switchScanMode('usb')"><i class="fa-solid fa-gun me-2 safe-icon"></i> ปืนสแกน (USB)</button>
+                <button id="btn-scan-cam" class="btn btn-light fw-bold flex-fill border shadow-sm rounded-pill text-secondary" onclick="App.pages.patients.switchScanMode('cam')"><i class="fa-solid fa-mobile-screen-button me-2 safe-icon"></i> กล้องมือถือ</button>
             </div>
             <div id="swal-usb-scanner" style="display: block;">
                 <p class="text-muted small mb-3">โปรดตรวจสอบให้แน่ใจว่าแป้นพิมพ์เป็น <b class="text-primary">ภาษาอังกฤษ (EN)</b></p>
                 <input type="text" id="swal-barcode-input" class="form-control form-control-lg text-center fw-bold text-primary shadow-sm input-modern" placeholder="ยิงบาร์โค้ดลงในช่องนี้..." autocomplete="off" style="font-size: 20px; letter-spacing: 2px;">
             </div>
             <div id="swal-cam-scanner" style="display: none;">
-                <div id="camera-reader" class="border rounded-4 overflow-hidden shadow-sm bg-dark d-flex align-items-center justify-content-center" style="width: 100%; min-height: 250px;"><i class="fa-solid fa-camera fa-2x text-secondary"></i></div>
+                <div id="camera-reader" class="border rounded-4 overflow-hidden shadow-sm bg-dark d-flex align-items-center justify-content-center" style="width: 100%; min-height: 250px;"><i class="fa-solid fa-camera fa-2x text-secondary safe-icon"></i></div>
                 <p class="text-muted small mt-3 mb-0">อนุญาตให้เข้าถึงกล้องและส่องที่บาร์โค้ด</p>
             </div>
         `;
 
         Swal.fire({
-            title: '<h4 class="fw-bold mb-0 text-dark" style="font-family:\'Prompt\';"><i class="fa-solid fa-expand me-2 text-primary"></i>สแกนบาร์โค้ดบัตรผู้ป่วย</h4>',
+            title: '<h4 class="fw-bold mb-0 text-dark" style="font-family:\'Prompt\';"><i class="fa-solid fa-expand me-2 text-primary safe-icon"></i>สแกนบาร์โค้ดบัตรผู้ป่วย</h4>',
             html: scannerHtml,
             showCancelButton: true, showConfirmButton: false, cancelButtonText: 'ปิดหน้าต่าง', allowOutsideClick: false,
             didOpen: () => {
@@ -354,7 +359,7 @@ class PatientsPageComponent {
             (errorMessage) => { /* Ignore background errors */ }
         ).catch(err => {
             if (document.getElementById('camera-reader')) { 
-                document.getElementById('camera-reader').innerHTML = '<div class="p-4 text-center text-white" style="font-family:\'Prompt\';"><i class="fa-solid fa-camera-slash fa-3x mb-3 text-danger"></i><br><b class="fs-5">ไม่สามารถเข้าถึงกล้องถ่ายรูปได้</b></div>'; 
+                document.getElementById('camera-reader').innerHTML = '<div class="p-4 text-center text-white" style="font-family:\'Prompt\';"><i class="fa-solid fa-camera-slash fa-3x mb-3 text-danger safe-icon"></i><br><b class="fs-5">ไม่สามารถเข้าถึงกล้องถ่ายรูปได้</b></div>'; 
             }
         });
     }
@@ -406,16 +411,16 @@ class PatientsPageComponent {
                     ${optionsHtml}
                 </select>
                 <div class="mt-3 p-3 bg-light rounded-3 border">
-                    <small class="text-muted"><i class="fa-solid fa-circle-info text-primary me-1"></i> ระบบจะจัดเรียงข้อมูล ตกแต่งสีสันตาราง และกำหนดขนาดคอลัมน์ให้สวยงามอ่านง่ายโดยอัตโนมัติ</small>
+                    <small class="text-muted"><i class="fa-solid fa-circle-info text-primary me-1 safe-icon"></i> ระบบจะจัดเรียงข้อมูล ตกแต่งสีสันตาราง และกำหนดขนาดคอลัมน์ให้สวยงามอ่านง่ายโดยอัตโนมัติ</small>
                 </div>
             </div>
         `;
 
         Swal.fire({
-            title: '<h4 class="fw-bold text-success mb-0"><i class="fa-solid fa-file-excel me-2"></i> สรุปทะเบียนผู้ป่วย (Excel)</h4>',
+            title: '<h4 class="fw-bold text-success mb-0"><i class="fa-solid fa-file-excel me-2 safe-icon"></i> สรุปทะเบียนผู้ป่วย (Excel)</h4>',
             html: modalHtml,
             showCancelButton: true,
-            confirmButtonText: '<i class="fa-solid fa-download me-1"></i> ดาวน์โหลด Excel',
+            confirmButtonText: '<i class="fa-solid fa-download me-1 safe-icon"></i> ดาวน์โหลด Excel',
             cancelButtonText: 'ยกเลิก',
             confirmButtonColor: '#10b981',
             preConfirm: () => { return document.getElementById('swal-export-right').value; }
