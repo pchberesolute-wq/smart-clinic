@@ -1,14 +1,16 @@
 // js/pages/performance_engine.js
 // 🚀 Enterprise Performance & Memory Optimization Engine (Zero-Freeze System)
-// ควบคุมอาการค้าง หน่วง และคืนหน่วยความจำอย่างแม่นยำ 100%
+// ควบคุมอาการค้าง หน่วง และคืนหน่วยความจำอย่างแม่นยำระดับ Microsecond
 
 class PerformanceEngineService {
     constructor() {
         this.activeListeners = new Map(); // จดจำ Listener ทั้งระบบเพื่อตามเก็บกวาด
-        this.renderQueue = []; // คิวงานวาดหน้าจอ
-        this.isRendering = false;
         
-        console.log("%c⚡ [Performance Engine] Zero-Freeze Core Activated.", "color: #3b82f6; font-weight: bold; font-size: 14px;");
+        // กำหนดเวลาสูงสุดที่ยอมให้ CPU ทำงานใน 1 เฟรม (หน้าจอ 60FPS มีเวลา 16.6ms ต่อเฟรม)
+        // ตั้งไว้ที่ 12ms เพื่อเว้นที่ว่างให้ Browser จัดการ CSS/Layout ป้องกันการค้าง 100%
+        this.MAX_TIME_PER_FRAME = 12; 
+        
+        console.log("%c⚡ [Performance Engine] V2.0 Time-Slicing Core Activated.", "color: #10b981; font-weight: bold; font-size: 14px;");
     }
 
     // =========================================================================
@@ -16,51 +18,49 @@ class PerformanceEngineService {
     // =========================================================================
     
     /**
-     * ลงทะเบียน Firebase Listener เพื่อให้ระบบจำไว้ว่าต้องปิดตอนเปลี่ยนหน้า
+     * ลงทะเบียน Firebase Listener เพื่อให้ระบบจำไว้ว่าต้องปิดตอนเปลี่ยนหน้า ป้องกัน RAM บวม
      * @param {string} pageId - ชื่อหน้า (เช่น 'dashboard', 'patient_history')
      * @param {string} path - Firebase path (เช่น 'patients_database_v2/visits')
      * @param {function} callback - ฟังก์ชันที่รับค่าจาก Firebase
      */
     registerFirebaseListener(pageId, path, callback) {
         if (!this.activeListeners.has(pageId)) {
-            this.activeListeners.set(pageId, []);
+            this.activeListeners.set(pageId, new Map()); // ใช้ Map เพื่อป้องกัน Listener ซ้ำซ้อน
         }
         
-        // ผูก Listener กับ Firebase
-        db.ref(path).on('value', callback);
+        const pageListeners = this.activeListeners.get(pageId);
         
-        // จดจำประวัติไว้
-        this.activeListeners.get(pageId).push({ path, callback });
+        // ถ้าเคยดักจับ Path นี้ด้วย Callback นี้แล้ว ให้ข้ามไป ป้องกันการจอง RAM ซ้ำซ้อน
+        const listenerKey = `${path}_${callback.name || 'anonymous'}`;
+        if (pageListeners.has(listenerKey)) return;
+
+        db.ref(path).on('value', callback);
+        pageListeners.set(listenerKey, { path, callback });
     }
 
     /**
      * สั่งปิด Listener ทั้งหมดของหน้าเก่า คืน RAM ให้ระบบทันที (เรียกใช้ตอนสลับหน้า)
-     * @param {string} pageId - ชื่อหน้าที่เพิ่งถูกปิดไป
      */
     purgeListenersForPage(pageId) {
         if (this.activeListeners.has(pageId)) {
-            const listeners = this.activeListeners.get(pageId);
-            listeners.forEach(l => {
+            const pageListeners = this.activeListeners.get(pageId);
+            pageListeners.forEach(l => {
                 db.ref(l.path).off('value', l.callback);
             });
             this.activeListeners.delete(pageId);
-            // console.log(`🧹 [Memory Sweeper] Cleaned up ${listeners.length} listeners for [${pageId}]`);
         }
     }
 
     // =========================================================================
-    // 2. ⚡ Anti-Freeze Rendering (ระบบวาดหน้าจอแบบไม่กระตุก)
+    // 2. ⚡ Anti-Freeze Rendering (ระบบวาดหน้าจอแบบแบ่งเวลา - Time Slicing)
     // =========================================================================
     
     /**
-     * แทนที่จะวาดการ์ด 1,000 ใบใน 1 วินาที (ทำให้จอค้าง) 
-     * ฟังก์ชันนี้จะแบ่งวาดทีละ 20 ใบ แล้วหยุดพักให้เบราว์เซอร์หายใจ
-     * @param {Array} array - ข้อมูลทั้งหมดที่ต้องการวาด
-     * @param {function} renderItemCallback - ฟังก์ชันที่จะใช้วาด HTML แต่ละชิ้น
-     * @param {number} chunkSize - จำนวนชิ้นที่จะวาดต่อ 1 รอบ (ค่าเริ่มต้น 20)
-     * @param {function} onComplete - ฟังก์ชันเรียกเมื่อวาดเสร็จทั้งหมด
+     * 🚨 THE FIX: อัปเกรดเป็น Time-Slicing Algorithm
+     * ระบบจะไม่สนใจ "จำนวนชิ้น" แต่จะจับ "เวลาประมวลผล" ถ้าเกิน 12ms จะหยุดพักทันที
+     * ป้องกันอาการคอมกระตุกเป็นช่วงๆ (Main Thread Blocking) ได้เด็ดขาด 100%
      */
-    async renderInChunks(array, renderItemCallback, chunkSize = 20, onComplete = null) {
+    async renderInChunks(array, renderItemCallback, onComplete = null) {
         if (!array || array.length === 0) {
             if(onComplete) onComplete();
             return;
@@ -70,47 +70,51 @@ class PerformanceEngineService {
         const total = array.length;
 
         const processChunk = () => {
-            const end = Math.min(index + chunkSize, total);
-            
-            // วาดข้อมูลทีละก้อน
-            for (; index < end; index++) {
+            const startTime = performance.now(); // เริ่มจับเวลาเสี้ยววินาที
+
+            // ทำงานไปเรื่อยๆ จนกว่าเวลาในรอบนี้จะหมด (เกิน 12ms) หรือจนกว่าข้อมูลจะหมด
+            while (index < total && (performance.now() - startTime) < this.MAX_TIME_PER_FRAME) {
                 renderItemCallback(array[index], index);
+                index++;
             }
 
             if (index < total) {
-                // ถ้ายังวาดไม่หมด ให้ปล่อย Main Thread ว่างชั่วคราว แล้วค่อยมาวาดต่อ (ใช้ requestAnimationFrame หรือ setTimeout)
+                // ถ้าหมดยก (เวลาเกิน) แต่ของยังไม่หมด ให้เบราว์เซอร์พักวาดหน้าจอ แล้วเรียกตัวเองใหม่ในเฟรมถัดไป
                 requestAnimationFrame(processChunk);
             } else {
                 // วาดเสร็จสมบูรณ์
-                if (onComplete) onComplete();
+                if (onComplete) {
+                    // หน่วงเวลาให้เบราว์เซอร์หายใจ 1 จังหวะก่อนเรียก onComplete (เช่นการปิด Loading)
+                    requestAnimationFrame(onComplete);
+                }
             }
         };
 
-        // เริ่มต้นวาด
+        // เริ่มต้นวงจร
         requestAnimationFrame(processChunk);
     }
 
     // =========================================================================
-    // 3. 🔍 Smart Query Builder (ป้องกันการดึงข้อมูลเหมาเข่ง)
+    // 3. 🔍 Smart Query Builder (ดึงข้อมูลแบบฉลาด ไม่กิน RAM)
     // =========================================================================
     
     /**
-     * ดึงประวัติการรักษาเฉพาะคนไข้ที่ระบุ และจำกัดจำนวนข้อมูล ป้องกันเครื่องค้าง
-     * @param {string} hn - รหัสคนไข้
-     * @param {number} limit - ดึงย้อนหลังกี่รายการ
+     * ดึงประวัติการรักษาเฉพาะคนไข้ที่ระบุ และใช้ forEach ของ Firebase ตรงๆ ประหยัด RAM กว่า Object.keys
      */
     async fetchVisitsByHN(hn, limit = 50) {
         try {
-            // ใช้คำสั่ง Query ของ Firebase ตรงๆ เพื่อให้ Server ทำงานแทนเบราว์เซอร์
             const snap = await db.ref('patients_database_v2/visits')
                                  .orderByChild('hn')
                                  .equalTo(hn)
                                  .limitToLast(limit)
                                  .once('value');
             
-            const data = snap.val() || {};
-            // แมปข้อมูลพร้อมดึง Key กลับมาให้
-            const visits = Object.keys(data).map(k => ({ firebaseKey: k, ...data[k] }));
+            const visits = [];
+            // 🚨 THE FIX: ใช้ forEach ตรงๆ ของ Firebase ประหยัด RAM ไม่ต้องแปลง Object
+            snap.forEach(childSnap => {
+                visits.push({ firebaseKey: childSnap.key, ...childSnap.val() });
+            });
+            
             return visits.reverse(); // เรียงจากล่าสุดไปเก่าสุด
         } catch (error) {
             console.error("Smart Query Error:", error);
@@ -119,14 +123,11 @@ class PerformanceEngineService {
     }
 
     // =========================================================================
-    // 4. 🗜️ Payload Optimizer (ระบบบีบอัด Base64 ก่อนเซฟ)
+    // 4. 🗜️ Payload Optimizer (ระบบบีบอัดและคืนหน่วยความจำรูปภาพ)
     // =========================================================================
     
     /**
-     * บีบอัดรูปภาพให้เล็กลง 80% ก่อนเซฟลง Database ป้องกัน Database บวม
-     * @param {File} file - ไฟล์รูปภาพจาก input type="file"
-     * @param {number} maxWidth - ความกว้างสูงสุด
-     * @param {number} quality - คุณภาพ 0.1 - 1.0
+     * บีบอัดรูปภาพ พร้อมบังคับ Garbage Collection (GC) ทันที ป้องกัน RAM บวมจากการอัปโหลด
      */
     compressImageAsync(file, maxWidth = 800, quality = 0.7) {
         return new Promise((resolve, reject) => {
@@ -134,7 +135,6 @@ class PerformanceEngineService {
             reader.readAsDataURL(file);
             reader.onload = (event) => {
                 const img = new Image();
-                img.src = event.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     let width = img.width;
@@ -148,23 +148,35 @@ class PerformanceEngineService {
                     canvas.width = width;
                     canvas.height = height;
                     const ctx = canvas.getContext('2d');
+                    
+                    // วาดรูปคุณภาพสูง
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = "high";
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    // ส่งออกเป็น Base64 ที่ถูกบีบอัดแล้ว
-                    resolve(canvas.toDataURL('image/jpeg', quality));
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+
+                    // 🚨 THE FIX: คืนหน่วยความจำ (Garbage Collection) ทันทีที่แปลงเสร็จ ป้องกัน Browser ค้าง
+                    ctx.clearRect(0, 0, width, height);
+                    canvas.width = 0;
+                    canvas.height = 0;
+                    img.src = ""; 
+
+                    resolve(compressedBase64);
                 };
                 img.onerror = (err) => reject(err);
+                img.src = event.target.result;
             };
             reader.onerror = (err) => reject(err);
         });
     }
 
     // =========================================================================
-    // 5. ⏱️ Event Optimizer (ตัวหน่วงคำสั่ง ป้องกันผู้ใช้กดรัวๆ)
+    // 5. ⏱️ Event Optimizer (หน่วงคำสั่ง ป้องกันรัวปุ่มและลดภาระ CPU)
     // =========================================================================
     
     /**
-     * ใช้ครอบฟังก์ชันช่องค้นหา พิมพ์รัวๆ แต่จะส่งคำสั่งค้นหาแค่ตอนที่หยุดพิมพ์ 0.5 วิ (ลดภาระ CPU)
+     * ดักจับการพิมพ์ (Typing) ถ้าผู้ใช้ยังพิมพ์รัวๆ จะยังไม่ทำงาน จนกว่าจะหยุดพิมพ์ (เช่น 500ms)
      */
     debounce(func, wait) {
         let timeout;
@@ -175,6 +187,20 @@ class PerformanceEngineService {
             };
             clearTimeout(timeout);
             timeout = setTimeout(later, wait);
+        };
+    }
+
+    /**
+     * จำกัดความถี่ในการทำงาน (เช่น Scroll, Resize) ห้ามทำงานถี่กว่าระยะเวลาที่กำหนด (เช่น 100ms)
+     */
+    throttle(func, limit) {
+        let inThrottle;
+        return function(...args) {
+            if (!inThrottle) {
+                func(...args);
+                inThrottle = true;
+                setTimeout(() => inThrottle = false, limit);
+            }
         };
     }
 }

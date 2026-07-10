@@ -1,5 +1,5 @@
 // js/pages/department_ledger.js
-// 🚀 Enterprise Department Ledger Module: Encapsulated State, Auto-Purge, Statement Printing & Theme Native
+// 🚀 Enterprise Department Ledger Module: Encapsulated State, Auto-Purge, Statement Printing & Modern PDF Engine
 
 class DepartmentLedgerPageComponent {
     constructor() {
@@ -12,7 +12,8 @@ class DepartmentLedgerPageComponent {
             categoriesOut: [],
             summaryChartInstance: null,
             _pendingChartData: null,
-            hasCleanedUp: false
+            hasCleanedUp: false,
+            clinicName: 'DIALYSIS PRO CLINIC'
         };
         this.firebaseListeners = [];
     }
@@ -26,7 +27,6 @@ class DepartmentLedgerPageComponent {
                 .table-ledger th { background: var(--bg-body); color: var(--text-dark); font-weight: 700; text-transform: uppercase; font-size: 13px; padding: 16px; border-bottom: 2px solid var(--border-color); border-top: none; white-space: nowrap; }
                 .table-ledger td { padding: 14px 16px; vertical-align: middle; border-bottom: 1px solid var(--border-color); font-size: 14.5px; color: var(--text-dark); background: transparent; }
                 
-                /* 🚨 ซ่อน Input Native ป้องกันสี่เหลี่ยมซ้อนทับปฏิทิน 100% 🚨 */
                 .native-date-wrapper {
                     position: relative; display: inline-flex; align-items: center; background: var(--bg-surface);
                     border: 2px solid var(--border-color); border-radius: 50px; padding: 6px 18px; cursor: pointer; overflow: hidden;
@@ -47,8 +47,26 @@ class DepartmentLedgerPageComponent {
                 .finance-nav-tabs .nav-link.active { background: var(--bg-surface); box-shadow: 0 -4px 10px rgba(0,0,0,0.02); color: var(--primary); }
                 .finance-nav-tabs .nav-link.active::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 3px; border-radius: 3px 3px 0 0; background: var(--primary); }
 
-                /* 🚨 THE FIX: ยันต์กันไอคอนเพี้ยน (Force Font Awesome) */
                 .safe-icon { font-family: 'Font Awesome 6 Free', 'FontAwesome', sans-serif !important; font-weight: 900 !important; font-style: normal !important; }
+
+                /* 🚨 THE FIX: Custom CSS ล็อกสีปุ่ม Action ทั้งหมด ป้องกัน Hover แล้วตัวหนังสือล่องหน 🚨 */
+                .btn-custom-secondary { background-color: var(--bg-surface) !important; color: #64748b !important; border: 1px solid #cbd5e1 !important; transition: all 0.3s ease; }
+                .btn-custom-secondary i { color: #64748b !important; transition: all 0.3s ease; }
+                .btn-custom-secondary:hover { background-color: #64748b !important; color: #ffffff !important; border-color: #64748b !important; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+                .btn-custom-secondary:hover i { color: #ffffff !important; }
+
+                .btn-custom-info { background-color: var(--bg-surface) !important; color: #0ea5e9 !important; border: 1px solid #7dd3fc !important; transition: all 0.3s ease; }
+                .btn-custom-info i { color: #0ea5e9 !important; transition: all 0.3s ease; }
+                .btn-custom-info:hover { background-color: #0ea5e9 !important; color: #ffffff !important; border-color: #0ea5e9 !important; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+                .btn-custom-info:hover i { color: #ffffff !important; }
+
+                .btn-export-main { background-color: #1e293b !important; color: #ffffff !important; border: none !important; transition: all 0.3s ease; }
+                .btn-export-main:hover { background-color: #0f172a !important; color: #ffffff !important; box-shadow: 0 4px 8px rgba(0,0,0,0.15); transform: translateY(-1px); }
+                .btn-export-main i { color: #f59e0b !important; } 
+
+                .btn-export-summary { background-color: #2563eb !important; color: #ffffff !important; border: none !important; transition: all 0.3s ease; }
+                .btn-export-summary:hover { background-color: #1e3a8a !important; color: #ffffff !important; box-shadow: 0 4px 8px rgba(0,0,0,0.15); transform: translateY(-1px); }
+                .btn-export-summary i { color: #ffffff !important; }
             </style>
 
             <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
@@ -57,11 +75,11 @@ class DepartmentLedgerPageComponent {
                     <p class="text-muted mt-1 mb-0" id="dl-date-text" style="color: var(--text-muted) !important;">จัดการงบประมาณ เงินสวัสดิการ และค่าใช้จ่ายแผนก</p>
                 </div>
                 <div class="d-flex gap-2 align-items-center flex-wrap">
-                    <button class="btn btn-outline-secondary fw-bold shadow-sm rounded-pill px-3 card-hover-float" style="background-color: var(--bg-surface);" onclick="DepartmentLedgerPage.manageCategories()">
-                        <i class="fas fa-tags me-1 text-secondary safe-icon"></i> จัดการหมวดหมู่
+                    <button class="btn btn-custom-secondary fw-bold shadow-sm rounded-pill px-3 card-hover-float" onclick="DepartmentLedgerPage.manageCategories()">
+                        <i class="fas fa-tags me-1 safe-icon"></i> จัดการหมวดหมู่
                     </button>
-                    <button class="btn btn-outline-info fw-bold shadow-sm rounded-pill px-3 card-hover-float" style="background-color: var(--bg-surface);" onclick="DepartmentLedgerPage.setInitialBalance()">
-                        <i class="fas fa-piggy-bank me-1 text-info safe-icon"></i> ตั้งยอดยกมาเริ่มต้น
+                    <button class="btn btn-custom-info fw-bold shadow-sm rounded-pill px-3 card-hover-float" onclick="DepartmentLedgerPage.setInitialBalance()">
+                        <i class="fas fa-piggy-bank me-1 safe-icon"></i> ตั้งยอดยกมาเริ่มต้น
                     </button>
                     
                     <div class="d-flex align-items-center p-1 rounded-pill shadow-sm ms-2" style="background-color: var(--bg-body); border: 1px solid var(--border-color);">
@@ -138,20 +156,30 @@ class DepartmentLedgerPageComponent {
 
             <div class="tab-content" id="ledgerTabContent">
                 <div class="tab-pane fade show active" id="ledger-panel" role="tabpanel">
-                    <div class="modern-panel shadow-sm p-4 position-relative overflow-hidden" style="border-top: 5px solid var(--primary); border-radius: 20px;">
+                    <div class="modern-panel shadow-sm p-4 position-relative" style="border-top: 5px solid var(--primary); border-radius: 20px;">
                         <div style="position: absolute; top: -30px; right: -30px; opacity: 0.02; font-size: 200px; pointer-events: none;"><i class="fa-solid fa-file-lines safe-icon"></i></div>
-                        <div class="d-flex justify-content-between align-items-center mb-4 position-relative z-1 flex-wrap gap-3">
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-4 position-relative flex-wrap gap-3" style="z-index: 1050;">
                             <h5 class="fw-bold mb-0" style="color: var(--text-dark);"><i class="fa-solid fa-clock-rotate-left text-primary me-2 safe-icon"></i> ความเคลื่อนไหวทางบัญชี (Running Ledger)</h5>
                             <div class="d-flex gap-2">
-                                <button class="btn btn-premium-danger px-4 shadow-sm" onclick="DepartmentLedgerPage.openAddModal('OUT')">
-                                    <i class="fas fa-minus-circle me-2 safe-icon"></i> บันทึกจ่ายออก
+                                <button class="btn btn-premium-danger px-3 shadow-sm" onclick="DepartmentLedgerPage.openAddModal('OUT')">
+                                    <i class="fas fa-minus-circle me-1 safe-icon"></i> จ่ายออก
                                 </button>
-                                <button class="btn btn-premium-success px-4 shadow-sm" onclick="DepartmentLedgerPage.openAddModal('IN')">
-                                    <i class="fas fa-plus-circle me-2 safe-icon"></i> บันทึกรับเข้า
+                                <button class="btn btn-premium-success px-3 shadow-sm" onclick="DepartmentLedgerPage.openAddModal('IN')">
+                                    <i class="fas fa-plus-circle me-1 safe-icon"></i> รับเข้า
                                 </button>
-                                <button class="btn btn-dark fw-bold shadow-sm rounded-pill px-4 ms-2" onclick="DepartmentLedgerPage.printLedger()">
-                                    <i class="fas fa-print me-2 text-warning safe-icon"></i> พิมพ์ Statement
-                                </button>
+                                
+                                <div class="dropdown">
+                                    <button class="btn btn-export-main fw-bold shadow-sm rounded-pill px-4 ms-2 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-file-export me-1 safe-icon"></i> ส่งออก (Export)
+                                    </button>
+                                    <ul class="dropdown-menu shadow-lg border-0" style="border-radius: 12px; margin-top: 8px; z-index: 9999;">
+                                        <li><a class="dropdown-item fw-bold text-success py-2" href="javascript:void(0)" onclick="DepartmentLedgerPage.exportExcel()"><i class="fa-solid fa-file-excel me-2 safe-icon"></i> ดาวน์โหลดเป็น Excel (.xlsx)</a></li>
+                                        <li><a class="dropdown-item fw-bold text-danger py-2" href="javascript:void(0)" onclick="DepartmentLedgerPage.exportPDF()"><i class="fa-solid fa-file-pdf me-2 safe-icon"></i> ดาวน์โหลดเป็น PDF (.pdf)</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item fw-bold text-dark py-2" href="javascript:void(0)" onclick="DepartmentLedgerPage.printLedger()"><i class="fa-solid fa-print me-2 safe-icon"></i> พิมพ์ลงกระดาษ (Print)</a></li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                         
@@ -178,16 +206,22 @@ class DepartmentLedgerPageComponent {
                 </div>
 
                 <div class="tab-pane fade" id="summary-panel" role="tabpanel">
-                    <div class="d-flex justify-content-end mb-3">
-                        <button class="btn btn-primary fw-bold shadow-sm rounded-pill px-4" onclick="DepartmentLedgerPage.printSummary()">
-                            <!-- 🚨 THE FIX: ป้องกันไอคอนพิมพ์ในแท็บ Summary เพี้ยน -->
-                            <i class="fa-solid fa-print me-2 text-white safe-icon"></i> พิมพ์สรุปยอด
-                        </button>
+                    <div class="d-flex justify-content-end mb-3 position-relative" style="z-index: 1050;">
+                        <div class="dropdown">
+                            <button class="btn btn-export-summary fw-bold shadow-sm rounded-pill px-4 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-file-export me-2 safe-icon"></i> ส่งออกสรุปยอด (Export)
+                            </button>
+                            <ul class="dropdown-menu shadow-lg border-0" style="border-radius: 12px; margin-top: 8px; z-index: 9999;">
+                                <li><a class="dropdown-item fw-bold text-success py-2" href="javascript:void(0)" onclick="DepartmentLedgerPage.exportSummaryExcel()"><i class="fa-solid fa-file-excel me-2 safe-icon"></i> ดาวน์โหลดเป็น Excel (.xlsx)</a></li>
+                                <li><a class="dropdown-item fw-bold text-danger py-2" href="javascript:void(0)" onclick="DepartmentLedgerPage.exportSummaryPDF()"><i class="fa-solid fa-file-pdf me-2 safe-icon"></i> ดาวน์โหลดเป็น PDF (.pdf)</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item fw-bold text-dark py-2" href="javascript:void(0)" onclick="DepartmentLedgerPage.printSummary()"><i class="fa-solid fa-print me-2 safe-icon"></i> พิมพ์ลงกระดาษ (Print)</a></li>
+                            </ul>
+                        </div>
                     </div>
-                    <div class="row g-4">
+                    <div class="row g-4 position-relative z-1">
                         <div class="col-lg-5">
                             <div class="modern-panel shadow-sm p-4 h-100 position-relative overflow-hidden" style="border-top: 5px solid var(--info); border-radius: 20px;">
-                                <!-- 🚨 THE FIX: ป้องกันไอคอนกราฟในแท็บ Summary เพี้ยน -->
                                 <h5 class="fw-bold mb-4" style="color: var(--text-dark);"><i class="fa-solid fa-chart-pie text-info me-2 safe-icon"></i> สัดส่วนการใช้จ่าย (Expense Breakdown)</h5>
                                 <div style="height: 380px; width: 100%; display: flex; align-items: center; justify-content: center;" id="dl-chart-container">
                                     <canvas id="dlSummaryChart"></canvas>
@@ -196,7 +230,6 @@ class DepartmentLedgerPageComponent {
                         </div>
                         <div class="col-lg-7">
                             <div class="modern-panel shadow-sm p-4 h-100 position-relative overflow-hidden" style="border-top: 5px solid #94a3b8; border-radius: 20px;">
-                                <!-- 🚨 THE FIX: ป้องกันไอคอน List-ul ในแท็บ Summary เพี้ยน 🚨 -->
                                 <h5 class="fw-bold mb-4" style="color: var(--text-dark);"><i class="fa-solid fa-list-ul text-secondary me-2 safe-icon"></i> สรุปยอดแยกตามหมวดหมู่</h5>
                                 <div class="table-responsive rounded-4 shadow-sm" style="background-color: var(--bg-surface); border: 1px solid var(--border-color);">
                                     <table class="table table-ledger w-100 mb-0">
@@ -223,7 +256,7 @@ class DepartmentLedgerPageComponent {
     init() {
         if (typeof db === 'undefined') return;
 
-        if (!this.state.hasCleanedUp) this.#autoPurgeOldRecords();
+        if (!this.state.hasCleanedUp) this._autoPurgeOldRecords();
 
         if(!this.state.startDate || !this.state.endDate) {
             this.setThisMonth();
@@ -231,7 +264,7 @@ class DepartmentLedgerPageComponent {
             this.updateDateDisplays();
         }
 
-        this.#setupListeners();
+        this._setupListeners();
     }
 
     destroy() {
@@ -243,7 +276,11 @@ class DepartmentLedgerPageComponent {
         }
     }
 
-    #setupListeners() {
+    _setupListeners() {
+        db.ref('clinic_settings_v2/clinic_name').once('value').then(snap => {
+            if(snap.exists()) { this.state.clinicName = snap.val(); }
+        });
+
         const cbSettings = db.ref('department_ledger_settings_v2').on('value', snap => {
             if (!document.getElementById('dl-bf-balance')) return;
             const settings = snap.val() || {};
@@ -263,7 +300,7 @@ class DepartmentLedgerPageComponent {
         this.firebaseListeners.push({ path: 'department_ledger_v2', callback: cbLedger });
     }
 
-    #autoPurgeOldRecords() {
+    _autoPurgeOldRecords() {
         this.state.hasCleanedUp = true;
         const cutoffDate = new Date();
         cutoffDate.setFullYear(cutoffDate.getFullYear() - 5);
@@ -413,11 +450,11 @@ class DepartmentLedgerPageComponent {
                     </td>
                     <td class="text-center">${badge}</td>
                     <td>
-                        <div class="fw-bold" style="font-family:'Prompt'; font-size:14.5px; color: var(--text-dark);">${this.#escapeHTML(t.description)}</div>
-                        <div class="small mt-1" style="color: var(--text-muted);"><span class="badge bg-secondary me-1">${this.#escapeHTML(t.category)}</span> ผู้บันทึก: ${this.#escapeHTML(t.recorded_by || 'Admin')}</div>
+                        <div class="fw-bold" style="font-family:'Prompt'; font-size:14.5px; color: var(--text-dark);">${this._escapeHTML(t.description)}</div>
+                        <div class="small mt-1" style="color: var(--text-muted);"><span class="badge bg-secondary me-1">${this._escapeHTML(t.category)}</span> ผู้บันทึก: ${this._escapeHTML(t.recorded_by || 'Admin')}</div>
                     </td>
                     <td>
-                        <div class="small" style="white-space:pre-wrap; max-width:200px; font-size:13px; line-height:1.4; color: var(--text-muted);">${this.#escapeHTML(t.remark || '-')}</div>
+                        <div class="small" style="white-space:pre-wrap; max-width:200px; font-size:13px; line-height:1.4; color: var(--text-muted);">${this._escapeHTML(t.remark || '-')}</div>
                     </td>
                     <td class="text-end fw-bold text-success" style="font-size:15px;">${inAmt}</td>
                     <td class="text-end fw-bold text-danger" style="font-size:15px;">${outAmt}</td>
@@ -442,10 +479,10 @@ class DepartmentLedgerPageComponent {
         `;
 
         document.getElementById('dl-table-body').innerHTML = html;
-        this.#renderSummaryData(summaryIn, summaryOut, totalOut);
+        this._renderSummaryData(summaryIn, summaryOut, totalOut);
     }
 
-    #renderSummaryData(summaryIn, summaryOut, totalOut) {
+    _renderSummaryData(summaryIn, summaryOut, totalOut) {
         if (!document.getElementById('dl-summary-body')) return;
         
         let sumHtml = '';
@@ -456,7 +493,7 @@ class DepartmentLedgerPageComponent {
         Object.keys(summaryIn).sort((a,b) => summaryIn[b] - summaryIn[a]).forEach(cat => { 
             sumHtml += `
             <tr>
-                <td><span class="fw-bold" style="color: var(--text-dark);">${this.#escapeHTML(cat)}</span></td>
+                <td><span class="fw-bold" style="color: var(--text-dark);">${this._escapeHTML(cat)}</span></td>
                 <td class="text-center"><span class="badge badge-soft-success">รับเข้า</span></td>
                 <td class="text-end fw-bold text-success">+ ${summaryIn[cat].toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
             </tr>`; 
@@ -465,7 +502,7 @@ class DepartmentLedgerPageComponent {
         Object.keys(summaryOut).sort((a,b) => summaryOut[b] - summaryOut[a]).forEach(cat => { 
             sumHtml += `
             <tr>
-                <td><span class="fw-bold" style="color: var(--text-dark);">${this.#escapeHTML(cat)}</span></td>
+                <td><span class="fw-bold" style="color: var(--text-dark);">${this._escapeHTML(cat)}</span></td>
                 <td class="text-center"><span class="badge badge-soft-danger">จ่ายออก</span></td>
                 <td class="text-end fw-bold text-danger">- ${summaryOut[cat].toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
             </tr>`; 
@@ -569,8 +606,8 @@ class DepartmentLedgerPageComponent {
     }
 
     manageCategories() {
-        let inHtml = this.state.categoriesIn.map((c, i) => `<span class="badge bg-success-subtle text-success-emphasis m-1 fs-6 border border-success-subtle py-2 px-3 shadow-sm rounded-pill">${this.#escapeHTML(c)} <i class="fa-solid fa-times ms-2 safe-icon" style="cursor:pointer;" onclick="Swal.close(); setTimeout(()=>DepartmentLedgerPage.removeCategory('IN', ${i}),300)"></i></span>`).join('');
-        let outHtml = this.state.categoriesOut.map((c, i) => `<span class="badge bg-danger-subtle text-danger-emphasis m-1 fs-6 border border-danger-subtle py-2 px-3 shadow-sm rounded-pill">${this.#escapeHTML(c)} <i class="fa-solid fa-times ms-2 safe-icon" style="cursor:pointer;" onclick="Swal.close(); setTimeout(()=>DepartmentLedgerPage.removeCategory('OUT', ${i}),300)"></i></span>`).join('');
+        let inHtml = this.state.categoriesIn.map((c, i) => `<span class="badge bg-success-subtle text-success-emphasis m-1 fs-6 border border-success-subtle py-2 px-3 shadow-sm rounded-pill">${this._escapeHTML(c)} <i class="fa-solid fa-times ms-2 safe-icon" style="cursor:pointer;" onclick="Swal.close(); setTimeout(()=>DepartmentLedgerPage.removeCategory('IN', ${i}),300)"></i></span>`).join('');
+        let outHtml = this.state.categoriesOut.map((c, i) => `<span class="badge bg-danger-subtle text-danger-emphasis m-1 fs-6 border border-danger-subtle py-2 px-3 shadow-sm rounded-pill">${this._escapeHTML(c)} <i class="fa-solid fa-times ms-2 safe-icon" style="cursor:pointer;" onclick="Swal.close(); setTimeout(()=>DepartmentLedgerPage.removeCategory('OUT', ${i}),300)"></i></span>`).join('');
 
         Swal.fire({
             title: '<h4 class="fw-bold mb-0" style="color: var(--text-dark);"><i class="fa-solid fa-tags text-secondary me-2 safe-icon"></i> จัดการหมวดหมู่รับ-จ่าย</h4>', 
@@ -626,7 +663,7 @@ class DepartmentLedgerPageComponent {
         const icon = isIncome ? 'fa-plus-circle' : 'fa-minus-circle';
         
         let activeArr = isIncome ? this.state.categoriesIn : this.state.categoriesOut; 
-        let catOptions = activeArr.map(c => `<option value="${this.#escapeHTML(c)}">${this.#escapeHTML(c)}</option>`).join('');
+        let catOptions = activeArr.map(c => `<option value="${this._escapeHTML(c)}">${this._escapeHTML(c)}</option>`).join('');
 
         Swal.fire({
             title: `<h4 class="fw-bold text-${color} mb-0" style="font-family:'Prompt';"><i class="fas ${icon} me-2 safe-icon"></i> ${title}</h4>`,
@@ -699,9 +736,9 @@ class DepartmentLedgerPageComponent {
         const color = 'warning'; 
         
         let activeArr = isIncome ? this.state.categoriesIn : this.state.categoriesOut; 
-        let catOptions = activeArr.map(c => `<option value="${this.#escapeHTML(c)}" ${item.category === c ? 'selected' : ''}>${this.#escapeHTML(c)}</option>`).join('');
+        let catOptions = activeArr.map(c => `<option value="${this._escapeHTML(c)}" ${item.category === c ? 'selected' : ''}>${this._escapeHTML(c)}</option>`).join('');
         if (!activeArr.includes(item.category)) {
-            catOptions += `<option value="${this.#escapeHTML(item.category)}" selected>${this.#escapeHTML(item.category)}</option>`;
+            catOptions += `<option value="${this._escapeHTML(item.category)}" selected>${this._escapeHTML(item.category)}</option>`;
         }
 
         Swal.fire({
@@ -719,7 +756,7 @@ class DepartmentLedgerPageComponent {
                         </div>
                     </div>
                     <label class="form-label fw-bold small" style="color: var(--text-muted);">รายละเอียดรายการ <span class="text-danger">*</span></label>
-                    <input type="text" id="swal-lg-desc" class="form-control input-modern fw-bold mb-3" style="color: var(--text-dark); border-radius:8px;" placeholder="เช่น ค่าเครื่องเขียน" value="${this.#escapeHTML(item.description)}">
+                    <input type="text" id="swal-lg-desc" class="form-control input-modern fw-bold mb-3" style="color: var(--text-dark); border-radius:8px;" placeholder="เช่น ค่าเครื่องเขียน" value="${this._escapeHTML(item.description)}">
                     
                     <label class="form-label fw-bold text-${isIncome ? 'success' : 'danger'} small">จำนวนเงิน (บาท) <span class="text-danger">*</span></label>
                     <div class="input-group shadow-sm mb-3" style="border-radius:12px; overflow:hidden; border: 1px solid var(--border-color); background-color: var(--bg-body);">
@@ -727,7 +764,7 @@ class DepartmentLedgerPageComponent {
                     </div>
                     
                     <label class="form-label fw-bold small" style="color: var(--text-muted);">หมายเหตุ (ข้อมูลเพิ่มเติม/เลขที่โอน)</label>
-                    <textarea id="swal-lg-remark" class="form-control input-modern" rows="2" style="border-radius:8px;" placeholder="เช่น โอนเข้าบัญชีคลินิก...">${this.#escapeHTML(item.remark || '')}</textarea>
+                    <textarea id="swal-lg-remark" class="form-control input-modern" rows="2" style="border-radius:8px;" placeholder="เช่น โอนเข้าบัญชีคลินิก...">${this._escapeHTML(item.remark || '')}</textarea>
                 </div>
             `,
             showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-save me-1 safe-icon"></i> บันทึกการแก้ไข', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#f59e0b', width: 500,
@@ -782,227 +819,746 @@ class DepartmentLedgerPageComponent {
         }); 
     }
 
+    exportExcel() {
+        if(typeof ExcelJS === 'undefined') {
+            Swal.fire({ title: 'กำลังโหลด Excel Engine...', html: 'โปรดรอสักครู่...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js';
+            script.onload = () => { Swal.close(); this._generateExcelJS(); };
+            script.onerror = () => { Swal.fire('ระบบขัดข้อง', 'ไม่สามารถดาวน์โหลด Excel Engine ได้', 'error'); };
+            document.head.appendChild(script);
+            return;
+        }
+        this._generateExcelJS();
+    }
+
+    async _generateExcelJS() {
+        Swal.fire({ title: 'กำลังประมวลผล Excel...', html: 'ระบบกำลังจัดทำตาราง .xlsx แท้ 100%', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        
+        try {
+            let filtered = this.state.allTransactions.filter(t => t.date >= this.state.startDate && t.date <= this.state.endDate); 
+            filtered.sort((a, b) => new Date(a.date + 'T' + (a.time||'00:00:00')) - new Date(b.date + 'T' + (b.time||'00:00:00')));
+            
+            let broughtForward = this.state.initialBalance; 
+            this.state.allTransactions.filter(t => t.date < this.state.startDate).forEach(t => { broughtForward += t.type === 'IN' ? Number(t.amount) : -Number(t.amount); });
+            
+            const workbook = new ExcelJS.Workbook();
+            const sheet = workbook.addWorksheet('Statement', { views: [{ showGridLines: false }] });
+
+            sheet.columns = [
+                { width: 6 },  { width: 22 }, { width: 40 }, { width: 30 }, 
+                { width: 20 }, { width: 16 }, { width: 16 }, { width: 18 }
+            ];
+
+            sheet.mergeCells('A1:H1');
+            const titleCell = sheet.getCell('A1');
+            titleCell.value = 'สมุดบัญชีรายรับ-รายจ่ายภายในหน่วยงาน (Department Ledger)';
+            titleCell.font = { name: 'Tahoma', size: 16, bold: true, color: { argb: 'FF1E3A8A' } };
+            titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+
+            sheet.mergeCells('A2:H2');
+            const subTitleCell = sheet.getCell('A2');
+            subTitleCell.value = `ความเคลื่อนไหวตั้งแต่: ${this.formatDateTh(this.state.startDate)} ถึง ${this.formatDateTh(this.state.endDate)}`;
+            subTitleCell.font = { name: 'Tahoma', size: 11, color: { argb: 'FF475569' } };
+            subTitleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+
+            sheet.addRow([]);
+
+            const headers = ["#", "วันที่", "รายการ", "หมายเหตุ", "ผู้บันทึก", "รับเข้า (฿)", "จ่ายออก (฿)", "คงเหลือ (฿)"];
+            const headerRow = sheet.addRow(headers);
+            headerRow.eachCell((cell) => {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+                cell.font = { name: 'Tahoma', bold: true, color: { argb: 'FF0F172A' } };
+                cell.border = { top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'} };
+                cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+            });
+
+            let currentBalance = broughtForward;
+            const bfRow = sheet.addRow(["", "", "", "ยอดยกมา (Brought Forward):", "", "", "", broughtForward]);
+            sheet.mergeCells('A5:D5');
+            sheet.getCell('A5').alignment = { horizontal: 'right', vertical: 'middle', wrapText: true };
+            bfRow.eachCell((cell, colNum) => {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+                cell.font = { name: 'Tahoma', bold: true, color: { argb: 'FF0F172A' } };
+                cell.border = { top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'} };
+                let align = { vertical: 'middle', wrapText: true };
+                if (colNum === 8) align.horizontal = 'right';
+                cell.alignment = align;
+                if(colNum === 8) cell.numFmt = '#,##0.00';
+            });
+
+            filtered.forEach((t, idx) => { 
+                let amt = Number(t.amount); 
+                let inAmt = t.type === 'IN' ? amt : null;
+                let outAmt = t.type === 'OUT' ? amt : null;
+                if(t.type === 'IN') currentBalance += amt; else currentBalance -= amt; 
+
+                const row = sheet.addRow([
+                    idx + 1,
+                    `${this.formatDateTh(t.date)} ${t.time ? t.time.substring(0,5)+' น.' : ''}`,
+                    `${t.description} [${t.category}]`,
+                    t.remark || "-",
+                    t.recorded_by || "Admin",
+                    inAmt,
+                    outAmt,
+                    currentBalance
+                ]);
+
+                row.eachCell((cell, colNum) => {
+                    cell.font = { name: 'Tahoma', color: { argb: 'FF0F172A' } };
+                    cell.border = { top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'} };
+                    
+                    let align = { vertical: 'middle', wrapText: true };
+                    if([1, 2, 5].includes(colNum)) align.horizontal = 'center';
+                    if([6, 7, 8].includes(colNum)) {
+                        align.horizontal = 'right';
+                        cell.numFmt = '#,##0.00';
+                    }
+                    cell.alignment = align;
+
+                    if(colNum === 6 && inAmt) cell.font = { name: 'Tahoma', bold: true, color: { argb: 'FF10B981' } };
+                    if(colNum === 7 && outAmt) cell.font = { name: 'Tahoma', bold: true, color: { argb: 'FFEF4444' } };
+                    if(colNum === 8) cell.font.bold = true;
+                });
+            });
+
+            const cfRow = sheet.addRow(["", "", "", "ยอดยกไป (Carried Forward):", "", "", "", currentBalance]);
+            const cfRowNum = sheet.rowCount;
+            sheet.mergeCells(`A${cfRowNum}:D${cfRowNum}`);
+            sheet.getCell(`A${cfRowNum}`).alignment = { horizontal: 'right', vertical: 'middle', wrapText: true };
+            cfRow.eachCell((cell, colNum) => {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } }; 
+                cell.font = { name: 'Tahoma', bold: true, size: 11, color: { argb: 'FF0F172A' } };
+                cell.border = { top:{style:'medium'}, bottom:{style:'medium'}, left:{style:'thin'}, right:{style:'thin'} };
+                let align = { vertical: 'middle', wrapText: true };
+                if (colNum === 8) align.horizontal = 'right';
+                cell.alignment = align;
+                if(colNum === 8) cell.numFmt = '#,##0.00';
+            });
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Department_Ledger_${this.state.startDate}_to_${this.state.endDate}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+            
+            Swal.fire('ดาวน์โหลดสำเร็จ!', 'ไฟล์ Excel (.xlsx) ถูกสร้างสมบูรณ์แบบ', 'success');
+
+        } catch (error) {
+            console.error(error);
+            Swal.fire('ข้อผิดพลาด', 'ไม่สามารถสร้างไฟล์ Excel ได้: ' + error.message, 'error');
+        }
+    }
+
+    exportSummaryExcel() {
+        if(typeof ExcelJS === 'undefined') {
+            Swal.fire({ title: 'กำลังโหลด Excel Engine...', html: 'โปรดรอสักครู่...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js';
+            script.onload = () => { Swal.close(); this._generateSummaryExcelJS(); };
+            document.head.appendChild(script);
+            return;
+        }
+        this._generateSummaryExcelJS();
+    }
+
+    async _generateSummaryExcelJS() {
+        if(!this.state._pendingChartData) { Swal.fire('ข้อมูลไม่พร้อม', 'ไม่พบข้อมูลสรุปเพื่อจัดพิมพ์', 'warning'); return; }
+        Swal.fire({ title: 'กำลังสร้างไฟล์ Excel...', html: 'ระบบกำลังแทรกกราฟและตารางแบบ Dashboard<br>โปรดรอสักครู่...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        
+        try {
+            // 1. ดึงภาพกราฟโดนัทจาก Canvas บนหน้าจอ
+            let chartImgUrl = null;
+            let imgRatio = 1; // 🚨 ตัวแปรเก็บอัตราส่วนภาพ ป้องกันกราฟเบี้ยว
+            try {
+                const existingCanvas = document.getElementById('dlSummaryChart');
+                if (existingCanvas) {
+                    // 🚨 คำนวณสัดส่วน กว้าง:สูง จากหน้าจอจริงๆ
+                    imgRatio = existingCanvas.height / existingCanvas.width; 
+                    
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = existingCanvas.width;
+                    tempCanvas.height = existingCanvas.height;
+                    const tCtx = tempCanvas.getContext('2d');
+                    tCtx.fillStyle = '#ffffff'; // ถมพื้นหลังขาว
+                    tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                    tCtx.drawImage(existingCanvas, 0, 0);
+                    chartImgUrl = tempCanvas.toDataURL('image/png');
+                }
+            } catch(e) { console.warn("Canvas capture warning", e); }
+
+            // 2. คำนวณข้อมูลเพื่อความแม่นยำ
+            let broughtForward = this.state.initialBalance; 
+            this.state.allTransactions.filter(t => t.date < this.state.startDate).forEach(t => { 
+                broughtForward += t.type === 'IN' ? Number(t.amount) : -Number(t.amount); 
+            });
+
+            let filtered = this.state.allTransactions.filter(t => t.date >= this.state.startDate && t.date <= this.state.endDate);
+            let totalIn = 0; let totalOut = 0;
+            let summaryIn = {}; let summaryOut = {}; 
+            
+            filtered.forEach(t => {
+                let amt = Number(t.amount);
+                if(t.type === 'IN') { totalIn += amt; summaryIn[t.category] = (summaryIn[t.category] || 0) + amt; } 
+                else { totalOut += amt; summaryOut[t.category] = (summaryOut[t.category] || 0) + amt; }
+            });
+            let netBalance = broughtForward + totalIn - totalOut;
+
+            // 3. สร้าง Workbook Excel
+            const workbook = new ExcelJS.Workbook();
+            const sheet = workbook.addWorksheet('Summary Dashboard', { views: [{ showGridLines: false }] });
+
+            // แบ่งเป็น 4 คอลัมน์หลัก (A: กราฟ, B: หมวดหมู่, C: ประเภท, D: ยอดรวม)
+            sheet.columns = [ 
+                { width: 45 }, { width: 35 }, { width: 15 }, { width: 25 }
+            ];
+
+            // 4. ส่วนหัวรายงาน (Header)
+            sheet.mergeCells('A1:D1');
+            const t1 = sheet.getCell('A1');
+            t1.value = this.state.clinicName;
+            t1.font = { name: 'Tahoma', size: 16, bold: true, color: { argb: 'FF1E3A8A' } };
+            t1.alignment = { vertical: 'middle', horizontal: 'center' };
+
+            sheet.mergeCells('A2:D2');
+            const t2 = sheet.getCell('A2');
+            t2.value = 'รายงานสรุปยอดดุลและโครงสร้างรับ-จ่ายภายในหน่วยงาน';
+            t2.font = { name: 'Tahoma', size: 12, bold: true, color: { argb: 'FF334155' } };
+            t2.alignment = { vertical: 'middle', horizontal: 'center' };
+
+            sheet.mergeCells('A3:D3');
+            const t3 = sheet.getCell('A3');
+            t3.value = `ช่วงเวลา: ${this.formatDateTh(this.state.startDate)} ถึง ${this.formatDateTh(this.state.endDate)}`;
+            t3.font = { name: 'Tahoma', size: 11, color: { argb: 'FF64748B' } };
+            t3.alignment = { vertical: 'middle', horizontal: 'center' };
+
+            sheet.addRow([]); // Row 4 (ว่าง)
+
+            // 5. Section 1: สรุปยอดดุล 4 กล่อง
+            sheet.mergeCells('A5:D5');
+            const section1 = sheet.getCell('A5');
+            section1.value = '1. สรุปยอดดุลทางการเงิน';
+            section1.font = { name: 'Tahoma', size: 12, bold: true };
+
+            const cardHeaders = sheet.addRow(["ยอดยกมา (Brought Fwd)", "รับเข้า (Income)", "จ่ายออก (Expense)", "คงเหลือสุทธิ (Net)"]);
+            cardHeaders.eachCell((cell, colNum) => {
+                let bgColor = colNum === 1 ? 'FFF8FAFC' : colNum === 2 ? 'FFF0FDF4' : colNum === 3 ? 'FFFEF2F2' : 'FFEFF6FF';
+                let fontColor = colNum === 1 ? 'FF64748B' : colNum === 2 ? 'FF15803D' : colNum === 3 ? 'FFB91C1C' : 'FF1D4ED8';
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
+                cell.font = { name: 'Tahoma', bold: true, size: 10, color: { argb: fontColor } };
+                cell.border = { top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'} };
+                cell.alignment = { vertical: 'middle', horizontal: 'center' };
+            });
+
+            const cardValues = sheet.addRow([broughtForward, totalIn, totalOut, netBalance]);
+            cardValues.eachCell((cell, colNum) => {
+                let bgColor = colNum === 1 ? 'FFF8FAFC' : colNum === 2 ? 'FFF0FDF4' : colNum === 3 ? 'FFFEF2F2' : 'FFEFF6FF';
+                let fontColor = colNum === 1 ? 'FF000000' : colNum === 2 ? 'FF166534' : colNum === 3 ? 'FF991B1B' : 'FF1E40AF';
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
+                cell.font = { name: 'Tahoma', bold: true, size: 14, color: { argb: fontColor } };
+                cell.border = { top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'} };
+                cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                cell.numFmt = '#,##0.00';
+            });
+
+            sheet.addRow([]); // Row 8 (ว่าง)
+
+            // 6. Section 2 & 3: แผนภูมิ และ ตาราง
+            sheet.getCell('A9').value = '2. แผนภูมิต้นทุนรายจ่าย';
+            sheet.getCell('A9').font = { name: 'Tahoma', size: 12, bold: true };
+            
+            sheet.mergeCells('B9:D9');
+            sheet.getCell('B9').value = '3. ยอดรวมสุทธิแยกตามหมวดหมู่โครงสร้าง';
+            sheet.getCell('B9').font = { name: 'Tahoma', size: 12, bold: true };
+
+            // 🚨 แปะรูปกราฟลงในคอลัมน์ A (ใต้หัวข้อ 2)
+            if (chartImgUrl) {
+                const imageId = workbook.addImage({ base64: chartImgUrl, extension: 'png' });
+                
+                // 🚨 คำนวณความกว้างและสูง ให้สัดส่วนภาพตรงตามจริง (ไม่บีบ ไม่เบี้ยว)
+                const baseWidth = 260; // กว้างพอดีคอลัมน์ A
+                const calculatedHeight = baseWidth * imgRatio;
+
+                sheet.addImage(imageId, {
+                    tl: { col: 0.2, row: 9.8 }, // ขยับลงมาตรงกลางเซลล์ให้สวยงาม
+                    ext: { width: baseWidth, height: calculatedHeight } 
+                });
+            }
+
+            // 🚨 สร้างตารางด้านขวา (เริ่มที่คอลัมน์ B, C, D แถวที่ 10 เป็นต้นไป)
+            const tableHeadersRow = sheet.getRow(10);
+            tableHeadersRow.getCell(2).value = "หมวดหมู่รายการ";
+            tableHeadersRow.getCell(3).value = "ประเภท";
+            tableHeadersRow.getCell(4).value = "รวม (฿)";
+            
+            [2, 3, 4].forEach(colNum => {
+                let cell = tableHeadersRow.getCell(colNum);
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+                cell.font = { name: 'Tahoma', bold: true, color: { argb: 'FF0F172A' } };
+                cell.border = { top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'} };
+                cell.alignment = { vertical: 'middle', horizontal: colNum === 4 ? 'right' : 'center' };
+            });
+
+            let currentRow = 11;
+            
+            Object.keys(summaryIn).sort((a,b) => summaryIn[b] - summaryIn[a]).forEach(cat => { 
+                const row = sheet.getRow(currentRow++);
+                row.getCell(2).value = cat;
+                row.getCell(3).value = "รับเข้า";
+                row.getCell(4).value = summaryIn[cat];
+
+                row.getCell(2).font = { name: 'Tahoma', bold: true };
+                row.getCell(3).font = { name: 'Tahoma', bold: true, color: { argb: 'FF10B981' } };
+                row.getCell(4).font = { name: 'Tahoma', bold: true, color: { argb: 'FF10B981' } };
+                
+                row.getCell(3).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                row.getCell(4).numFmt = '#,##0.00';
+                
+                [2, 3, 4].forEach(c => {
+                    row.getCell(c).border = { top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'} };
+                    row.getCell(c).alignment = { ...row.getCell(c).alignment, vertical: 'middle', wrapText: true };
+                });
+            });
+
+            Object.keys(summaryOut).sort((a,b) => summaryOut[b] - summaryOut[a]).forEach(cat => { 
+                const row = sheet.getRow(currentRow++);
+                row.getCell(2).value = cat;
+                row.getCell(3).value = "จ่ายออก";
+                row.getCell(4).value = summaryOut[cat];
+
+                row.getCell(2).font = { name: 'Tahoma', bold: true };
+                row.getCell(3).font = { name: 'Tahoma', bold: true, color: { argb: 'FFEF4444' } };
+                row.getCell(4).font = { name: 'Tahoma', bold: true, color: { argb: 'FFEF4444' } };
+                
+                row.getCell(3).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                row.getCell(4).numFmt = '#,##0.00';
+                
+                [2, 3, 4].forEach(c => {
+                    row.getCell(c).border = { top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'} };
+                    row.getCell(c).alignment = { ...row.getCell(c).alignment, vertical: 'middle', wrapText: true };
+                });
+            });
+
+            // ดาวน์โหลดไฟล์ Excel ออกมา
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Ledger_Summary_${this.state.startDate}_to_${this.state.endDate}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+            
+            Swal.fire('ดาวน์โหลดสำเร็จ!', 'ไฟล์ Excel แบบ Dashboard สร้างสมบูรณ์แบบ', 'success');
+
+        } catch (error) {
+            console.error(error);
+            Swal.fire('ข้อผิดพลาด', 'ไม่สามารถสร้างไฟล์ Excel ได้: ' + error.message, 'error');
+        }
+    }
+    
+
+    // 🚨 THE FIX: กางเอกสารลงบนหน้าจอตรงตำแหน่งที่กำลังมองอยู่ (In-Viewport) เพื่อหนีระบบ Culling ของ Browser 🚨
+    async _executeDirectPDF(htmlContent, filename, orientation = 'portrait') {
+        // อัปเกรดไลบรารีเป็นเวอร์ชันล่าสุดที่มีการแก้บั๊กภาษาไทยแล้ว 
+        if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+            Swal.fire({ title: 'กำลังโหลด PDF Engine...', html: 'โปรดรอสักครู่...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            await Promise.all([
+                new Promise((res) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'; s.onload = res; document.head.appendChild(s); }),
+                new Promise((res) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'; s.onload = res; document.head.appendChild(s); })
+            ]);
+        }
+
+        const containerWidth = orientation === 'portrait' ? 794 : 1122; // ความกว้างมาตรฐาน A4 (96 DPI)
+        const currentScrollY = window.scrollY; // ล็อกพิกัดหน้าจอ ณ ปัจจุบัน
+
+        // 🚨 ท่าไม้ตายที่ 1: กางตารางไว้บนหน้าจอเป๊ะๆ (In-Viewport) เพื่อไม่ให้ Browser มองข้าม
+        const container = document.createElement('div');
+        container.style.position = 'absolute';
+        container.style.top = currentScrollY + 'px'; 
+        container.style.left = '0px';
+        container.style.width = containerWidth + 'px';
+        container.style.backgroundColor = '#ffffff';
+        container.style.zIndex = '1050'; // 🚨 อยู่บนสุด แต่จะถูก SweetAlert บังไว้
+        container.innerHTML = htmlContent;
+        document.body.appendChild(container);
+
+        Swal.fire({ 
+            title: 'กำลังสร้างไฟล์ PDF...', 
+            html: 'ระบบกำลังจัดทำภาพความละเอียดสูง<br><b class="text-danger">กรุณารอสักครู่ (ห้ามเลื่อนจอ)</b>', 
+            allowOutsideClick: false, 
+            didOpen: () => {
+                Swal.showLoading();
+                const swalContainer = document.querySelector('.swal2-container');
+                if(swalContainer) swalContainer.style.zIndex = '200000'; // ดึง Loading มาบังตารางไว้
+            }
+        });
+
+        try {
+            await document.fonts.ready;
+            await new Promise(resolve => setTimeout(resolve, 1500)); // หน่วงเวลาให้เบราว์เซอร์วาดตาราง
+
+            // 🚨 ท่าไม้ตายที่ 2: ใช้ html2canvas รุ่น 1.4.1 ยิงแคปเจอร์เจาะจงเฉพาะตำแหน่ง
+            const canvas = await html2canvas(container, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                x: 0,
+                y: currentScrollY, // ชี้เป้าพิกัดปัจจุบันให้ Canvas ไม่หลงทิศ
+                scrollY: currentScrollY,
+                windowWidth: containerWidth + 50
+            });
+
+            // นำภาพใส่ PDF และดาวน์โหลด
+            const imgData = canvas.toDataURL('image/jpeg', 1.0);
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF(orientation, 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save(filename);
+
+            container.remove();
+            Swal.fire('สำเร็จ!', 'ไฟล์ PDF ถูกดาวน์โหลดลงเครื่องแล้ว!', 'success');
+
+        } catch (err) {
+            container.remove();
+            Swal.fire('ข้อผิดพลาด', 'เกิดปัญหาขณะสร้าง PDF: ' + err.message, 'error');
+        }
+    }
+
+    exportPDF() {
+        this.buildLedgerHTML().then(html => {
+            const filename = `Department_Ledger_${this.state.startDate}_to_${this.state.endDate}.pdf`;
+            this._executeDirectPDF(html, filename, 'portrait');
+        });
+    }
+
+    exportSummaryPDF() {
+        this.buildSummaryHTML().then(html => {
+            if(html) {
+                const filename = `Ledger_Summary_${this.state.startDate}_to_${this.state.endDate}.pdf`;
+                this._executeDirectPDF(html, filename, 'portrait');
+            } else {
+                Swal.fire('ข้อมูลไม่พร้อม', 'ไม่พบข้อมูลสรุปเพื่อจัดพิมพ์', 'warning');
+            }
+        });
+    }
+
+    buildLedgerHTML() {
+        return new Promise((resolve) => {
+            let filtered = this.state.allTransactions.filter(t => t.date >= this.state.startDate && t.date <= this.state.endDate); 
+            filtered.sort((a, b) => new Date(a.date + 'T' + (a.time||'00:00:00')) - new Date(b.date + 'T' + (b.time||'00:00:00')));
+            
+            let broughtForward = this.state.initialBalance; 
+            this.state.allTransactions.filter(t => t.date < this.state.startDate).forEach(t => { broughtForward += t.type === 'IN' ? Number(t.amount) : -Number(t.amount); });
+            
+            let currentBalance = broughtForward;
+            
+            // 🚨 บังคับใช้ฟอนต์ Tahoma (ฟอนต์ระบบ) แท้ๆ เพื่อแก้ปัญหาสระลอย 100%
+            const inlineStyles = `
+                background-color: #ffffff !important;
+                border: 1px solid #cbd5e1 !important;
+                padding: 6px 4px !important;
+                color: #000000 !important;
+                font-size: 11px !important;
+                font-family: 'Tahoma', sans-serif !important;
+                word-wrap: break-word !important;
+                white-space: normal !important;
+            `;
+
+            let tbodyHtml = `
+                <tr>
+                    <td colspan="4" style="background-color: #f8fafc !important; font-weight: bold !important; text-align: right !important; border: 1px solid #cbd5e1 !important; padding: 5px 4px !important; color: #000000 !important; font-size: 11px !important; font-family: 'Tahoma', sans-serif !important;">ยอดยกมา (Brought Forward):</td>
+                    <td style="background-color: #f8fafc !important; border: 1px solid #cbd5e1 !important; padding: 5px 4px !important;"></td>
+                    <td style="background-color: #f8fafc !important; border: 1px solid #cbd5e1 !important; padding: 5px 4px !important;"></td>
+                    <td style="background-color: #f8fafc !important; font-weight: bold !important; text-align: right !important; border: 1px solid #cbd5e1 !important; padding: 5px 4px !important; color: #000000 !important; font-size: 11px !important; font-family: 'Tahoma', sans-serif !important;">${broughtForward.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                </tr>
+            `;
+            
+            filtered.forEach((t, idx) => { 
+                let amt = Number(t.amount); 
+                if(t.type === 'IN') currentBalance += amt; else currentBalance -= amt; 
+                
+                tbodyHtml += `
+                <tr>
+                    <td style="${inlineStyles} text-align: center !important;">${idx+1}</td>
+                    <td style="${inlineStyles} text-align: center !important;">${this.formatDateTh(t.date)} <br><span style="color: #64748b !important; font-size: 9px !important; display: block; margin-top: 2px;">${t.time?t.time.substring(0,5)+' น.':'-'}</span></td>
+                    <td style="${inlineStyles} text-align: left !important;">${this._escapeHTML(t.description)} <br><span style="color: #64748b !important; font-size: 9px !important; display: block; margin-top: 2px;">[${this._escapeHTML(t.category)}]</span></td>
+                    <td style="${inlineStyles} text-align: left !important;">${this._escapeHTML(t.remark || '-')}</td>
+                    <td style="${inlineStyles} text-align: left !important;">${this._escapeHTML(t.recorded_by)}</td>
+                    <td style="${inlineStyles} text-align: right !important; color: #15803d !important; font-weight: bold !important;">${t.type === 'IN' ? amt.toLocaleString(undefined, {minimumFractionDigits: 2}) : '-'}</td>
+                    <td style="${inlineStyles} text-align: right !important; color: #b91c1c !important; font-weight: bold !important;">${t.type === 'OUT' ? amt.toLocaleString(undefined, {minimumFractionDigits: 2}) : '-'}</td>
+                    <td style="${inlineStyles} text-align: right !important; font-weight: bold !important;">${currentBalance.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                </tr>`; 
+            });
+            
+            tbodyHtml += `
+                <tr>
+                    <td colspan="4" style="background-color: #e2e8f0 !important; text-align: right !important; font-weight: bold !important; font-size: 13px !important; border: 1px solid #cbd5e1 !important; padding: 5px 4px !important; color: #000000 !important; font-family: 'Tahoma', sans-serif !important;">ยอดยกไป (Carried Forward):</td>
+                    <td style="background-color: #e2e8f0 !important; border: 1px solid #cbd5e1 !important; padding: 5px 4px !important;"></td>
+                    <td style="background-color: #e2e8f0 !important; border: 1px solid #cbd5e1 !important; padding: 5px 4px !important;"></td>
+                    <td style="background-color: #e2e8f0 !important; text-align: right !important; font-weight: bold !important; font-size: 13px !important; color: #000000 !important; border: 1px solid #cbd5e1 !important; padding: 5px 4px !important; font-family: 'Tahoma', sans-serif !important;">${currentBalance.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                </tr>
+            `;
+
+            db.ref('clinic_settings_v2').once('value').then(snap => {
+                const settings = snap.val() || { clinic_name: "DIALYSIS PRO CLINIC" };
+                const htmlContent = `
+                    <div style="background-color: #ffffff !important; padding: 10mm !important; width: 100% !important; box-sizing: border-box !important;">
+                        <h2 style="color: #1e3a8a !important; font-size: 20px !important; text-align: center !important; margin: 0 0 5px 0 !important; font-weight: bold !important; font-family: 'Tahoma', sans-serif !important;">${this._escapeHTML(settings.clinic_name)}</h2>
+                        <h3 style="color: #334155 !important; font-size: 14px !important; text-align: center !important; margin: 0 0 5px 0 !important; font-weight: normal !important; font-family: 'Tahoma', sans-serif !important;">สมุดบัญชีรายรับ-รายจ่ายภายในหน่วยงาน (Department Ledger)</h3>
+                        <p style="text-align: center !important; color: #64748b !important; font-size: 12px !important; margin: 0 0 20px 0 !important; font-family: 'Tahoma', sans-serif !important;">ความเคลื่อนไหวตั้งแต่: ${this.formatDateTh(this.state.startDate)} ถึง ${this.formatDateTh(this.state.endDate)}</p>
+                        
+                        <table style="width: 100% !important; border-collapse: collapse !important; background-color: #ffffff !important; border: 1px solid #cbd5e1 !important; table-layout: fixed !important; word-wrap: break-word !important;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 5%; background-color: #f1f5f9 !important; border: 1px solid #cbd5e1 !important; padding: 6px 3px !important; font-weight: bold !important; text-align: center !important; color: #000000 !important; font-size: 11.5px !important; font-family: 'Tahoma', sans-serif !important;">#</th>
+                                    <th style="width: 13%; background-color: #f1f5f9 !important; border: 1px solid #cbd5e1 !important; padding: 8px !important; font-weight: bold !important; text-align: center !important; color: #000000 !important; font-size: 11.5px !important; font-family: 'Tahoma', sans-serif !important;">วันที่</th>
+                                    <th style="width: 23%; background-color: #f1f5f9 !important; border: 1px solid #cbd5e1 !important; padding: 8px !important; font-weight: bold !important; text-align: center !important; color: #000000 !important; font-size: 11.5px !important; font-family: 'Tahoma', sans-serif !important;">รายการ</th>
+                                    <th style="width: 16%; background-color: #f1f5f9 !important; border: 1px solid #cbd5e1 !important; padding: 8px !important; font-weight: bold !important; text-align: center !important; color: #000000 !important; font-size: 11.5px !important; font-family: 'Tahoma', sans-serif !important;">หมายเหตุ</th>
+                                    <th style="width: 13%; background-color: #f1f5f9 !important; border: 1px solid #cbd5e1 !important; padding: 8px !important; font-weight: bold !important; text-align: center !important; color: #000000 !important; font-size: 11.5px !important; font-family: 'Tahoma', sans-serif !important;">ผู้บันทึก</th>
+                                    <th style="width: 10%; background-color: #f1f5f9 !important; border: 1px solid #cbd5e1 !important; padding: 8px !important; font-weight: bold !important; text-align: center !important; color: #000000 !important; font-size: 11.5px !important; font-family: 'Tahoma', sans-serif !important;">รับเข้า (฿)</th>
+                                    <th style="width: 10%; background-color: #f1f5f9 !important; border: 1px solid #cbd5e1 !important; padding: 8px !important; font-weight: bold !important; text-align: center !important; color: #000000 !important; font-size: 11.5px !important; font-family: 'Tahoma', sans-serif !important;">จ่ายออก (฿)</th>
+                                    <th style="width: 10%; background-color: #f1f5f9 !important; border: 1px solid #cbd5e1 !important; padding: 8px !important; font-weight: bold !important; text-align: center !important; color: #000000 !important; font-size: 11.5px !important; font-family: 'Tahoma', sans-serif !important;">คงเหลือ (฿)</th>
+                                </tr>
+                            </thead>
+                            <tbody>${tbodyHtml}</tbody>
+                        </table>
+                    </div>
+                `;
+                resolve(htmlContent);
+            });
+        });
+    }
+
+    buildSummaryHTML() {
+        return new Promise((resolve) => {
+            if(!this.state._pendingChartData) { resolve(null); return; }
+            
+            let chartImgUrl = '';
+            // 🚨 ดึงภาพกราฟอย่างปลอดภัยจากบนหน้าจอ
+            try {
+                const existingCanvas = document.getElementById('dlSummaryChart');
+                if (existingCanvas && existingCanvas.toDataURL) {
+                    chartImgUrl = existingCanvas.toDataURL('image/png');
+                }
+            } catch(e) { 
+                console.warn("ไม่สามารถดึงภาพ Canvas ได้", e); 
+            }
+
+            // ถ่ายโอนไม่ได้ ให้สร้างแบบซ่อนตัว (Off-screen) โดยย่อขนาดลงเหลือ 300x300
+            if (!chartImgUrl && window.Chart) {
+                try {
+                    const tempContainer = document.createElement('div');
+                    tempContainer.style.position = 'absolute';
+                    tempContainer.style.top = '-9999px';
+                    tempContainer.style.width = '300px';
+                    tempContainer.style.height = '300px';
+                    document.body.appendChild(tempContainer);
+
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = 300; 
+                    tempCanvas.height = 300;
+                    tempContainer.appendChild(tempCanvas);
+
+                    const tempChart = new window.Chart(tempCanvas.getContext('2d'), {
+                        type: 'doughnut',
+                        data: { 
+                            labels: this.state._pendingChartData.labels, 
+                            datasets: [{ data: this.state._pendingChartData.data, backgroundColor: this.state._pendingChartData.colors.slice(0, this.state._pendingChartData.data.length), borderWidth: 2, borderColor: '#fff' }] 
+                        },
+                        options: { responsive: false, maintainAspectRatio: true, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { font: { family: 'Tahoma', size: 12 }, color: '#0f172a' }, padding: 10 } }, animation: { duration: 0 } }
+                    });
+                    
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.font = "bold 16px Tahoma"; // ย่อตัวอักษรกลางกราฟ
+                    ctx.textBaseline = "middle"; 
+                    ctx.fillStyle = "#334155"; 
+                    var text = "฿" + this.state._pendingChartData.totalOut.toLocaleString(undefined, {minimumFractionDigits: 2}); 
+                    var textX = Math.round((300 - ctx.measureText(text).width) / 2);
+                    var textY = 150 - 20; 
+                    ctx.fillText(text, textX, textY);
+                    
+                    chartImgUrl = tempCanvas.toDataURL('image/png');
+                    tempChart.destroy(); 
+                    tempContainer.remove();
+                } catch(err) {
+                    console.error("Off-screen chart generation failed:", err);
+                }
+            }
+
+            // 🚨 ย่อขนาดแมกซ์ของรูปกราฟเหลือ 220px ให้ดูกะทัดรัด
+            const chartImgHtml = chartImgUrl 
+                ? `<img src="${chartImgUrl}" style="width: 100% !important; max-width: 220px !important; height: auto !important; display: block !important; margin: 0 auto !important; object-fit: contain !important;">`
+                : `<div style="text-align:center; padding: 20px; color: #94a3b8; border: 1px dashed #cbd5e1; font-family: Tahoma, sans-serif; font-size: 11px;">(กำลังประมวลผลกราฟ)</div>`;
+
+            // 🚨 ย่อ Padding ของการ์ดลงเหลือ 8px และฟอนต์เหลือ 10px / 13px
+            let cardsHtml = `
+                <table style="width: 100% !important; border-collapse: separate !important; border-spacing: 5px 0 !important; margin-bottom: 15px !important; border: none !important; background-color: transparent !important; table-layout: fixed !important;">
+                    <tr>
+                        <td style="border: 1px solid #cbd5e1 !important; border-radius: 8px !important; text-align: center !important; padding: 8px !important; background-color: #f8fafc !important; width: 25% !important; word-wrap: break-word; white-space: normal;">
+                            <div style="font-size: 10px !important; font-weight: bold !important; margin-bottom: 2px !important; color: #64748b !important; font-family: 'Tahoma', sans-serif !important;">ยอดยกมา</div>
+                            <div style="font-size: 13px !important; font-weight: bold !important; color: #000000 !important; font-family: 'Tahoma', sans-serif !important;">฿${document.getElementById('dl-bf-balance') ? document.getElementById('dl-bf-balance').innerText : '0.00'}</div>
+                        </td>
+                        <td style="border: 1px solid #cbd5e1 !important; border-radius: 8px !important; text-align: center !important; padding: 8px !important; background-color: #f0fdf4 !important; width: 25% !important; word-wrap: break-word; white-space: normal;">
+                            <div style="font-size: 10px !important; font-weight: bold !important; margin-bottom: 2px !important; color: #15803d !important; font-family: 'Tahoma', sans-serif !important;">รับเข้า</div>
+                            <div style="font-size: 13px !important; font-weight: bold !important; color: #166534 !important; font-family: 'Tahoma', sans-serif !important;">+ ฿${document.getElementById('dl-total-in') ? document.getElementById('dl-total-in').innerText : '0.00'}</div>
+                        </td>
+                        <td style="border: 1px solid #cbd5e1 !important; border-radius: 8px !important; text-align: center !important; padding: 8px !important; background-color: #fef2f2 !important; width: 25% !important; word-wrap: break-word; white-space: normal;">
+                            <div style="font-size: 10px !important; font-weight: bold !important; margin-bottom: 2px !important; color: #b91c1c !important; font-family: 'Tahoma', sans-serif !important;">จ่ายออก</div>
+                            <div style="font-size: 13px !important; font-weight: bold !important; color: #991b1b !important; font-family: 'Tahoma', sans-serif !important;">- ฿${document.getElementById('dl-total-out') ? document.getElementById('dl-total-out').innerText : '0.00'}</div>
+                        </td>
+                        <td style="border: 1px solid #cbd5e1 !important; border-radius: 8px !important; text-align: center !important; padding: 8px !important; background-color: #eff6ff !important; width: 25% !important; word-wrap: break-word; white-space: normal;">
+                            <div style="font-size: 10px !important; font-weight: bold !important; margin-bottom: 2px !important; color: #1d4ed8 !important; font-family: 'Tahoma', sans-serif !important;">คงเหลือสุทธิ</div>
+                            <div style="font-size: 13px !important; font-weight: bold !important; color: #1e40af !important; font-family: 'Tahoma', sans-serif !important;">฿${document.getElementById('dl-net-balance') ? document.getElementById('dl-net-balance').innerText : '0.00'}</div>
+                        </td>
+                    </tr>
+                </table>
+            `;
+
+            let tbodyHtml = '';
+            let summaryIn = {}; 
+            let summaryOut = {}; 
+            let filtered = this.state.allTransactions.filter(t => t.date >= this.state.startDate && t.date <= this.state.endDate);
+            filtered.forEach(t => {
+                let amt = Number(t.amount);
+                if(t.type === 'IN') { summaryIn[t.category] = (summaryIn[t.category] || 0) + amt; } 
+                else { summaryOut[t.category] = (summaryOut[t.category] || 0) + amt; }
+            });
+
+            // 🚨 ย่อขนาดฟอนต์ในตารางเหลือ 11px และลด Padding
+            Object.keys(summaryIn).sort((a,b) => summaryIn[b] - summaryIn[a]).forEach(cat => { 
+                tbodyHtml += `<tr style="background-color: #ffffff !important;">
+                    <td style="border: 1px solid #cbd5e1 !important; padding: 6px 4px !important; color: #000000 !important; font-weight: bold !important; font-size: 11px !important; font-family: 'Tahoma', sans-serif !important; word-wrap: break-word; white-space: normal;">${this._escapeHTML(cat)}</td>
+                    <td style="border: 1px solid #cbd5e1 !important; padding: 6px 4px !important; text-align: center !important; color: #10b981 !important; font-weight: bold !important; font-size: 11px !important; font-family: 'Tahoma', sans-serif !important;">รับเข้า</td>
+                    <td style="border: 1px solid #cbd5e1 !important; padding: 6px 4px !important; text-align: right !important; color: #10b981 !important; font-weight: bold !important; font-size: 11px !important; font-family: 'Tahoma', sans-serif !important;">+ ${summaryIn[cat].toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                </tr>`;
+            });
+            Object.keys(summaryOut).sort((a,b) => summaryOut[b] - summaryOut[a]).forEach(cat => { 
+                tbodyHtml += `<tr style="background-color: #ffffff !important;">
+                    <td style="border: 1px solid #cbd5e1 !important; padding: 6px 4px !important; color: #000000 !important; font-weight: bold !important; font-size: 11px !important; font-family: 'Tahoma', sans-serif !important; word-wrap: break-word; white-space: normal;">${this._escapeHTML(cat)}</td>
+                    <td style="border: 1px solid #cbd5e1 !important; padding: 6px 4px !important; text-align: center !important; color: #ef4444 !important; font-weight: bold !important; font-size: 11px !important; font-family: 'Tahoma', sans-serif !important;">จ่ายออก</td>
+                    <td style="border: 1px solid #cbd5e1 !important; padding: 6px 4px !important; text-align: right !important; color: #ef4444 !important; font-weight: bold !important; font-size: 11px !important; font-family: 'Tahoma', sans-serif !important;">- ${summaryOut[cat].toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                </tr>`;
+            });
+
+            db.ref('clinic_settings_v2').once('value').then(snap => {
+                const settings = snap.val() || { clinic_name: "DIALYSIS PRO CLINIC" };
+                const htmlContent = `
+                    <div style="background-color: #ffffff !important; padding: 10mm !important; width: 100% !important; box-sizing: border-box !important;">
+                        <h2 style="color: #1e3a8a !important; font-size: 18px !important; text-align: center !important; margin: 0 0 4px 0 !important; font-weight: bold !important; font-family: 'Tahoma', sans-serif !important; background-color: transparent !important;">${this._escapeHTML(settings.clinic_name)}</h2>
+                        <h3 style="color: #334155 !important; font-size: 13px !important; text-align: center !important; margin: 0 0 4px 0 !important; font-weight: normal !important; font-family: 'Tahoma', sans-serif !important; background-color: transparent !important;">รายงานสรุปยอดดุลและโครงสร้างรับ-จ่ายภายในหน่วยงาน</h3>
+                        <p style="text-align: center !important; color: #64748b !important; font-size: 11px !important; margin: 0 0 15px 0 !important; font-family: 'Tahoma', sans-serif !important; background-color: transparent !important;">ช่วงเวลา: ${this.formatDateTh(this.state.startDate)} ถึง ${this.formatDateTh(this.state.endDate)}</p>
+                        
+                        <div style="font-size: 13px !important; font-weight: bold !important; margin-bottom: 8px !important; border-left: 4px solid #0284c7 !important; padding-left: 8px !important; color: #000000 !important; font-family: 'Tahoma', sans-serif !important; background-color: transparent !important;">1. สรุปยอดดุลทางการเงิน</div>
+                        ${cardsHtml}
+                        
+                        <table style="width: 100% !important; border: none !important; border-collapse: collapse !important; background-color: transparent !important; table-layout: fixed !important;">
+                            <tr>
+                                <td style="width: 45% !important; vertical-align: top !important; border: none !important; padding: 0 10px 0 0 !important; background-color: transparent !important;">
+                                    <div style="font-size: 13px !important; font-weight: bold !important; margin-bottom: 8px !important; border-left: 4px solid #0284c7 !important; padding-left: 8px !important; color: #000000 !important; font-family: 'Tahoma', sans-serif !important; background-color: transparent !important;">2. แผนภูมิต้นทุนรายจ่าย</div>
+                                    ${chartImgHtml}
+                                </td>
+                                <td style="width: 55% !important; vertical-align: top !important; border: none !important; padding: 0 0 0 10px !important; background-color: transparent !important;">
+                                    <div style="font-size: 13px !important; font-weight: bold !important; margin-bottom: 8px !important; border-left: 4px solid #0284c7 !important; padding-left: 8px !important; color: #000000 !important; font-family: 'Tahoma', sans-serif !important; background-color: transparent !important;">3. ยอดรวมสุทธิแยกตามหมวดหมู่โครงสร้าง</div>
+                                    <table style="width: 100% !important; border-collapse: collapse !important; background-color: #ffffff !important; border: 1px solid #cbd5e1 !important; margin-top: 5px !important; table-layout: fixed !important;">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 50%; background-color: #f1f5f9 !important; border: 1px solid #cbd5e1 !important; padding: 6px 4px !important; font-weight: bold !important; text-align: center !important; color: #000000 !important; font-size: 11px !important; font-family: 'Tahoma', sans-serif !important;">หมวดหมู่รายการ</th>
+                                                <th style="width: 20%; background-color: #f1f5f9 !important; border: 1px solid #cbd5e1 !important; padding: 6px 4px !important; font-weight: bold !important; text-align: center !important; color: #000000 !important; font-size: 11px !important; font-family: 'Tahoma', sans-serif !important;">ประเภท</th>
+                                                <th style="width: 30%; background-color: #f1f5f9 !important; border: 1px solid #cbd5e1 !important; padding: 6px 4px !important; font-weight: bold !important; text-align: right !important; color: #000000 !important; font-size: 11px !important; font-family: 'Tahoma', sans-serif !important;">รวม (฿)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${tbodyHtml}
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                `;
+                resolve(htmlContent);
+            });
+        });
+    }
+
+    printLedger() {
+        this.buildLedgerHTML().then(html => {
+            this._executePrint(html);
+        });
+    }
+
+    printSummary() {
+        this.buildSummaryHTML().then(html => {
+            if(html) {
+                this._executePrint(html);
+            } else {
+                Swal.fire('ข้อมูลไม่พร้อม', 'ไม่พบข้อมูลสรุปเพื่อจัดพิมพ์', 'warning');
+            }
+        });
+    }
+
     _executePrint(htmlContent) {
-        Swal.fire({ title: 'กำลังเตรียมเอกสาร...', html: 'กรุณารอสักครู่ ระบบกำลังจัดหน้ากระดาษ', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+        Swal.fire({ title: 'กำลังเตรียมหน้าต่างพิมพ์...', html: 'กรุณารอสักครู่', allowOutsideClick: false, timer: 1500, didOpen: () => { Swal.showLoading(); } });
         
         let oldIframe = document.getElementById('hidden-print-frame'); 
         if (oldIframe) { oldIframe.remove(); }
         
         let iframe = document.createElement('iframe'); 
         iframe.id = 'hidden-print-frame'; 
-        iframe.style.position = 'fixed'; iframe.style.right = '0'; iframe.style.bottom = '0'; iframe.style.width = '0'; iframe.style.height = '0'; iframe.style.border = '0'; 
+        iframe.style.position = 'fixed'; 
+        iframe.style.right = '0'; 
+        iframe.style.bottom = '0'; 
+        iframe.style.width = '1px'; 
+        iframe.style.height = '1px'; 
+        iframe.style.border = '0'; 
         document.body.appendChild(iframe);
-        
-        iframe.onload = function() { 
-            setTimeout(function() { 
-                Swal.close(); 
-                iframe.contentWindow.focus(); 
-                iframe.contentWindow.print(); 
-                setTimeout(() => { if (document.getElementById('hidden-print-frame')) document.getElementById('hidden-print-frame').remove(); }, 10000); 
-            }, 800); 
-        };
         
         let doc = iframe.contentWindow.document; 
         doc.open(); 
-        doc.write(htmlContent); 
+        doc.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>พิมพ์รายงาน</title>
+                <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+                <style>
+                    @page{size: A4 portrait; margin: 10mm;} 
+                    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; box-sizing: border-box !important; }
+                    body { background-color: #ffffff !important; margin: 0; padding: 0; color: #000; font-family: 'Sarabun', sans-serif; }
+                </style>
+            </head>
+            <body>
+                <div style="width: 794px; margin: 0 auto;">
+                    ${htmlContent}
+                </div>
+            </body>
+            </html>
+        `); 
         doc.close();
-    }
 
-    printLedger() {
-        let filtered = this.state.allTransactions.filter(t => t.date >= this.state.startDate && t.date <= this.state.endDate); 
-        filtered.sort((a, b) => new Date(a.date + 'T' + (a.time||'00:00:00')) - new Date(b.date + 'T' + (b.time||'00:00:00')));
-        
-        let broughtForward = this.state.initialBalance; 
-        this.state.allTransactions.filter(t => t.date < this.state.startDate).forEach(t => { broughtForward += t.type === 'IN' ? Number(t.amount) : -Number(t.amount); });
-        
-        let currentBalance = broughtForward;
-        let tbodyHtml = `
-            <tr style="background-color: #f1f5f9; font-weight: bold;">
-                <td colspan="4" style="text-align: right;">ยอดยกมา (Brought Forward):</td>
-                <td></td>
-                <td></td>
-                <td style="text-align: right;">${broughtForward.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-            </tr>
-        `;
-        
-        filtered.forEach((t, idx) => { 
-            let amt = Number(t.amount); 
-            if(t.type === 'IN') currentBalance += amt; else currentBalance -= amt; 
-            
-            tbodyHtml += `
-            <tr>
-                <td style="text-align: center;">${idx+1}</td>
-                <td style="text-align: center;">${this.formatDateTh(t.date)} <br><small style="color: #64748b;">${t.time?t.time.substring(0,5)+' น.':'-'}</small></td>
-                <td>${this.#escapeHTML(t.description)} <br><small style="color: #64748b;">[${this.#escapeHTML(t.category)}]</small></td>
-                <td>${this.#escapeHTML(t.remark || '-')}</td>
-                <td>${this.#escapeHTML(t.recorded_by)}</td>
-                <td style="text-align: right; color: #10b981;">${t.type === 'IN' ? amt.toLocaleString(undefined, {minimumFractionDigits: 2}) : '-'}</td>
-                <td style="text-align: right; color: #ef4444;">${t.type === 'OUT' ? amt.toLocaleString(undefined, {minimumFractionDigits: 2}) : '-'}</td>
-                <td style="text-align: right; font-weight:bold;">${currentBalance.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-            </tr>`; 
-        });
-        
-        tbodyHtml += `
-            <tr style="background-color: #e2e8f0; font-weight: bold; font-size: 16px;">
-                <td colspan="4" style="text-align: right;">ยอดยกไป (Carried Forward):</td>
-                <td></td>
-                <td></td>
-                <td style="text-align: right;">${currentBalance.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-            </tr>
-        `;
-
-        db.ref('clinic_settings_v2').once('value', snap => {
-            const settings = snap.val() || { clinic_name: "DIALYSIS PRO CLINIC" };
-            const html = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>Statement - ${this.#escapeHTML(settings.clinic_name)}</title>
-                <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
-                <style>
-                    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-                    body{font-family:'Sarabun',sans-serif;padding:20px;font-size:13px;}
-                    .header{text-align:center;margin-bottom:20px;border-bottom:2px solid #000;padding-bottom:15px;}
-                    table{width:100%;border-collapse:collapse;}
-                    th,td{border:1px solid #000;padding:8px;}
-                    th{background-color:#f1f5f9 !important; -webkit-print-color-adjust:exact;}
-                </style>
-            </head>
-            <body>
-                <div class="header">
-                    <h2>${this.#escapeHTML(settings.clinic_name)}</h2>
-                    <h3>สมุดบัญชีรายรับ-รายจ่ายภายในหน่วยงาน (Department Ledger)</h3>
-                    <div>ความเคลื่อนไหวตั้งแต่: ${this.formatDateTh(this.state.startDate)} ถึง ${this.formatDateTh(this.state.endDate)}</div>
-                </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>วันที่</th>
-                            <th>รายการ</th>
-                            <th>หมายเหตุ</th>
-                            <th>ผู้บันทึก</th>
-                            <th>รับเข้า (฿)</th>
-                            <th>จ่ายออก (฿)</th>
-                            <th>คงเหลือ (฿)</th>
-                        </tr>
-                    </thead>
-                    <tbody>${tbodyHtml}</tbody>
-                </table>
-            </body>
-            </html>`;
-            this._executePrint(html);
-        });
-    }
-
-    printSummary() {
-        if(!this.state._pendingChartData) { Swal.fire('ข้อมูลไม่พร้อม', 'ไม่พบข้อมูลสรุปเพื่อจัดพิมพ์', 'warning'); return; }
-        
-        db.ref('clinic_settings_v2').once('value').then(snap => {
-            const settings = snap.val() || { clinic_name: "DIALYSIS PRO CLINIC" };
-            
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = 450; tempCanvas.height = 450;
-            const tempCtx = tempCanvas.getContext('2d');
-            const ChartLib = window.Chart;
-            
-            if(!ChartLib) {
-                Swal.fire('ข้อผิดพลาด', 'ไม่พบไลบรารีสำหรับสร้างกราฟ', 'error');
-                return;
+        setTimeout(() => { 
+            Swal.close(); 
+            try {
+                iframe.contentWindow.focus(); 
+                iframe.contentWindow.print(); 
+            } catch(e) {
+                console.error("Print Error:", e);
             }
-
-            const tempChart = new ChartLib(tempCtx, {
-                type: 'doughnut',
-                data: { 
-                    labels: this.state._pendingChartData.labels, 
-                    datasets: [{ data: this.state._pendingChartData.data, backgroundColor: this.state._pendingChartData.colors.slice(0, this.state._pendingChartData.data.length), borderWidth: 2, borderColor: '#fff' }] 
-                },
-                options: { responsive: false, maintainAspectRatio: true, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { font: { family: 'Prompt', size: 16 } } } }, animation: { duration: 0 } },
-                plugins: [{ 
-                    id: 'textCenterTemp', 
-                    beforeDraw: (chart) => { 
-                        var width = chart.width, height = chart.height, ctx = chart.ctx; 
-                        ctx.restore(); ctx.font = "bold 20px Prompt"; ctx.textBaseline = "middle"; ctx.fillStyle = "#334155"; 
-                        var text = "฿" + this.state._pendingChartData.totalOut.toLocaleString(undefined, {minimumFractionDigits: 2}); 
-                        var textX = Math.round((width - ctx.measureText(text).width) / 2), textY = (height / 2) - 30; 
-                        ctx.fillText(text, textX, textY); ctx.save(); 
-                    } 
-                }]
-            });
-
-            const chartImgHtml = `<img src="${tempCanvas.toDataURL('image/png')}" style="width: 100%; max-width: 400px; height: auto; display: block; margin: 0 auto; object-fit: contain;">`;
-            tempChart.destroy(); tempCanvas.remove(); 
-
-            let cardsHtml = `
-                <div style="display:flex; justify-content:space-between; margin-bottom:25px; gap:10px;">
-                    <div class="print-card" style="background:#f8fafc;">
-                        <div style="font-size:11px; color:#64748b; font-weight:bold; margin-bottom:4px;">ยอดยกมา</div>
-                        <div style="font-size:17px; font-weight:bold; color:#475569;">฿${document.getElementById('dl-bf-balance').innerText}</div>
-                    </div>
-                    <div class="print-card" style="background:#f0fdf4;">
-                        <div style="font-size:11px; color:#15803d; font-weight:bold; margin-bottom:4px;">รับเข้า</div>
-                        <div style="font-size:17px; font-weight:bold; color:#166534;">+ ฿${document.getElementById('dl-total-in').innerText}</div>
-                    </div>
-                    <div class="print-card" style="background:#fef2f2;">
-                        <div style="font-size:11px; color:#b91c1c; font-weight:bold; margin-bottom:4px;">จ่ายออก</div>
-                        <div style="font-size:17px; font-weight:bold; color:#991b1b;">- ฿${document.getElementById('dl-total-out').innerText}</div>
-                    </div>
-                    <div class="print-card" style="background:#eff6ff;">
-                        <div style="font-size:11px; color:#1d4ed8; font-weight:bold; margin-bottom:4px;">คงเหลือสุทธิ</div>
-                        <div style="font-size:17px; font-weight:bold; color:#1e40af;">฿${document.getElementById('dl-net-balance').innerText}</div>
-                    </div>
-                </div>`;
-
-            const html = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>Summary - ${this.#escapeHTML(settings.clinic_name)}</title>
-                <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
-                <style>
-                    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-                    body{font-family:'Sarabun',sans-serif;color:#000;padding:15px;font-size:13px;}
-                    .header{text-align:center;margin-bottom:20px;border-bottom:2px solid #000;padding-bottom:12px;}
-                    table{width:100%;border-collapse:collapse;margin-top:15px;}
-                    th,td{border:1px solid #000;padding:8px;}
-                    th{background-color:#f1f5f9 !important; -webkit-print-color-adjust:exact;}
-                    .section-title{font-size:14px;font-weight:bold;margin-top:15px;margin-bottom:15px;border-left:4px solid #0284c7;padding-left:8px;}
-                    .flex-container{display:flex;gap:30px;margin-top:20px;align-items:flex-start;}
-                    .flex-child{flex:1;}
-                    .print-card{flex:1; border:1px solid #cbd5e1; padding:12px; border-radius:10px; text-align:center;}
-                </style>
-            </head>
-            <body>
-                <div class="header">
-                    <h2>${this.#escapeHTML(settings.clinic_name)}</h2>
-                    <h3>รายงานสรุปยอดดุลและโครงสร้างรับ-จ่ายภายในหน่วยงาน</h3>
-                    <div>ช่วงเวลา: ${this.formatDateTh(this.state.startDate)} ถึง ${this.formatDateTh(this.state.endDate)}</div>
-                </div>
-                <div class="section-title">1. สรุปยอดดุลทางการเงิน</div>
-                ${cardsHtml}
-                <div class="flex-container">
-                    <div class="flex-child" style="max-width: 45%;">
-                        <div class="section-title">2. แผนภูมิต้นทุนรายจ่าย</div>
-                        ${chartImgHtml}
-                    </div>
-                    <div class="flex-child">
-                        <div class="section-title">3. ยอดรวมสุทธิแยกตามหมวดหมู่โครงสร้าง</div>
-                        <table>
-                            <thead><tr><th>หมวดหมู่รายการ</th><th>ประเภท</th><th style="text-align:right;">รวม (฿)</th></tr></thead>
-                            <tbody>${document.getElementById('dl-summary-body').innerHTML}</tbody>
-                        </table>
-                    </div>
-                </div>
-            </body>
-            </html>`;
-            
-            this._executePrint(html);
-        });
+            setTimeout(() => { if(document.getElementById('hidden-print-frame')) document.getElementById('hidden-print-frame').remove(); }, 10000);
+        }, 1500); 
     }
 
-    #escapeHTML(str) {
+    _escapeHTML(str) {
         if (!str && str !== 0) return '';
         return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
     }

@@ -212,6 +212,30 @@ class SettingsPageComponent {
                 
                 html[data-bs-theme="dark"] #database-panel .bg-white { background: rgba(0,0,0,0.2) !important; }
                 html[data-bs-theme="dark"] #database-panel .border-danger-subtle { border-color: rgba(239, 68, 68, 0.3) !important; background: rgba(239, 68, 68, 0.05) !important;}
+
+                /* 🚨 THE FIX: ปุ่ม Action ป้องกัน Hover แล้วพื้นขาวกลืนตัวหนังสือ */
+                .btn-custom-manage {
+                    background-color: #f1f5f9 !important;
+                    color: #475569 !important;
+                    border: 1px solid #cbd5e1 !important;
+                    transition: all 0.3s ease;
+                }
+                .btn-custom-manage:hover {
+                    background-color: #475569 !important;
+                    color: #ffffff !important;
+                    border-color: #475569 !important;
+                }
+                .btn-custom-manage i { color: inherit !important; }
+                
+                html[data-bs-theme="dark"] .btn-custom-manage {
+                    background-color: rgba(255,255,255,0.1) !important;
+                    color: #f8fafc !important;
+                    border-color: rgba(255,255,255,0.2) !important;
+                }
+                html[data-bs-theme="dark"] .btn-custom-manage:hover {
+                    background-color: #ffffff !important;
+                    color: #0f172a !important;
+                }
             </style>
 
             <div class="page-header mb-4">
@@ -712,7 +736,6 @@ class SettingsPageComponent {
         Swal.fire({ title: 'ลบรูปโลโก้เตรียมพร้อม', text: 'กรุณากดปุ่ม "บันทึกข้อมูลบริษัทและคลินิก" เพื่อยืนยันการลบออกจากระบบครับ', icon: 'success', timer: 2000, showConfirmButton: false });
     }
 
-    // 🚨 THE FIX: เปลี่ยน image/jpeg เป็น image/png เพื่อรักษาสีใส (Transparency) ของโลโก้
     handleLogoUpload(event, hiddenInputId, previewContainerId) {
         const file = event.target.files[0];
         if(!file) return;
@@ -740,7 +763,6 @@ class SettingsPageComponent {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
                 
-                // แปลงรูปเป็น PNG เพื่อไม่ให้พื้นหลังกลายเป็นสีดำ
                 const compressedBase64 = canvas.toDataURL('image/png');
                 
                 document.getElementById(previewContainerId).innerHTML = `<img src="${compressedBase64}">`;
@@ -773,6 +795,7 @@ class SettingsPageComponent {
     promptPrintCard(type) {
         let titleHtml = type === 'clinic' ? '<i class="fa-solid fa-hospital text-primary me-2"></i> สั่งพิมพ์นามบัตรคลินิก' : '<i class="fa-solid fa-building text-warning me-2"></i> สั่งพิมพ์นามบัตรใบกำกับภาษี';
         
+        // 🚨 THE FIX: เพิ่มตัวเลือกสีม่วง Amethyst Purple ลงใน Dropdown 🚨
         Swal.fire({
             title: `<h4 class="fw-bold mb-0" style="font-family:'Prompt';">${titleHtml}</h4>`,
             html: `
@@ -784,6 +807,7 @@ class SettingsPageComponent {
                         <option value="theme-elegant-gold">🟡 Elegant Gold (พรีเมียมแบล็ค + สีทองหรูหรา)</option>
                         <option value="theme-emerald-geo">🟢 Emerald Geo (มินต์สดใส + ลายตัดเหลี่ยม)</option>
                         <option value="theme-rose-wave">🔴 Rose Wave (โรสโกลด์ + อบอุ่นซอฟต์)</option>
+                        <option value="theme-amethyst-purple">🪻 Amethyst Purple (ม่วงอเมทิสต์ + ลายพริ้วไหว)</option>
                         <option value="theme-clean-white" selected>⚪ Clean White (เรียบหรู มินิมอล)</option>
                     </select>
                     <label class="fw-bold text-secondary small">ระบุจำนวนใบที่ต้องการพิมพ์</label>
@@ -981,6 +1005,15 @@ class SettingsPageComponent {
                     .theme-rose-wave .divider { background: linear-gradient(90deg, #e11d48, transparent); height: 1.5px; }
                     .theme-rose-wave .tax-id-box { background: linear-gradient(135deg, #e11d48, #9f1239) !important; box-shadow: 0 2px 4px rgba(225,29,72,0.2); }
 
+                    /* 🚨 THE FIX: 🪻 Amethyst Purple (สีม่วงอเมทิสต์) 🚨 */
+                    .theme-amethyst-purple.clinic-card { border-left: 4px solid #8b5cf6 !important; } 
+                    .theme-amethyst-purple.company-card { border-top: 4px solid #8b5cf6 !important; }
+                    .theme-amethyst-purple .card-bg-wash { background: linear-gradient(135deg, #ffffff 30%, #f5f3ff 100%); }
+                    .theme-amethyst-purple .accent-shape { right: -15mm; bottom: -15mm; width: 50mm; height: 50mm; background: radial-gradient(circle, rgba(139,92,246,0.25) 0%, transparent 70%); }
+                    .theme-amethyst-purple .pattern-overlay { background: repeating-linear-gradient(-45deg, rgba(139,92,246,0.03) 0px, rgba(139,92,246,0.03) 2px, transparent 2px, transparent 10px); }
+                    .theme-amethyst-purple .divider { background: linear-gradient(90deg, #8b5cf6, transparent); height: 1.5px; }
+                    .theme-amethyst-purple .tax-id-box { background: linear-gradient(135deg, #8b5cf6, #5b21b6) !important; box-shadow: 0 2px 4px rgba(139,92,246,0.2); color: #fff !important; }
+
                     /* Common elements */
                     .logo-wrapper { height: 16mm; max-width: 40mm; min-width: 16mm; flex-shrink: 0; display: flex; align-items: center; justify-content: flex-start; } 
                     .logo-img { max-width: 100%; max-height: 100%; width: auto; object-fit: contain; object-position: left center; } 
@@ -1087,9 +1120,16 @@ class SettingsPageComponent {
         }
         let html = '';
         this.state.allUsers.forEach(user => {
+            // 🚨 THE FIX: จัดการเรื่องสีป้ายกำกับ (Role Badge) ที่หายไป
             let roleInfo = this.roleConfig[user.role] || { label: 'พนักงานทั่วไป', icon: 'fa-user', color: 'secondary' };
-            let roleBadge = `<span class="badge badge-soft-${roleInfo.color} px-3 py-2 rounded-pill shadow-sm"><i class="fa-solid ${roleInfo.icon} me-1"></i> ${roleInfo.label}</span>`;
-            let statusBadge = user.status === 'active' ? '<span class="badge badge-soft-success px-2 py-1 shadow-sm"><i class="fa-solid fa-check-circle me-1"></i> ปกติ</span>' : '<span class="badge badge-soft-danger px-2 py-1 shadow-sm"><i class="fa-solid fa-lock me-1"></i> ระงับ</span>';
+            
+            // เปลี่ยนมาใช้ bg-[color]-subtle และ text-[color] ของ Bootstrap เพื่อการันตีว่าสีพื้นหลังและตัวหนังสือจะแสดงผล 100% แน่นอน
+            let roleBadge = `<span class="badge bg-${roleInfo.color}-subtle text-${roleInfo.color} border border-${roleInfo.color}-subtle px-3 py-2 rounded-pill shadow-sm" style="font-size: 13px;"><i class="fa-solid ${roleInfo.icon} me-1"></i> ${roleInfo.label}</span>`;
+            
+            let statusBadge = user.status === 'active' 
+                ? '<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 shadow-sm"><i class="fa-solid fa-check-circle me-1"></i> ปกติ</span>' 
+                : '<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 shadow-sm"><i class="fa-solid fa-lock me-1"></i> ระงับ</span>';
+            
             let safeName = this._escapeHTML(user.name || 'U');
             let imgSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(safeName)}&background=f8fafc&color=334155&bold=true`;
             
@@ -1112,14 +1152,13 @@ class SettingsPageComponent {
                 <td class="text-center">${statusBadge}</td>
                 <td class="text-center">
                     <button class="btn btn-sm btn-light border shadow-sm me-1 fw-bold text-dark" onclick="App.pages.settings.openUserModal('${user.id}')" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
-                    <button class="btn btn-sm btn-outline-info shadow-sm me-1 fw-bold" onclick="App.pages.settings.openRolePermissionsModal('${user.role}', '${user.name}')" title="ตั้งค่าการมองเห็นเมนู"><i class="fa-solid fa-shield-halved"></i> แก้ไขสิทธิ์</button>
-                    <button class="btn btn-sm btn-outline-danger shadow-sm" onclick="App.pages.settings.deleteUser('${user.id}')" title="ลบ"><i class="fa-solid fa-trash"></i></button>
+                    <button class="btn btn-sm btn-light border shadow-sm me-1 fw-bold text-info" onclick="App.pages.settings.openRolePermissionsModal('${user.role}', '${user.name}')" title="ตั้งค่าการมองเห็นเมนู"><i class="fa-solid fa-shield-halved"></i> แก้ไขสิทธิ์</button>
+                    <button class="btn btn-sm btn-outline-danger shadow-sm fw-bold" onclick="App.pages.settings.deleteUser('${user.id}')" title="ลบ"><i class="fa-solid fa-trash"></i></button>
                 </td>
             </tr>`;
         });
         tbody.innerHTML = html;
     }
-
     openRolePermissionsModal(roleId, userName) {
         if (roleId === 'admin') {
             Swal.fire('สิทธิ์สูดสุด', 'ผู้ดูแลระบบ (Admin) มีสิทธิ์เข้าถึงทุกเมนูโดยอัตโนมัติ ไม่สามารถปิดกั้นสิทธิ์ได้ครับ', 'info');
@@ -1281,7 +1320,7 @@ class SettingsPageComponent {
                     <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-folder-open text-danger me-2"></i> ${this._escapeHTML(s.name)} ${priceLabel}</h6>
                     <div class="mb-3">${tags}</div>
                     <div class="mt-auto text-end border-top pt-3">
-                        <button class="btn btn-sm btn-light border shadow-sm fw-bold px-3 text-dark me-1" onclick="App.pages.settings.openLabSetModal('${s.id}')">แก้ไข</button>
+                        <button class="btn btn-sm btn-custom-manage shadow-sm fw-bold px-3 me-1" onclick="App.pages.settings.openLabSetModal('${s.id}')">แก้ไข</button>
                         <button class="btn btn-sm btn-outline-danger shadow-sm px-3" onclick="App.pages.settings.deleteLabSet('${s.id}')"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
@@ -1488,7 +1527,7 @@ class SettingsPageComponent {
                     </div>
                     <p class="text-muted small mb-3 p-2 bg-light rounded" style="display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; white-space: pre-wrap; font-size: 13px;">${this._escapeHTML(t.text)}</p>
                     <div class="text-end mt-auto pt-2">
-                        <button class="btn btn-sm btn-light border text-dark fw-bold px-3 shadow-sm me-1" onclick="App.pages.settings.openNoteTemplateModal('${t.id}')">แก้ไข</button>
+                        <button class="btn btn-sm btn-custom-manage shadow-sm px-3 me-1 fw-bold" onclick="App.pages.settings.openNoteTemplateModal('${t.id}')">แก้ไข</button>
                         <button class="btn btn-sm btn-outline-danger shadow-sm px-3" onclick="App.pages.settings.deleteNoteTemplate('${t.id}')"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
