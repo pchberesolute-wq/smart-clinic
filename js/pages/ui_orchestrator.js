@@ -1,5 +1,5 @@
 // js/pages/ui_orchestrator.js
-// 👑 TRUE GOD-MODE UI Orchestrator: ดักปล้นและยึดอำนาจคำสั่ง DataTables แบบ 100%
+// 👑 TRUE GOD-MODE UI Orchestrator: ดักปล้นและยึดอำนาจคำสั่ง DataTables และ Responsive UI แบบ 100%
 
 class UIOrchestratorService {
     constructor() {
@@ -10,29 +10,68 @@ class UIOrchestratorService {
         this._injectAbsoluteStyles();
         this._hijackDataTables(); 
         this._setupRotationEngine(); 
-        this._setupGlobalSweetAlertFix(); // 🚨 NEW: ล็อก Z-index ป๊อปอัป
+        this._setupGlobalSweetAlertFix(); // 🚨 แก้ป๊อปอัปหลบหลังเมนู
+        this._enforceTabletDesktopLayout(); // 🚨 แก้ iPad แนวนอนเมนูหด
+        
         console.log("👑 [UI Orchestrator] TRUE GOD-MODE Activated (100% Override)");
     }
 
     // ==========================================
-    // 🛡️ 0. แฟกซ์ Z-Index ของ SweetAlert ให้ทะลุทุก Layer (แก้ป๊อปอัปโดนเมนูบังในมือถือ)
+    // 🛡️ 0. แฟกซ์ Z-Index ทะลุจักรวาล (แก้ป๊อปอัป Logout โดนเมนูบังในมือถือ)
     // ==========================================
     _setupGlobalSweetAlertFix() {
+        if (document.getElementById('orchestrator-swal-fix')) return;
         const style = document.createElement('style');
+        style.id = 'orchestrator-swal-fix';
         style.innerHTML = `
-            /* บังคับป๊อปอัปทุกตัวของ SweetAlert ให้อยู่บนสุดเหนือ Sidebar และ Navbar เสมอ */
-            .swal2-container {
-                z-index: 9999999 !important;
+            /* 🚨 บังคับป๊อปอัป SweetAlert ให้อยู่บนสุดเหนือทุกสิ่ง (Max 32-bit Integer) */
+            div.swal2-container {
+                z-index: 2147483647 !important;
             }
             
-            /* ซ่อนปุ่ม 3 ขีด (Hamburger Menu) เด็ดขาด เมื่อหน้าจอระดับ iPad แนวนอนขึ้นไป (>= 992px) */
-            @media (min-width: 992px) {
-                #sidebar-toggle-btn, .mobile-toggle-btn, .hamburger-menu {
-                    display: none !important;
-                }
+            /* 🚨 เวลาที่ป๊อปอัปแสดงขึ้นมา บังคับให้ Sidebar/Offcanvas มุดลงไปอยู่ข้างล่างทันที */
+            body.swal2-shown [class*="sidebar"],
+            body.swal2-shown [class*="offcanvas"],
+            body.swal2-shown [id*="sidebar"],
+            body.swal2-shown header {
+                z-index: 1000 !important;
             }
         `;
         document.head.appendChild(style);
+    }
+
+    // ==========================================
+    // 📱 0.1 บังคับ iPad แนวนอนให้กางเมนูเต็ม (แก้ปัญหาปุ่ม 3 ขีด และเมนูหด)
+    // ==========================================
+    _enforceTabletDesktopLayout() {
+        const fixLayout = () => {
+            // หน้าจอกว้างตั้งแต่ 992px ขึ้นไป (iPad แนวนอน และ คอมพิวเตอร์)
+            if (window.innerWidth >= 992) {
+                // 1. ถอดคลาสที่ทำให้ Sidebar หดตัวออกให้หมด (ครอบคลุมทุกคลาสมาตรฐาน)
+                document.body.classList.remove('sidebar-collapse', 'sidebar-mini', 'sidebar-collapsed', 'toggle-sidebar');
+                
+                // 2. ใส่คลาสที่บังคับให้ Sidebar กางออกเต็ม 100%
+                document.body.classList.add('sidebar-expanded', 'sidebar-open');
+                
+                // 3. ปิดปุ่ม 3 ขีด (Hamburger Menu) ทิ้งเด็ดขาด
+                const togglers = document.querySelectorAll('.sidebar-toggle, #sidebarToggle, .hamburger-menu, [data-bs-toggle="sidebar"], .mobile-toggle');
+                togglers.forEach(btn => btn.style.setProperty('display', 'none', 'important'));
+            } else {
+                // มือถือ และ iPad แนวตั้ง: ปล่อยให้ปุ่ม 3 ขีดแสดงตามปกติ
+                const togglers = document.querySelectorAll('.sidebar-toggle, #sidebarToggle, .hamburger-menu, [data-bs-toggle="sidebar"], .mobile-toggle');
+                togglers.forEach(btn => btn.style.removeProperty('display'));
+            }
+        };
+
+        // ทำงานทันทีตอนโหลด
+        fixLayout();
+        
+        // ทำงานทุกครั้งที่หมุนจอ หรือย่อขยายหน้าต่าง
+        window.addEventListener('resize', fixLayout);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(fixLayout, 200);
+            setTimeout(fixLayout, 600); // ย้ำอีกครั้งเผื่อ Browser เรนเดอร์ช้า
+        });
     }
 
     // ==========================================
@@ -58,7 +97,7 @@ class UIOrchestratorService {
     }
 
     // ==========================================
-    // ⚔️ 2. ระบบยึดอำนาจ DataTables (ดักจับทุกการเรียกใช้ในทุกไฟล์)
+    // ⚔️ 2. ระบบยึดอำนาจ DataTables (แก้ปุ่มตารางเพี้ยนให้คลุมทุกหน้า 100%)
     // ==========================================
     _hijackDataTables() {
         let retries = 0;
@@ -127,8 +166,16 @@ class UIOrchestratorService {
                 $(document).on('draw.dt', styleDataTablesUI);
                 $(document).on('init.dt', styleDataTablesUI);
 
-                // 🚨 NEW: ใช้ MutationObserver ดักจับเผื่อกรณีมีการสร้างปุ่มช้ากว่าปกติ (เช่น หน้าเปลี่ยนไปมา)
-                const observer = new MutationObserver(() => styleDataTablesUI());
+                // 🚨 NEW: ใช้ MutationObserver ดักจับเผื่อกรณีหน้าไหนโหลดช้า แล้วปุ่มตารางเพี้ยน
+                const observer = new MutationObserver((mutations) => {
+                    let shouldStyle = false;
+                    mutations.forEach(m => {
+                        if (m.target.classList && (m.target.classList.contains('dataTables_wrapper') || m.target.classList.contains('pagination'))) {
+                            shouldStyle = true;
+                        }
+                    });
+                    if(shouldStyle) styleDataTablesUI();
+                });
                 observer.observe(document.body, { childList: true, subtree: true });
 
             } else if (retries < 100) {
