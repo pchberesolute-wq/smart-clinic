@@ -16,6 +16,28 @@ class StockManagePageComponent {
                 .table-premium td { padding: 14px 10px; vertical-align: middle; border-bottom: 1px solid var(--border-color); transition: background 0.2s; }
                 .btn-action-icon { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.2s ease; }
                 .btn-action-icon:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+                
+                /* 🚨 THE FIX 1: ล็อกสีปุ่มสแกนมือ ป้องกัน Hover แล้วขาวล่องหน */
+                .btn-manual-search {
+                    border: 2px dashed var(--primary) !important;
+                    background-color: var(--bg-surface) !important;
+                    color: var(--primary) !important;
+                    transition: all 0.3s ease;
+                }
+                .btn-manual-search:hover {
+                    background-color: var(--primary) !important;
+                    color: #ffffff !important;
+                    border-style: solid !important;
+                    box-shadow: 0 4px 12px rgba(37,99,235,0.2) !important;
+                }
+
+                /* 🚨 THE FIX 2: ล็อกสี Hover สำหรับรายการในกล่องค้นหาพัสดุ */
+                .list-group-custom-hover {
+                    transition: background-color 0.2s ease !important;
+                }
+                .list-group-custom-hover:hover {
+                    background-color: var(--border-color) !important;
+                }
             </style>
 
             <div class="page-header mb-4">
@@ -60,7 +82,7 @@ class StockManagePageComponent {
                                 </button>
                             </div>
                             
-                            <button class="btn btn-outline-primary w-100 fw-bold shadow-sm mb-2" style="border-radius:12px; border-style: dashed; padding: 14px; background: var(--bg-surface);" onclick="App.pages.stock_manage.openManualSelect()">
+                            <button class="btn btn-manual-search w-100 fw-bold shadow-sm mb-2" style="border-radius:12px; padding: 14px;" onclick="App.pages.stock_manage.openManualSelect()">
                                 <i class="fa-solid fa-hand-pointer me-2"></i> หรือ กดเพื่อค้นหาและเลือกพัสดุด้วยมือ
                             </button>
                             <small class="text-muted"><i class="fa-solid fa-circle-info"></i> สแกน/เลือกรายการเดิมซ้ำ = เพิ่มจำนวนทีละ 1 อัตโนมัติ</small>
@@ -250,8 +272,9 @@ class StockManagePageComponent {
             const safeBarcode = this.#escapeHTML(i.barcode || '-');
             const safeName = this.#escapeHTML(i.name);
 
+            // 🚨 THE FIX 2: ปรับเปลี่ยนคลาส .list-group-custom-hover เพื่อแก้ไข Hover สีขาวกลืนหาย
             return `
-            <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3" style="background: var(--bg-surface); border-color: var(--border-color); color: var(--text-dark);" onclick="Swal.close(); App.pages.stock_manage.processScan('${i.barcode}')">
+            <button type="button" class="list-group-item list-group-custom-hover d-flex justify-content-between align-items-center py-3" style="background: var(--bg-surface); border-color: var(--border-color); color: var(--text-dark);" onclick="Swal.close(); App.pages.stock_manage.processScan('${i.barcode}')">
                 <div class="d-flex align-items-center">
                     <div class="text-center fw-bold text-secondary me-3" style="width: 30px; font-size: 16px;">${orderVal}</div>
                     <div class="text-start">
