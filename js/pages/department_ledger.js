@@ -1,5 +1,5 @@
 // js/pages/department_ledger.js
-// 🚀 Enterprise Department Ledger Module: Encapsulated State, Auto-Purge, Statement Printing & Modern PDF Engine
+// 🚀 Enterprise Department Ledger Module: Zero-CLS Tab Stacking & PC-Optimized Print/Export Engine
 
 class DepartmentLedgerPageComponent {
     constructor() {
@@ -16,6 +16,25 @@ class DepartmentLedgerPageComponent {
             clinicName: 'DIALYSIS PRO CLINIC'
         };
         this.firebaseListeners = [];
+    }
+
+    switchTab(tabId) {
+        document.querySelectorAll('.fin-nav-tabs .fin-nav-link').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelectorAll('#ledgerTabContent .custom-tab-pane').forEach(pane => {
+            pane.classList.remove('active');
+        });
+        
+        const targetBtn = document.getElementById(`btn-${tabId}`);
+        if (targetBtn) targetBtn.classList.add('active');
+        
+        const targetPane = document.getElementById(tabId);
+        if (targetPane) targetPane.classList.add('active');
+
+        if(tabId === 'summary-panel') {
+            setTimeout(() => this.renderSummaryChart(), 50);
+        }
     }
 
     get html() {
@@ -39,17 +58,84 @@ class DepartmentLedgerPageComponent {
                 .native-date-wrapper input[type="date"]::-webkit-datetime-edit, .native-date-wrapper input[type="date"]::-webkit-datetime-edit-text, .native-date-wrapper input[type="date"]::-webkit-datetime-edit-month-field, .native-date-wrapper input[type="date"]::-webkit-datetime-edit-day-field, .native-date-wrapper input[type="date"]::-webkit-datetime-edit-year-field { color: transparent !important; background: transparent !important; }
                 .native-date-wrapper input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; margin: 0; padding: 0; cursor: pointer; opacity: 0; }
 
-                .finance-nav-tabs { border-bottom: 2px solid var(--border-color); gap: 5px; flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; padding-bottom: 2px; }
-                .finance-nav-tabs::-webkit-scrollbar { height: 4px; }
-                .finance-nav-tabs::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 10px; }
-                .finance-nav-tabs .nav-link { border: none; color: var(--text-muted); font-weight: 600; padding: 14px 24px; border-radius: 12px 12px 0 0; transition: all 0.3s ease; background: transparent; position: relative; font-family:'Prompt'; font-size:15px; }
-                .finance-nav-tabs .nav-link:hover { color: var(--primary); background: var(--bg-body); }
-                .finance-nav-tabs .nav-link.active { background: var(--bg-surface); box-shadow: 0 -4px 10px rgba(0,0,0,0.02); color: var(--primary); }
-                .finance-nav-tabs .nav-link.active::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 3px; border-radius: 3px 3px 0 0; background: var(--primary); }
+                ul.fin-nav-tabs { 
+                    display: flex !important; 
+                    flex-direction: row !important;
+                    border-bottom: 2px solid var(--border-color) !important; 
+                    margin: 0 0 -1px 0 !important; 
+                    padding-left: 0 !important; 
+                    list-style-type: none !important; 
+                    gap: 5px !important; 
+                    overflow-x: auto !important;
+                    position: relative; z-index: 10;
+                }
+                ul.fin-nav-tabs::-webkit-scrollbar { height: 4px; }
+                ul.fin-nav-tabs::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+                ul.fin-nav-tabs li { list-style: none !important; margin: 0 !important; padding: 0 !important; }
+
+                .fin-nav-link { 
+                    display: inline-flex; align-items: center; background: transparent; border: none !important; 
+                    padding: 14px 24px; font-family: 'Prompt', sans-serif; font-weight: 600; font-size: 15px; 
+                    color: var(--text-muted); cursor: pointer; border-radius: 12px 12px 0 0; position: relative; 
+                    transition: all 0.2s; outline: none !important; 
+                }
+                .fin-nav-link:hover { color: var(--primary); background: var(--bg-surface); filter: brightness(0.95); }
+                .fin-nav-link.active { background: var(--bg-surface); box-shadow: 0 -4px 10px rgba(0,0,0,0.02); color: var(--primary); font-weight: 700;}
+                .fin-nav-link.active::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 3px; background: var(--primary); border-radius: 3px 3px 0 0; }
+
+                #ledgerTabContent {
+                    display: grid;
+                    grid-template-columns: 1fr;
+                    grid-template-rows: 1fr;
+                    height: 650px !important;       
+                    min-height: 650px !important;
+                    max-height: 650px !important;
+                    width: 100%;
+                    margin-bottom: 2rem;
+                }
+
+                .custom-tab-pane {
+                    grid-area: 1 / 1;               
+                    opacity: 0;
+                    visibility: hidden;
+                    pointer-events: none;           
+                    transition: opacity 0.25s ease; 
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .custom-tab-pane.active {
+                    opacity: 1;
+                    visibility: visible;
+                    pointer-events: auto;
+                    z-index: 5;
+                }
+
+                .panel-locked {
+                    height: 100% !important;
+                    display: flex;
+                    flex-direction: column;
+                    margin-bottom: 0 !important; 
+                    border-top-left-radius: 0 !important;
+                }
+
+                .locked-table-wrapper {
+                    flex-grow: 1;
+                    min-height: 0; 
+                    overflow-y: auto;
+                    overflow-x: auto; 
+                    background-color: var(--bg-surface);
+                    border: 1px solid var(--border-color);
+                    border-radius: 16px;
+                    box-shadow: var(--shadow-sm);
+                }
+                .locked-table-wrapper::-webkit-scrollbar { width: 6px; height: 6px; }
+                .locked-table-wrapper::-webkit-scrollbar-track { background: transparent; }
+                .locked-table-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
                 .safe-icon { font-family: 'Font Awesome 6 Free', 'FontAwesome', sans-serif !important; font-weight: 900 !important; font-style: normal !important; }
 
-                /* 🚨 THE FIX: Custom CSS ล็อกสีปุ่ม Action ทั้งหมด ป้องกัน Hover แล้วตัวหนังสือล่องหน 🚨 */
                 .btn-custom-secondary { background-color: var(--bg-surface) !important; color: #64748b !important; border: 1px solid #cbd5e1 !important; transition: all 0.3s ease; }
                 .btn-custom-secondary i { color: #64748b !important; transition: all 0.3s ease; }
                 .btn-custom-secondary:hover { background-color: #64748b !important; color: #ffffff !important; border-color: #64748b !important; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
@@ -75,10 +161,10 @@ class DepartmentLedgerPageComponent {
                     <p class="text-muted mt-1 mb-0" id="dl-date-text" style="color: var(--text-muted) !important;">จัดการงบประมาณ เงินสวัสดิการ และค่าใช้จ่ายแผนก</p>
                 </div>
                 <div class="d-flex gap-2 align-items-center flex-wrap">
-                    <button class="btn btn-custom-secondary fw-bold shadow-sm rounded-pill px-3 card-hover-float" onclick="DepartmentLedgerPage.manageCategories()">
+                    <button class="btn btn-custom-secondary fw-bold shadow-sm rounded-pill px-3 card-hover-float" onclick="window.DepartmentLedgerPage.manageCategories()">
                         <i class="fas fa-tags me-1 safe-icon"></i> จัดการหมวดหมู่
                     </button>
-                    <button class="btn btn-custom-info fw-bold shadow-sm rounded-pill px-3 card-hover-float" onclick="DepartmentLedgerPage.setInitialBalance()">
+                    <button class="btn btn-custom-info fw-bold shadow-sm rounded-pill px-3 card-hover-float" onclick="window.DepartmentLedgerPage.setInitialBalance()">
                         <i class="fas fa-piggy-bank me-1 safe-icon"></i> ตั้งยอดยกมาเริ่มต้น
                     </button>
                     
@@ -86,15 +172,15 @@ class DepartmentLedgerPageComponent {
                         <div class="native-date-wrapper">
                             <i class="fas fa-calendar-days text-primary me-2 safe-icon"></i>
                             <span class="thai-text" id="dl-start-display">กำลังโหลด...</span>
-                            <input type="date" id="dl-start-date" onchange="DepartmentLedgerPage.onDateChange()">
+                            <input type="date" id="dl-start-date" onchange="window.DepartmentLedgerPage.onDateChange()">
                         </div>
                         <span class="mx-2 fw-bold small" style="color: var(--text-muted);">ถึง</span>
                         <div class="native-date-wrapper">
                             <i class="fas fa-calendar-days text-primary me-2 safe-icon"></i>
                             <span class="thai-text" id="dl-end-display">กำลังโหลด...</span>
-                            <input type="date" id="dl-end-date" onchange="DepartmentLedgerPage.onDateChange()">
+                            <input type="date" id="dl-end-date" onchange="window.DepartmentLedgerPage.onDateChange()">
                         </div>
-                        <button class="btn btn-primary rounded-pill px-3 ms-2 fw-bold shadow-sm" style="position: relative; z-index: 15;" onclick="DepartmentLedgerPage.setThisMonth()">เดือนนี้</button>
+                        <button class="btn btn-primary rounded-pill px-3 ms-2 fw-bold shadow-sm" style="position: relative; z-index: 15;" onclick="window.DepartmentLedgerPage.setThisMonth()">เดือนนี้</button>
                     </div>
                 </div>
             </div>
@@ -141,31 +227,32 @@ class DepartmentLedgerPageComponent {
                 </div>
             </div>
 
-            <ul class="nav finance-nav-tabs mb-4" id="ledgerTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#ledger-panel" type="button" role="tab">
+            <ul class="fin-nav-tabs mb-4">
+                <li>
+                    <button class="fin-nav-link active" id="btn-ledger-panel" onclick="window.DepartmentLedgerPage.switchTab('ledger-panel')">
                         <i class="fa-solid fa-book-open me-2 safe-icon"></i> สมุดบัญชีรวม (Statement)
                     </button>
                 </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link text-info" data-bs-toggle="tab" data-bs-target="#summary-panel" type="button" role="tab" onclick="setTimeout(()=>DepartmentLedgerPage.renderSummaryChart(), 200)">
+                <li>
+                    <button class="fin-nav-link text-info" id="btn-summary-panel" onclick="window.DepartmentLedgerPage.switchTab('summary-panel')">
                         <i class="fa-solid fa-chart-pie me-2 safe-icon"></i> สรุปรายงานการใช้จ่าย (Summary)
                     </button>
                 </li>
             </ul>
 
-            <div class="tab-content" id="ledgerTabContent">
-                <div class="tab-pane fade show active" id="ledger-panel" role="tabpanel">
-                    <div class="modern-panel shadow-sm p-4 position-relative" style="border-top: 5px solid var(--primary); border-radius: 20px;">
-                        <div style="position: absolute; top: -30px; right: -30px; opacity: 0.02; font-size: 200px; pointer-events: none;"><i class="fa-solid fa-file-lines safe-icon"></i></div>
+            <div id="ledgerTabContent">
+                
+                <div class="custom-tab-pane active" id="ledger-panel">
+                    <div class="modern-panel panel-locked shadow-sm p-4 position-relative" style="border-top: 5px solid var(--primary); border-radius: 0 20px 20px 20px; background-color: var(--bg-surface); border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+                        <div style="position: absolute; top: -30px; right: -30px; opacity: 0.02; font-size: 200px; pointer-events: none; color: var(--text-dark);"><i class="fa-solid fa-file-lines safe-icon"></i></div>
                         
                         <div class="d-flex justify-content-between align-items-center mb-4 position-relative flex-wrap gap-3" style="z-index: 1050;">
                             <h5 class="fw-bold mb-0" style="color: var(--text-dark);"><i class="fa-solid fa-clock-rotate-left text-primary me-2 safe-icon"></i> ความเคลื่อนไหวทางบัญชี (Running Ledger)</h5>
                             <div class="d-flex gap-2">
-                                <button class="btn btn-premium-danger px-3 shadow-sm" onclick="DepartmentLedgerPage.openAddModal('OUT')">
+                                <button class="btn btn-premium-danger px-3 shadow-sm" onclick="window.DepartmentLedgerPage.openAddModal('OUT')">
                                     <i class="fas fa-minus-circle me-1 safe-icon"></i> จ่ายออก
                                 </button>
-                                <button class="btn btn-premium-success px-3 shadow-sm" onclick="DepartmentLedgerPage.openAddModal('IN')">
+                                <button class="btn btn-premium-success px-3 shadow-sm" onclick="window.DepartmentLedgerPage.openAddModal('IN')">
                                     <i class="fas fa-plus-circle me-1 safe-icon"></i> รับเข้า
                                 </button>
                                 
@@ -174,16 +261,16 @@ class DepartmentLedgerPageComponent {
                                         <i class="fas fa-file-export me-1 safe-icon"></i> ส่งออก (Export)
                                     </button>
                                     <ul class="dropdown-menu shadow-lg border-0" style="border-radius: 12px; margin-top: 8px; z-index: 9999;">
-                                        <li><a class="dropdown-item fw-bold text-success py-2" href="javascript:void(0)" onclick="DepartmentLedgerPage.exportExcel()"><i class="fa-solid fa-file-excel me-2 safe-icon"></i> ดาวน์โหลดเป็น Excel (.xlsx)</a></li>
-                                        <li><a class="dropdown-item fw-bold text-danger py-2" href="javascript:void(0)" onclick="DepartmentLedgerPage.exportPDF()"><i class="fa-solid fa-file-pdf me-2 safe-icon"></i> ดาวน์โหลดเป็น PDF (.pdf)</a></li>
+                                        <li><a class="dropdown-item fw-bold text-success py-2" href="javascript:void(0)" onclick="window.DepartmentLedgerPage.exportExcel()"><i class="fa-solid fa-file-excel me-2 safe-icon"></i> ดาวน์โหลดเป็น Excel (.xlsx)</a></li>
+                                        <li><a class="dropdown-item fw-bold text-danger py-2" href="javascript:void(0)" onclick="window.DepartmentLedgerPage.exportPDF()"><i class="fa-solid fa-file-pdf me-2 safe-icon"></i> ดาวน์โหลดเป็น PDF (.pdf)</a></li>
                                         <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item fw-bold text-dark py-2" href="javascript:void(0)" onclick="DepartmentLedgerPage.printLedger()"><i class="fa-solid fa-print me-2 safe-icon"></i> พิมพ์ลงกระดาษ (Print)</a></li>
+                                        <li><a class="dropdown-item fw-bold text-dark py-2" href="javascript:void(0)" onclick="window.DepartmentLedgerPage.printLedger()"><i class="fa-solid fa-print me-2 safe-icon"></i> พิมพ์ลงกระดาษ (Print)</a></li>
                                     </ul>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="table-responsive rounded-4 position-relative z-1 shadow-sm" style="background-color: var(--bg-surface); border: 1px solid var(--border-color); max-height: 550px; overflow-y: auto;">
+                        <div class="locked-table-wrapper">
                             <table class="table table-ledger w-100 mb-0">
                                 <thead style="position: sticky; top: 0; z-index: 10;">
                                     <tr>
@@ -191,9 +278,9 @@ class DepartmentLedgerPageComponent {
                                         <th style="width: 10%;">ประเภท</th>
                                         <th style="width: 20%;">รายละเอียดรายการ</th>
                                         <th style="width: 18%;"><i class="fa-regular fa-comment-dots me-1 safe-icon"></i> หมายเหตุ</th>
-                                        <th class="text-end text-success" style="width: 10%;">เงินเข้า (IN)</th>
-                                        <th class="text-end text-danger" style="width: 10%;">เงินออก (OUT)</th>
-                                        <th class="text-end text-primary" style="width: 13%;">คงเหลือ (BAL)</th>
+                                        <th class="text-end" style="width: 10%; color: var(--success) !important;">เงินเข้า (IN)</th>
+                                        <th class="text-end" style="width: 10%; color: var(--danger) !important;">เงินออก (OUT)</th>
+                                        <th class="text-end" style="width: 13%; color: var(--primary) !important;">คงเหลือ (BAL)</th>
                                         <th class="text-center no-print" style="width: 10%;"><i class="fa-solid fa-gears safe-icon"></i></th>
                                     </tr>
                                 </thead>
@@ -205,48 +292,54 @@ class DepartmentLedgerPageComponent {
                     </div>
                 </div>
 
-                <div class="tab-pane fade" id="summary-panel" role="tabpanel">
-                    <div class="d-flex justify-content-end mb-3 position-relative" style="z-index: 1050;">
-                        <div class="dropdown">
-                            <button class="btn btn-export-summary fw-bold shadow-sm rounded-pill px-4 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-file-export me-2 safe-icon"></i> ส่งออกสรุปยอด (Export)
-                            </button>
-                            <ul class="dropdown-menu shadow-lg border-0" style="border-radius: 12px; margin-top: 8px; z-index: 9999;">
-                                <li><a class="dropdown-item fw-bold text-success py-2" href="javascript:void(0)" onclick="DepartmentLedgerPage.exportSummaryExcel()"><i class="fa-solid fa-file-excel me-2 safe-icon"></i> ดาวน์โหลดเป็น Excel (.xlsx)</a></li>
-                                <li><a class="dropdown-item fw-bold text-danger py-2" href="javascript:void(0)" onclick="DepartmentLedgerPage.exportSummaryPDF()"><i class="fa-solid fa-file-pdf me-2 safe-icon"></i> ดาวน์โหลดเป็น PDF (.pdf)</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item fw-bold text-dark py-2" href="javascript:void(0)" onclick="DepartmentLedgerPage.printSummary()"><i class="fa-solid fa-print me-2 safe-icon"></i> พิมพ์ลงกระดาษ (Print)</a></li>
-                            </ul>
+                <div class="custom-tab-pane" id="summary-panel">
+                    <div class="modern-panel panel-locked shadow-sm p-4 position-relative overflow-hidden" style="border-top: 5px solid var(--info); border-radius: 0 20px 20px 20px; background-color: var(--bg-surface); border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-4 position-relative" style="z-index: 1050;">
+                            <h5 class="fw-bold mb-0" style="color: var(--text-dark);"><i class="fa-solid fa-chart-pie text-info me-2 safe-icon"></i> สรุปรายงานการใช้จ่ายประจำรอบ</h5>
+                            <div class="dropdown">
+                                <button class="btn btn-export-summary fw-bold shadow-sm rounded-pill px-4 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-file-export me-2 safe-icon"></i> ส่งออกสรุปยอด (Export)
+                                </button>
+                                <ul class="dropdown-menu shadow-lg border-0" style="border-radius: 12px; margin-top: 8px; z-index: 9999;">
+                                    <li><a class="dropdown-item fw-bold text-success py-2" href="javascript:void(0)" onclick="window.DepartmentLedgerPage.exportSummaryExcel()"><i class="fa-solid fa-file-excel me-2 safe-icon"></i> ดาวน์โหลดเป็น Excel (.xlsx)</a></li>
+                                    <li><a class="dropdown-item fw-bold text-danger py-2" href="javascript:void(0)" onclick="window.DepartmentLedgerPage.exportSummaryPDF()"><i class="fa-solid fa-file-pdf me-2 safe-icon"></i> ดาวน์โหลดเป็น PDF (.pdf)</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item fw-bold text-dark py-2" href="javascript:void(0)" onclick="window.DepartmentLedgerPage.printSummary()"><i class="fa-solid fa-print me-2 safe-icon"></i> พิมพ์ลงกระดาษ (Print)</a></li>
+                                </ul>
+                            </div>
                         </div>
-                    </div>
-                    <div class="row g-4 position-relative z-1">
-                        <div class="col-lg-5">
-                            <div class="modern-panel shadow-sm p-4 h-100 position-relative overflow-hidden" style="border-top: 5px solid var(--info); border-radius: 20px;">
-                                <h5 class="fw-bold mb-4" style="color: var(--text-dark);"><i class="fa-solid fa-chart-pie text-info me-2 safe-icon"></i> สัดส่วนการใช้จ่าย (Expense Breakdown)</h5>
-                                <div style="height: 380px; width: 100%; display: flex; align-items: center; justify-content: center;" id="dl-chart-container">
-                                    <canvas id="dlSummaryChart"></canvas>
+
+                        <div class="row g-4 position-relative z-1 flex-grow-1" style="min-height: 0;">
+                            <div class="col-lg-5 h-100">
+                                <div class="modern-panel shadow-sm p-4 h-100 d-flex flex-column" style="border-radius: 16px; background-color: var(--bg-body); border: 1px solid var(--border-color);">
+                                    <h6 class="fw-bold mb-3" style="color: var(--text-dark);"><i class="fa-solid fa-chart-donut text-info me-2 safe-icon"></i> สัดส่วนการใช้จ่าย (Expense Breakdown)</h6>
+                                    <div class="flex-grow-1" style="position: relative; width: 100%;" id="dl-chart-container">
+                                        <canvas id="dlSummaryChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-7 h-100">
+                                <div class="modern-panel shadow-sm p-4 h-100 d-flex flex-column" style="border-radius: 16px; background-color: var(--bg-body); border: 1px solid var(--border-color);">
+                                    <h6 class="fw-bold mb-3" style="color: var(--text-dark);"><i class="fa-solid fa-list-ul text-secondary me-2 safe-icon"></i> สรุปยอดแยกตามหมวดหมู่</h6>
+                                    <div class="locked-table-wrapper" style="box-shadow: none; border-radius: 12px;">
+                                        <table class="table table-ledger w-100 mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>หมวดหมู่</th>
+                                                    <th class="text-center">ประเภท</th>
+                                                    <th class="text-end">ยอดรวม (฿)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="dl-summary-body">
+                                                <tr><td colspan="3" class="text-center py-4" style="color: var(--text-muted);">...กำลังโหลดข้อมูล...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-7">
-                            <div class="modern-panel shadow-sm p-4 h-100 position-relative overflow-hidden" style="border-top: 5px solid #94a3b8; border-radius: 20px;">
-                                <h5 class="fw-bold mb-4" style="color: var(--text-dark);"><i class="fa-solid fa-list-ul text-secondary me-2 safe-icon"></i> สรุปยอดแยกตามหมวดหมู่</h5>
-                                <div class="table-responsive rounded-4 shadow-sm" style="background-color: var(--bg-surface); border: 1px solid var(--border-color);">
-                                    <table class="table table-ledger w-100 mb-0">
-                                        <thead>
-                                            <tr>
-                                                <th>หมวดหมู่</th>
-                                                <th class="text-center">ประเภท</th>
-                                                <th class="text-end">ยอดรวม (฿)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="dl-summary-body">
-                                            <tr><td colspan="3" class="text-center py-4" style="color: var(--text-muted);">...กำลังโหลดข้อมูล...</td></tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
+
                     </div>
                 </div>
             </div>
@@ -461,8 +554,8 @@ class DepartmentLedgerPageComponent {
                     <td class="text-end fw-bold border-start" style="font-size:15px; color: var(--text-dark); border-color: var(--border-color) !important;">฿${t.runningBalance.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                     <td class="text-center">
                         <div class="d-flex justify-content-center gap-2">
-                            <button class="btn btn-sm btn-warning shadow-sm px-2" style="border-radius: 8px;" onclick="DepartmentLedgerPage.editTransaction('${t.id}')" title="แก้ไขรายการนี้"><i class="fa-solid fa-pen safe-icon"></i></button>
-                            <button class="btn btn-sm btn-danger shadow-sm px-2 text-white" style="border-radius: 8px;" onclick="DepartmentLedgerPage.deleteTransaction('${t.id}')" title="ลบรายการนี้"><i class="fa-solid fa-trash safe-icon"></i></button>
+                            <button class="btn btn-sm btn-warning shadow-sm px-2" style="border-radius: 8px;" onclick="window.DepartmentLedgerPage.editTransaction('${t.id}')" title="แก้ไขรายการนี้"><i class="fa-solid fa-pen safe-icon"></i></button>
+                            <button class="btn btn-sm btn-danger shadow-sm px-2 text-white" style="border-radius: 8px;" onclick="window.DepartmentLedgerPage.deleteTransaction('${t.id}')" title="ลบรายการนี้"><i class="fa-solid fa-trash safe-icon"></i></button>
                         </div>
                     </td>
                 </tr>`;
@@ -606,8 +699,8 @@ class DepartmentLedgerPageComponent {
     }
 
     manageCategories() {
-        let inHtml = this.state.categoriesIn.map((c, i) => `<span class="badge bg-success-subtle text-success-emphasis m-1 fs-6 border border-success-subtle py-2 px-3 shadow-sm rounded-pill">${this._escapeHTML(c)} <i class="fa-solid fa-times ms-2 safe-icon" style="cursor:pointer;" onclick="Swal.close(); setTimeout(()=>DepartmentLedgerPage.removeCategory('IN', ${i}),300)"></i></span>`).join('');
-        let outHtml = this.state.categoriesOut.map((c, i) => `<span class="badge bg-danger-subtle text-danger-emphasis m-1 fs-6 border border-danger-subtle py-2 px-3 shadow-sm rounded-pill">${this._escapeHTML(c)} <i class="fa-solid fa-times ms-2 safe-icon" style="cursor:pointer;" onclick="Swal.close(); setTimeout(()=>DepartmentLedgerPage.removeCategory('OUT', ${i}),300)"></i></span>`).join('');
+        let inHtml = this.state.categoriesIn.map((c, i) => `<span class="badge bg-success-subtle text-success-emphasis m-1 fs-6 border border-success-subtle py-2 px-3 shadow-sm rounded-pill">${this._escapeHTML(c)} <i class="fa-solid fa-times ms-2 safe-icon" style="cursor:pointer;" onclick="Swal.close(); setTimeout(()=>window.DepartmentLedgerPage.removeCategory('IN', ${i}),300)"></i></span>`).join('');
+        let outHtml = this.state.categoriesOut.map((c, i) => `<span class="badge bg-danger-subtle text-danger-emphasis m-1 fs-6 border border-danger-subtle py-2 px-3 shadow-sm rounded-pill">${this._escapeHTML(c)} <i class="fa-solid fa-times ms-2 safe-icon" style="cursor:pointer;" onclick="Swal.close(); setTimeout(()=>window.DepartmentLedgerPage.removeCategory('OUT', ${i}),300)"></i></span>`).join('');
 
         Swal.fire({
             title: '<h4 class="fw-bold mb-0" style="color: var(--text-dark);"><i class="fa-solid fa-tags text-secondary me-2 safe-icon"></i> จัดการหมวดหมู่รับ-จ่าย</h4>', 
@@ -618,7 +711,7 @@ class DepartmentLedgerPageComponent {
                         <h6 class="fw-bold text-success mb-3"><i class="fa-solid fa-arrow-turn-down me-1 safe-icon" style="transform:rotate(90deg);"></i> หมวดหมู่รายรับ</h6>
                         <div class="input-group mb-3 shadow-sm" style="border-radius:8px; overflow:hidden;">
                             <input type="text" id="new-cat-in" class="form-control input-modern" placeholder="พิมพ์หมวดหมู่ใหม่...">
-                            <button class="btn btn-success fw-bold" onclick="Swal.close(); setTimeout(()=>DepartmentLedgerPage.addCategory('IN'),300)">เพิ่ม</button>
+                            <button class="btn btn-success fw-bold" onclick="Swal.close(); setTimeout(()=>window.DepartmentLedgerPage.addCategory('IN'),300)">เพิ่ม</button>
                         </div>
                         <div class="p-3" style="background-color: var(--bg-body); border: 1px solid var(--border-color); min-height: 150px; border-radius: 12px;">${inHtml || '<div class="small" style="color: var(--text-muted);">ไม่มีข้อมูล</div>'}</div>
                     </div>
@@ -626,7 +719,7 @@ class DepartmentLedgerPageComponent {
                         <h6 class="fw-bold text-danger mb-3"><i class="fa-solid fa-arrow-turn-up me-1 safe-icon" style="transform:rotate(90deg);"></i> หมวดหมู่รายจ่าย</h6>
                         <div class="input-group mb-3 shadow-sm" style="border-radius:8px; overflow:hidden;">
                             <input type="text" id="new-cat-out" class="form-control input-modern" placeholder="พิมพ์หมวดหมู่ใหม่...">
-                            <button class="btn btn-danger fw-bold" onclick="Swal.close(); setTimeout(()=>DepartmentLedgerPage.addCategory('OUT'),300)">เพิ่ม</button>
+                            <button class="btn btn-danger fw-bold" onclick="Swal.close(); setTimeout(()=>window.DepartmentLedgerPage.addCategory('OUT'),300)">เพิ่ม</button>
                         </div>
                         <div class="p-3" style="background-color: var(--bg-body); border: 1px solid var(--border-color); min-height: 150px; border-radius: 12px;">${outHtml || '<div class="small" style="color: var(--text-muted);">ไม่มีข้อมูล</div>'}</div>
                     </div>
@@ -941,12 +1034,14 @@ class DepartmentLedgerPageComponent {
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = `Department_Ledger_${this.state.startDate}_to_${this.state.endDate}.xlsx`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(link.href);
             
-            Swal.fire('ดาวน์โหลดสำเร็จ!', 'ไฟล์ Excel (.xlsx) ถูกสร้างสมบูรณ์แบบ', 'success');
+            Swal.close();
+            setTimeout(() => {
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+            }, 500);
 
         } catch (error) {
             console.error(error);
@@ -971,27 +1066,23 @@ class DepartmentLedgerPageComponent {
         Swal.fire({ title: 'กำลังสร้างไฟล์ Excel...', html: 'ระบบกำลังแทรกกราฟและตารางแบบ Dashboard<br>โปรดรอสักครู่...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         
         try {
-            // 1. ดึงภาพกราฟโดนัทจาก Canvas บนหน้าจอ
             let chartImgUrl = null;
-            let imgRatio = 1; // 🚨 ตัวแปรเก็บอัตราส่วนภาพ ป้องกันกราฟเบี้ยว
+            let imgRatio = 1; 
             try {
                 const existingCanvas = document.getElementById('dlSummaryChart');
                 if (existingCanvas) {
-                    // 🚨 คำนวณสัดส่วน กว้าง:สูง จากหน้าจอจริงๆ
                     imgRatio = existingCanvas.height / existingCanvas.width; 
-                    
                     const tempCanvas = document.createElement('canvas');
                     tempCanvas.width = existingCanvas.width;
                     tempCanvas.height = existingCanvas.height;
                     const tCtx = tempCanvas.getContext('2d');
-                    tCtx.fillStyle = '#ffffff'; // ถมพื้นหลังขาว
+                    tCtx.fillStyle = '#ffffff'; 
                     tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
                     tCtx.drawImage(existingCanvas, 0, 0);
                     chartImgUrl = tempCanvas.toDataURL('image/png');
                 }
             } catch(e) { console.warn("Canvas capture warning", e); }
 
-            // 2. คำนวณข้อมูลเพื่อความแม่นยำ
             let broughtForward = this.state.initialBalance; 
             this.state.allTransactions.filter(t => t.date < this.state.startDate).forEach(t => { 
                 broughtForward += t.type === 'IN' ? Number(t.amount) : -Number(t.amount); 
@@ -1008,16 +1099,13 @@ class DepartmentLedgerPageComponent {
             });
             let netBalance = broughtForward + totalIn - totalOut;
 
-            // 3. สร้าง Workbook Excel
             const workbook = new ExcelJS.Workbook();
             const sheet = workbook.addWorksheet('Summary Dashboard', { views: [{ showGridLines: false }] });
 
-            // แบ่งเป็น 4 คอลัมน์หลัก (A: กราฟ, B: หมวดหมู่, C: ประเภท, D: ยอดรวม)
             sheet.columns = [ 
                 { width: 45 }, { width: 35 }, { width: 15 }, { width: 25 }
             ];
 
-            // 4. ส่วนหัวรายงาน (Header)
             sheet.mergeCells('A1:D1');
             const t1 = sheet.getCell('A1');
             t1.value = this.state.clinicName;
@@ -1036,9 +1124,8 @@ class DepartmentLedgerPageComponent {
             t3.font = { name: 'Tahoma', size: 11, color: { argb: 'FF64748B' } };
             t3.alignment = { vertical: 'middle', horizontal: 'center' };
 
-            sheet.addRow([]); // Row 4 (ว่าง)
+            sheet.addRow([]); 
 
-            // 5. Section 1: สรุปยอดดุล 4 กล่อง
             sheet.mergeCells('A5:D5');
             const section1 = sheet.getCell('A5');
             section1.value = '1. สรุปยอดดุลทางการเงิน';
@@ -1065,9 +1152,8 @@ class DepartmentLedgerPageComponent {
                 cell.numFmt = '#,##0.00';
             });
 
-            sheet.addRow([]); // Row 8 (ว่าง)
+            sheet.addRow([]);
 
-            // 6. Section 2 & 3: แผนภูมิ และ ตาราง
             sheet.getCell('A9').value = '2. แผนภูมิต้นทุนรายจ่าย';
             sheet.getCell('A9').font = { name: 'Tahoma', size: 12, bold: true };
             
@@ -1075,21 +1161,17 @@ class DepartmentLedgerPageComponent {
             sheet.getCell('B9').value = '3. ยอดรวมสุทธิแยกตามหมวดหมู่โครงสร้าง';
             sheet.getCell('B9').font = { name: 'Tahoma', size: 12, bold: true };
 
-            // 🚨 แปะรูปกราฟลงในคอลัมน์ A (ใต้หัวข้อ 2)
             if (chartImgUrl) {
                 const imageId = workbook.addImage({ base64: chartImgUrl, extension: 'png' });
-                
-                // 🚨 คำนวณความกว้างและสูง ให้สัดส่วนภาพตรงตามจริง (ไม่บีบ ไม่เบี้ยว)
-                const baseWidth = 260; // กว้างพอดีคอลัมน์ A
+                const baseWidth = 260; 
                 const calculatedHeight = baseWidth * imgRatio;
 
                 sheet.addImage(imageId, {
-                    tl: { col: 0.2, row: 9.8 }, // ขยับลงมาตรงกลางเซลล์ให้สวยงาม
+                    tl: { col: 0.2, row: 9.8 },
                     ext: { width: baseWidth, height: calculatedHeight } 
                 });
             }
 
-            // 🚨 สร้างตารางด้านขวา (เริ่มที่คอลัมน์ B, C, D แถวที่ 10 เป็นต้นไป)
             const tableHeadersRow = sheet.getRow(10);
             tableHeadersRow.getCell(2).value = "หมวดหมู่รายการ";
             tableHeadersRow.getCell(3).value = "ประเภท";
@@ -1143,29 +1225,27 @@ class DepartmentLedgerPageComponent {
                 });
             });
 
-            // ดาวน์โหลดไฟล์ Excel ออกมา
             const buffer = await workbook.xlsx.writeBuffer();
             const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = `Ledger_Summary_${this.state.startDate}_to_${this.state.endDate}.xlsx`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(link.href);
             
-            Swal.fire('ดาวน์โหลดสำเร็จ!', 'ไฟล์ Excel แบบ Dashboard สร้างสมบูรณ์แบบ', 'success');
+            Swal.close();
+            setTimeout(() => {
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+            }, 500);
 
         } catch (error) {
             console.error(error);
             Swal.fire('ข้อผิดพลาด', 'ไม่สามารถสร้างไฟล์ Excel ได้: ' + error.message, 'error');
         }
     }
-    
 
-    // 🚨 THE FIX: กางเอกสารลงบนหน้าจอตรงตำแหน่งที่กำลังมองอยู่ (In-Viewport) เพื่อหนีระบบ Culling ของ Browser 🚨
     async _executeDirectPDF(htmlContent, filename, orientation = 'portrait') {
-        // อัปเกรดไลบรารีเป็นเวอร์ชันล่าสุดที่มีการแก้บั๊กภาษาไทยแล้ว 
         if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
             Swal.fire({ title: 'กำลังโหลด PDF Engine...', html: 'โปรดรอสักครู่...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             await Promise.all([
@@ -1174,47 +1254,42 @@ class DepartmentLedgerPageComponent {
             ]);
         }
 
-        const containerWidth = orientation === 'portrait' ? 794 : 1122; // ความกว้างมาตรฐาน A4 (96 DPI)
-        const currentScrollY = window.scrollY; // ล็อกพิกัดหน้าจอ ณ ปัจจุบัน
+        const containerWidth = orientation === 'portrait' ? 794 : 1122; 
+        const currentScrollY = window.scrollY; 
 
-        // 🚨 ท่าไม้ตายที่ 1: กางตารางไว้บนหน้าจอเป๊ะๆ (In-Viewport) เพื่อไม่ให้ Browser มองข้าม
         const container = document.createElement('div');
         container.style.position = 'absolute';
         container.style.top = currentScrollY + 'px'; 
         container.style.left = '0px';
         container.style.width = containerWidth + 'px';
         container.style.backgroundColor = '#ffffff';
-        container.style.zIndex = '1050'; // 🚨 อยู่บนสุด แต่จะถูก SweetAlert บังไว้
+        container.style.zIndex = '-9999';
         container.innerHTML = htmlContent;
         document.body.appendChild(container);
 
         Swal.fire({ 
             title: 'กำลังสร้างไฟล์ PDF...', 
-            html: 'ระบบกำลังจัดทำภาพความละเอียดสูง<br><b class="text-danger">กรุณารอสักครู่ (ห้ามเลื่อนจอ)</b>', 
+            html: 'ระบบกำลังประมวลผลข้อมูล...', 
             allowOutsideClick: false, 
             didOpen: () => {
                 Swal.showLoading();
-                const swalContainer = document.querySelector('.swal2-container');
-                if(swalContainer) swalContainer.style.zIndex = '200000'; // ดึง Loading มาบังตารางไว้
             }
         });
 
         try {
             await document.fonts.ready;
-            await new Promise(resolve => setTimeout(resolve, 1500)); // หน่วงเวลาให้เบราว์เซอร์วาดตาราง
+            await new Promise(resolve => setTimeout(resolve, 1500)); 
 
-            // 🚨 ท่าไม้ตายที่ 2: ใช้ html2canvas รุ่น 1.4.1 ยิงแคปเจอร์เจาะจงเฉพาะตำแหน่ง
             const canvas = await html2canvas(container, {
                 scale: 2,
                 useCORS: true,
                 backgroundColor: '#ffffff',
                 x: 0,
-                y: currentScrollY, // ชี้เป้าพิกัดปัจจุบันให้ Canvas ไม่หลงทิศ
+                y: currentScrollY, 
                 scrollY: currentScrollY,
                 windowWidth: containerWidth + 50
             });
 
-            // นำภาพใส่ PDF และดาวน์โหลด
             const imgData = canvas.toDataURL('image/jpeg', 1.0);
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF(orientation, 'mm', 'a4');
@@ -1222,10 +1297,13 @@ class DepartmentLedgerPageComponent {
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
             pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save(filename);
-
+            
             container.remove();
-            Swal.fire('สำเร็จ!', 'ไฟล์ PDF ถูกดาวน์โหลดลงเครื่องแล้ว!', 'success');
+            
+            Swal.close();
+            setTimeout(() => {
+                pdf.save(filename);
+            }, 500); 
 
         } catch (err) {
             container.remove();
@@ -1261,7 +1339,6 @@ class DepartmentLedgerPageComponent {
             
             let currentBalance = broughtForward;
             
-            // 🚨 บังคับใช้ฟอนต์ Tahoma (ฟอนต์ระบบ) แท้ๆ เพื่อแก้ปัญหาสระลอย 100%
             const inlineStyles = `
                 background-color: #ffffff !important;
                 border: 1px solid #cbd5e1 !important;
@@ -1343,7 +1420,6 @@ class DepartmentLedgerPageComponent {
             if(!this.state._pendingChartData) { resolve(null); return; }
             
             let chartImgUrl = '';
-            // 🚨 ดึงภาพกราฟอย่างปลอดภัยจากบนหน้าจอ
             try {
                 const existingCanvas = document.getElementById('dlSummaryChart');
                 if (existingCanvas && existingCanvas.toDataURL) {
@@ -1353,7 +1429,6 @@ class DepartmentLedgerPageComponent {
                 console.warn("ไม่สามารถดึงภาพ Canvas ได้", e); 
             }
 
-            // ถ่ายโอนไม่ได้ ให้สร้างแบบซ่อนตัว (Off-screen) โดยย่อขนาดลงเหลือ 300x300
             if (!chartImgUrl && window.Chart) {
                 try {
                     const tempContainer = document.createElement('div');
@@ -1378,7 +1453,7 @@ class DepartmentLedgerPageComponent {
                     });
                     
                     const ctx = tempCanvas.getContext('2d');
-                    ctx.font = "bold 16px Tahoma"; // ย่อตัวอักษรกลางกราฟ
+                    ctx.font = "bold 16px Tahoma"; 
                     ctx.textBaseline = "middle"; 
                     ctx.fillStyle = "#334155"; 
                     var text = "฿" + this.state._pendingChartData.totalOut.toLocaleString(undefined, {minimumFractionDigits: 2}); 
@@ -1394,12 +1469,10 @@ class DepartmentLedgerPageComponent {
                 }
             }
 
-            // 🚨 ย่อขนาดแมกซ์ของรูปกราฟเหลือ 220px ให้ดูกะทัดรัด
             const chartImgHtml = chartImgUrl 
                 ? `<img src="${chartImgUrl}" style="width: 100% !important; max-width: 220px !important; height: auto !important; display: block !important; margin: 0 auto !important; object-fit: contain !important;">`
                 : `<div style="text-align:center; padding: 20px; color: #94a3b8; border: 1px dashed #cbd5e1; font-family: Tahoma, sans-serif; font-size: 11px;">(กำลังประมวลผลกราฟ)</div>`;
 
-            // 🚨 ย่อ Padding ของการ์ดลงเหลือ 8px และฟอนต์เหลือ 10px / 13px
             let cardsHtml = `
                 <table style="width: 100% !important; border-collapse: separate !important; border-spacing: 5px 0 !important; margin-bottom: 15px !important; border: none !important; background-color: transparent !important; table-layout: fixed !important;">
                     <tr>
@@ -1433,7 +1506,6 @@ class DepartmentLedgerPageComponent {
                 else { summaryOut[t.category] = (summaryOut[t.category] || 0) + amt; }
             });
 
-            // 🚨 ย่อขนาดฟอนต์ในตารางเหลือ 11px และลด Padding
             Object.keys(summaryIn).sort((a,b) => summaryIn[b] - summaryIn[a]).forEach(cat => { 
                 tbodyHtml += `<tr style="background-color: #ffffff !important;">
                     <td style="border: 1px solid #cbd5e1 !important; padding: 6px 4px !important; color: #000000 !important; font-weight: bold !important; font-size: 11px !important; font-family: 'Tahoma', sans-serif !important; word-wrap: break-word; white-space: normal;">${this._escapeHTML(cat)}</td>
@@ -1453,9 +1525,9 @@ class DepartmentLedgerPageComponent {
                 const settings = snap.val() || { clinic_name: "DIALYSIS PRO CLINIC" };
                 const htmlContent = `
                     <div style="background-color: #ffffff !important; padding: 10mm !important; width: 100% !important; box-sizing: border-box !important;">
-                        <h2 style="color: #1e3a8a !important; font-size: 18px !important; text-align: center !important; margin: 0 0 4px 0 !important; font-weight: bold !important; font-family: 'Tahoma', sans-serif !important; background-color: transparent !important;">${this._escapeHTML(settings.clinic_name)}</h2>
-                        <h3 style="color: #334155 !important; font-size: 13px !important; text-align: center !important; margin: 0 0 4px 0 !important; font-weight: normal !important; font-family: 'Tahoma', sans-serif !important; background-color: transparent !important;">รายงานสรุปยอดดุลและโครงสร้างรับ-จ่ายภายในหน่วยงาน</h3>
-                        <p style="text-align: center !important; color: #64748b !important; font-size: 11px !important; margin: 0 0 15px 0 !important; font-family: 'Tahoma', sans-serif !important; background-color: transparent !important;">ช่วงเวลา: ${this.formatDateTh(this.state.startDate)} ถึง ${this.formatDateTh(this.state.endDate)}</p>
+                        <h2 style="color: #1e3a8a !important; font-size: 20px !important; text-align: center !important; margin: 0 0 5px 0 !important; font-weight: bold !important; font-family: 'Tahoma', sans-serif !important;">${this._escapeHTML(settings.clinic_name)}</h2>
+                        <h3 style="color: #334155 !important; font-size: 14px !important; text-align: center !important; margin: 0 0 5px 0 !important; font-weight: normal !important; font-family: 'Tahoma', sans-serif !important;">สมุดบัญชีรายรับ-รายจ่ายภายในหน่วยงาน (Department Ledger)</h3>
+                        <p style="text-align: center !important; color: #64748b !important; font-size: 12px !important; margin: 0 0 20px 0 !important; font-family: 'Tahoma', sans-serif !important;">ความเคลื่อนไหวตั้งแต่: ${this.formatDateTh(this.state.startDate)} ถึง ${this.formatDateTh(this.state.endDate)}</p>
                         
                         <div style="font-size: 13px !important; font-weight: bold !important; margin-bottom: 8px !important; border-left: 4px solid #0284c7 !important; padding-left: 8px !important; color: #000000 !important; font-family: 'Tahoma', sans-serif !important; background-color: transparent !important;">1. สรุปยอดดุลทางการเงิน</div>
                         ${cardsHtml}
@@ -1490,6 +1562,7 @@ class DepartmentLedgerPageComponent {
         });
     }
 
+    // 🚨 THE PC FIX: Asynchronous Iframe Processing - รอให้กระดาษสร้างเสร็จก่อนสั่งพิมพ์
     printLedger() {
         this.buildLedgerHTML().then(html => {
             this._executePrint(html);
@@ -1507,7 +1580,12 @@ class DepartmentLedgerPageComponent {
     }
 
     _executePrint(htmlContent) {
-        Swal.fire({ title: 'กำลังเตรียมหน้าต่างพิมพ์...', html: 'กรุณารอสักครู่', allowOutsideClick: false, timer: 1500, didOpen: () => { Swal.showLoading(); } });
+        Swal.fire({ 
+            title: 'กำลังเตรียมหน้าต่างพิมพ์...', 
+            html: 'กรุณารอสักครู่ เบราว์เซอร์กำลังโหลด...', 
+            allowOutsideClick: false, 
+            didOpen: () => { Swal.showLoading(); } 
+        });
         
         let oldIframe = document.getElementById('hidden-print-frame'); 
         if (oldIframe) { oldIframe.remove(); }
@@ -1529,12 +1607,11 @@ class DepartmentLedgerPageComponent {
             <html>
             <head>
                 <meta charset="UTF-8">
-                <title>พิมพ์รายงาน</title>
-                <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+                <title>พิมพ์รายงานคลินิก</title>
                 <style>
-                    @page{size: A4 portrait; margin: 10mm;} 
+                    @page { size: A4 portrait; margin: 10mm; } 
                     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; box-sizing: border-box !important; }
-                    body { background-color: #ffffff !important; margin: 0; padding: 0; color: #000; font-family: 'Sarabun', sans-serif; }
+                    body { background-color: #ffffff !important; margin: 0; padding: 0; color: #000; font-family: sans-serif; }
                 </style>
             </head>
             <body>
@@ -1546,16 +1623,24 @@ class DepartmentLedgerPageComponent {
         `); 
         doc.close();
 
-        setTimeout(() => { 
-            Swal.close(); 
+        // 🚨 สั่ง iframe ให้รอจนกว่าทรัพยากร (เช่น ภาพกราฟ) จะโหลดเสร็จ 100%
+        iframe.onload = () => {
+            Swal.close();
             try {
                 iframe.contentWindow.focus(); 
                 iframe.contentWindow.print(); 
             } catch(e) {
-                console.error("Print Error:", e);
+                console.error("Print execution failed:", e);
+                Swal.fire('ข้อผิดพลาด', 'ระบบพิมพ์ถูกบล็อก กรุณากดยอมรับ Popup', 'error');
             }
-            setTimeout(() => { if(document.getElementById('hidden-print-frame')) document.getElementById('hidden-print-frame').remove(); }, 10000);
-        }, 1500); 
+            
+            // รอจนกว่าจะพิมพ์เสร็จ หรือปิดหน้าต่าง ค่อยลบ iframe ทิ้ง
+            setTimeout(() => {
+                if(document.getElementById('hidden-print-frame')) {
+                    document.getElementById('hidden-print-frame').remove();
+                }
+            }, 60000); // เก็บไว้ 1 นาทีเผื่อพิมพ์ช้า
+        };
     }
 
     _escapeHTML(str) {

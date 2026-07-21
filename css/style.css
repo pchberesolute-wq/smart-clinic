@@ -77,7 +77,6 @@ h1, h2, h3, h4, h5, h6, .page-title { font-family: 'Prompt', sans-serif; letter-
    02. 🌟 TOPBAR & CONTENT AREA
    ========================================================================== */
 .main-content { margin-left: var(--sidebar-width) !important; min-height: calc(var(--vh, 1vh) * 100) !important; display: flex; flex-direction: column; transition: margin-left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important; transform: translateZ(0); }
-/* 🚨 THE FIX: Topbar Flex Wrap */
 .topbar { height: auto; min-height: 90px; background: transparent; padding: 15px 30px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px; }
 .search-box, .search-box-modern { background: #ffffff; border: 1px solid #e2e8f0; padding: 12px 24px; border-radius: 50px; width: 380px; max-width: 100%; flex-grow: 1; display: flex; align-items: center; gap: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); cursor: text; transition: var(--transition-colors), transform 0.3s ease, box-shadow 0.3s ease; }
 .search-box:hover, .search-box-modern:hover, .search-box:focus-within, .search-box-modern:focus-within { border-color: #bfdbfe; box-shadow: var(--shadow-float-primary); transform: translate3d(0, -2px, 0); }
@@ -90,7 +89,6 @@ h1, h2, h3, h4, h5, h6, .page-title { font-family: 'Prompt', sans-serif; letter-
 /* ==========================================================================
    03. 🌟 PANELS & PREMIUM BUTTONS
    ========================================================================== */
-/* 🚨 THE FIX: ป้องกัน Card ทะลัก ให้เลื่อนซ้ายขวาได้ */
 .modern-panel { background: var(--bg-surface); border-radius: var(--radius-xl); padding: 30px; box-shadow: var(--shadow-panel); border: 1px solid #ffffff; width: 100%; max-width: 100% !important; overflow-x: auto !important; overflow-y: visible !important; box-sizing: border-box !important; }
 .card-hover-float { transition: transform 0.3s var(--ease-bouncy), box-shadow 0.3s ease, border-color 0.3s ease; border: 1px solid transparent; will-change: transform; }
 .card-hover-float:hover { transform: translate3d(0, -4px, 0); box-shadow: var(--shadow-float-primary); border-color: var(--primary-light); }
@@ -150,7 +148,6 @@ h1, h2, h3, h4, h5, h6, .page-title { font-family: 'Prompt', sans-serif; letter-
     .main-content { margin-left: var(--sidebar-collapsed-width) !important; }
 }
 
-/* 🚨 THE FIX: Topbar Mobile & Tablet Fold */
 @media (max-width: 1024px) {
     .sidebar { transform: translateX(-120%) !important; box-shadow: 20px 0 50px rgba(0,0,0,0.15) !important; border-radius: 0 28px 28px 0 !important; top: 0 !important; bottom: 0 !important; left: 0 !important; }
     .sidebar.active { transform: translateX(0) !important; }
@@ -176,11 +173,10 @@ h1, h2, h3, h4, h5, h6, .page-title { font-family: 'Prompt', sans-serif; letter-
     #app-content { padding: 0 20px 30px 20px !important; }
     .topbar-left-section { width: 100% !important; max-width: 100% !important; flex: 1 1 100% !important; }
     .topbar-actions { width: 100% !important; justify-content: flex-end !important; gap: 10px !important; }
-    .time-widget { display: none !important; } /* ซ่อนนาฬิกาบนจอเล็ก */
+    .time-widget { display: none !important; } 
 }
 
 @media (max-width: 767px) {
-    /* ปิดกระจกฝ้า (Blur) ทั้งหมดบนมือถือ เพื่อป้องกัน GPU ค้าง */
     * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
     .login-card, .custom-options-panel, .smart-menu-container, .floating-action-bar { background: rgba(255, 255, 255, 0.98) !important; }
 
@@ -291,7 +287,7 @@ input[type="date"]#dc-specific-date::-webkit-calendar-picker-indicator:hover { o
     width: 100% !important; 
     overflow-x: auto !important; 
     -webkit-overflow-scrolling: touch !important; 
-    min-width: 900px !important; /* 🚨 บังคับจอคอมตลอดกาล */
+    min-width: 900px !important;
 }
 
 table.dataTable, table.table { 
@@ -303,7 +299,7 @@ table.dataTable, table.table {
 
 table.dataTable th, table.dataTable td, table.table th, table.table td { 
     padding: 12px 16px !important; 
-    white-space: nowrap !important; /* 🚨 ห้ามตัวหนังสือตกบรรทัด */
+    white-space: nowrap !important; 
     vertical-align: middle !important; 
     font-size: 14px !important; 
     border-bottom: 1px solid #f1f5f9 !important; 
@@ -665,3 +661,8 @@ body.theme-dark .badge, body.theme-dark .badge * {
 body.theme-dark .nav-item.active, body.theme-dark .nav-item.active * {
     color: #ffffff !important;
 }
+
+/* 🚨 THE FIX 3: ครอบคลุมกฎของหน้า shift_schedule.js เข้าสู่ Theme Engine */
+body.theme-dark .ts-table th { color: #f8fafc !important; }
+body.theme-dark .day-num { color: #f8fafc !important; }
+body.theme-dark .day-name { color: #94a3b8 !important; }

@@ -1,11 +1,12 @@
 // js/pages/inventory.js
-// 🚀 Enterprise Inventory Module: Atomic Writes, Theme Native Ready & Bulk Print
+// 🚀 Enterprise Inventory Module: Atomic Writes, Auto-Suggest Meds Binding & Bulk Print
 
 class InventoryPageComponent {
     constructor() {
         this.allItems = [];
         this.savedCategories = []; 
         this.savedUnits = [];       
+        this.medItems = []; // 🌟 เก็บรายชื่อยาจากหน้าตั้งค่า (Settings)
         this.firebaseListeners = [];
         this.searchTimeout = null;
     }
@@ -19,12 +20,8 @@ class InventoryPageComponent {
                 .btn-action-icon { width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; transition: all 0.2s ease; border: none; }
                 .btn-action-icon i { font-size: 15px; }
                 
-                /* ยันต์กันไอคอนเพี้ยน (Force Font Awesome) */
                 .safe-icon { font-family: 'Font Awesome 6 Free', 'FontAwesome', sans-serif !important; font-weight: 900 !important; font-style: normal !important; }
 
-                /* 🚨 THE FIX: เกราะป้องกันสีระดับ MAX ฝ่าทะลวง Dark Mode (CSS Specificity War Winner) 🚨 */
-                /* ใช้ Selector ยาวๆ เพื่อให้พลังชนะ Global CSS ของ Bootstrap 100% */
-                
                 html[data-bs-theme="dark"] body .table .btn-action-icon.btn-primary,
                 body .table .btn-action-icon.btn-primary { 
                     background-color: #3b82f6 !important; border: 1px solid #3b82f6 !important; color: #ffffff !important; 
@@ -56,30 +53,30 @@ class InventoryPageComponent {
                 }
             </style>
 
-            <div class="page-header mb-4">
+            <div class="page-header mb-4 fade-in-up">
                 <div>
                     <h2 class="page-title text-primary" style="font-size: 28px;"><i class="fa-solid fa-boxes-stacked me-2"></i> ฐานข้อมูลคลังพัสดุ</h2>
                     <p class="text-muted mt-1 mb-0">จัดการรายการพัสดุ รหัสสินค้า บาร์โค้ด และจัดลำดับการแสดงผลเพื่อรองรับระบบ Smart PO</p>
                 </div>
                 <div class="d-flex gap-2 mt-3 mt-md-0 flex-wrap justify-content-md-end">
-                    <button class="btn btn-outline-dark fw-bold shadow-sm rounded-pill px-3" onclick="App.pages.inventory.printAllBarcodes()" title="พิมพ์บาร์โค้ดของพัสดุทั้งหมดในระบบ" style="color: var(--text-dark); border-color: var(--border-color);">
+                    <button class="btn btn-outline-dark fw-bold shadow-sm rounded-pill px-3 card-hover-float" onclick="App.pages.inventory.printAllBarcodes()" title="พิมพ์บาร์โค้ดของพัสดุทั้งหมดในระบบ" style="color: var(--text-dark); border-color: var(--border-color);">
                         <i class="fa-solid fa-print me-1 text-warning safe-icon"></i> พิมพ์บาร์โค้ดทั้งหมด
                     </button>
-                    <button class="btn btn-outline-secondary fw-bold shadow-sm rounded-pill px-3" onclick="App.pages.inventory.openOptionsModal()" title="จัดการตัวเลือกหมวดหมู่และหน่วยนับ">
+                    <button class="btn btn-outline-secondary fw-bold shadow-sm rounded-pill px-3 card-hover-float" onclick="App.pages.inventory.openOptionsModal()" title="จัดการตัวเลือกหมวดหมู่และหน่วยนับ">
                         <i class="fa-solid fa-tags me-1 safe-icon"></i> จัดการหมวดหมู่/หน่วยนับ
                     </button>
                     
-                    <button class="btn btn-outline-primary fw-bold shadow-sm rounded-pill px-4" onclick="App.switchPage('stock_manage')">
+                    <button class="btn btn-outline-primary fw-bold shadow-sm rounded-pill px-4 card-hover-float" onclick="App.switchPage('stock_manage')">
                         <i class="fa-solid fa-truck-ramp-box me-2 safe-icon"></i> ไปหน้าเบิกจ่าย / โอนย้าย
                     </button>
 
-                    <button class="btn btn-premium-primary fw-bold shadow-sm rounded-pill px-4" onclick="App.pages.inventory.openItemModal()">
+                    <button class="btn btn-premium-primary fw-bold shadow-sm rounded-pill px-4 card-hover-float" onclick="App.pages.inventory.openItemModal()">
                         <i class="fa-solid fa-plus me-2 safe-icon"></i> ลงทะเบียนพัสดุใหม่
                     </button>
                 </div>
             </div>
 
-            <div class="row g-4 mb-4">
+            <div class="row g-4 mb-4 fade-in-up" style="animation-delay: 0.1s;">
                 <div class="col-md-4">
                     <div class="modern-panel h-100 p-4 position-relative overflow-hidden shadow-sm" style="border-top: 4px solid var(--primary); border-radius: 20px; background-color: var(--bg-surface); border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
                         <div style="position: absolute; top: -10px; right: -10px; opacity: 0.04; font-size: 100px; pointer-events: none; color: var(--text-dark);"><i class="fa-solid fa-cubes"></i></div>
@@ -118,7 +115,7 @@ class InventoryPageComponent {
                 </div>
             </div>
 
-            <div class="modern-panel shadow-sm p-4 position-relative overflow-hidden" style="border-radius: 20px; background-color: var(--bg-surface); border: 1px solid var(--border-color);">
+            <div class="modern-panel shadow-sm p-4 position-relative overflow-hidden fade-in-up" style="border-radius: 20px; background-color: var(--bg-surface); border: 1px solid var(--border-color); animation-delay: 0.2s;">
                 <div style="position: absolute; top: -30px; right: -30px; opacity: 0.02; font-size: 250px; pointer-events: none; color: var(--text-dark);"><i class="fa-solid fa-boxes-stacked"></i></div>
                 
                 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 position-relative z-1">
@@ -153,25 +150,21 @@ class InventoryPageComponent {
         `;
     }
 
-    // 🚀 Lifecycle: Mount
     init() {
         if (typeof db === 'undefined') return;
 
         this.#bindEvents();
         this.#fetchMasterOptions();
+        this.#fetchMedsList(); 
         this.#fetchInventoryItems();
     }
 
-    // 🧹 Lifecycle: Unmount
     destroy() {
         this.firebaseListeners.forEach(l => db.ref(l.path).off('value', l.callback));
         this.firebaseListeners = [];
         console.log("🧹 [Inventory] Cleaned up listeners.");
     }
 
-    // ---------------------------------------------------------
-    // ⚙️ Events & Data Loading
-    // ---------------------------------------------------------
     #bindEvents() {
         const searchInput = document.getElementById('inv-search');
         if (searchInput) {
@@ -207,6 +200,17 @@ class InventoryPageComponent {
         this.firebaseListeners.push({ path: 'inventory_database_v2/options', callback: cbOptions });
     }
 
+    #fetchMedsList() {
+        const cbMeds = db.ref('clinic_meds_list_v2').on('value', snap => {
+            const data = snap.val();
+            this.medItems = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])) : [];
+            if(this.allItems.length > 0) {
+                this.renderTable(this.allItems);
+            }
+        });
+        this.firebaseListeners.push({ path: 'clinic_meds_list_v2', callback: cbMeds });
+    }
+
     #fetchInventoryItems() {
         const cbItems = db.ref('inventory_database_v2/items').on('value', snap => {
             const data = snap.val();
@@ -224,7 +228,7 @@ class InventoryPageComponent {
 
             const searchBox = document.getElementById('inv-search');
             if (searchBox && searchBox.value.trim() !== "") {
-                searchBox.dispatchEvent(new Event('input')); // Trigger render via Debounce
+                searchBox.dispatchEvent(new Event('input')); 
             } else { 
                 this.renderTable(this.allItems); 
             }
@@ -232,9 +236,6 @@ class InventoryPageComponent {
         this.firebaseListeners.push({ path: 'inventory_database_v2/items', callback: cbItems });
     }
 
-    // ---------------------------------------------------------
-    // 🎨 UI Logic & Rendering
-    // ---------------------------------------------------------
     updateStats() {
         let total = this.allItems.length;
         let lowMain = 0; let lowSub = 0;
@@ -283,13 +284,19 @@ class InventoryPageComponent {
             const safeItemCode = this.#escapeHTML(i.item_code || '-');
             const safeBarcode = this.#escapeHTML(i.barcode || '-');
 
+            const isLinkedMed = this.medItems.some(m => (typeof m === 'object' ? m.name : m) === i.name);
+            const linkBadge = isLinkedMed 
+                ? `<span class="badge ms-2 px-2 shadow-sm" style="background: rgba(139,92,246,0.1); color: #8b5cf6; border: 1px solid rgba(139,92,246,0.2); font-size: 10px;" title="เชื่อมโยงกับฐานข้อมูลยา (ตั้งค่าแพทย์) เรียบร้อย"><i class="fa-solid fa-link"></i> ลิงก์ยา</span>` 
+                : '';
+
             html += `
             <tr class="align-middle card-hover-float" style="cursor: default;">
                 <td class="text-center fw-bold text-secondary" style="font-size: 15px;">${orderVal}</td>
                 <td class="text-center"><span class="badge border shadow-sm px-2 py-1 text-primary" style="font-family: monospace; font-size:13px; border-radius:6px; background: var(--bg-body); border-color: var(--primary) !important;">${safeItemCode}</span></td>
                 <td><span class="badge border shadow-sm px-2 py-1" style="font-family: monospace; font-size:12px; border-radius:6px; background: var(--bg-body); color: var(--text-dark); border-color: var(--border-color) !important;"><i class="fa-solid fa-barcode text-secondary me-1 safe-icon"></i> ${safeBarcode}</span></td>
                 
-                <td><div class="fw-bold" style="font-size:14.5px; color: var(--text-dark);">${safeName}</div><div class="small text-muted mt-1"><i class="fa-solid fa-tag me-1 text-secondary safe-icon"></i> ${safeCategory}</div></td>
+                <td><div class="fw-bold d-flex align-items-center" style="font-size:14.5px; color: var(--text-dark);">${safeName} ${linkBadge}</div><div class="small text-muted mt-1"><i class="fa-solid fa-tag me-1 text-secondary safe-icon"></i> ${safeCategory}</div></td>
+                
                 <td class="text-center text-primary fw-bold fs-6">${bReq > 0 ? bReq : '-'}</td>
                 <td class="text-center border-start border-end" style="border-color: var(--border-color) !important; color: var(--text-dark);">${mainHtml}</td>
                 <td class="text-center border-end" style="border-color: var(--border-color) !important; color: var(--text-dark);">${subHtml}</td>
@@ -306,9 +313,6 @@ class InventoryPageComponent {
         tbody.innerHTML = html;
     }
 
-    // ---------------------------------------------------------
-    // 🛡️ Data Mutation (Atomic Updates)
-    // ---------------------------------------------------------
     openOptionsModal() { 
         window.renderInvOptions = () => {
             let catHtml = this.savedCategories.length === 0 ? '<div class="text-muted small mt-2">ไม่มีข้อมูล</div>' : this.savedCategories.map((c, i) => `
@@ -348,7 +352,7 @@ class InventoryPageComponent {
                     </div>
                 </div>
             `,
-            showConfirmButton: false, showCloseButton: true, didOpen: () => { window.renderInvOptions(); }
+            showConfirmButton: false, showCloseButton: true, didOpen: () => { window.renderInvOptions(); }, customClass: { popup: 'premium-alert' }
         });
     }
 
@@ -370,14 +374,12 @@ class InventoryPageComponent {
         db.ref('inventory_database_v2/options').update({ categories: this.savedCategories, units: this.savedUnits }); 
     }
 
-    // ---------------------------------------------------------
-    // 📦 Register & Modify Items
-    // ---------------------------------------------------------
     generateRandomBarcode() { 
         const input = document.getElementById('swal-inv-barcode');
         if(input) input.value = `INV${Math.floor(10000000 + Math.random() * 90000000)}`; 
     }
 
+    // 🚨 THE FIX: เปลี่ยนกลับมาเป็น <datalist> (Auto-Suggest) ทะลุทะลวงง่ายๆ พิมพ์ปุ๊บเด้งปั๊บ!
     openItemModal(itemId = null) {
         let isEdit = !!itemId;
         let item = isEdit ? this.allItems.find(i => i.id === itemId) : {};
@@ -392,6 +394,15 @@ class InventoryPageComponent {
 
         let catOptions = this.savedCategories.map(c => `<option value="${this.#escapeHTML(c)}"></option>`).join('');
         let unitOptions = this.savedUnits.map(u => `<option value="${this.#escapeHTML(u)}"></option>`).join('');
+
+        // 🌟 สร้าง Datalist Option จากตั้งค่าแพทย์
+        let medOptions = '';
+        if (this.medItems && this.medItems.length > 0) {
+            this.medItems.forEach(m => {
+                let mName = typeof m === 'object' ? m.name : m;
+                medOptions += `<option value="${this.#escapeHTML(mName)}">ดึงจากตั้งค่าแพทย์</option>`;
+            });
+        }
 
         Swal.fire({
             title: `<h4 class="text-primary fw-bold mb-0"><i class="fa-solid fa-box-open me-2 safe-icon"></i> ${isEdit ? 'แก้ไขข้อมูลพัสดุ' : 'ลงทะเบียนพัสดุใหม่'}</h4>`,
@@ -420,8 +431,9 @@ class InventoryPageComponent {
                         </div>
                     </div>
 
-                    <label class="form-label fw-bold text-secondary small">ชื่อรายการพัสดุ <span class="text-danger">*</span></label>
-                    <input type="text" id="swal-inv-name" class="form-control form-control-lg fw-bold shadow-sm mb-3 input-modern" value="${this.#escapeHTML(item.name || '')}" placeholder="เช่น น้ำยา A (แกลลอน)">
+                    <label class="form-label fw-bold text-secondary small mb-1">ชื่อรายการพัสดุ <span class="text-danger">*</span> <span class="text-primary" style="font-size: 11px;">(พิมพ์เพื่อดึงยาจากหน้าตั้งค่าแพทย์ได้)</span></label>
+                    <input type="text" id="swal-inv-name" list="inv-meds-list" class="form-control form-control-lg fw-bold shadow-sm mb-3 input-modern text-dark" value="${this.#escapeHTML(item.name || '')}" placeholder="คลิกเพื่อเลือกจากรายชื่อยา หรือ พิมพ์ชื่อใหม่..." style="cursor: pointer;">
+                    <datalist id="inv-meds-list">${medOptions}</datalist>
 
                     <div class="row g-3 mb-4">
                         <div class="col-6">
@@ -473,7 +485,7 @@ class InventoryPageComponent {
                     ` : `<input type="hidden" id="swal-inv-qty-main" value="${qMain}"><input type="hidden" id="swal-inv-qty-sub" value="${qSub}">`}
                 </div>
             `,
-            showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-save me-1"></i> บันทึกข้อมูล', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#10b981', width: 600,
+            showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-save me-1"></i> บันทึกข้อมูล', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#10b981', width: 600, customClass: { popup: 'premium-alert' },
             preConfirm: () => {
                 const name = document.getElementById('swal-inv-name').value.trim();
                 const barcode = document.getElementById('swal-inv-barcode').value.trim();
@@ -512,9 +524,9 @@ class InventoryPageComponent {
                             user: App.currentUser ? App.currentUser.name : 'Admin' 
                         });
                     }
-                    Swal.fire({title: 'สำเร็จ', text: 'ข้อมูลพัสดุอัปเดตเรียบร้อย', icon: 'success', timer: 1500, showConfirmButton: false});
+                    Swal.fire({title: 'สำเร็จ', text: 'ข้อมูลพัสดุอัปเดตเรียบร้อย', icon: 'success', timer: 1500, showConfirmButton: false, customClass: { popup: 'premium-alert' }});
                 } catch (err) {
-                    Swal.fire('ข้อผิดพลาด', err.message, 'error');
+                    Swal.fire({title:'ข้อผิดพลาด', text:err.message, icon:'error', customClass: { popup: 'premium-alert' }});
                 }
             }
         });
@@ -530,7 +542,8 @@ class InventoryPageComponent {
             showCancelButton: true, 
             confirmButtonColor: '#ef4444', 
             confirmButtonText: '<i class="fa-solid fa-trash"></i> ยืนยันการลบ', 
-            cancelButtonText: 'ยกเลิก' 
+            cancelButtonText: 'ยกเลิก',
+            customClass: { popup: 'premium-alert' }
         }).then(async (res) => { 
             if(res.isConfirmed) {
                 Swal.fire({ title: 'กำลังลบข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
@@ -548,9 +561,9 @@ class InventoryPageComponent {
                     }
 
                     await refToDelete.remove();
-                    Swal.fire({title:'ลบสำเร็จ', icon:'success', timer:1200, showConfirmButton:false});
+                    Swal.fire({title:'ลบสำเร็จ', icon:'success', timer:1200, showConfirmButton:false, customClass: { popup: 'premium-alert' }});
                 } catch (err) {
-                    Swal.fire('ข้อผิดพลาด', err.message, 'error');
+                    Swal.fire({title:'ข้อผิดพลาด', text:err.message, icon:'error', customClass: { popup: 'premium-alert' }});
                 }
             } 
         });

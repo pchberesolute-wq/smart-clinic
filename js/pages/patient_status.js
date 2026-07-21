@@ -1,5 +1,5 @@
 // js/pages/patient_status.js
-// 🚀 โมดูลทะเบียนผู้ป่วยส่งต่อ/จำหน่าย (Enterprise ES6 Class Ready - Tab Active Bug Fixed & Theme Native)
+// 🚀 โมดูลทะเบียนผู้ป่วยส่งต่อ/จำหน่าย (Ultra-Clean Line Tabs + Zero-Shift)
 
 class PatientStatusPageComponent {
     constructor() {
@@ -10,59 +10,136 @@ class PatientStatusPageComponent {
 
     get html() {
         return `
-            <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+            <style>
+                /* 🚨 ULTRA-CLEAN TABS: ล้างเงา ล้างขอบ ล้างพื้นหลังให้สะอาดหมดจด 🚨 */
+                .ps-tabs-wrapper {
+                    display: flex;
+                    gap: 28px; /* เว้นระยะห่างให้ดูโปร่งสบายตา */
+                    margin-bottom: 24px;
+                    border-bottom: 2px solid var(--border-color); /* เส้นแกนหลัก */
+                    overflow-x: auto;
+                    -webkit-overflow-scrolling: touch;
+                    scrollbar-width: none;
+                    align-items: flex-end;
+                    padding-bottom: 0;
+                }
+                .ps-tabs-wrapper::-webkit-scrollbar { display: none; }
+                
+                .ps-tab-btn {
+                    flex: 0 0 auto;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 12px 4px; /* ลด Padding ซ้ายขวา เพื่อให้เส้นใต้พอดีกับตัวอักษร */
+                    background: transparent !important; /* ล้างพื้นหลัง 100% */
+                    border: none !important; /* ล้างเส้นขอบบนซ้ายขวา 100% */
+                    border-bottom: 3px solid transparent !important; /* ซ่อนเส้นใต้รอไว้ */
+                    border-radius: 0 !important; /* ไม่ต้องโค้งมน เพราะเป็นแค่เส้น */
+                    font-family: 'Prompt', sans-serif;
+                    font-size: 15px;
+                    font-weight: 600;
+                    color: var(--text-muted);
+                    cursor: pointer;
+                    transition: color 0.2s ease, border-color 0.2s ease !important;
+                    position: relative;
+                    white-space: nowrap;
+                    margin-bottom: -2px; /* 🎯 ดึงเส้นใต้ลงมาทับเส้นแกนหลักให้สนิทเป๊ะ */
+                    box-sizing: border-box;
+                    box-shadow: none !important; /* 🎯 ฆ่าเงาทุกชนิดทิ้ง! */
+                }
+                
+                .ps-tab-btn:hover { 
+                    color: var(--text-dark); 
+                }
+                .ps-tab-btn i { transition: transform 0.2s ease; }
+                .ps-tab-btn:hover i { transform: scale(1.15); }
+
+                /* 🌟 สถานะ Active ของแต่ละแท็บ (สะอาด เน้นสีอักษรและเส้นใต้หนาๆ) */
+                .ps-tab-btn.tab-admit-active {
+                    color: #ef4444 !important;
+                    border-bottom-color: #ef4444 !important;
+                    font-weight: 800;
+                }
+                .ps-tab-btn.tab-transfer-active {
+                    color: #0ea5e9 !important;
+                    border-bottom-color: #0ea5e9 !important;
+                    font-weight: 800;
+                }
+                .ps-tab-btn.tab-deceased-active {
+                    color: var(--text-dark, #334155) !important;
+                    border-bottom-color: var(--text-dark, #334155) !important;
+                    font-weight: 800;
+                }
+
+                /* 🪟 พาเนลเนื้อหาหลัก */
+                #ps-main-panel {
+                    border-top-width: 4px !important;
+                    border-top-style: solid !important;
+                    transition: border-top-color 0.4s ease;
+                    border-radius: 20px;
+                    background-color: var(--bg-surface);
+                    border-left: 1px solid var(--border-color);
+                    border-right: 1px solid var(--border-color);
+                    border-bottom: 1px solid var(--border-color);
+                    min-height: 400px;
+                    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05) !important; /* เงาบางๆ แค่ใต้กล่องตาราง */
+                }
+                #ps-main-panel.panel-admit-active { border-top-color: #ef4444 !important; }
+                #ps-main-panel.panel-transfer-active { border-top-color: #0ea5e9 !important; }
+                #ps-main-panel.panel-deceased-active { border-top-color: var(--text-dark, #334155) !important; }
+
+                .safe-icon { font-family: 'Font Awesome 6 Free', 'FontAwesome', sans-serif !important; font-weight: 900 !important; font-style: normal !important; }
+            </style>
+
+            <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 fade-in-up">
                 <div>
                     <h2 class="page-title text-danger" style="font-size: 28px;">
-                        <div class="d-inline-flex align-items-center justify-content-center rounded-4 shadow-sm me-2" style="width: 45px; height: 45px; background: var(--danger-gradient); color: white;">
-                            <i class="fa-solid fa-truck-medical"></i>
+                        <div class="me-3 d-inline-flex align-items-center justify-content-center rounded-4 shadow-sm" style="width: 50px; height: 50px; background: linear-gradient(135deg, #ef4444, #b91c1c); color: white;">
+                            <i class="fa-solid fa-truck-medical safe-icon fs-4"></i>
                         </div>
-                        ผู้ป่วยส่งต่อและจำหน่าย <span class="text-muted fw-normal" style="font-size: 20px;">(Archive)</span>
+                        ผู้ป่วยส่งต่อและจำหน่าย <span class="text-muted fw-normal ms-2" style="font-size: 18px; letter-spacing: 1px;">(ARCHIVE)</span>
                     </h2>
                     <p class="text-muted mt-2 mb-0 fw-bold" id="ps-count-text">กำลังซิงค์ข้อมูลจากระบบคลาวด์...</p>
                 </div>
                 <div class="d-flex gap-2 align-items-center flex-wrap">
-                    <div class="search-box-modern shadow-sm" style="width: 320px; padding: 10px 20px; border-radius: 50px; background-color: var(--bg-surface); border: 1px solid var(--border-color);">
-                        <i class="fa-solid fa-search text-danger"></i>
-                        <input type="text" id="psSearch" class="border-0 bg-transparent ms-2 w-100 fw-bold" placeholder="ค้นหา HN, ชื่อ..." style="outline: none; font-family:'Prompt'; color: var(--text-dark);">
+                    <div class="search-box-modern shadow-sm" style="width: 320px; padding: 12px 20px; border-radius: 50px; background-color: var(--bg-surface); border: 2px solid transparent; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); transition: all 0.3s;">
+                        <i class="fa-solid fa-search text-danger safe-icon"></i>
+                        <input type="text" id="psSearch" class="border-0 bg-transparent ms-2 w-100 fw-bold" placeholder="ค้นหา HN, ชื่อคนไข้..." style="outline: none; font-family:'Prompt'; color: var(--text-dark);">
                     </div>
                 </div>
             </div>
 
-            <ul class="nav finance-nav-tabs mb-4" id="statusTabs" role="tablist" style="border-bottom: 2px solid var(--border-color); gap: 10px; display: flex;">
-                <li class="nav-item" role="presentation">
-                    <!-- แท็บแรกมีคลาส active เป็นค่าเริ่มต้น -->
-                    <button class="nav-link active fw-bold px-4 py-3" id="tab-admit" onclick="PatientStatusPage.switchTab('Admit รพ.')" style="border: none; border-radius: 12px 12px 0 0; color: var(--danger); font-size: 16px; background: var(--bg-surface); box-shadow: 0 -4px 10px rgba(0,0,0,0.02); border-bottom: 3px solid var(--danger);">
-                        <i class="fa-solid fa-hospital me-2"></i> Admit รพ. (<span id="count-admit">0</span>)
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link fw-bold px-4 py-3 text-secondary" id="tab-transfer" onclick="PatientStatusPage.switchTab('ย้ายคลินิก')" style="border: none; border-radius: 12px 12px 0 0; font-size: 16px; background: transparent; border-bottom: 3px solid transparent;">
-                        <i class="fa-solid fa-right-left me-2"></i> ย้ายคลินิก/จำหน่าย (<span id="count-transfer">0</span>)
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link fw-bold px-4 py-3 text-dark" id="tab-deceased" onclick="PatientStatusPage.switchTab('เสียชีวิต')" style="border: none; border-radius: 12px 12px 0 0; font-size: 16px; background: transparent; border-bottom: 3px solid transparent;">
-                        <i class="fa-solid fa-book-skull me-2"></i> เสียชีวิต (<span id="count-deceased">0</span>)
-                    </button>
-                </li>
-            </ul>
+            <div class="ps-tabs-wrapper" id="statusTabs">
+                <button class="ps-tab-btn tab-admit-active" id="tab-admit" onclick="PatientStatusPage.switchTab('Admit รพ.')">
+                    <i class="fa-solid fa-hospital me-2 safe-icon"></i> Admit รพ. 
+                    <span class="badge bg-danger ms-2 rounded-pill" id="count-admit">0</span>
+                </button>
+                <button class="ps-tab-btn" id="tab-transfer" onclick="PatientStatusPage.switchTab('ย้ายคลินิก')">
+                    <i class="fa-solid fa-truck-arrow-right me-2 safe-icon"></i> ย้ายคลินิก/จำหน่าย 
+                    <span class="badge bg-info text-white ms-2 rounded-pill" id="count-transfer">0</span>
+                </button>
+                <button class="ps-tab-btn" id="tab-deceased" onclick="PatientStatusPage.switchTab('เสียชีวิต')">
+                    <i class="fa-solid fa-book-skull me-2 safe-icon"></i> เสียชีวิต 
+                    <span class="badge bg-secondary ms-2 rounded-pill" id="count-deceased">0</span>
+                </button>
+            </div>
             
-            <div class="modern-panel shadow-sm p-4 position-relative overflow-hidden" style="border-top: 5px solid var(--danger); background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 20px;">
-                <div style="position: absolute; top: -30px; right: -30px; opacity: 0.02; font-size: 300px; pointer-events: none; color: var(--text-dark);"><i class="fa-solid fa-truck-medical"></i></div>
+            <div class="modern-panel p-4 position-relative overflow-hidden panel-admit-active fade-in-up" id="ps-main-panel" style="animation-delay: 0.1s;">
+                <div style="position: absolute; top: -30px; right: -30px; opacity: 0.03; font-size: 300px; pointer-events: none; color: var(--text-dark); transform: rotate(-10deg);"><i class="fa-solid fa-folder-tree safe-icon"></i></div>
                 
                 <div class="table-responsive rounded-4 border position-relative z-1 shadow-sm pb-2" style="background-color: var(--bg-surface); border-color: var(--border-color) !important;">
                     <table class="table table-premium w-100 mb-0">
                         <thead>
                             <tr>
-                                <th style="width: 30%;"><i class="fa-solid fa-id-card-clip text-primary me-2"></i> ผู้ป่วย (HN & ชื่อ)</th>
-                                <th style="width: 25%;"><i class="fa-solid fa-phone text-info me-2"></i> ข้อมูลติดต่อ</th>
-                                <th style="width: 15%;"><i class="fa-solid fa-shield-heart text-success me-2"></i> สิทธิรักษา</th>
-                                <th class="text-center" style="width: 10%;"><i class="fa-solid fa-chart-simple text-warning me-2"></i> Status</th>
-                                <th class="text-center" style="width: 20%;"><i class="fa-solid fa-gears text-secondary me-2"></i> จัดการ / ดึงกลับ</th>
+                                <th style="width: 30%;"><i class="fa-solid fa-id-card-clip text-primary me-2 safe-icon"></i> ผู้ป่วย (HN & ชื่อ)</th>
+                                <th style="width: 25%;"><i class="fa-solid fa-phone text-info me-2 safe-icon"></i> ข้อมูลติดต่อ</th>
+                                <th style="width: 15%;"><i class="fa-solid fa-shield-heart text-success me-2 safe-icon"></i> สิทธิรักษา</th>
+                                <th class="text-center" style="width: 10%;"><i class="fa-solid fa-chart-simple text-warning me-2 safe-icon"></i> Status</th>
+                                <th class="text-center" style="width: 20%;"><i class="fa-solid fa-gears text-secondary me-2 safe-icon"></i> จัดการ / ดึงกลับ</th>
                             </tr>
                         </thead>
                         <tbody id="ps-table-body">
-                            <tr><td colspan="5" class="text-center py-5 text-danger"><i class="fas fa-spinner fa-spin fa-3x mb-3 drop-shadow"></i><br>กำลังดึงข้อมูลเวชระเบียน...</td></tr>
+                            <tr><td colspan="5" class="text-center py-5 text-danger"><i class="fas fa-circle-notch fa-spin fa-3x mb-3 drop-shadow safe-icon"></i><br><h5 class="fw-bold">กำลังเชื่อมต่อคลาวด์...</h5></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -89,8 +166,17 @@ class PatientStatusPageComponent {
         setTimeout(() => {
             const searchInput = document.getElementById('psSearch');
             if (searchInput) {
-                searchInput.addEventListener('keyup', (e) => {
+                searchInput.addEventListener('input', (e) => {
                     this.renderTable(e.target.value.toLowerCase());
+                });
+                
+                searchInput.addEventListener('focus', () => {
+                    searchInput.parentElement.style.borderColor = 'var(--danger)';
+                    searchInput.parentElement.style.boxShadow = '0 0 0 4px rgba(239, 68, 68, 0.15)';
+                });
+                searchInput.addEventListener('blur', () => {
+                    searchInput.parentElement.style.borderColor = 'transparent';
+                    searchInput.parentElement.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.02)';
                 });
             }
         }, 100);
@@ -98,7 +184,6 @@ class PatientStatusPageComponent {
 
     destroy() {
         db.ref('patients_database_v2/patients').off('value');
-        console.log("🧹 [Patient Status] Unmounted and cleared listeners.");
     }
 
     autoCleanUpOldArchives() {
@@ -151,70 +236,63 @@ class PatientStatusPageComponent {
         if(document.getElementById('count-admit')) document.getElementById('count-admit').innerText = admit;
         if(document.getElementById('count-transfer')) document.getElementById('count-transfer').innerText = transfer;
         if(document.getElementById('count-deceased')) document.getElementById('count-deceased').innerText = deceased;
-        if(document.getElementById('ps-count-text')) document.getElementById('ps-count-text').innerText = `พบรายชื่อผู้ป่วยที่ถูกแยกไว้ทั้งหมด ${this.allData.length} ราย`;
+        if(document.getElementById('ps-count-text')) document.getElementById('ps-count-text').innerText = `รายการที่ถูกแยกไว้ทั้งหมด ${this.allData.length} แฟ้ม`;
     }
 
-    // 🚨 THE FIX: อัปเกรดลอจิกการสลับแท็บ เคลียร์คลาส 'active' ออกให้หมด 100%
     switchTab(tabName) {
         this.currentTab = tabName;
+        const panel = document.getElementById('ps-main-panel');
         
-        // 1. CLEAR ALL TABS (ถอดหมวก VIP ออกจากทุกคน)
         ['tab-admit', 'tab-transfer', 'tab-deceased'].forEach(id => {
             let el = document.getElementById(id);
-            if(el) {
-                el.style.background = 'transparent';
-                el.style.borderBottom = '3px solid transparent';
-                el.style.boxShadow = 'none';
-                // 🚨 หัวใจสำคัญ: ต้อง remove คลาส 'active' ออกด้วย!
-                el.classList.remove('active', 'text-danger', 'text-secondary', 'text-dark', 'text-white');
-                el.classList.add('text-secondary');
-            }
+            if(el) el.classList.remove('tab-admit-active', 'tab-transfer-active', 'tab-deceased-active');
         });
+        if(panel) panel.classList.remove('panel-admit-active', 'panel-transfer-active', 'panel-deceased-active');
 
-        // 2. SET ACTIVE TAB (สวมหมวก VIP ให้แท็บที่ถูกเลือก)
         let activeEl = null;
-        let activeColor = '';
+        let activeClass = '';
+        let panelClass = '';
         
         if(tabName === 'Admit รพ.') { 
             activeEl = document.getElementById('tab-admit'); 
-            activeColor = 'var(--danger)'; 
-            activeEl.classList.add('text-danger', 'active'); 
+            activeClass = 'tab-admit-active';
+            panelClass = 'panel-admit-active';
         }
         else if(tabName === 'ย้ายคลินิก') { 
             activeEl = document.getElementById('tab-transfer'); 
-            activeColor = '#64748b'; 
-            activeEl.classList.add('text-secondary', 'active');
+            activeClass = 'tab-transfer-active';
+            panelClass = 'panel-transfer-active';
         }
         else if(tabName === 'เสียชีวิต') { 
             activeEl = document.getElementById('tab-deceased'); 
-            activeColor = 'var(--text-dark)'; 
-            activeEl.classList.add('text-dark', 'active');
+            activeClass = 'tab-deceased-active';
+            panelClass = 'panel-deceased-active';
         }
 
-        if(activeEl) {
-            activeEl.classList.remove('text-secondary'); // เอาสีจางตอนแรกออก
-            activeEl.style.background = 'var(--bg-surface)'; 
-            activeEl.style.borderBottom = `3px solid ${activeColor}`;
-            activeEl.style.boxShadow = '0 -4px 10px rgba(0,0,0,0.05)';
-        }
+        if(activeEl) activeEl.classList.add(activeClass);
+        if(panel) panel.classList.add(panelClass);
 
-        // รีโหลดตาราง
         this.renderTable(document.getElementById('psSearch') ? document.getElementById('psSearch').value.toLowerCase() : "");
     }
 
     restorePatient(hn, patientName) {
         Swal.fire({
-            title: 'ยืนยันการดึงผู้ป่วยกลับ?',
+            title: '<h4 class="fw-bold text-success mb-0" style="font-family:\'Prompt\';"><i class="fa-solid fa-rotate-left me-2"></i> ดึงผู้ป่วยกลับ</h4>',
             html: `คุณต้องการนำคุณ <b>${patientName}</b><br>กลับเข้าสู่ทะเบียนผู้ป่วย <b>"สถานะปกติ"</b> ใช่หรือไม่?`,
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#10b981',
             cancelButtonColor: '#64748b',
-            confirmButtonText: '<i class="fa-solid fa-rotate-left me-1"></i> ดึงกลับสู่ระบบ',
-            cancelButtonText: 'ยกเลิก'
+            confirmButtonText: '<i class="fa-solid fa-check me-1"></i> ยืนยันการดึงกลับ',
+            cancelButtonText: 'ยกเลิก',
+            customClass: {
+                popup: 'premium-alert',
+                confirmButton: 'btn-premium-swal btn-success-swal mx-2',
+                cancelButton: 'btn-cancel-swal mx-2'
+            }
         }).then((result) => {
             if (result.isConfirmed) {
-                Swal.fire({ title: 'กำลังประมวลผล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+                Swal.fire({ title: 'กำลังประมวลผล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }, customClass: { popup: 'premium-alert' } });
                 
                 db.ref('patients_database_v2/patients').once('value').then(snap => {
                     let data = snap.val();
@@ -228,12 +306,19 @@ class PatientStatusPageComponent {
                         patientsList[targetIndex].last_updated = new Date().toISOString();
                         
                         db.ref('patients_database_v2/patients').set(patientsList).then(() => {
-                            Swal.fire('ดึงกลับสำเร็จ!', 'ผู้ป่วยกลับไปอยู่ในทะเบียนหลักเรียบร้อยแล้ว', 'success');
+                            Swal.fire({
+                                title: 'ดึงกลับสำเร็จ!', 
+                                text: 'ผู้ป่วยกลับไปอยู่ในทะเบียนหลักเรียบร้อยแล้ว', 
+                                icon: 'success',
+                                timer: 1500,
+                                showConfirmButton: false,
+                                customClass: { popup: 'premium-alert' }
+                            });
                         }).catch(err => {
-                            Swal.fire('ข้อผิดพลาด', err.message, 'error');
+                            Swal.fire({ title: 'ข้อผิดพลาด', text: err.message, icon: 'error', customClass: { popup: 'premium-alert' } });
                         });
                     } else {
-                        Swal.fire('ข้อผิดพลาด', 'ไม่พบข้อมูลผู้ป่วยในระบบ', 'error');
+                        Swal.fire({ title: 'ข้อผิดพลาด', text: 'ไม่พบข้อมูลผู้ป่วยในระบบ', icon: 'error', customClass: { popup: 'premium-alert' } });
                     }
                 });
             }
@@ -254,16 +339,21 @@ class PatientStatusPageComponent {
         }
 
         if (filtered.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted"><i class="fa-solid fa-box-archive fa-3x mb-3" style="opacity:0.2;"></i><br>ไม่มีรายชื่อผู้ป่วยในหมวดหมู่นี้</td></tr>`;
+            let iconHtml = '<i class="fa-solid fa-folder-open fa-3x mb-3 text-secondary" style="opacity:0.3;"></i>';
+            if(this.currentTab === 'Admit รพ.') iconHtml = '<i class="fa-solid fa-bed fa-3x mb-3 text-danger" style="opacity:0.3;"></i>';
+            if(this.currentTab === 'ย้ายคลินิก') iconHtml = '<i class="fa-solid fa-truck-arrow-right fa-3x mb-3 text-info" style="opacity:0.3;"></i>';
+            if(this.currentTab === 'เสียชีวิต') iconHtml = '<i class="fa-solid fa-book-skull fa-3x mb-3 text-dark" style="opacity:0.3;"></i>';
+
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted">${iconHtml}<br><h5 class="fw-bold mt-2">ไม่มีข้อมูลในหมวดหมู่นี้</h5></td></tr>`;
             return;
         }
 
         let html = "";
         filtered.forEach(p => {
             let statusBadge = '';
-            if (p.status === "Admit รพ.") statusBadge = `<span class="badge bg-danger px-3 py-2 rounded-pill shadow-sm" style="font-size:12px;"><i class="fa-solid fa-truck-medical me-1"></i> ${p.status}</span>`;
-            else if (p.status === "ย้ายคลินิก") statusBadge = `<span class="badge bg-secondary px-3 py-2 rounded-pill shadow-sm" style="font-size:12px;"><i class="fa-solid fa-right-left me-1"></i> ${p.status}</span>`;
-            else if (p.status === "เสียชีวิต") statusBadge = `<span class="badge bg-dark px-3 py-2 rounded-pill shadow-sm" style="font-size:12px;"><i class="fa-solid fa-book-skull me-1"></i> ${p.status}</span>`;
+            if (p.status === "Admit รพ.") statusBadge = `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-2 rounded-pill shadow-sm" style="font-size:12px;"><i class="fa-solid fa-truck-medical me-1 safe-icon"></i> ${p.status}</span>`;
+            else if (p.status === "ย้ายคลินิก") statusBadge = `<span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-3 py-2 rounded-pill shadow-sm" style="font-size:12px;"><i class="fa-solid fa-right-left me-1 safe-icon"></i> ${p.status}</span>`;
+            else if (p.status === "เสียชีวิต") statusBadge = `<span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-3 py-2 rounded-pill shadow-sm" style="font-size:12px;"><i class="fa-solid fa-book-skull me-1 safe-icon"></i> ${p.status}</span>`;
 
             let imgSrc = p.photo_base64 ? (p.photo_base64.startsWith('data:image') ? p.photo_base64 : 'data:image/jpeg;base64,' + p.photo_base64) : `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name_th||'X')}&background=334155&color=fff&bold=true`;
             let fullName = `${p.title || ''}${p.name_th || 'ไม่ระบุชื่อ'}`;
@@ -279,27 +369,27 @@ class PatientStatusPageComponent {
             }
 
             html += `
-            <tr class="card-hover-float" style="cursor: default;">
+            <tr class="align-middle card-hover-float" style="cursor: default;">
                 <td>
                     <div class="d-flex align-items-center">
-                        <img src="${imgSrc}" class="me-3 shadow-sm border border-3 border-dark" style="width: 55px; height: 55px; border-radius: 14px; object-fit: cover; filter: grayscale(20%);">
+                        <img src="${imgSrc}" class="me-3 shadow-sm border border-3 border-light" style="width: 55px; height: 55px; border-radius: 14px; object-fit: cover; filter: grayscale(15%); transition: all 0.3s;" onmouseover="this.style.filter='grayscale(0%)'" onmouseout="this.style.filter='grayscale(15%)'">
                         <div>
                             <div class="fw-bold text-dark" style="font-size:15.5px; font-family:'Prompt';">${fullName}</div>
-                            <div class="text-muted fw-bold mt-1" style="font-size:13px;"><i class="fa-solid fa-id-card-clip me-1"></i> ${p.hn || '-'} <span class="ms-2 text-muted fw-normal">| อายุ: ${p.age || '-'} ปี</span></div>
-                            <div class="small text-danger fw-bold mt-1" style="font-size:11px;"><i class="fa-solid fa-clock me-1"></i> จำหน่ายเมื่อ: ${formattedDate}</div>
+                            <div class="text-muted fw-bold mt-1" style="font-size:13px;"><i class="fa-solid fa-id-card-clip me-1 safe-icon"></i> ${p.hn || '-'} <span class="ms-2 text-muted fw-normal">| อายุ: ${p.age || '-'} ปี</span></div>
+                            <div class="small text-secondary fw-bold mt-1" style="font-size:11px;"><i class="fa-solid fa-clock me-1 safe-icon"></i> ย้ายเมื่อ: ${formattedDate}</div>
                         </div>
                     </div>
                 </td>
                 <td>
-                    <div class="fw-bold text-dark" style="font-size:13.5px;"><i class="fa-solid fa-phone text-secondary me-2"></i> ${p.phone || '-'}</div>
-                    <div class="text-muted small mt-1" style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><i class="fa-solid fa-truck-medical text-danger me-2"></i> ${p.emergency_contact || '-'}</div>
+                    <div class="fw-bold text-dark" style="font-size:13.5px;"><i class="fa-solid fa-phone text-secondary me-2 safe-icon"></i> ${p.phone || '-'}</div>
+                    <div class="text-muted small mt-1" style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><i class="fa-solid fa-house-chimney-medical text-danger me-2 safe-icon"></i> ${p.emergency_contact || '-'}</div>
                 </td>
                 <td class="fw-bold text-secondary" style="font-size:13.5px;">${p.right || '-'}</td>
                 <td class="text-center">${statusBadge}</td>
                 <td class="text-center">
                     <div class="d-flex justify-content-center gap-2">
-                        <button class="btn btn-sm btn-primary shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0;" onclick="App.switchPage('patient_history', null, '${p.hn}')" title="แฟ้มประวัติ (EMR)"><i class="fa-solid fa-folder-open"></i></button>
-                        <button class="btn btn-sm btn-success text-white shadow-sm" style="border-radius:10px; padding: 0 15px; height:34px; font-size:13px; display:inline-flex; align-items:center; gap:5px;" onclick="PatientStatusPage.restorePatient('${p.hn}', '${fullName}')" title="ดึงกลับเป็นผู้ป่วยปกติ"><i class="fa-solid fa-rotate-left"></i> ดึงกลับ</button>
+                        <button class="btn btn-sm btn-primary shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0;" onclick="App.switchPage('patient_history', null, '${p.hn}')" title="เปิดดูแฟ้มประวัติ (EMR)"><i class="fa-solid fa-folder-open safe-icon"></i></button>
+                        <button class="btn btn-sm btn-success text-white shadow-sm" style="border-radius:10px; padding: 0 16px; height:34px; font-size:13px; display:inline-flex; align-items:center; gap:6px;" onclick="PatientStatusPage.restorePatient('${p.hn}', '${fullName}')" title="ดึงกลับเข้าทะเบียนหลัก"><i class="fa-solid fa-rotate-left safe-icon"></i> ดึงกลับ</button>
                     </div>
                 </td>
             </tr>`;

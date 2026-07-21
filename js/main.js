@@ -1,5 +1,21 @@
 // js/main.js
-// 🚀 Enterprise Core Router: Bulletproof Rendering, Zero-Freeze, Dynamic Real-time RBAC & Ghost CSS Terminator
+// 🚀 Enterprise Core Router: Multi-Tab Enabled, Zero-Popup Paradigm & Real-time RBAC (v11.0)
+
+document.addEventListener('click', function(e) {
+    const link = e.target.closest('a[target="_blank"]');
+    if (link) {
+        e.preventDefault();
+        Swal.fire({
+            title: '<span style="font-family:Prompt; font-size:18px; font-weight:bold;"><i class="fa-solid fa-file-lines text-primary me-2"></i> เปิดเอกสาร / หน้าต่างใหม่</span>',
+            html: `<iframe src="${link.href}" style="width:100%; height:80vh; border:none; border-radius:12px; background:#fff; box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);"></iframe>`,
+            width: '90%',
+            padding: '15px',
+            showConfirmButton: false,
+            showCloseButton: true,
+            customClass: { popup: 'premium-alert' }
+        });
+    }
+});
 
 const App = {
     currentUser: null,
@@ -13,7 +29,6 @@ const App = {
     
     pages: {}, 
 
-    // 🚨 THE FIX: ตั้งค่า Default Fallback เผื่อกรณีอินเทอร์เน็ตหลุดหรือฐานข้อมูลว่างเปล่า 🚨
     defaultRolePermissions: {
         'admin': ['*'],
         'doctor': ['dashboard', 'visits', 'visit_detail', 'patients', 'patient_history', 'document_center', 'search_copy', 'about'],
@@ -24,7 +39,6 @@ const App = {
         'stock': ['dashboard', 'inventory', 'stock_manage', 'stock_history', 'monthly_requisition', 'stock_forecast', 'usage_statistics', 'search_copy', 'about']
     },
 
-    // ตัวแปรเก็บสิทธิ์ที่ดึงมาจาก Firebase
     rolePermissions: {},
 
     initPages: function() {
@@ -40,6 +54,7 @@ const App = {
             settings: typeof SettingsPage !== 'undefined' ? SettingsPage : window.SettingsPage,
             search_copy: typeof SearchCopyPage !== 'undefined' ? SearchCopyPage : window.SearchCopyPage,
             about: typeof AboutPage !== 'undefined' ? AboutPage : window.AboutPage,
+            shift_schedule: typeof ShiftSchedulePage !== 'undefined' ? ShiftSchedulePage : window.ShiftSchedulePage,
             inventory: typeof InventoryPage !== 'undefined' ? InventoryPage : window.InventoryPage,
             stock_forecast: typeof StockForecastPage !== 'undefined' ? StockForecastPage : window.StockForecastPage,
             stock_manage: typeof StockManagePage !== 'undefined' ? StockManagePage : window.StockManagePage,
@@ -166,17 +181,14 @@ const App = {
         this.mainClockInterval = setInterval(updateClock, 1000);
     },
 
-    // 🚨 THE FIX: อัปเกรดระบบ RBAC ให้ฟังคำสั่งจาก Firebase แบบ Real-time 🚨
     applyRBAC: function() {
         if (!this.currentUser) return;
         const role = this.currentUser.role || 'nurse'; 
         
-        // เช็คก่อนว่าโหลดมาจาก Firebase หรือยัง ถ้ายังให้ใช้ Default ไปก่อน
         const permissionsSrc = Object.keys(this.rolePermissions).length > 0 ? this.rolePermissions : this.defaultRolePermissions;
         const allowedPages = permissionsSrc[role] || [];
         const isAdmin = allowedPages.includes('*');
 
-        // 1. ซ่อน/แสดง เมนูซ้ายมือ (Sidebar Nav Items)
         const navItems = document.querySelectorAll('#mainNavigation .nav-item');
         navItems.forEach(item => {
             const pageName = item.getAttribute('data-page');
@@ -191,7 +203,6 @@ const App = {
             }
         });
 
-        // 2. ซ่อนหมวดหมู่หลัก (Nav Sections) หากเมนูย่อยถูกปิดหมด
         let currentSection = null;
         let visibleCount = 0;
         
@@ -208,7 +219,6 @@ const App = {
         });
         if (currentSection && visibleCount === 0) currentSection.style.display = 'none';
 
-        // 3. เตะออกจากหน้าจอทันที! ถ้าระหว่างที่ใช้งานอยู่โดนถอดสิทธิ์
         const currentPageEl = document.querySelector('.nav-item.active');
         if (currentPageEl) {
             const currentPage = currentPageEl.getAttribute('data-page');
@@ -232,7 +242,6 @@ const App = {
         const mainContent = document.querySelector('.main-content');
         let appContent = document.getElementById('app-content');
 
-        // 🚨 บล็อกการเปิดหน้าจาก Console หากไม่มีสิทธิ์
         if (pageName !== 'login' && this.currentUser) {
             const role = this.currentUser.role || 'nurse';
             const permissionsSrc = Object.keys(this.rolePermissions).length > 0 ? this.rolePermissions : this.defaultRolePermissions;
@@ -263,7 +272,8 @@ const App = {
             if(mainContent) mainContent.style.marginLeft = '';
             if(appContent) appContent.style.padding = '';
             
-            if (!this.currentUser && localStorage.getItem('dialysis_user_session')) {
+            // 🚨 THE FIX: เปลี่ยนมาเช็คข้อมูลจาก SessionStorage
+            if (!this.currentUser && sessionStorage.getItem('dialysis_user_session')) {
                 this.checkAuth();
             }
         } else {
@@ -337,14 +347,25 @@ const App = {
         }, 150);
     },
 
+    // 🚨 THE FIX: อัปเกรดฟังก์ชัน logout ทะลวงกำแพง Z-Index
     logout: function() {
         Swal.fire({
             title: 'ออกจากระบบ?',
             text: "คุณต้องการออกจากระบบเวชระเบียนใช่หรือไม่?",
             icon: 'question',
-            showCancelButton: true, confirmButtonColor: '#ef4444', cancelButtonColor: '#cbd5e1',
-            confirmButtonText: '<i class="fa-solid fa-sign-out-alt me-2"></i> ออกจากระบบ', cancelButtonText: 'ยกเลิก',
-            customClass: { popup: 'shadow-lg border rounded-4' }
+            showCancelButton: true, 
+            confirmButtonColor: '#ef4444', 
+            cancelButtonColor: '#cbd5e1',
+            confirmButtonText: '<i class="fa-solid fa-sign-out-alt me-2"></i> ออกจากระบบ', 
+            cancelButtonText: 'ยกเลิก',
+            customClass: { popup: 'shadow-lg border rounded-4' },
+            // 🌟 MAGIC FIX: ดันเลเยอร์ของกล่องข้อความให้ทะลุหน้าจอ Lock Screen ออกมา
+            didOpen: () => {
+                const container = Swal.getContainer();
+                if (container) {
+                    container.style.setProperty('z-index', '9999999', 'important');
+                }
+            }
         }).then((result) => {
             if (result.isConfirmed) {
                 if(this.lockClockInterval) clearInterval(this.lockClockInterval);
@@ -354,8 +375,9 @@ const App = {
                     try { this.activePageModule.destroy(); } catch (e) {}
                 }
 
-                localStorage.removeItem('dialysis_user_session');
-                localStorage.removeItem('dialysis_is_locked'); 
+                // กวาดล้างข้อมูลใน SessionStorage
+                sessionStorage.removeItem('dialysis_user_session');
+                sessionStorage.removeItem('dialysis_is_locked'); 
                 sessionStorage.removeItem('dialysis_session_active'); 
                 window.location.reload(); 
             }
@@ -390,7 +412,8 @@ const App = {
 
     lockScreen: function() {
         this.isLocked = true;
-        localStorage.setItem('dialysis_is_locked', 'true'); 
+        // 🚨 THE FIX: เปลี่ยนมาใช้ SessionStorage
+        sessionStorage.setItem('dialysis_is_locked', 'true'); 
         
         let overlay = document.getElementById('lock-screen-overlay');
         if (!overlay) {
@@ -495,7 +518,8 @@ const App = {
             if (this.currentUser && this.currentUser.id === 'MASTER_ADMIN' && pw === 'admin1234') {
                 this.isLocked = false;
                 if(this.lockClockInterval) clearInterval(this.lockClockInterval);
-                localStorage.removeItem('dialysis_is_locked'); 
+                // 🚨 THE FIX: เปลี่ยนมาใช้ SessionStorage
+                sessionStorage.removeItem('dialysis_is_locked'); 
                 const overlay = document.getElementById('lock-screen-overlay');
                 if (overlay) overlay.remove();
                 this.resetIdleTimer();
@@ -507,7 +531,8 @@ const App = {
             if (user) {
                 this.isLocked = false;
                 if(this.lockClockInterval) clearInterval(this.lockClockInterval); 
-                localStorage.removeItem('dialysis_is_locked'); 
+                // 🚨 THE FIX: เปลี่ยนมาใช้ SessionStorage
+                sessionStorage.removeItem('dialysis_is_locked'); 
                 const overlay = document.getElementById('lock-screen-overlay');
                 if (overlay) overlay.remove();
                 this.resetIdleTimer();
@@ -524,14 +549,15 @@ const App = {
     },
 
     checkAuth: function() {
-        const isLockedFromStorage = localStorage.getItem('dialysis_is_locked') === 'true';
+        // 🚨 THE FIX: ดึงค่าสถานะการล็อคจอ และข้อมูลล็อกอินจาก SessionStorage
+        const isLockedFromStorage = sessionStorage.getItem('dialysis_is_locked') === 'true';
         if (isLockedFromStorage) {
             this.isLocked = true;
         }
 
         this.clearAllOverlays();
 
-        const sessionStr = localStorage.getItem('dialysis_user_session');
+        const sessionStr = sessionStorage.getItem('dialysis_user_session');
         const sidebar = document.getElementById('sidebar');
         const topbar = document.querySelector('.topbar');
         const mainContent = document.querySelector('.main-content');
@@ -579,9 +605,12 @@ const App = {
                     avatar.innerText = initials;
                 }
             }
+
+            this._syncAgentVersion();
+
         } catch (e) {
             console.error("Session parse error", e);
-            localStorage.removeItem('dialysis_user_session');
+            sessionStorage.removeItem('dialysis_user_session');
             this.switchPage('login');
             return false;
         }
@@ -593,6 +622,25 @@ const App = {
         }
 
         return true; 
+    },
+
+    _syncAgentVersion: function() {
+        try {
+            if (typeof AboutPage !== 'undefined' && AboutPage.version) {
+                const appVersion = AboutPage.version;
+                
+                fetch(`http://127.0.0.1:8000/health?v=${encodeURIComponent(appVersion)}`, { method: 'GET', mode: 'cors' })
+                    .then(res => res.json())
+                    .then(data => {
+                        console.log("✅ [Agent Sync]: Version synced to Python Agent ->", appVersion);
+                    })
+                    .catch(err => {
+                        console.log("ℹ️ [Agent Sync]: Agent not running, skip version sync.");
+                    });
+            }
+        } catch(e) {
+            console.warn("[Agent Sync] Failed to sync version:", e);
+        }
     }
 };
 
@@ -603,23 +651,18 @@ window.addEventListener('DOMContentLoaded', () => {
     try { App.initClock(); } catch (e) { console.error("Clock Init Error:", e); }
 
     if (!sessionStorage.getItem('dialysis_session_active')) {
-        localStorage.removeItem('dialysis_user_session');
-        localStorage.removeItem('dialysis_is_locked');
         sessionStorage.setItem('dialysis_session_active', 'true');
     }
 
-    // 🚨 THE FIX: เปิดท่อดึงสิทธิ์จาก Firebase ทันทีที่โหลดโปรแกรม (Real-time RBAC Hook)
     if (typeof db !== 'undefined') {
         db.ref('clinic_roles_v2').on('value', snap => {
             const data = snap.val();
             if (data) {
-                App.rolePermissions = data; // อัปเดตสิทธิ์ใหม่ล่าสุด
+                App.rolePermissions = data; 
             } else {
-                // ถ้าในฐานข้อมูลว่างเปล่า (ยังไม่เคยตั้งค่า) ให้สร้างครั้งแรกอัตโนมัติ
                 App.rolePermissions = App.defaultRolePermissions;
                 db.ref('clinic_roles_v2').set(App.defaultRolePermissions);
             }
-            // ถ้ายูสเซอร์ล็อกอินอยู่ ให้สับสวิตช์อัปเดตเมนูทันที!
             if (App.currentUser) App.applyRBAC();
         });
 
@@ -635,7 +678,6 @@ window.addEventListener('DOMContentLoaded', () => {
     const isAuthenticated = App.checkAuth();
     if (!isAuthenticated) return; 
 
-    // เช็คสิทธิ์และหาหน้าแรก (Default Page) ที่พนักงานคนนั้นเข้าได้
     const role = App.currentUser ? App.currentUser.role : 'nurse';
     const permissionsSrc = Object.keys(App.rolePermissions).length > 0 ? App.rolePermissions : App.defaultRolePermissions;
     const allowed = permissionsSrc[role] || [];
@@ -648,6 +690,26 @@ window.addEventListener('DOMContentLoaded', () => {
     const defaultMenu = document.querySelector(`.nav-item[data-page="${defaultPage}"]`);
     App.switchPage(defaultPage, defaultMenu);
 });
+
+function syncWithLocalAgent() {
+    let currentVersion = "5.5.0 (Enterprise Ultimate Edition)";
+    if (typeof AboutPage !== 'undefined' && AboutPage.version) {
+        currentVersion = AboutPage.version;
+    }
+
+    const agentUrl = `http://127.0.0.1:8000/health?v=${encodeURIComponent(currentVersion)}`;
+    fetch(agentUrl, { method: 'GET' })
+        .then(res => res.json())
+        .then(data => {
+            // ซิงค์สำเร็จ
+        })
+        .catch(err => {
+            // ปล่อยผ่าน
+        });
+}
+
+setTimeout(syncWithLocalAgent, 1000);
+setInterval(syncWithLocalAgent, 3000);
 
 window.App = App;
 

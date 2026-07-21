@@ -186,18 +186,32 @@ class MonthlyRequisitionPageComponent {
         `;
     }
 
-    init() {
+    // 🚨 THE FIX 2: (ไฟล์ monthly_requisition.js) อัปเกรดให้รับ Data ได้ทั้ง 2 ช่องทาง (Payload & LocalStorage)
+    init(payload) {
         const today = new Date();
         const monthStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
         document.getElementById('req-month-picker').value = monthStr;
 
-        const draft = localStorage.getItem('smart_po_sync_data');
-        if (draft) {
-            try {
-                this.syncedItems = JSON.parse(draft);
-                document.getElementById('sync-status-text').innerHTML = '<span class="badge shadow-sm rounded-pill fw-bold" style="background-color: #fef08a !important; color: #92400e !important; font-size: 13px; border: 1px solid #fcd34d;"><i class="fa-solid fa-bolt me-1"></i> โหลดข้อมูลจากหน้าคำนวณยอดเบิก (Smart PO) สำเร็จ!</span>';
-                localStorage.removeItem('smart_po_sync_data'); 
-            } catch(e) { this.syncedItems = []; }
+        // 1. ลองดึงข้อมูลจาก Router Payload (ถ้ามีส่งมาสดๆ)
+        let incomingData = (payload && payload.syncedItems) ? payload.syncedItems : null;
+        
+        // 2. ถ้าไม่มี Payload ให้ไปค้นใน LocalStorage (เผื่อผู้ใช้กด Refresh หน้าจอ ข้อมูลจะได้ไม่หาย)
+        if (!incomingData) {
+            const draft = localStorage.getItem('smart_po_sync_data');
+            if (draft) {
+                try { 
+                    incomingData = JSON.parse(draft); 
+                } catch(e) { console.warn("Failed to parse draft sync data"); }
+            }
+        }
+
+        // 3. นำข้อมูลที่ได้มาตั้งค่า State และลบของเก่าทิ้งป้องกันการซ้ำซ้อน
+        if (incomingData && incomingData.length > 0) {
+            this.syncedItems = incomingData;
+            document.getElementById('sync-status-text').innerHTML = '<span class="badge shadow-sm rounded-pill fw-bold" style="background-color: #fef08a !important; color: #92400e !important; font-size: 13px; border: 1px solid #fcd34d;"><i class="fa-solid fa-bolt me-1"></i> โหลดข้อมูลจากหน้าคำนวณยอดเบิก (Smart PO) สำเร็จ!</span>';
+            
+            // เคลียร์ LocalStorage ทิ้งหลังจากดึงมาใช้แล้ว เพื่อความสะอาดของ Memory
+            localStorage.removeItem('smart_po_sync_data');
         } else {
             this.syncedItems = [];
             document.getElementById('sync-status-text').innerHTML = '<span class="badge shadow-sm rounded-pill fw-bold" style="background-color: #fee2e2 !important; color: #b91c1c !important; font-size: 14px; border: 1px solid #fca5a5;"><i class="fa-solid fa-circle-exclamation me-1"></i> กรุณาส่งข้อมูลมาจากหน้า "คำนวณยอดเบิก"</span>';
@@ -240,7 +254,7 @@ class MonthlyRequisitionPageComponent {
                     <span class="print-val-display print-val-center"></span>
                 </td>
                 <td class="col-qty">
-                    <input type="number" min="0" class="req-input qty-input req-qty-val d-print-none print-sync-input qty-inp" value="${this.#escapeHTML(String(item.qty || ''))}" oninput="App.pages.monthly_requisition.calculateTotal()">
+                    <input type="number" min="0" class="req-input qty-input req-qty-val d-print-none print-sync-input qty-inp" value="${this.#escapeHTML(String(item.adjustedReq || item.qty || ''))}" oninput="App.pages.monthly_requisition.calculateTotal()">
                     <span class="print-val-display print-val-center"></span>
                 </td>
                 <td class="col-remark">
@@ -280,7 +294,6 @@ class MonthlyRequisitionPageComponent {
             return;
         }
         
-        // 🚨 THE FIX: ไม่ใช้ span หุ้มทับแล้ว เพราะจะไปตีกับ CSS ให้ใช้ text ตรงๆ เลย CSS จะจัดการให้ดำสนิทเอง
         document.getElementById('print-month-display').innerText = this.getThaiMonth();
         
         const allInputs = document.querySelectorAll('.print-sync-input');
@@ -392,7 +405,7 @@ class MonthlyRequisitionPageComponent {
                     qty ? Number(qty) : "",
                     remark
                 ];
-                row.height = 26; // ขยายความสูงบรรทัดข้อมูลเพื่อให้อ่านง่าย
+                row.height = 26; 
 
                 for (let c = 1; c <= 6; c++) {
                     const cell = row.getCell(c);
@@ -405,17 +418,17 @@ class MonthlyRequisitionPageComponent {
             });
 
             // 5. โซนลายเซ็น
-            let sigStartRow = currentRowNum + 3; // เว้นระยะห่างตารางกับลายเซ็น
+            let sigStartRow = currentRowNum + 3;
 
             worksheet.mergeCells(`A${sigStartRow}:C${sigStartRow}`);
             worksheet.mergeCells(`D${sigStartRow}:F${sigStartRow}`);
             worksheet.getRow(sigStartRow).getCell(1).value = "ลงชื่อผู้เบิก.......................................................";
-            worksheet.getRow(sigStartRow).getCell(4).value = "               ☐ อนุมัติ";
+            worksheet.getRow(sigStartRow).getCell(4).value = "              ☐ อนุมัติ";
 
             worksheet.mergeCells(`A${sigStartRow+1}:C${sigStartRow+1}`);
             worksheet.mergeCells(`D${sigStartRow+1}:F${sigStartRow+1}`);
             worksheet.getRow(sigStartRow+1).getCell(1).value = "(.......................................................)";
-            worksheet.getRow(sigStartRow+1).getCell(4).value = "               ☐ ไม่อนุมัติ";
+            worksheet.getRow(sigStartRow+1).getCell(4).value = "              ☐ ไม่อนุมัติ";
 
             worksheet.mergeCells(`A${sigStartRow+2}:C${sigStartRow+2}`);
             worksheet.mergeCells(`D${sigStartRow+2}:F${sigStartRow+2}`);

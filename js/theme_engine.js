@@ -1,19 +1,20 @@
 // js/theme_engine.js
-// 👑 Theme Engine: The Global UI Controller (Subtle Background & Ghost Button Rescue)
+// 👑 Theme Engine V5.5: Perfect Color Mapping + Quantum Aesthetics
+// ผสานความสมบูรณ์แบบของสีกราฟิกเดิม เข้ากับแอนิเมชันขั้นสุดยอด (Ripple, Hover Physics, Sticky Tables)
 
 const ThemeEngine = {
     themes: {
         'modern': { 
-            name: 'Modern Blue', primary: '#2563eb', primary_dark: '#1e40af',
+            name: 'Modern Blue', primary: '#2563eb', primary_dark: '#1e40af', primary_glow: 'rgba(37, 99, 235, 0.25)',
             bg: '#f1f5f9', surface: '#ffffff', text: '#0f172a', text_muted: '#64748b', border: '#e2e8f0', type: 'light'
         },
         'glass': { 
-            name: 'Aurora Glass', primary: '#8b5cf6', primary_dark: '#6d28d9',
+            name: 'Aurora Glass', primary: '#8b5cf6', primary_dark: '#6d28d9', primary_glow: 'rgba(139, 92, 246, 0.35)',
             bg: 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)', surface: 'rgba(255, 255, 255, 0.55)', 
             text: '#1e1b4b', text_muted: '#4338ca', border: 'rgba(255, 255, 255, 0.4)', type: 'glass'
         },
         'minimal': { 
-            name: 'Midnight Pro', primary: '#10b981', primary_dark: '#047857',
+            name: 'Midnight Pro', primary: '#10b981', primary_dark: '#047857', primary_glow: 'rgba(16, 185, 129, 0.25)',
             bg: '#0f172a', surface: '#1e293b', text: '#f8fafc', text_muted: '#94a3b8', border: '#334155', type: 'dark'
         }
     },
@@ -46,6 +47,7 @@ const ThemeEngine = {
         const root = document.documentElement;
         root.style.setProperty('--primary', t.primary);
         root.style.setProperty('--primary-dark', t.primary_dark);
+        root.style.setProperty('--primary-glow', t.primary_glow);
         root.style.setProperty('--primary-gradient', `linear-gradient(135deg, ${t.primary} 0%, ${t.primary_dark} 100%)`);
         root.style.setProperty('--bg-body', t.bg);
         root.style.setProperty('--bg-surface', t.surface);
@@ -53,16 +55,61 @@ const ThemeEngine = {
         root.style.setProperty('--text-muted', t.text_muted);
         root.style.setProperty('--border-color', t.border);
 
+        // =========================================================================
+        // 🚀 1. AESTHETIC ENGINE (ตัวหนังสือคมกริบ, ปุ่มหยดน้ำ, กล่องมีมิติ, ช่องกรอกเรืองแสง)
+        // =========================================================================
         let css = `
             html body, html body .main-content, html body .login-container { 
                 background-color: var(--bg-body) !important; color: var(--text-dark) !important; 
+                -webkit-font-smoothing: antialiased !important; -moz-osx-font-smoothing: grayscale !important; text-rendering: optimizeLegibility !important;
             }
             .btn-premium-primary, .swal2-confirm { 
                 background: var(--primary-gradient) !important; color: #ffffff !important; border: none !important; 
             }
             a:not(.btn) { background-color: transparent !important; }
+
+            /* 🪟 Physics & Hover Effects (การ์ดยกตัวได้) */
+            .card, .modern-panel, .info-box, .visit-card {
+                transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease !important;
+            }
+            .card:hover, .modern-panel:hover, .visit-card:hover {
+                transform: translateY(-4px) !important;
+                box-shadow: 0 15px 35px -5px rgba(0,0,0,0.15) !important;
+            }
+
+            /* ⌨️ Breathing Inputs (ช่องกรอกข้อมูลเรืองแสง) */
+            input.form-control, select.form-select, textarea.form-control, .dataTables_filter input {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            }
+            input.form-control:focus, select.form-select:focus, textarea.form-control:focus, .dataTables_filter input:focus {
+                border-color: var(--primary) !important;
+                box-shadow: 0 0 0 4px var(--primary-glow) !important;
+                outline: none !important; transform: translateY(-1px);
+            }
+
+            /* 🔘 Interactive Ripple Buttons (แอนิเมชันปุ่มมีชีวิต) */
+            .btn { position: relative; overflow: hidden; transform: translateZ(0); transition: all 0.3s ease !important; }
+            .btn:hover { transform: translateY(-2px) scale(1.02) !important; }
+            .btn:active { transform: translateY(1px) scale(0.98) !important; }
+            .btn .ripple { position: absolute; border-radius: 50%; transform: scale(0); animation: ripple-effect 0.6s linear; background-color: rgba(255, 255, 255, 0.4); pointer-events: none; }
+            @keyframes ripple-effect { to { transform: scale(4); opacity: 0; } }
+
+            /* 📑 Smart Capsule Tabs (แท็บทรงแคปซูล) */
+            .nav-tabs { border-bottom: none !important; gap: 8px; padding: 4px; background: rgba(0,0,0,0.03); border-radius: 16px; display: inline-flex !important; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+            .nav-tabs::-webkit-scrollbar { display: none !important; }
+            .nav-tabs .nav-link { border: none !important; border-radius: 12px !important; font-weight: 700 !important; padding: 10px 24px !important; transition: all 0.3s ease !important; white-space: nowrap; }
+            .nav-tabs .nav-link.active { transform: scale(1.05); }
+
+            /* 📊 Sticky Headers สำหรับตารางโหมดสว่าง */
+            .table-responsive, .dataTables_wrapper { overflow-x: auto !important; }
+            html[data-bs-theme="light"] table.dataTable thead th, html[data-bs-theme="light"] table.table thead th {
+                position: sticky !important; top: 0 !important; z-index: 10 !important; background: #f8fafc !important;
+            }
         `;
 
+        // =========================================================================
+        // 🌑 2. PERFECT DARK MODE MAPPING (โค้ดสีสมบูรณ์แบบของคุณหมอ)
+        // =========================================================================
         if (t.type === 'dark') {
             const D = 'html[data-bs-theme="dark"] body';
 
@@ -158,17 +205,18 @@ const ThemeEngine = {
                     color: #94a3b8 !important; opacity: 1 !important; font-weight: 500 !important; 
                 }
 
-                /* 🚨 5. CRISP GRID TABLES */
+                /* 🚨 5. CRISP GRID TABLES (รวม Sticky Header ของ V5.0 เข้าไป) */
                 ${D} table, ${D} .table, ${D} .table-premium, ${D} .table-finance, ${D} .table-ledger, ${D} .req-table-ui {
                     color: #f1f5f9 !important; border-collapse: collapse !important; border: 1px solid #334155 !important; background-color: transparent !important;
                 }
                 ${D} table th, ${D} .table th, ${D} .table-premium th, ${D} .table-finance th, ${D} .table-ledger th, ${D} .req-table-ui th {
                     background-color: #020617 !important; background: #020617 !important; border: 1px solid #334155 !important; color: #f1f5f9 !important;
+                    position: sticky !important; top: 0 !important; z-index: 10 !important; /* <--- V5.0 Sticky */
                 }
                 ${D} table td, ${D} .table td, ${D} .table-premium td, ${D} .table-finance td, ${D} .table-ledger td, ${D} .req-table-ui td {
                     background-color: transparent !important; background: transparent !important; border: 1px solid #334155 !important; color: #f1f5f9 !important;
                 }
-                ${D} table tbody tr:hover td, ${D} .table tbody tr:hover td { background-color: #334155 !important; }
+                ${D} table tbody tr:hover td, ${D} .table tbody tr:hover td { background-color: #334155 !important; cursor: pointer; }
 
                 /* 🚨 6. FORMS & TABS */
                 ${D} .nav-tabs .nav-link.active, ${D} .nav-pills .nav-link.active, ${D} .finance-nav-tabs .nav-link.active, ${D} .emr-nav-tabs .nav-link.active {
@@ -204,8 +252,8 @@ const ThemeEngine = {
                     }
                     html body.theme-glass input:not([type="radio"]):not([type="checkbox"]), html body.theme-glass select, html body.theme-glass textarea, 
                     html body.theme-glass .form-control, html body.theme-glass .input-modern { background-color: rgba(255, 255, 255, 0.6) !important; }
-                    html body.theme-glass table.dataTable thead th, html body.theme-glass .table thead th { background: rgba(255,255,255,0.2) !important; }
-                    html body.theme-glass table.dataTable tbody tr:hover td { background-color: rgba(255,255,255,0.4) !important; }
+                    html body.theme-glass table.dataTable thead th, html body.theme-glass .table thead th { background: rgba(255,255,255,0.2) !important; position: sticky !important; top: 0 !important; z-index: 10 !important; }
+                    html body.theme-glass table.dataTable tbody tr:hover td { background-color: rgba(255,255,255,0.4) !important; cursor: pointer; }
                 `;
             }
         }
@@ -221,6 +269,9 @@ const ThemeEngine = {
 
         styleEl.innerHTML = css;
 
+        // 🌟 เปิดใช้งาน Ripple Engine
+        this.enableRippleEngine();
+
         if (typeof Swal !== 'undefined' && !this._isInit) {
             Swal.fire({
                 title: 'เปลี่ยนธีมสำเร็จ!', text: `อัปเดตเป็นสไตล์ "${t.name}" เรียบร้อยแล้ว`,
@@ -230,7 +281,36 @@ const ThemeEngine = {
     },
 
     // =========================================================================
-    // 🤖 THE DOM SENTINEL (หุ่นยนต์พิทักษ์ความมืด อัปเกรดเซนเซอร์จับสีเทา)
+    // 🌊 3. RIPPLE ENGINE (เครื่องยนต์ปุ่มหยดน้ำระดับ Android Material)
+    // =========================================================================
+    enableRippleEngine() {
+        if (this._rippleEnabled) return;
+        this._rippleEnabled = true;
+
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('.btn, .nav-link, .custom-option-item, .page-link');
+            if (!btn) return;
+
+            const rect = btn.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const ripple = document.createElement('span');
+            ripple.className = 'ripple';
+            ripple.style.left = `${x}px`;
+            ripple.style.top = `${y}px`;
+
+            const diameter = Math.max(rect.width, rect.height);
+            ripple.style.width = ripple.style.height = `${diameter}px`;
+            ripple.style.marginLeft = ripple.style.marginTop = `${-diameter / 2}px`;
+
+            btn.appendChild(ripple);
+            setTimeout(() => { ripple.remove(); }, 600);
+        });
+    },
+
+    // =========================================================================
+    // 🤖 THE DOM SENTINEL (หุ่นยนต์พิทักษ์ความมืด)
     // =========================================================================
     startSentinel() {
         if (this.sentinel) return;

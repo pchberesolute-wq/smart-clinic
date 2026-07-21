@@ -1,67 +1,95 @@
-// js/auto_purge_service.js
-// 🚀 Enterprise FinOps Engine: Distributed Auto-Purge Service (7-Year Data Retention Compliance)
+// js/pages/auto_purge_service.js
+// 🚀 Enterprise FinOps Engine V4.0: Quantum Distributed Auto-Purge Service
+// ระบบกวาดล้างข้อมูลอัจฉริยะ (7-Year Compliance) ป้องกัน Payload ล้น, ไร้อาการค้าง, และมี Audit Trail
 
-const AutoPurgeService = {
-    isPurging: false,
-    retentionYears: 7, // 🚨 ขยายเวลาเก็บข้อมูลเป็น 7 ปี ตามมาตรฐานเวชระเบียนสากล
+class FinOpsPurgeEngineService {
+    constructor() {
+        this.isPurging = false;
+        this.retentionYears = 7; // มาตรฐานเวชระเบียน 7 ปี
+        this.CHUNK_SIZE = 500; // 🚨 ป้องกัน Firebase แฮงก์ หั่นส่งทีละ 500 รายการ
+        this.LOCK_TIMEOUT_MINUTES = 30; // ถ้า Lock นานเกิน 30 นาทีถือว่าเครื่องพัง ให้ปลด Lock อัตโนมัติ
 
-    init: function() {
-        // หน่วงเวลา 10 วินาที เพื่อไม่ให้แย่ง Bandwidth ตอนเปิดหน้าจอ Dashboard ครั้งแรก
+        console.log("%c🌌 [FinOps Engine] V4.0 Quantum Purge Service Standby.", "color: #a855f7; font-weight: bold; font-size: 13px; text-shadow: 0 0 5px rgba(168,85,247,0.5);");
+    }
+
+    init() {
+        // หน่วงเวลา 15 วินาที รอให้หน้าจออื่นๆ (Dashboard, Tables) โหลดและวาดเสร็จก่อน 100%
         setTimeout(() => {
             this.tryAcquireLockAndPurge();
-        }, 10000);
-    },
+        }, 15000);
+    }
 
-    // 🔒 1. ระบบ Distributed Lock (ป้องกันรันซ้ำซ้อนจากหลายเครื่อง)
-    tryAcquireLockAndPurge: async function() {
+    // ============================================================================
+    // 🔒 1. Advanced Distributed Lock (กันรันซ้อน + มีระบบแก้ Deadlock)
+    // ============================================================================
+    async tryAcquireLockAndPurge() {
         if (typeof db === 'undefined') return;
 
-        const today = new Date().toISOString().split('T')[0];
-        const lockRef = db.ref('system_metadata/last_global_purge_date');
+        const todayDate = new Date().toISOString().split('T')[0];
+        const currentTime = new Date().getTime();
+        const lockRef = db.ref('system_metadata/finops_purge_lock');
 
         try {
-            // ใช้ Transaction สั่งคุยกับเซิร์ฟเวอร์โดยตรง (Locking Mechanism)
-            const { committed, snapshot } = await lockRef.transaction((currentValue) => {
-                // ถ้าวันนี้มีเครื่องอื่นทำไปแล้ว ยกเลิกทันที
-                if (currentValue === today) {
-                    return; // Abort transaction
+            const { committed, snapshot } = await lockRef.transaction((lockData) => {
+                if (lockData) {
+                    // ถ้าวันนี้ทำไปแล้ว (สำเร็จ) -> ยกเลิก
+                    if (lockData.last_completed_date === todayDate) return; 
+
+                    // ถ้ากำลังทำอยู่ (แต่ยังไม่เสร็จ)
+                    if (lockData.status === 'processing') {
+                        const lockAgeMins = (currentTime - lockData.timestamp) / (1000 * 60);
+                        // ถ้าเครื่องที่ล็อคไว้ ทำงานนานเกิน 30 นาที (คาดว่าไฟดับ/เน็ตหลุด) -> ยึดอำนาจ!
+                        if (lockAgeMins < this.LOCK_TIMEOUT_MINUTES) {
+                            return; // ยังไม่หมดเวลา ปล่อยเครื่องนั้นทำไป
+                        }
+                        console.warn("⚠️ [FinOps] ตรวจพบ Deadlock! ทำการยึดกุญแจ (Lock Override)");
+                    }
                 }
-                // ถ้ายังไม่มีใครทำ ให้เครื่องนี้เป็นคนทำ และเซ็ตวันที่ของวันนี้
-                return today; 
+
+                // สวมมงกุฎ ยึดกุญแจเป็นของเครื่องนี้
+                return {
+                    status: 'processing',
+                    timestamp: currentTime,
+                    last_completed_date: lockData?.last_completed_date || "2000-01-01"
+                };
             });
 
             if (!committed) {
-                console.log("✅ [FinOps] วันนี้คลินิกทำการกวาดล้างข้อมูลไปแล้วจากเครื่องอื่น (Standby Mode)");
+                console.log("✅ [FinOps] วันนี้คลินิกทำการกวาดล้างข้อมูลไปแล้ว หรือเครื่องอื่นกำลังทำงานอยู่");
                 return;
             }
 
-            // ถ้าได้กุญแจ (Lock) มาแล้ว ค่อยเริ่มทำความสะอาด
-            const deletedCount = await this.runGlobalPurge();
+            // 🚀 เริ่มกระบวนการกวาดล้าง
+            const stats = await this.runGlobalPurge();
             
-            if (deletedCount > 0) {
-                this.showToast(`คืนพื้นที่ให้ Cloud! ลบข้อมูลเก่าเกิน ${this.retentionYears} ปี จำนวน ${deletedCount} รายการ`);
+            // ปลดล็อคและบันทึกความสำเร็จ
+            await lockRef.set({
+                status: 'idle',
+                timestamp: new Date().getTime(),
+                last_completed_date: todayDate
+            });
+
+            // แจ้งเตือน + บันทึก Audit Log
+            if (stats.total > 0) {
+                this.showCyberToast(stats);
+                this.saveAuditLog(stats);
             }
+
         } catch (error) {
             console.error("❌ [FinOps] Transaction Lock Error:", error);
+            // พยายามปลดล็อคเผื่อระบบล่ม
+            await lockRef.child('status').set('idle');
         }
-    },
+    }
 
-    showToast: function(msg) {
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                toast: true, position: 'bottom-end', showConfirmButton: false, timer: 6000,
-                icon: 'info', title: '♻️ ' + msg,
-                customClass: { popup: 'shadow-lg border-primary rounded-4' }
-            });
-        }
-    },
-
-    // 🧹 2. ปฏิบัติการกวาดล้าง (Atomic Payload Construction)
-    runGlobalPurge: async function() {
-        if (this.isPurging) return 0;
+    // ============================================================================
+    // 🧹 2. Quantum Purge Execution (ไร้อาการค้าง 100%)
+    // ============================================================================
+    async runGlobalPurge() {
+        if (this.isPurging) return { total: 0 };
         this.isPurging = true;
 
-        console.log(`🚀 [FinOps] เริ่มต้นสแกนหาข้อมูลหมดอายุ (Older than ${this.retentionYears} years)...`);
+        console.log(`🚀 [FinOps] เริ่มสแกนข้อมูลหมดอายุขัย (Older than ${this.retentionYears} years)...`);
         
         const cutoffDate = new Date();
         cutoffDate.setFullYear(cutoffDate.getFullYear() - this.retentionYears);
@@ -69,101 +97,191 @@ const AutoPurgeService = {
         const cutoffStrDate = cutoffDate.toISOString().split('T')[0];
         const cutoffStrISO = cutoffDate.toISOString();
 
-        let totalDeleted = 0;
+        let stats = { total: 0, patients: 0, visits: 0, inventory: 0, expenses: 0 };
 
         try {
-            // -------------------------------------------------------------
-            // 🛡️ ส่วนที่ 1: กวาดล้างแฟ้มผู้ป่วย (แบบเจาะจง ไม่เซฟทับทั้งตู้)
-            // -------------------------------------------------------------
+            // 🛡️ 2.1 กวาดล้างแฟ้มผู้ป่วย (Patient Records)
             const pSnap = await db.ref('patients_database_v2/patients').once('value');
             if (pSnap.exists()) {
                 const patients = pSnap.val();
-                const updates = {}; // สร้างตระกร้าสำหรับส่งคำสั่งอัปเดตแบบรวดเดียว (Batch)
+                let updates = {};
+                let updateCount = 0;
 
-                // ลูปผ่าน Key/ID ของ Firebase ป้องกันปัญหา Array Index เลื่อน
-                Object.entries(patients).forEach(([patientId, p]) => {
-                    if (!p) return;
+                const entries = Object.entries(patients);
+                for (let i = 0; i < entries.length; i++) {
+                    const [patientId, p] = entries[i];
+                    if (!p) continue;
                     
-                    // กรณีตาย/ย้าย/จำหน่าย เกิน 7 ปี -> ลบคนไข้ทิ้งทั้งแฟ้ม
+                    let needsUpdate = false;
+
+                    // ผู้ป่วยจำหน่าย/เสียชีวิต เกิน 7 ปี
                     if ((p.status || 'ปกติ') !== 'ปกติ') {
                         let recordDate = new Date(p.last_updated || p.register_date || "2000-01-01").getTime();
                         if (recordDate < cutoffTime) {
-                            updates[`${patientId}`] = null; // คำสั่ง Null ใน Firebase คือการลบทิ้ง
-                            totalDeleted++;
-                            return; 
+                            updates[`${patientId}`] = null;
+                            stats.patients++;
+                            needsUpdate = true;
                         }
                     }
                     
-                    // กรณีคนไข้ยังอยู่ แต่ประวัติ (History) ยาวเกินไป -> ตัดส่วนเก่าทิ้ง
-                    if (Array.isArray(p.history)) {
-                        let validHistory = p.history.filter(h => h && h.date && new Date(h.date).getTime() >= cutoffTime);
-                        if (validHistory.length < p.history.length) {
-                            updates[`${patientId}/history`] = validHistory;
-                            totalDeleted += (p.history.length - validHistory.length);
+                    if (!needsUpdate) {
+                        // ตัดประวัติการรักษาเก่า
+                        if (Array.isArray(p.history)) {
+                            let validHistory = p.history.filter(h => h && h.date && new Date(h.date).getTime() >= cutoffTime);
+                            if (validHistory.length < p.history.length) {
+                                updates[`${patientId}/history`] = validHistory;
+                                stats.patients += (p.history.length - validHistory.length);
+                                needsUpdate = true;
+                            }
+                        }
+                        // ตัดผลแล็บเก่า
+                        if (Array.isArray(p.labs)) {
+                            let validLabs = p.labs.filter(l => l && l.date && new Date(l.date).getTime() >= cutoffTime);
+                            if (validLabs.length < p.labs.length) {
+                                updates[`${patientId}/labs`] = validLabs;
+                                stats.patients += (p.labs.length - validLabs.length);
+                                needsUpdate = true;
+                            }
                         }
                     }
-                    
-                    // ล้างผลแล็บ (Labs)
-                    if (Array.isArray(p.labs)) {
-                        let validLabs = p.labs.filter(l => l && l.date && new Date(l.date).getTime() >= cutoffTime);
-                        if (validLabs.length < p.labs.length) {
-                            updates[`${patientId}/labs`] = validLabs;
-                            totalDeleted += (p.labs.length - validLabs.length);
-                        }
-                    }
-                });
 
-                // ส่งคำสั่งอัปเดตทีเดียว (Atomic Update) - ถ้ามีคนไข้ใหม่เพิ่มมาตอนส่งคำสั่งนี้ คนไข้ใหม่จะไม่หาย!
+                    if (needsUpdate) updateCount++;
+
+                    // 🚨 CHUNKING: ถ้าครบโควต้า ให้ส่งคำสั่งลบ แล้วล้างตะกร้า ป้องกัน Payload Too Large
+                    if (updateCount >= this.CHUNK_SIZE) {
+                        await db.ref('patients_database_v2/patients').update(updates);
+                        updates = {};
+                        updateCount = 0;
+                        await this.yieldThread(); // 🌬️ ให้เบราว์เซอร์หายใจ
+                    }
+
+                    // 🌬️ YIELDING: ทุกๆ 100 ลูป ให้ปล่อย Main Thread ไปวาดหน้าจอ (ป้องกันหน้าจอค้าง)
+                    if (i % 100 === 0) await this.yieldThread();
+                }
+
+                // ส่งของที่เหลือในตะกร้า
                 if (Object.keys(updates).length > 0) {
                     await db.ref('patients_database_v2/patients').update(updates);
                 }
             }
 
-            // -------------------------------------------------------------
-            // 🛡️ ส่วนที่ 2: กวาดล้างคิวและธุรกรรม (Query โดยตรง ประหยัด RAM)
-            // -------------------------------------------------------------
+            // 🛡️ 2.2 กวาดล้างข้อมูล Transaction (Queue, Stock, Finance)
+            stats.visits = await this.purgeNodeChunked('patients_database_v2/visits', 'date', cutoffStrDate);
+            stats.inventory = await this.purgeNodeChunked('inventory_database_v2/transactions', 'timestamp', cutoffStrISO);
+            stats.expenses = await this.purgeNodeChunked('clinic_expenses_v2', 'date', cutoffStrDate);
             
-            // ใช้ helper function เพื่อลดโค้ดซ้ำซ้อน
-            totalDeleted += await this.purgeNodeByDate('patients_database_v2/visits', 'date', cutoffStrDate);
-            totalDeleted += await this.purgeNodeByDate('inventory_database_v2/transactions', 'timestamp', cutoffStrISO);
-            totalDeleted += await this.purgeNodeByDate('clinic_expenses_v2', 'date', cutoffStrDate);
-            totalDeleted += await this.purgeNodeByDate('department_ledger_v2', 'date', cutoffStrDate);
-
-            console.log(`✅ [FinOps] ทำความสะอาดเสร็จสิ้น! คืนพื้นที่รวม ${totalDeleted} รายการ`);
-            return totalDeleted;
+            stats.total = stats.patients + stats.visits + stats.inventory + stats.expenses;
+            
+            console.log(`✅ [FinOps] คลีนเสร็จสิ้น! คืนพื้นที่: ${stats.total} รายการ`);
+            return stats;
 
         } catch (error) {
-            console.error("❌ [FinOps] เกิดข้อผิดพลาดระหว่างการกวาดล้าง:", error);
-            // ปลดล็อคเผื่อให้เครื่องอื่นทำงานแทนในกรณีที่เครื่องนี้ Crash
-            await db.ref('system_metadata/last_global_purge_date').set(null); 
-            return 0;
+            console.error("❌ [FinOps] เกิดข้อผิดพลาดร้ายแรงระหว่างกวาดล้าง:", error);
+            throw error; 
         } finally {
             this.isPurging = false;
         }
-    },
-
-    // ฟังก์ชันผู้ช่วย: ค้นหาและลบเฉพาะรายการที่เก่ากว่ากำหนดแบบรวดเดียว
-    purgeNodeByDate: async function(path, dateField, cutoffString) {
-        let deleted = 0;
-        // query เฉพาะของเก่ามาลบ ไม่ต้องโหลดของใหม่มาให้เปลืองเน็ต
-        const snap = await db.ref(path).orderByChild(dateField).endAt(cutoffString).once('value');
-        
-        if (snap.exists()) {
-            let updates = {};
-            snap.forEach(child => { 
-                updates[child.key] = null; 
-                deleted++; 
-            });
-            await db.ref(path).update(updates);
-        }
-        return deleted;
     }
-};
 
-// ⚡ ฝังระบบรอให้ Firebase โหลดเสร็จ แล้วสั่งสตาร์ท
+    // ============================================================================
+    // 🧩 3. Chunked Purge Helper (ลบแบบหั่นเนื้อ ป้องกันแฮงก์)
+    // ============================================================================
+    async purgeNodeChunked(path, dateField, cutoffString) {
+        let deletedCount = 0;
+        try {
+            const snap = await db.ref(path).orderByChild(dateField).endAt(cutoffString).once('value');
+            if (!snap.exists()) return 0;
+
+            let updates = {};
+            let count = 0;
+            let totalProcessed = 0;
+
+            // ไม่ใช้ forEach ตรงๆ เพราะเราต้องการใช้ await ข้างใน
+            const nodes = [];
+            snap.forEach(child => { nodes.push(child.key); });
+
+            for (let i = 0; i < nodes.length; i++) {
+                updates[nodes[i]] = null;
+                count++;
+                deletedCount++;
+                totalProcessed++;
+
+                if (count >= this.CHUNK_SIZE) {
+                    await db.ref(path).update(updates);
+                    updates = {};
+                    count = 0;
+                    await this.yieldThread(); // หายใจ
+                }
+
+                if (totalProcessed % 200 === 0) await this.yieldThread();
+            }
+
+            if (Object.keys(updates).length > 0) {
+                await db.ref(path).update(updates);
+            }
+
+        } catch (e) { console.error(`Failed to purge ${path}:`, e); }
+        
+        return deletedCount;
+    }
+
+    // ============================================================================
+    // 📜 4. HA/JCI Audit Logging (มาตรฐานโรงพยาบาล)
+    // ============================================================================
+    saveAuditLog(stats) {
+        try {
+            const logRef = db.ref('system_metadata/purge_audit_logs').push();
+            logRef.set({
+                timestamp: new Date().toISOString(),
+                retention_policy: `${this.retentionYears}_years`,
+                deleted_items: stats,
+                executed_by: "Auto_FinOps_Engine"
+            });
+        } catch (e) { console.warn("Could not save audit log", e); }
+    }
+
+    // ============================================================================
+    // 🎨 5. Enterprise Cyber UI
+    // ============================================================================
+    showCyberToast(stats) {
+        if (typeof Swal !== 'undefined') {
+            const numText = stats.total.toLocaleString('th-TH');
+            Swal.fire({
+                toast: true, 
+                position: 'top-end', 
+                showConfirmButton: false, 
+                timer: 8000,
+                timerProgressBar: true,
+                background: '#0f172a', // Dark theme
+                color: '#f8fafc',
+                icon: 'success', 
+                iconColor: '#2dd4bf', // Purple/Teal vibe
+                title: `<span style="font-family:Prompt; font-size:14px; font-weight:700; letter-spacing:0.5px; color:#2dd4bf;">FINOPS: CLOUD OPTIMIZED</span>`,
+                html: `<div style="font-family:Prompt; font-size:12px; text-align:left; margin-top:5px; color:#94a3b8;">
+                          กวาดล้างข้อมูลเก่าเกิน ${this.retentionYears} ปี สำเร็จ<br>
+                          <span style="color:#f8fafc; font-weight:bold;">คืนพื้นที่ความจำ: ${numText} รายการ</span>
+                       </div>`,
+                customClass: { 
+                    popup: 'shadow-lg border border-secondary border-opacity-25 rounded-4' 
+                }
+            });
+        }
+    }
+
+    // 🌬️ Thread Yielding: หลอกเบราว์เซอร์ให้สลับไปทำงานอื่น (เช่น วาดหน้าจอ) 0 มิลลิวินาที
+    yieldThread() {
+        return new Promise(resolve => setTimeout(resolve, 0));
+    }
+}
+
+// 🌐 Expose & Auto-Start
+const FinOpsEngine = new FinOpsPurgeEngineService();
+window.AutoPurgeService = FinOpsEngine; // Map ชื่อเดิมให้ระบบอื่นอ้างอิงได้
+
+// ⚡ ฝังระบบรอให้ Firebase โหลดเสร็จ แล้วสั่งสตาร์ทแบบเงียบๆ
 let globalPurgeInterval = setInterval(() => {
     if (typeof db !== 'undefined') {
-        AutoPurgeService.init();
+        FinOpsEngine.init();
         clearInterval(globalPurgeInterval);
     }
 }, 2000);

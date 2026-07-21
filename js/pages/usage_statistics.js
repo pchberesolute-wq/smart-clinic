@@ -1,574 +1,923 @@
 // js/pages/usage_statistics.js
-// 🚀 Enterprise Usage Statistics Module: FinOps Analytics, Dynamic Charting & Memory-Leak Free
+// 🚀 Enterprise Analytics Module: Ultra-Premium UI/UX, Soft Shadows & Advanced Data Visualization
 
-class UsageStatisticsPageComponent {
+class UsageStatisticsComponent {
     constructor() {
         this.state = {
-            startDate: '', 
-            endDate: '', 
-            selectedView: 'monthly', 
-            allTransactions: [], 
-            inventoryItems: [], 
-            chartInstance: null, 
-            pieChartInstance: null, 
-            hasCleanedUp: false,
-            _chartPayload: null,
-            _piePayload: null
+            visits: [],
+            currentFilter: 'month', 
+            specificDate: '',
+            chartInstance: null,
+            exportData: null 
         };
         this.firebaseListeners = [];
+        this.masterDict = new Map(); 
+    }
+
+    parseFBArray(data) {
+        if (!data) return [];
+        if (Array.isArray(data)) return data.filter(item => item !== null && item !== undefined);
+        if (typeof data === 'object' && data !== null) return Object.keys(data).map(k => ({ firebaseKey: k, ...data[k] })).filter(item => item !== null && item !== undefined);
+        return []; 
+    }
+
+    escapeHTML(str) {
+        if (!str && str !== 0) return '';
+        return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
     }
 
     get html() {
         return `
             <style>
-                @keyframes fadeInUpLocal{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
-                .fade-in-up{animation:fadeInUpLocal 0.4s cubic-bezier(0.16,1,0.3,1) forwards;opacity:0;}
-                .stat-card-analytics{border-radius:20px;padding:24px;position:relative;overflow:hidden;background:#fff;border:1px solid #e2e8f0;transition:all 0.3s ease;height:100%;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);}
-                .stat-card-analytics:hover{transform:translateY(-4px);box-shadow:0 15px 30px -10px rgba(0,0,0,0.1);border-color:#cbd5e1;}
-                .analytics-icon-bg{position:absolute;top:-20px;right:-20px;opacity:0.04;font-size:130px;pointer-events:none;z-index:0;}
-                .table-analytics th{background:#f8fafc;color:#475569;font-weight:700;text-transform:uppercase;font-size:13px;padding:16px;border-bottom:2px solid #e2e8f0;border-top:none;white-space:nowrap;}
-                .table-analytics td{padding:14px 16px;vertical-align:middle;border-bottom:1px solid #f1f5f9;font-size:14.5px;}
+                @keyframes fadeScaleIn { from { opacity: 0; transform: scale(0.98) translateY(15px); } to { opacity: 1; transform: scale(1) translateY(0); } }
                 
-                /* โครงสร้างกล่องตัวกรองสถิติ */
-                .view-btn-group { display: flex; flex-wrap: wrap; background: #f8fafc; padding: 4px; border-radius: 50px; border: 1px solid #e2e8f0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); gap: 4px; }
-                .view-btn-group .btn{font-family:'Prompt';font-weight:600;font-size:13px;padding:6px 16px;border-radius:50px;transition:all 0.2s;border:none;background:transparent;color:#64748b;}
-                .view-btn-group .btn.active{background:var(--primary);color:#fff;box-shadow:0 4px 10px rgba(37,99,235,0.2);}
+                /* 👑 Premium Page Header */
+                .analytics-header { padding-bottom: 1rem; border-bottom: 2px dashed rgba(0,0,0,0.05); }
+                html[data-bs-theme="dark"] .analytics-header { border-bottom-color: rgba(255,255,255,0.05); }
                 
-                .badge-fluid{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;font-weight:700;border-radius:50px;padding:4px 12px;}
-                .badge-med{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;font-weight:700;border-radius:50px;padding:4px 12px;}
+                /* 👑 Premium Stat Cards */
+                .stat-card-v2 {
+                    animation: fadeScaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                    background: #ffffff;
+                    border: none;
+                    border-radius: 24px;
+                    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);
+                    position: relative;
+                    overflow: hidden;
+                    transition: all 0.3s ease;
+                    z-index: 1;
+                }
+                .stat-card-v2::before {
+                    content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 5px; z-index: 2;
+                }
+                .stat-card-v2.success-theme::before { background: linear-gradient(90deg, #10b981, #34d399); }
+                .stat-card-v2.primary-theme::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+                .stat-card-v2.warning-theme::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
                 
-                /* โครงสร้างกล่องเลือกวันที่ */
-                .date-filter-container { display: flex; align-items: center; background: #ffffff; padding: 4px 8px; border-radius: 50px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); flex-wrap: wrap; gap: 8px; }
+                .stat-card-v2:hover { transform: translateY(-8px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.12); }
                 
-                .native-date-wrapper { position: relative; display: inline-flex; align-items: center; justify-content: center; padding: 6px 14px; cursor: pointer; min-width: 145px; border-radius: 50px; background: #f8fafc; border: 1px solid transparent; transition: 0.2s; overflow: hidden; }
-                .native-date-wrapper:hover { border-color: #cbd5e1; background: #f1f5f9; }
-                .native-date-wrapper input[type="date"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; border: none; background: transparent; color: transparent; }
-                .native-date-wrapper input[type="date"]::-webkit-calendar-picker-indicator { width: 100%; height: 100%; opacity: 0; cursor: pointer; position: absolute; left: 0; top: 0; }
+                html[data-bs-theme="dark"] .stat-card-v2 { background: #1e293b; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5); }
                 
-                .native-date-wrapper span { position: relative; z-index: 1; font-family: 'Prompt'; font-weight: 800; color: #2563eb; font-size: 14px; pointer-events: none; }
-                .native-date-wrapper i { position: relative; z-index: 1; margin-right: 8px; font-size: 16px; color: #2563eb; pointer-events: none; }
+                .stat-icon-wrapper-v2 {
+                    width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 26px; color: #fff;
+                    box-shadow: inset 0 -3px 0 rgba(0,0,0,0.1);
+                }
 
-                /* 🚨 THE FIX: ยันต์กันไอคอนเพี้ยน (Force Font Awesome) 🚨 */
-                .safe-icon { font-family: 'Font Awesome 6 Free', 'FontAwesome', sans-serif !important; font-weight: 900 !important; font-style: normal !important; }
+                /* 👑 Filter Buttons */
+                .filter-btn { transition: all 0.25s ease; border: none; font-weight: 700; color: #64748b; background: transparent; }
+                .filter-btn:hover { background: rgba(0,0,0,0.05); color: #0f172a; }
+                .filter-btn.active { background: linear-gradient(135deg, #3b82f6, #2563eb) !important; color: white !important; box-shadow: 0 6px 15px rgba(37, 99, 235, 0.35) !important; }
+                html[data-bs-theme="dark"] .filter-btn { color: #94a3b8; }
+                html[data-bs-theme="dark"] .filter-btn:hover { background: rgba(255,255,255,0.05); color: #f8fafc; }
+                html[data-bs-theme="dark"] .filter-btn.active { color: #fff !important; }
 
-                /* บังคับแก้ไขสีสว่างให้เป็นโหมดมืด (Dark Mode Support) แบบตายตัว */
-                html[data-bs-theme="dark"] .stat-card-analytics { background-color: var(--bg-surface) !important; border-color: var(--border-color) !important; }
-                html[data-bs-theme="dark"] .stat-card-analytics .text-dark { color: var(--text-dark) !important; }
-                html[data-bs-theme="dark"] .view-btn-group { background-color: var(--bg-surface) !important; border-color: var(--border-color) !important; }
-                html[data-bs-theme="dark"] .view-btn-group .btn { color: var(--text-muted); }
-                html[data-bs-theme="dark"] .view-btn-group .btn.active { color: #fff; }
-                html[data-bs-theme="dark"] .date-filter-container { background-color: var(--bg-surface) !important; border-color: var(--border-color) !important; }
-                html[data-bs-theme="dark"] .native-date-wrapper { background-color: rgba(255,255,255,0.05) !important; }
-                html[data-bs-theme="dark"] .native-date-wrapper:hover { border-color: var(--border-color) !important; background-color: rgba(255,255,255,0.1) !important; }
-                html[data-bs-theme="dark"] .table-analytics th { background-color: var(--bg-body) !important; color: var(--text-muted) !important; border-color: var(--border-color) !important; }
-                html[data-bs-theme="dark"] .table-analytics td { border-color: var(--border-color) !important; color: var(--text-dark) !important; }
-                html[data-bs-theme="dark"] .table-responsive.bg-white { background-color: transparent !important; border-color: var(--border-color) !important; }
+                /* 👑 Premium Panels & Tables */
+                .modern-panel-v2 {
+                    background: #ffffff;
+                    border: 1px solid rgba(0,0,0,0.03);
+                    border-radius: 24px;
+                    box-shadow: 0 15px 35px -5px rgba(0,0,0,0.04);
+                    transition: all 0.3s ease;
+                }
+                html[data-bs-theme="dark"] .modern-panel-v2 { background: #1e293b; border-color: rgba(255,255,255,0.05); box-shadow: 0 15px 35px -5px rgba(0,0,0,0.3); }
+
+                .table-premium-v2 { border-collapse: separate; border-spacing: 0; width: 100%; margin-bottom: 0; }
+                .table-premium-v2 thead th {
+                    position: sticky; top: 0; z-index: 10;
+                    background: rgba(248, 250, 252, 0.95);
+                    backdrop-filter: blur(8px);
+                    color: #64748b;
+                    font-size: 12px;
+                    font-weight: 800;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    padding: 16px 12px;
+                    border-bottom: 2px solid #e2e8f0;
+                    border-top: none; white-space: nowrap;
+                }
+                html[data-bs-theme="dark"] .table-premium-v2 thead th { background: rgba(30, 41, 59, 0.95); color: #94a3b8; border-bottom-color: #334155; }
+                
+                .table-premium-v2 tbody tr { transition: all 0.2s; border-bottom: 1px solid #f1f5f9; }
+                html[data-bs-theme="dark"] .table-premium-v2 tbody tr { border-bottom-color: #334155; }
+                
+                .table-premium-v2 tbody tr:hover { background-color: #f8fafc; }
+                html[data-bs-theme="dark"] .table-premium-v2 tbody tr:hover { background-color: rgba(255,255,255,0.02); }
+                
+                .table-premium-v2 td { padding: 14px 12px; vertical-align: middle; border: none; }
+                
+                .scroll-table-container { max-height: 380px; overflow-y: auto; border-radius: 0 0 24px 24px; padding-bottom: 10px; }
+                .scroll-table-container-large { max-height: 550px; overflow-y: auto; border-radius: 0 0 24px 24px; padding-bottom: 10px; }
+                
+                /* Custom Scrollbar */
+                .scroll-table-container::-webkit-scrollbar, .scroll-table-container-large::-webkit-scrollbar { width: 6px; height: 6px; }
+                .scroll-table-container::-webkit-scrollbar-track, .scroll-table-container-large::-webkit-scrollbar-track { background: transparent; }
+                .scroll-table-container::-webkit-scrollbar-thumb, .scroll-table-container-large::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+                .scroll-table-container::-webkit-scrollbar-thumb:hover, .scroll-table-container-large::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+                /* 👑 Badges & Accents */
+                .soft-badge { padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
+                
+                /* Chart */
+                .chart-container { position: relative; height: 320px; width: 100%; margin-top: 10px; }
             </style>
 
-            <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+            <div class="analytics-header mb-4 d-flex justify-content-between align-items-end flex-wrap gap-3 fade-in-up">
                 <div>
-                    <h2 class="page-title text-primary" style="font-size:28px;"><i class="fa-solid fa-chart-line me-2 safe-icon"></i> สถิติการเบิกใช้น้ำยาและยาฉีด</h2>
-                    <p class="text-muted mt-1 mb-0" id="stat-date-text">ประมวลผลสรุปปริมาณการใช้พัสดุและแสดงรหัสสินค้าอ้างอิง</p>
+                    <h2 class="page-title text-primary" style="font-family:'Prompt'; font-weight:800; font-size:28px;"><i class="fa-solid fa-chart-pie me-2"></i> สถิติการใช้พัสดุและยาฉีด</h2>
+                    <p class="text-muted mt-1 mb-0 fw-bold" style="font-size:15px;">ระบบวิเคราะห์ข้อมูลและสรุปยอดค่าใช้จ่ายแบบเรียลไทม์ (Analytics Dashboard)</p>
                 </div>
                 
-                <div class="d-flex gap-2 align-items-center flex-wrap justify-content-end">
-                    <div class="view-btn-group">
-                        <button class="btn active" id="btn-v-daily" onclick="App.pages.usage_statistics.changeView('daily')">รายวัน</button>
-                        <button class="btn" id="btn-v-weekly" onclick="App.pages.usage_statistics.changeView('weekly')">รายสัปดาห์</button>
-                        <button class="btn" id="btn-v-monthly" onclick="App.pages.usage_statistics.changeView('monthly')">รายเดือน</button>
-                        <button class="btn" id="btn-v-yearly" onclick="App.pages.usage_statistics.changeView('yearly')">รายปี</button>
+                <div class="d-flex gap-2 flex-wrap align-items-center bg-white p-2 rounded-pill shadow-sm" style="border: 1px solid rgba(0,0,0,0.05);">
+                    <button class="btn btn-sm rounded-pill px-4 filter-btn" data-filter="today" onclick="App.pages.usage_statistics.applyFilter('today')">วันนี้</button>
+                    <button class="btn btn-sm rounded-pill px-4 filter-btn active" data-filter="month" onclick="App.pages.usage_statistics.applyFilter('month')">เดือนนี้</button>
+                    <button class="btn btn-sm rounded-pill px-4 filter-btn" data-filter="year" onclick="App.pages.usage_statistics.applyFilter('year')">ปีนี้</button>
+                    <button class="btn btn-sm rounded-pill px-4 filter-btn" data-filter="all" onclick="App.pages.usage_statistics.applyFilter('all')">ทั้งหมด</button>
+                    
+                    <div style="border-left: 2px solid #e2e8f0; height: 24px; margin: 0 5px;"></div>
+                    
+                    <div class="d-flex align-items-center px-2 bg-light rounded-pill p-1">
+                        <i class="fa-solid fa-calendar-day text-primary ms-2 me-1"></i>
+                        <input type="date" id="us-specific-date" class="form-control form-control-sm border-0 bg-transparent fw-bold text-dark p-1" style="width: 120px; outline: none; box-shadow: none;" onchange="App.pages.usage_statistics.applySpecificDate(this.value)">
                     </div>
                     
-                    <div class="date-filter-container">
-                        <div class="native-date-wrapper" onclick="this.querySelector('input').showPicker ? this.querySelector('input').showPicker() : null">
-                            <i class="fa-solid fa-calendar-days safe-icon"></i><span id="stat-start-display">กำลังโหลด...</span>
-                            <input type="date" id="stat-start-date" onchange="App.pages.usage_statistics.onDateChange()">
+                    <button class="btn btn-sm btn-success rounded-pill fw-bold shadow-sm ms-2 px-4" onclick="App.pages.usage_statistics.exportExcel()" style="padding-top: 6px; padding-bottom: 6px;"><i class="fa-solid fa-file-excel me-1"></i> ส่งออก Excel</button>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4" id="us-summary-cards">
+                <div class="col-md-4">
+                    <div class="stat-card-v2 success-theme p-4 h-100">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-secondary fw-bold mb-1 small text-uppercase" style="letter-spacing: 0.5px;">มูลค่ายาและพัสดุรวม (บาท)</h6>
+                                <h2 class="fw-bold text-dark mb-0" id="us-total-cost" style="font-family:'Prompt'; letter-spacing:-0.5px;">฿0.00</h2>
+                            </div>
+                            <div class="stat-icon-wrapper-v2" style="background: linear-gradient(135deg, #10b981, #059669);">
+                                <i class="fa-solid fa-sack-dollar"></i>
+                            </div>
                         </div>
-                        <span class="text-muted fw-bold small mx-1">ถึง</span>
-                        <div class="native-date-wrapper" onclick="this.querySelector('input').showPicker ? this.querySelector('input').showPicker() : null">
-                            <i class="fa-solid fa-calendar-days safe-icon"></i><span id="stat-end-display">กำลังโหลด...</span>
-                            <input type="date" id="stat-end-date" onchange="App.pages.usage_statistics.onDateChange()">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card-v2 primary-theme p-4 h-100" style="animation-delay: 0.1s;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-secondary fw-bold mb-1 small text-uppercase" style="letter-spacing: 0.5px;">จำนวนรอบที่สั่งเบิก (คิว)</h6>
+                                <h2 class="fw-bold text-dark mb-0" id="us-total-transactions" style="font-family:'Prompt'; letter-spacing:-0.5px;">0</h2>
+                            </div>
+                            <div class="stat-icon-wrapper-v2" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                                <i class="fa-solid fa-file-invoice"></i>
+                            </div>
                         </div>
-                        <button class="btn btn-primary rounded-pill px-3 fw-bold shadow-sm" style="z-index:15; font-size: 13px; margin-left: 4px;" onclick="App.pages.usage_statistics.setThisMonth()">เดือนนี้</button>
-                    </div>
-                    
-                    <button class="btn btn-dark fw-bold shadow-sm rounded-pill px-4 card-hover-float" onclick="App.pages.usage_statistics.printReport()"><i class="fa-solid fa-print me-2 text-warning safe-icon"></i> พิมพ์เอกสาร</button>
-                </div>
-            </div>
-
-            <div class="row g-3 mb-4">
-                <div class="col-md-4">
-                    <div class="stat-card-analytics" style="border-top:5px solid #10b981;">
-                        <i class="fa-solid fa-faucet-drip analytics-icon-bg safe-icon"></i>
-                        <div class="d-flex justify-content-between mb-2"><div class="text-success fw-bold small text-uppercase">น้ำยาไตเทียม (Dialysate)</div></div>
-                        <div class="fs-2 fw-bold text-dark"><span id="lbl-total-fluid"><i class="fas fa-spinner fa-spin fs-4 safe-icon"></i></span> <span class="fs-6 text-muted fw-normal">แกลลอน/ชิ้น</span></div>
-                        <p class="text-muted small mt-1 mb-0">น้ำยาพาร์ท A, B และ Concentrates ทุกสูตร</p>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="stat-card-analytics" style="border-top:5px solid #ef4444;">
-                        <i class="fa-solid fa-syringe analytics-icon-bg safe-icon" style="font-size:110px;"></i>
-                        <div class="d-flex justify-content-between mb-2"><div class="text-danger fw-bold small text-uppercase">ยาฉีดและเวชภัณฑ์ (Medications)</div></div>
-                        <div class="fs-2 fw-bold text-dark"><span id="lbl-total-meds"><i class="fas fa-spinner fa-spin fs-4 safe-icon"></i></span> <span class="fs-6 text-muted fw-normal">Vial/ชิ้น</span></div>
-                        <p class="text-muted small mt-1 mb-0">Heparin, EPO และเวชภัณฑ์สิ้นเปลือง</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="stat-card-analytics" style="border-top:5px solid #3b82f6;">
-                        <i class="fa-solid fa-star analytics-icon-bg safe-icon"></i>
-                        <div class="d-flex justify-content-between mb-2"><div class="text-primary fw-bold small text-uppercase">รายการพัสดุที่เบิกใช้สูงสุด</div></div>
-                        <div class="fs-4 fw-bold text-dark text-truncate" id="lbl-top-item" style="font-family:'Prompt';">กำลังคำนวณ...</div>
-                        <p class="text-muted small mt-1 mb-0">ไอเทมพัสดุที่มีจำนวนการใช้สูงสุดในช่วงเวลานี้</p>
+                    <div class="stat-card-v2 warning-theme p-4 h-100" style="animation-delay: 0.2s;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="min-w-0 flex-grow-1 pe-3">
+                                <h6 class="text-secondary fw-bold mb-1 small text-uppercase" style="letter-spacing: 0.5px;">ถูกใช้มากที่สุด (Top Item)</h6>
+                                <h4 class="fw-bold text-dark mb-0 text-truncate" id="us-top-item" title="-" style="font-family:'Prompt';">กำลังคำนวณ...</h4>
+                                <div class="small fw-bold text-warning-dark mt-1" id="us-top-item-qty"><i class="fa-solid fa-arrow-trend-up me-1"></i> -</div>
+                            </div>
+                            <div class="stat-icon-wrapper-v2 flex-shrink-0" style="background: linear-gradient(135deg, #f59e0b, #b45309);">
+                                <i class="fa-solid fa-crown"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="row g-4 mb-4">
-                <div class="col-xl-8">
-                    <div class="modern-panel shadow-sm p-4 h-100" style="border-radius:20px; background:var(--bg-surface); border:1px solid var(--border-color); border-top:5px solid var(--info);">
-                        <h5 class="fw-bold mb-4" style="color:var(--text-dark);"><i class="fa-solid fa-chart-column text-info me-2 safe-icon"></i> กราฟเปรียบเทียบแนวโน้มปริมาณการเบิกใช้รายหมวดหมู่</h5>
-                        <div style="height:320px; width:100%; display:flex; justify-content:center; align-items:center;" id="stat-chart-container"><canvas id="usageStatisticsChart"></canvas></div>
-                    </div>
-                </div>
-                <div class="col-xl-4">
-                    <div class="modern-panel shadow-sm p-4 h-100" style="border-radius:20px; background:var(--bg-surface); border:1px solid var(--border-color); border-top:5px solid #8b5cf6;">
-                        <h5 class="fw-bold mb-4" style="color:var(--text-dark);"><i class="fa-solid fa-chart-pie text-primary me-2 safe-icon"></i> สัดส่วน Top 5 รายการยอดฮิต</h5>
-                        <div style="height:320px; width:100%; display:flex; justify-content:center; align-items:center;" id="stat-pie-container"><canvas id="topItemsPieChart"></canvas></div>
+            <div class="row mb-4">
+                <div class="col-12 fade-in-up" style="animation-delay: 0.3s;">
+                    <div class="modern-panel-v2 p-4 h-100">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <h5 class="fw-bold text-dark mb-0" style="font-family:'Prompt';"><i class="fa-solid fa-chart-column text-primary me-2"></i> กราฟ 10 อันดับแรกที่มีการใช้สูงสุด (Top 10 Overall)</h5>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="usageBarChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="modern-panel shadow-sm p-4 position-relative overflow-hidden" style="border-top:5px solid var(--secondary); border-radius:20px; background:var(--bg-surface); border:1px solid var(--border-color);">
-                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-                    <h5 class="fw-bold text-dark mb-0" style="color:var(--text-dark) !important;"><i class="fa-solid fa-table text-secondary me-2 safe-icon"></i> ตารางวิเคราะห์สรุปยอดแยกประเภทรายการเบิกใช้</h5>
-                    <div class="search-box-modern shadow-sm" style="width: 250px; background-color:var(--bg-body); border: 1px solid var(--border-color); border-radius: 50px; padding: 6px 15px;">
-                        <i class="fa-solid fa-search text-primary safe-icon"></i>
-                        <input type="text" id="stat-search-inp" class="border-0 bg-transparent ms-2 w-100 fw-bold text-dark" placeholder="ค้นหาชื่อ, รหัส..." onkeyup="App.pages.usage_statistics.filterTable()" style="outline:none;">
+            <div class="row g-4 mb-4 fade-in-up" style="animation-delay: 0.4s;">
+                <div class="col-xl-6">
+                    <div class="modern-panel-v2 h-100 d-flex flex-column" style="border-top: 4px solid var(--primary);">
+                        <div class="p-4 border-bottom d-flex justify-content-between align-items-center">
+                            <h5 class="fw-bold text-dark mb-0" style="font-family:'Prompt';"><i class="fa-solid fa-pills text-primary me-2"></i> หมวดยาและน้ำยาไต</h5>
+                            <span class="soft-badge bg-primary-subtle text-primary" id="us-meds-total"><i class="fa-solid fa-coins me-1"></i> ฿0.00</span>
+                        </div>
+                        <div class="scroll-table-container flex-grow-1 px-2">
+                            <table class="table-premium-v2">
+                                <thead>
+                                    <tr>
+                                        <th width="8%" class="text-center">#</th>
+                                        <th width="42%">รายการยา / น้ำยา</th>
+                                        <th width="15%" class="text-end">ราคา/หน่วย</th>
+                                        <th width="15%" class="text-center">ใช้ไป</th>
+                                        <th width="20%" class="text-end pe-3">รวม (฿)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="us-meds-table-body">
+                                    <tr><td colspan="5" class="text-center py-5 text-muted"><i class="fas fa-spinner fa-spin fa-2x mb-3"></i></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
-                <div class="table-responsive bg-white rounded-4 border border-light shadow-sm" style="max-height:500px; overflow-y:auto;">
-                    <table class="table table-analytics w-100 mb-0">
-                        <thead style="position:sticky; top:0; z-index:10;">
-                            <tr>
-                                <th>ช่วงเวลา</th>
-                                <th class="text-center">หมวดหมู่พัสดุ</th>
-                                <th>รหัสพัสดุ (Item Code)</th>
-                                <th>ชื่อรายการพัสดุ</th>
-                                <th class="text-end" style="width:15%;">จำนวนเบิกทั้งหมด</th>
-                                <th class="text-end" style="width:15%;">มูลค่าต้นทุน (฿)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="stat-table-body">
-                            <tr><td colspan="6" class="text-center py-5">...กำลังโหลดข้อมูล...</td></tr>
-                        </tbody>
-                    </table>
+                <div class="col-xl-6">
+                    <div class="modern-panel-v2 h-100 d-flex flex-column" style="border-top: 4px solid var(--danger);">
+                        <div class="p-4 border-bottom d-flex justify-content-between align-items-center">
+                            <h5 class="fw-bold text-dark mb-0" style="font-family:'Prompt';"><i class="fa-solid fa-box-open text-danger me-2"></i> หมวดพัสดุและ X-Ray</h5>
+                            <span class="soft-badge bg-danger-subtle text-danger" id="us-inv-total"><i class="fa-solid fa-coins me-1"></i> ฿0.00</span>
+                        </div>
+                        <div class="scroll-table-container flex-grow-1 px-2">
+                            <table class="table-premium-v2">
+                                <thead>
+                                    <tr>
+                                        <th width="8%" class="text-center">#</th>
+                                        <th width="42%">รายการพัสดุ / บริการ</th>
+                                        <th width="15%" class="text-end">ราคา/หน่วย</th>
+                                        <th width="15%" class="text-center">ใช้ไป</th>
+                                        <th width="20%" class="text-end pe-3">รวม (฿)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="us-inv-table-body">
+                                    <tr><td colspan="5" class="text-center py-5 text-muted"><i class="fas fa-spinner fa-spin fa-2x mb-3"></i></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row pb-5 fade-in-up" style="animation-delay: 0.5s;">
+                <div class="col-12">
+                    <div class="modern-panel-v2 d-flex flex-column" style="border-top: 4px solid var(--info);">
+                        <div class="p-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <h5 class="fw-bold text-dark mb-1" style="font-family:'Prompt';"><i class="fa-solid fa-magnifying-glass-chart text-info me-2"></i> บันทึกการใช้งานเชิงลึก (Detailed Transaction Log)</h5>
+                                <p class="text-muted small mb-0 fw-bold">แจกแจงประวัติการใช้งานพัสดุและยาแยกตามผู้ป่วยแต่ละรอบการฟอกเลือด</p>
+                            </div>
+                        </div>
+                        <div class="scroll-table-container-large flex-grow-1 px-2">
+                            <table class="table-premium-v2" id="detailed-log-table">
+                                <thead>
+                                    <tr>
+                                        <th width="10%" class="text-center">วันที่</th>
+                                        <th width="10%" class="text-center">HN</th>
+                                        <th width="22%">ชื่อคนไข้</th>
+                                        <th width="28%">รายการที่ใช้</th>
+                                        <th width="8%" class="text-center">หมวด</th>
+                                        <th width="8%" class="text-end">ราคา(฿)</th>
+                                        <th width="6%" class="text-center">จำนวน</th>
+                                        <th width="8%" class="text-end pe-3">รวม (฿)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="us-detailed-table-body">
+                                    <tr><td colspan="8" class="text-center py-5 text-muted"><i class="fas fa-spinner fa-spin fa-2x mb-3"></i></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
     }
 
-    // 🚀 Lifecycle: Mount
     init() {
-        if (typeof db === 'undefined') return;
-        
-        // ❌ เอา Auto Purge ออก ให้ส่วนกลางทำงานแทน
-
-        if(!this.state.startDate || !this.state.endDate) {
-            this.setThisMonth();
-        } else {
-            this.updateDateDisplays();
-            this.syncActiveButton();
+        if (typeof db === 'undefined') {
+            const bodyMeds = document.getElementById('us-meds-table-body');
+            if(bodyMeds) bodyMeds.innerHTML = '<tr><td colspan="5" class="text-danger text-center py-5 fw-bold">ไม่พบการเชื่อมต่อฐานข้อมูล Firebase</td></tr>';
+            return;
         }
 
-        this.#setupFirebaseListeners();
+        this.masterDict.clear();
+        this.state.visits = [];
+        this.state.exportData = null; 
+        
+        const today = new Date();
+        const localDate = new Date(today.getTime() - (today.getTimezoneOffset() * 60000));
+        this.state.specificDate = localDate.toISOString().split('T')[0];
+
+        if (typeof Chart === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+            script.onload = () => this.setupRealtimeData();
+            script.onerror = () => { console.error("Failed to load Chart.js"); this.setupRealtimeData(); };
+            document.head.appendChild(script);
+        } else {
+            this.setupRealtimeData();
+        }
     }
 
-    // 🧹 Lifecycle: Unmount
     destroy() {
         this.firebaseListeners.forEach(l => db.ref(l.path).off('value', l.callback));
         this.firebaseListeners = [];
-        
         if (this.state.chartInstance) {
             this.state.chartInstance.destroy();
             this.state.chartInstance = null;
         }
-        if (this.state.pieChartInstance) {
-            this.state.pieChartInstance.destroy();
-            this.state.pieChartInstance = null;
-        }
-        console.log("🧹 [Usage Statistics] Cleaned up listeners and charts.");
+        this.masterDict.clear();
+        this.state.exportData = null;
     }
 
-    // ---------------------------------------------------------
-    // 📡 Data Fetching
-    // ---------------------------------------------------------
-    #setupFirebaseListeners() {
-        db.ref('inventory_database_v2/items').once('value', snap => {
-            const data = snap.val(); 
-            this.state.inventoryItems = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])) : [];
-            
-            const cbTrans = db.ref('inventory_database_v2/transactions').on('value', tSnap => {
-                if (!document.getElementById('stat-table-body')) return; 
-                
-                const transData = tSnap.val(); 
-                this.state.allTransactions = transData ? Object.keys(transData).map(k => ({ id: k, ...transData[k] })) : [];
-                this.processData();
+    setupRealtimeData() {
+        const toArray = (snapVal) => snapVal ? (Array.isArray(snapVal) ? snapVal : Object.keys(snapVal).map(k => snapVal[k])).filter(Boolean) : [];
+
+        const updateDict = (path, itemType) => {
+            const cb = db.ref(path).on('value', snap => {
+                let items = toArray(snap.val());
+                items.forEach(i => {
+                    let id = typeof i === 'object' ? (i.id || i.name || i.title) : i;
+                    let name = typeof i === 'object' ? (i.name || i.title || i.id) : i;
+                    let price = typeof i === 'object' ? (parseFloat(i.price) || 0) : 0;
+                    
+                    if(id) this.masterDict.set(String(id).toLowerCase().trim(), { name, price, type: itemType });
+                    if(name) this.masterDict.set(String(name).toLowerCase().trim(), { name, price, type: itemType });
+                });
+                this.processAndRender();
             });
-            this.firebaseListeners.push({ path: 'inventory_database_v2/transactions', callback: cbTrans });
+            this.firebaseListeners.push({ path, callback: cb });
+        };
+
+        updateDict('inventory_database_v2/items', 'inv');
+        updateDict('clinic_meds_list_v2', 'med');
+        updateDict('clinic_xray_list_v2', 'xray');
+        updateDict('clinic_xrays_v2', 'xray');
+
+        const visitCb = db.ref('patients_database_v2/visits').on('value', snap => {
+            this.state.visits = toArray(snap.val());
+            this.processAndRender();
         });
+        this.firebaseListeners.push({ path: 'patients_database_v2/visits', callback: visitCb });
     }
 
-    // ---------------------------------------------------------
-    // 🎛️ UI & Filtering
-    // ---------------------------------------------------------
-    formatDateLocal(d) { 
-        let month = '' + (d.getMonth() + 1);
-        let day = '' + d.getDate();
-        let year = d.getFullYear();
-        if(month.length < 2) month = '0' + month; 
-        if(day.length < 2) day = '0' + day; 
-        return [year, month, day].join('-'); 
-    }
-
-    formatDateTh(isoStr) { 
-        if(!isoStr) return '-'; 
-        const d = new Date(isoStr); 
-        let dStr = String(d.getDate()).padStart(2, '0');
-        let mStr = String(d.getMonth() + 1).padStart(2, '0');
-        let yStr = d.getFullYear() + 543;
-        return dStr + '/' + mStr + '/' + yStr;
-    }
-    
-    updateDateDisplays() {
-        if(document.getElementById('stat-start-date')) document.getElementById('stat-start-date').value = this.state.startDate;
-        if(document.getElementById('stat-end-date')) document.getElementById('stat-end-date').value = this.state.endDate;
-        if(document.getElementById('stat-start-display')) document.getElementById('stat-start-display').innerText = this.formatDateTh(this.state.startDate);
-        if(document.getElementById('stat-end-display')) document.getElementById('stat-end-display').innerText = this.formatDateTh(this.state.endDate);
-    }
-
-    onDateChange() {
-        const sInput = document.getElementById('stat-start-date').value; 
-        const eInput = document.getElementById('stat-end-date').value;
-        if(sInput && eInput) {
-            if(new Date(sInput) > new Date(eInput)) { 
-                Swal.fire('ข้อผิดพลาด', 'วันเริ่มต้นต้องไม่มากกว่าวันสิ้นสุด', 'warning'); 
-                this.updateDateDisplays(); 
-                return; 
-            }
-            this.state.startDate = sInput; 
-            this.state.endDate = eInput; 
-            this.updateDateDisplays(); 
-            this.processData();
-        }
-    }
-
-    setThisMonth() {
-        const d = new Date(); 
-        const firstDay = new Date(d.getFullYear(), d.getMonth(), 1); 
-        const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-        this.state.startDate = this.formatDateLocal(firstDay); 
-        this.state.endDate = this.formatDateLocal(lastDay); 
-        this.updateDateDisplays(); 
-        this.processData();
-    }
-
-    changeView(vType) { 
-        this.state.selectedView = vType; 
-        this.syncActiveButton(); 
-        this.processData(); 
-    }
-    
-    syncActiveButton() { 
-        const btnGroup = document.querySelector('.view-btn-group'); 
-        if (!btnGroup) return; 
-        btnGroup.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active')); 
-        const activeBtn = document.getElementById('btn-v-' + this.state.selectedView); 
-        if (activeBtn) activeBtn.classList.add('active'); 
-    }
-
-    getWeekNumber(d) { 
-        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); 
-        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7)); 
-        var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1)); 
-        var weekNo = Math.ceil((((d-yearStart)/86400000)+1)/7); 
-        return d.getUTCFullYear() + "-W" + String(weekNo).padStart(2, '0'); 
-    }
-
-    // ---------------------------------------------------------
-    // 📊 Data Processing
-    // ---------------------------------------------------------
-    processData() {
-        if (!document.getElementById('stat-table-body')) return; 
-        if (!this.state.startDate || !this.state.endDate) return;
-
-        let filteredTrans = this.state.allTransactions.filter(t => {
-            if (!t.timestamp) return false; 
-            let dp = t.timestamp.split('T')[0];
-            return dp >= this.state.startDate && dp <= this.state.endDate && (t.mode === 'out_sub' || t.mode === 'out');
-        });
-
-        let grandFluidQty = 0; 
-        let grandMedsQty = 0; 
-        let itemUsageCount = {}; 
-        let periodGroups = {};
-
-        filteredTrans.forEach(t => {
-            let qty = Math.abs(Number(t.qty || 0)); 
-            let dateObj = new Date(t.timestamp); 
-            let pKey = '';
-            
-            if (this.state.selectedView === 'daily') pKey = t.timestamp.split('T')[0];
-            else if (this.state.selectedView === 'weekly') pKey = this.getWeekNumber(dateObj);
-            else if (this.state.selectedView === 'monthly') pKey = t.timestamp.substring(0, 7);
-            else if (this.state.selectedView === 'yearly') pKey = t.timestamp.substring(0, 4);
-
-            let item = this.state.inventoryItems.find(i => i.id === t.itemId);
-            let catName = item && item.category ? item.category : 'ทั่วไป';
-            let costPrice = item && item.price ? Number(item.price) : 0;
-            let finalItemCode = item && item.item_code ? item.item_code : (t.itemCode || '-');
-            let finalBarcode = item && item.barcode ? item.barcode : (t.barcode || '-');
-            
-            let calcCost = costPrice * qty;
-
-            let isFluid = catName.includes('น้ำยา') || t.itemName.includes('น้ำยา') || t.itemName.includes('Dialysate');
-            if (isFluid) grandFluidQty += qty; 
-            else grandMedsQty += qty;
-            
-            itemUsageCount[t.itemName] = (itemUsageCount[t.itemName] || 0) + qty;
-
-            if (!periodGroups[pKey]) periodGroups[pKey] = {};
-            if (!periodGroups[pKey][t.itemId]) {
-                periodGroups[pKey][t.itemId] = { 
-                    name: t.itemName, 
-                    itemCode: finalItemCode, 
-                    barcode: finalBarcode, 
-                    cat: isFluid ? 'น้ำยาไตเทียม' : 'ยาฉีดและเวชภัณฑ์', 
-                    qty: 0, 
-                    cost: 0 
-                };
-            }
-            periodGroups[pKey][t.itemId].qty += qty; 
-            periodGroups[pKey][t.itemId].cost += calcCost;
-        });
-
-        document.getElementById('lbl-total-fluid').innerText = grandFluidQty.toLocaleString();
-        document.getElementById('lbl-total-meds').innerText = grandMedsQty.toLocaleString();
-
-        let sortedTopItems = Object.entries(itemUsageCount).sort((a,b)=>b[1]-a[1]);
-        if(sortedTopItems.length > 0) {
-            document.getElementById('lbl-top-item').innerText = sortedTopItems[0][0] + ' (' + sortedTopItems[0][1].toLocaleString() + ' ชิ้น)';
-        } else {
-            document.getElementById('lbl-top-item').innerText = 'ไม่มีข้อมูล';
-        }
-
-        let tableHtml = ''; 
-        let cLabels = []; 
-        let cFluidData = []; 
-        let cMedsData = [];
+    applyFilter(filterType) {
+        this.state.currentFilter = filterType;
         
-        Object.keys(periodGroups).sort().forEach(pKey => {
-            let dp = pKey;
-            if(this.state.selectedView === 'monthly') { 
-                let parts = pKey.split('-'); 
-                dp = parts[1] + '/' + (Number(parts[0])+543); 
-            } 
-            else if(this.state.selectedView === 'yearly') { dp = 'พ.ศ. ' + (Number(pKey)+543); } 
-            else if(this.state.selectedView === 'daily') { dp = this.formatDateTh(pKey).substring(0,5); }
-            cLabels.push(dp);
-            
-            let fSum = 0; let mSum = 0;
-            Object.keys(periodGroups[pKey]).forEach(iId => { 
-                if(periodGroups[pKey][iId].cat === 'น้ำยาไตเทียม') fSum += periodGroups[pKey][iId].qty; 
-                else mSum += periodGroups[pKey][iId].qty; 
-            });
-            cFluidData.push(fSum); 
-            cMedsData.push(mSum);
-        });
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        const activeBtn = document.querySelector(`.filter-btn[data-filter="${filterType}"]`);
+        if(activeBtn) activeBtn.classList.add('active');
 
-        Object.keys(periodGroups).sort().reverse().forEach(pKey => {
-            let itemsInPeriod = periodGroups[pKey];
-            Object.keys(itemsInPeriod).forEach(iId => {
-                let d = itemsInPeriod[iId]; 
-                // 🚨 THE FIX: เติม safe-icon ให้หยดน้ำและเข็มฉีดยา
-                let badge = d.cat === 'น้ำยาไตเทียม' ? '<span class="badge-fluid"><i class="fa-solid fa-faucet-drip me-1 safe-icon"></i> น้ำยา</span>' : '<span class="badge-med"><i class="fa-solid fa-syringe me-1 safe-icon"></i> เวชภัณฑ์</span>';
-                
-                let dp = pKey;
-                if(this.state.selectedView === 'monthly') { 
-                    let parts = pKey.split('-'); 
-                    dp = 'เดือน ' + parts[1] + '/' + (Number(parts[0])+543); 
-                } 
-                else if(this.state.selectedView === 'yearly') { dp = 'ปี พ.ศ. ' + (Number(pKey)+543); } 
-                else if(this.state.selectedView === 'daily') { dp = this.formatDateTh(pKey); }
-                
-                // 🚨 THE FIX: เติม safe-icon ให้บาร์โค้ด
-                tableHtml += '<tr class="card-hover-float stat-row">' +
-                             '<td><span class="badge bg-dark text-white fw-bold px-3 py-1 rounded-pill small">' + this.#escapeHTML(dp) + '</span></td>' +
-                             '<td class="text-center">' + badge + '</td>' +
-                             '<td><span class="badge bg-primary-subtle text-primary border border-primary-subtle me-1">' + this.#escapeHTML(d.itemCode) + '</span> <span class="badge bg-light text-secondary border"><i class="fa-solid fa-barcode safe-icon"></i> ' + this.#escapeHTML(d.barcode) + '</span></td>' +
-                             '<td><span class="fw-bold text-dark row-search-name" style="font-family:\'Prompt\';">' + this.#escapeHTML(d.name) + '</span></td>' +
-                             '<td class="text-end fw-bold text-dark" style="font-size:15px;">' + d.qty.toLocaleString() + '</td>' +
-                             '<td class="text-end fw-bold text-primary" style="font-size:15px;">฿' + d.cost.toLocaleString(undefined, {minimumFractionDigits: 2}) + '</td>' +
-                             '</tr>';
-            });
-        });
-
-        if(!tableHtml) {
-            // 🚨 THE FIX: เติม safe-icon ให้ชาร์ตพายของ Empty State
-            tableHtml = '<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fa-solid fa-chart-pie fa-3x mb-3 safe-icon" style="opacity:0.2;"></i><br>ไม่พบประวัติข้อมูลเบิกพัสดุในช่วงเวลาที่เลือก</td></tr>';
+        if (filterType !== 'specific') {
+            const dateInput = document.getElementById('us-specific-date');
+            if (dateInput) dateInput.value = '';
+            this.state.specificDate = '';
         }
-        document.getElementById('stat-table-body').innerHTML = tableHtml;
 
-        let top5Names = []; 
-        let top5Qtys = [];
-        sortedTopItems.slice(0, 5).forEach(item => { 
-            top5Names.push(item[0]); 
-            top5Qtys.push(item[1]); 
-        });
-
-        this.state._chartPayload = { labels: cLabels, fluid: cFluidData, meds: cMedsData };
-        this.state._piePayload = { labels: top5Names, data: top5Qtys };
-        this.renderChart();
+        this.processAndRender();
     }
 
-    filterTable() {
-        const term = document.getElementById('stat-search-inp').value.toLowerCase();
-        const rows = document.querySelectorAll('.stat-row');
-        
-        rows.forEach(row => {
-            const textContent = row.innerText.toLowerCase();
-            if (textContent.includes(term)) {
-                row.style.display = '';
+    applySpecificDate(dateStr) {
+        if (!dateStr) return;
+        this.state.specificDate = dateStr;
+        this.applyFilter('specific');
+    }
+
+    processAndRender() {
+        if (!this.state.visits) return;
+
+        const today = new Date();
+        const localDate = new Date(today.getTime() - (today.getTimezoneOffset() * 60000));
+        const todayStr = localDate.toISOString().split('T')[0];
+        const currentMonth = todayStr.substring(0, 7);
+        const currentYear = todayStr.substring(0, 4);
+
+        let filteredVisits = this.state.visits.filter(v => {
+            if(!v.date) return false;
+            if (this.state.currentFilter === 'today') return v.date === todayStr;
+            if (this.state.currentFilter === 'month') return v.date.startsWith(currentMonth);
+            if (this.state.currentFilter === 'year') return v.date.startsWith(currentYear);
+            if (this.state.currentFilter === 'specific' && this.state.specificDate) return v.date === this.state.specificDate;
+            return true;
+        });
+
+        let medsMap = new Map(); 
+        let invMap = new Map();  
+        let detailedLogs = [];
+        let totalCost = 0;
+        let totalTransactions = 0;
+
+        const addItem = (visitDate, patientName, patientHn, idOrName, qtyStr, defaultType) => {
+            if(!idOrName) return;
+            let qty = parseFloat(qtyStr);
+            if(isNaN(qty) || qty <= 0) return;
+
+            let term = String(idOrName).toLowerCase().trim();
+            let name = String(idOrName);
+            let price = 0;
+            let type = defaultType; 
+
+            let dictItem = this.masterDict.get(term);
+            if(dictItem) {
+                name = dictItem.name;
+                price = dictItem.price;
+                type = dictItem.type; 
+            }
+
+            let itemCost = qty * price;
+            totalCost += itemCost;
+
+            detailedLogs.push({
+                date: visitDate,
+                patientName: patientName || 'ไม่ระบุชื่อ',
+                patientHn: patientHn || '-',
+                itemName: name,
+                category: type === 'med' ? 'ยา/น้ำยา' : (type === 'xray' ? 'X-Ray' : 'พัสดุ'),
+                unitPrice: price,
+                qty: qty,
+                totalValue: itemCost
+            });
+
+            let targetMap = (type === 'med') ? medsMap : invMap;
+            let key = name.toLowerCase().trim();
+
+            if(targetMap.has(key)) {
+                let existing = targetMap.get(key);
+                existing.qty += qty;
+                existing.totalValue += itemCost;
             } else {
-                row.style.display = 'none';
+                targetMap.set(key, { name: name, qty: qty, unitPrice: price, totalValue: itemCost, type: type });
             }
-        });
-    }
+        };
 
-    renderChart() {
-        if (!this.state._chartPayload) return;
+        filteredVisits.forEach(v => {
+            let hasItems = false;
+            let vDate = v.date || '1970-01-01';
+            let vName = v.name || '';
+            let vHn = v.hn || '';
+            
+            if(v.hd_dialysate_item && v.hd_dialysate_qty) { addItem(vDate, vName, vHn, v.hd_dialysate_item, v.hd_dialysate_qty, 'med'); hasItems = true; }
+            if(v.hd_saline_item && v.hd_saline_qty) { addItem(vDate, vName, vHn, v.hd_saline_item, v.hd_saline_qty, 'med'); hasItems = true; }
+            if(v.hd_heparin_item && v.hd_heparin_qty) { addItem(vDate, vName, vHn, v.hd_heparin_item, v.hd_heparin_qty, 'med'); hasItems = true; }
+            
+            let oMeds = this.parseFBArray(v.other_meds);
+            oMeds.forEach(m => {
+                if(m && (m.id || m.name) && m.qty) { addItem(vDate, vName, vHn, m.id || m.name, m.qty, 'med'); hasItems = true; }
+            });
+
+            let xRays = this.parseFBArray(v.xray_list);
+            xRays.forEach(x => {
+                if(x && (x.id || x.name) && x.qty) { addItem(vDate, vName, vHn, x.id || x.name, x.qty, 'xray'); hasItems = true; }
+            });
+
+            if(hasItems) totalTransactions++;
+        });
+
+        let medsAggregated = Array.from(medsMap.values()).sort((a, b) => b.qty - a.qty);
+        let invAggregated = Array.from(invMap.values()).sort((a, b) => b.qty - a.qty);
+        let allAggregated = [...medsAggregated, ...invAggregated].sort((a, b) => b.qty - a.qty);
+        detailedLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        this.state.exportData = {
+            meds: medsAggregated,
+            inv: invAggregated,
+            logs: detailedLogs,
+            totalCost: totalCost
+        };
+
+        const totalCostEl = document.getElementById('us-total-cost');
+        if(totalCostEl) totalCostEl.innerText = `฿${totalCost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         
-        const ChartLib = window.Chart;
-        if (!ChartLib) return;
+        const totalTxEl = document.getElementById('us-total-transactions');
+        if(totalTxEl) totalTxEl.innerText = totalTransactions.toLocaleString();
 
-        // ดึงสีตาม Theme ปัจจุบันให้กราฟ (Dark Mode Support)
-        const themeTextColor = getComputedStyle(document.documentElement).getPropertyValue('--text-dark').trim() || '#334155';
-        const themeGridColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim() || '#e2e8f0';
-
-        const ctxBar = document.getElementById('usageStatisticsChart');
-        if (ctxBar) {
-            if (this.state.chartInstance) this.state.chartInstance.destroy();
-            this.state.chartInstance = new ChartLib(ctxBar.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: this.state._chartPayload.labels,
-                    datasets: [
-                        { label: 'น้ำยาไตเทียม (แกลลอน/ชิ้น)', data: this.state._chartPayload.fluid, backgroundColor: 'rgba(16, 185, 129, 0.85)', borderColor: '#10b981', borderWidth: 2, borderRadius: 6 },
-                        { label: 'ยาและเวชภัณฑ์ (Vial/ชิ้น)', data: this.state._chartPayload.meds, backgroundColor: 'rgba(239, 68, 68, 0.85)', borderColor: '#ef4444', borderWidth: 2, borderRadius: 6 }
-                    ]
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { legend: { position: 'top', labels: { color: themeTextColor, font: { family: 'Prompt', size: 14 } } } }, 
-                    scales: { 
-                        y: { beginAtZero: true, grid: { color: themeGridColor }, ticks: { color: themeTextColor, font: { family: 'Prompt' } } }, 
-                        x: { grid: { color: themeGridColor }, ticks: { color: themeTextColor, font: { family: 'Prompt', size: 13 } } } 
-                    }, 
-                    animation: { duration: 0 } 
-                }
-            });
+        const topItemEl = document.getElementById('us-top-item');
+        const topItemQtyEl = document.getElementById('us-top-item-qty');
+        if (allAggregated.length > 0 && topItemEl && topItemQtyEl) {
+            topItemEl.innerText = allAggregated[0].name;
+            topItemEl.title = allAggregated[0].name;
+            topItemQtyEl.innerText = `จำนวน ${allAggregated[0].qty.toLocaleString()} หน่วย`;
+        } else if (topItemEl && topItemQtyEl) {
+            topItemEl.innerText = '-';
+            topItemQtyEl.innerText = 'จำนวน 0 หน่วย';
         }
 
-        const ctxPie = document.getElementById('topItemsPieChart');
-        if (ctxPie && this.state._piePayload.labels.length > 0) {
-            if (this.state.pieChartInstance) this.state.pieChartInstance.destroy();
-            this.state.pieChartInstance = new ChartLib(ctxPie.getContext('2d'), {
-                type: 'doughnut',
-                data: {
-                    labels: this.state._piePayload.labels,
-                    datasets: [{ data: this.state._piePayload.data, backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'], hoverOffset: 4, borderColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-surface').trim() || '#ffffff' }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: themeTextColor, font: { family: 'Prompt', size: 12 } } } }, cutout: '65%', animation: { duration: 0 } }
-            });
-        }
+        this.renderSummaryTable('us-meds-table-body', 'us-meds-total', medsAggregated, 'ยาและน้ำยา');
+        this.renderSummaryTable('us-inv-table-body', 'us-inv-total', invAggregated, 'พัสดุและ X-Ray');
+        this.renderDetailedLogTable(detailedLogs);
+        this.renderChart(allAggregated);
     }
 
-    // ---------------------------------------------------------
-    // 🖨️ Printing & Reporting
-    // ---------------------------------------------------------
-    printReport() {
-        this.renderChart();
-        if(!this.state._chartPayload) { Swal.fire('ข้อมูลว่างเปล่า', 'ไม่มีประวัติสถิติเพื่อจัดพิมพ์รายงาน', 'warning'); return; }
+    renderSummaryTable(tbodyId, totalBadgeId, dataArray, emptyText) {
+        let tableBody = document.getElementById(tbodyId);
+        let totalBadge = document.getElementById(totalBadgeId);
+        if (!tableBody) return;
 
-        db.ref('clinic_settings_v2').once('value').then(snap => {
-            const settings = snap.val() || { clinic_name: "หน่วยไตเทียม" };
-            const chartCanvas = document.getElementById('usageStatisticsChart');
-            const pieCanvas = document.getElementById('topItemsPieChart');
-            let chartImgHtml = ''; 
-            let pieImgHtml = '';
+        let tableTotal = 0;
+        if (dataArray.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted"><i class="fa-solid fa-box-open fa-2x mb-2" style="opacity: 0.2;"></i><br>ไม่พบประวัติการใช้${emptyText}</td></tr>`;
+        } else {
+            let tableHtml = '';
+            dataArray.forEach((item, index) => {
+                tableTotal += item.totalValue;
+                tableHtml += `
+                <tr class="fade-in-up" style="animation-delay: ${(index % 10) * 0.02}s">
+                    <td class="text-center text-muted fw-bold small">${index + 1}</td>
+                    <td><div class="fw-bold text-dark text-truncate" style="font-size: 14px; max-width: 200px;" title="${this.escapeHTML(item.name)}">${this.escapeHTML(item.name)}</div></td>
+                    <td class="text-end text-secondary small">฿${item.unitPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    <td class="text-center fw-bold text-primary">${item.qty.toLocaleString()}</td>
+                    <td class="text-end pe-3 fw-bold text-success">฿${item.totalValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                </tr>`;
+            });
+            tableBody.innerHTML = tableHtml;
+        }
+        if (totalBadge) totalBadge.innerHTML = `<i class="fa-solid fa-coins me-1"></i> ฿${tableTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    }
+
+    renderDetailedLogTable(detailedLogs) {
+        let tableBody = document.getElementById('us-detailed-table-body');
+        if (!tableBody) return;
+
+        if (detailedLogs.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-5 text-muted"><i class="fa-solid fa-magnifying-glass fa-2x mb-2" style="opacity: 0.2;"></i><br>ไม่มีข้อมูลเชิงลึกในช่วงเวลานี้</td></tr>`;
+            return;
+        }
+
+        let tableHtml = '';
+        detailedLogs.forEach((log, index) => {
+            let badgeClass = log.category === 'ยา/น้ำยา' ? 'bg-primary-subtle text-primary' : 
+                             (log.category === 'X-Ray' ? 'bg-info-subtle text-info' : 'bg-danger-subtle text-danger');
             
-            if (chartCanvas && this.state.chartInstance) { 
-                try { chartImgHtml = '<img src="' + chartCanvas.toDataURL('image/png') + '" style="width:100%; max-height:280px; display:block; margin:0 auto; object-fit:contain;">'; } catch(e){} 
+            tableHtml += `
+            <tr class="fade-in-up" style="animation-delay: ${(index % 15) * 0.015}s">
+                <td class="text-center text-muted fw-bold" style="font-size:13px;">${new Date(log.date).toLocaleDateString('th-TH')}</td>
+                <td class="text-center text-secondary fw-bold" style="font-size:13px;">${this.escapeHTML(log.patientHn)}</td>
+                <td><div class="fw-bold text-dark text-truncate" style="font-size:14px; max-width: 180px;">${this.escapeHTML(log.patientName)}</div></td>
+                <td><div class="fw-bold text-dark text-truncate" style="font-size:14px; max-width: 220px;" title="${this.escapeHTML(log.itemName)}">${this.escapeHTML(log.itemName)}</div></td>
+                <td class="text-center"><span class="soft-badge ${badgeClass}">${log.category}</span></td>
+                <td class="text-end text-secondary small">฿${log.unitPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                <td class="text-center fw-bold text-primary">${log.qty.toLocaleString()}</td>
+                <td class="text-end pe-3 fw-bold text-success">฿${log.totalValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            </tr>`;
+        });
+        tableBody.innerHTML = tableHtml;
+    }
+
+    renderChart(data) {
+        if (typeof Chart === 'undefined') return;
+        const canvas = document.getElementById('usageBarChart');
+        if (!canvas) return;
+
+        if (this.state.chartInstance) {
+            this.state.chartInstance.destroy();
+        }
+
+        const top10 = data.slice(0, 10);
+        const labels = top10.map(d => {
+            let name = String(d.name);
+            return name.length > 25 ? name.substring(0, 25) + '...' : name;
+        });
+        const quantities = top10.map(d => d.qty);
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Gradient แบบหรูหรา
+        let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.8)');
+        gradient.addColorStop(1, 'rgba(37, 99, 235, 0.3)');
+
+        this.state.chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'จำนวนที่เบิกใช้ (หน่วย)',
+                    data: quantities,
+                    backgroundColor: gradient,
+                    borderColor: '#2563eb',
+                    borderWidth: 1,
+                    borderRadius: 8,
+                    barPercentage: 0.5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'x', 
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        titleFont: { family: 'Prompt', size: 14 },
+                        bodyFont: { family: 'Prompt', size: 13, weight: 'bold' },
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        padding: 12,
+                        cornerRadius: 8,
+                        boxPadding: 6
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { family: 'Prompt', size: 11, weight: 'bold' }, color: '#64748b' } },
+                    y: { grid: { color: 'rgba(0,0,0,0.04)', drawBorder: false }, ticks: { font: { family: 'Prompt', weight: 'bold' }, color: '#94a3b8' } }
+                }
             }
-            if (pieCanvas && this.state.pieChartInstance) { 
-                try { pieImgHtml = '<img src="' + pieCanvas.toDataURL('image/png') + '" style="width:100%; max-height:280px; display:block; margin:0 auto; object-fit:contain;">'; } catch(e){} 
-            }
-
-            let viewTitle = this.state.selectedView === 'daily' ? 'รายวัน' : this.state.selectedView === 'weekly' ? 'รายสัปดาห์' : this.state.selectedView === 'monthly' ? 'รายเดือน' : 'รายปี';
-            
-            let oldIframe = document.getElementById('hidden-print-frame'); 
-            if (oldIframe) oldIframe.remove();
-            
-            let iframe = document.createElement('iframe'); 
-            iframe.id = 'hidden-print-frame'; 
-            iframe.style.position = 'fixed'; iframe.style.right = '0'; iframe.style.bottom = '0'; iframe.style.width = '0'; iframe.style.height = '0'; iframe.style.border = '0'; 
-            document.body.appendChild(iframe);
-
-            let doc = iframe.contentWindow.document; 
-            doc.open();
-
-            let htmlContent = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>รายงานสถิติพัสดุ</title><link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">' +
-                '<style>*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important;}body{font-family:"Sarabun",sans-serif;color:#000;padding:20px;font-size:13px;}.header{text-align:center;margin-bottom:25px;border-bottom:2px solid #000;padding-bottom:15px;}.header h2{font-size:24px;font-weight:700;margin:0;}table{width:100%;border-collapse:collapse;margin-top:20px;}th,td{border:1px solid #000;padding:10px 8px;text-align:left;}th{background-color:#f1f5f9!important;font-weight:bold;}.text-end{text-align:right;}.section-title{font-size:15px;font-weight:bold;margin-top:20px;margin-bottom:10px;border-left:4px solid #2563eb;padding-left:8px;}@media print{@page{size:A4 portrait;margin:12mm;}body{padding:0;}}</style>' +
-                '</head><body>' +
-                '<div class="header"><h2>' + this.#escapeHTML(settings.clinic_name) + '</h2><h3>รายงานวิเคราะห์สถิติปริมาณการเบิกใช้น้ำยาและยาฉีดเวชภัณฑ์ (' + viewTitle + ')</h3><div style="margin-top:5px;">รอบการประมวลผล: ' + this.formatDateTh(this.state.startDate) + ' ถึง ' + this.formatDateTh(this.state.endDate) + '</div></div>' +
-                '<div class="section-title">1. สรุปยอดสะสมรวมพัสดุคลังย่อย</div>' +
-                '<div style="display:flex; gap:15px; margin-bottom:25px;">' +
-                '<div style="flex:1; border:1px solid #000; padding:12px; text-align:center; background:#f0fdf4;"><b>ยอดใช้น้ำยาไตเทียมสะสม:</b><br><span style="font-size:18px; font-weight:bold;">' + document.getElementById('lbl-total-fluid').innerText + ' แกลลอน/ชิ้น</span></div>' +
-                '<div style="flex:1; border:1px solid #000; padding:12px; text-align:center; background:#fef2f2;"><b>ยอดใช้ยาฉีดเวชภัณฑ์สะสม:</b><br><span style="font-size:18px; font-weight:bold;">' + document.getElementById('lbl-total-meds').innerText + ' Vial/ชิ้น</span></div>' +
-                '</div>' +
-                '<div class="section-title">2. แผนภูมิกราฟการวิเคราะห์ข้อมูล</div>' +
-                '<div style="display:flex; gap:15px; margin-bottom:25px;">' +
-                '<div style="flex:2; padding:10px; border:1px solid #cbd5e1; border-radius:10px; text-align:center;"><b>กราฟเปรียบเทียบแนวโน้ม</b><br>' + chartImgHtml + '</div>' +
-                '<div style="flex:1; padding:10px; border:1px solid #cbd5e1; border-radius:10px; text-align:center;"><b>สัดส่วนรายการเบิกใช้สูงสุด</b><br>' + pieImgHtml + '</div>' +
-                '</div>' +
-                '<div class="section-title">3. บันทึกตารางแจกแจงรายการแยกประเภท</div>' +
-                '<table><thead><tr><th>ช่วงเวลา</th><th>หมวดหมู่</th><th>รหัสพัสดุ</th><th>ชื่อรายการพัสดุทางการแพทย์</th><th class="text-end">จำนวนเบิกใช้</th><th class="text-end">มูลค่า (฿)</th></tr></thead><tbody>' + document.getElementById('stat-table-body').innerHTML + '</tbody></table>' +
-                '<div style="text-align:right; margin-top:60px;"><p>ลงชื่อ .............................................................. ผู้จัดทำรายงานสถิติคลัง</p><p style="margin-right:40px;">( ........................................................ )</p></div>' +
-                '</body></html>';
-
-            doc.write(htmlContent);
-            doc.close();
-
-            Swal.fire({ title: 'กำลังเตรียมเอกสาร...', html: 'ระบบจัดพิมพ์กำลังประมวลผล', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
-            
-            iframe.onload = function() { 
-                setTimeout(() => { 
-                    Swal.close(); 
-                    iframe.contentWindow.focus(); 
-                    iframe.contentWindow.print(); 
-                    setTimeout(() => iframe.remove(), 10000); 
-                }, 800); 
-            };
         });
     }
 
-    #escapeHTML(str) {
-        if (!str && str !== 0) return '';
-        return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+    async exportExcel() {
+        if (!this.state.visits || this.state.visits.length === 0) {
+            Swal.fire('ไม่มีข้อมูล', 'ไม่พบข้อมูลประวัติในระบบ', 'warning');
+            return;
+        }
+
+        if (typeof ExcelJS === 'undefined') {
+            Swal.fire({ title: 'กำลังเชื่อมต่อ Excel Engine...', html: 'โปรดรอสักครู่...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js';
+            script.onload = () => { Swal.close(); this.promptExportType(); };
+            script.onerror = () => { Swal.fire('ระบบขัดข้อง', 'ไม่สามารถดาวน์โหลด Excel Engine ได้', 'error'); };
+            document.head.appendChild(script);
+        } else {
+            this.promptExportType();
+        }
+    }
+
+    async promptExportType() {
+        const inputOptions = {
+            'current': '📊 1. ส่งออกข้อมูลที่แสดงบนหน้าจอปัจจุบัน (ได้ 2 Sheet)',
+            'daily': '📅 2. สรุปยอดรวม แยก "รายวัน" (Daily Breakdown)',
+            'monthly': '📅 3. สรุปยอดรวม แยก "รายเดือน" (Monthly Breakdown)',
+            'yearly': '📅 4. สรุปยอดรวม แยก "รายปี" (Yearly Breakdown)'
+        };
+
+        const { value: exportType } = await Swal.fire({
+            title: '<h4 class="fw-bold mb-0 text-success"><i class="fa-solid fa-file-excel me-2"></i> รูปแบบรายงาน Excel</h4>',
+            text: 'กรุณาเลือกลักษณะการสรุปยอดที่คุณหมอ/ฝ่ายบัญชี ต้องการ',
+            input: 'radio',
+            inputOptions: inputOptions,
+            inputValue: 'current',
+            showCancelButton: true,
+            confirmButtonText: '<i class="fa-solid fa-download me-1"></i> ดาวน์โหลด',
+            confirmButtonColor: '#10b981',
+            cancelButtonText: 'ยกเลิก',
+            customClass: { popup: 'premium-alert text-start' }
+        });
+
+        if (exportType) {
+            this._generateNativeExcel(exportType);
+        }
+    }
+
+    async _generateNativeExcel(exportType) {
+        Swal.fire({ title: 'กำลังสร้างไฟล์ Excel...', html: 'ระบบกำลังจัดทำตาราง .xlsx แท้ 100%<br>จัดคอลัมน์และตั้งหน้ากระดาษอย่างสวยงาม', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+        try {
+            const workbook = new ExcelJS.Workbook();
+            
+            const applyTableStyles = (row, isHeader = false) => {
+                row.eachCell((cell, colNum) => {
+                    cell.font = { name: 'Tahoma', bold: isHeader, color: { argb: 'FF0F172A' }, size: 11 };
+                    cell.border = { top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'} };
+                    cell.alignment = { vertical: 'middle', wrapText: true };
+                    
+                    if (isHeader) {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+                        cell.alignment.horizontal = 'center';
+                    }
+                });
+            };
+
+            if (exportType === 'current') {
+                const data = this.state.exportData;
+                const sheet1 = workbook.addWorksheet('สรุปภาพรวม', { views: [{ showGridLines: false }] });
+                
+                sheet1.columns = [
+                    { width: 8 }, { width: 45 }, { width: 18 }, { width: 15 }, { width: 25 }
+                ];
+
+                sheet1.mergeCells('A1:E1');
+                const titleCell = sheet1.getCell('A1');
+                titleCell.value = 'รายงานสรุปสถิติการใช้พัสดุและยาฉีด (Analytics Summary)';
+                titleCell.font = { name: 'Tahoma', size: 16, bold: true, color: { argb: 'FF1E3A8A' } };
+                titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+
+                sheet1.mergeCells('A2:E2');
+                const subTitleCell = sheet1.getCell('A2');
+                let dateText = this.state.currentFilter === 'specific' ? `ประจำวันที่: ${new Date(this.state.specificDate).toLocaleDateString('th-TH')}` : `ฟิลเตอร์: ${this.state.currentFilter}`;
+                subTitleCell.value = `${dateText} | พิมพ์เมื่อ: ${new Date().toLocaleString('th-TH')}`;
+                subTitleCell.font = { name: 'Tahoma', size: 11, color: { argb: 'FF475569' } };
+                subTitleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+                sheet1.addRow([]); 
+
+                const h1 = sheet1.addRow(["1. หมวดยาและน้ำยาไต (Medications)"]);
+                h1.font = { name: 'Tahoma', bold: true, size: 12, color: { argb: 'FF0F172A' } };
+                const head1 = sheet1.addRow(["#", "ชื่อยา / น้ำยา", "ราคา/หน่วย (฿)", "จำนวนที่ใช้", "มูลค่าประเมิน (฿)"]);
+                applyTableStyles(head1, true);
+
+                if (data.meds.length === 0) {
+                    const emptyRow = sheet1.addRow(["", "ไม่มีข้อมูล", "", "", ""]);
+                    applyTableStyles(emptyRow);
+                    sheet1.mergeCells(`B${emptyRow.number}:E${emptyRow.number}`);
+                    emptyRow.getCell(2).alignment = { horizontal: 'center' };
+                } else {
+                    data.meds.forEach((item, idx) => {
+                        const r = sheet1.addRow([idx + 1, item.name, item.unitPrice, item.qty, item.totalValue]);
+                        applyTableStyles(r);
+                        r.getCell(1).alignment = { horizontal: 'center' };
+                        r.getCell(3).alignment = { horizontal: 'right' }; r.getCell(3).numFmt = '#,##0.00';
+                        r.getCell(4).alignment = { horizontal: 'center' };
+                        r.getCell(5).alignment = { horizontal: 'right' }; r.getCell(5).numFmt = '#,##0.00';
+                    });
+                }
+                sheet1.addRow([]); 
+
+                const h2 = sheet1.addRow(["2. หมวดเวชภัณฑ์และ X-Ray (Inventory & Others)"]);
+                h2.font = { name: 'Tahoma', bold: true, size: 12, color: { argb: 'FF0F172A' } };
+                const head2 = sheet1.addRow(["#", "ชื่อเวชภัณฑ์ / X-Ray", "ราคา/หน่วย (฿)", "จำนวนที่ใช้", "มูลค่าประเมิน (฿)"]);
+                applyTableStyles(head2, true);
+
+                if (data.inv.length === 0) {
+                    const emptyRow = sheet1.addRow(["", "ไม่มีข้อมูล", "", "", ""]);
+                    applyTableStyles(emptyRow);
+                    sheet1.mergeCells(`B${emptyRow.number}:E${emptyRow.number}`);
+                    emptyRow.getCell(2).alignment = { horizontal: 'center' };
+                } else {
+                    data.inv.forEach((item, idx) => {
+                        const r = sheet1.addRow([idx + 1, item.name, item.unitPrice, item.qty, item.totalValue]);
+                        applyTableStyles(r);
+                        r.getCell(1).alignment = { horizontal: 'center' };
+                        r.getCell(3).alignment = { horizontal: 'right' }; r.getCell(3).numFmt = '#,##0.00';
+                        r.getCell(4).alignment = { horizontal: 'center' };
+                        r.getCell(5).alignment = { horizontal: 'right' }; r.getCell(5).numFmt = '#,##0.00';
+                    });
+                }
+
+                // Sheet 2: Detailed Logs
+                const sheet2 = workbook.addWorksheet('ประวัติเชิงลึกรายบุคคล', { views: [{ showGridLines: false }] });
+                sheet2.columns = [
+                    { width: 15 }, { width: 15 }, { width: 35 }, { width: 45 }, { width: 15 }, { width: 18 }, { width: 10 }, { width: 20 }
+                ];
+                sheet2.mergeCells('A1:H1');
+                const t2_1 = sheet2.getCell('A1');
+                t2_1.value = 'รายละเอียดการเบิกใช้เชิงลึกรายบุคคล (Detailed Transaction Log)';
+                t2_1.font = { name: 'Tahoma', size: 16, bold: true, color: { argb: 'FF0F766E' } };
+                t2_1.alignment = { vertical: 'middle', horizontal: 'center' };
+                sheet2.addRow([]);
+
+                const headLog = sheet2.addRow(["วันที่", "HN", "ชื่อคนไข้", "รายการที่ใช้ (Item)", "หมวดหมู่", "ราคา/หน่วย (฿)", "จำนวน", "รวม (฿)"]);
+                applyTableStyles(headLog, true);
+
+                if (data.logs.length === 0) {
+                    const emptyRow = sheet2.addRow(["ไม่มีข้อมูลเชิงลึกในช่วงเวลานี้", "", "", "", "", "", "", ""]);
+                    sheet2.mergeCells(`A${emptyRow.number}:H${emptyRow.number}`);
+                    emptyRow.getCell(1).alignment = { horizontal: 'center' };
+                    applyTableStyles(emptyRow);
+                } else {
+                    data.logs.forEach(log => {
+                        const dateLocal = new Date(log.date).toLocaleDateString('th-TH');
+                        const r = sheet2.addRow([dateLocal, log.patientHn, log.patientName, log.itemName, log.category, log.unitPrice, log.qty, log.totalValue]);
+                        applyTableStyles(r);
+                        r.getCell(1).alignment = { horizontal: 'center' }; r.getCell(2).alignment = { horizontal: 'center' };
+                        r.getCell(5).alignment = { horizontal: 'center' }; r.getCell(7).alignment = { horizontal: 'center' };
+                        r.getCell(6).alignment = { horizontal: 'right' }; r.getCell(6).numFmt = '#,##0.00';
+                        r.getCell(8).alignment = { horizontal: 'right' }; r.getCell(8).numFmt = '#,##0.00';
+                    });
+                }
+
+            } else {
+                // ==========================================
+                // รูปแบบที่ 2-4: แยกตาราง Aggregate ตามวัน/เดือน/ปี
+                // ==========================================
+                let flatData = [];
+                
+                this.state.visits.forEach(v => {
+                    if(!v.date) return;
+                    let timeKey = '';
+                    if(exportType === 'daily') timeKey = v.date; // 2023-10-15
+                    else if(exportType === 'monthly') timeKey = v.date.substring(0, 7); // 2023-10
+                    else if(exportType === 'yearly') timeKey = v.date.substring(0, 4); // 2023
+
+                    const extractItem = (idOrName, qtyStr, defType) => {
+                        if(!idOrName) return;
+                        let qty = parseFloat(qtyStr);
+                        if(isNaN(qty) || qty <= 0) return;
+                        let term = String(idOrName).toLowerCase().trim();
+                        let name = String(idOrName);
+                        let price = 0;
+                        let cType = defType;
+
+                        let dictItem = this.masterDict.get(term);
+                        if(dictItem) {
+                            name = dictItem.name;
+                            price = dictItem.price;
+                            cType = dictItem.type;
+                        }
+
+                        flatData.push({
+                            timeKey: timeKey,
+                            name: name,
+                            category: cType === 'med' ? 'ยา/น้ำยา' : (cType === 'xray' ? 'X-Ray' : 'พัสดุ'),
+                            unitPrice: price,
+                            qty: qty,
+                            totalValue: qty * price
+                        });
+                    }
+
+                    if(v.hd_dialysate_item && v.hd_dialysate_qty) extractItem(v.hd_dialysate_item, v.hd_dialysate_qty, 'med');
+                    if(v.hd_saline_item && v.hd_saline_qty) extractItem(v.hd_saline_item, v.hd_saline_qty, 'med');
+                    if(v.hd_heparin_item && v.hd_heparin_qty) extractItem(v.hd_heparin_item, v.hd_heparin_qty, 'med');
+                    
+                    let oMeds = this.parseFBArray(v.other_meds);
+                    oMeds.forEach(m => { if(m && (m.id || m.name) && m.qty) extractItem(m.id || m.name, m.qty, 'med'); });
+                    
+                    let xRays = this.parseFBArray(v.xray_list);
+                    xRays.forEach(x => { if(x && (x.id || x.name) && x.qty) extractItem(x.id || x.name, x.qty, 'xray'); });
+                });
+
+                // รวมยอดตาม TimeKey + ItemName
+                let aggMap = new Map();
+                flatData.forEach(d => {
+                    let k = `${d.timeKey}_${d.name}`;
+                    if(aggMap.has(k)) {
+                        let ex = aggMap.get(k);
+                        ex.qty += d.qty;
+                        ex.totalValue += d.totalValue;
+                    } else {
+                        aggMap.set(k, { ...d });
+                    }
+                });
+
+                let finalAggData = Array.from(aggMap.values());
+                // Sort by timeKey descending (ใหม่ไปเก่า), then by totalValue descending
+                finalAggData.sort((a, b) => {
+                    if(a.timeKey !== b.timeKey) return b.timeKey.localeCompare(a.timeKey);
+                    return b.totalValue - a.totalValue;
+                });
+
+                const sheetNameMap = { 'daily': 'สรุปรายวัน', 'monthly': 'สรุปรายเดือน', 'yearly': 'สรุปรายปี' };
+                const sheet = workbook.addWorksheet(sheetNameMap[exportType], { views: [{ showGridLines: false }] });
+
+                sheet.columns = [
+                    { width: 20 }, // A: Period
+                    { width: 15 }, // B: Category
+                    { width: 45 }, // C: Item Name
+                    { width: 18 }, // D: Unit Price
+                    { width: 15 }, // E: Qty
+                    { width: 25 }  // F: Total Value
+                ];
+
+                sheet.mergeCells('A1:F1');
+                const titleCell = sheet.getCell('A1');
+                titleCell.value = `รายงานสรุปยอดรวม แยกตาม${sheetNameMap[exportType].replace('สรุป', '')}`;
+                titleCell.font = { name: 'Tahoma', size: 16, bold: true, color: { argb: 'FF1E3A8A' } };
+                titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+
+                sheet.mergeCells('A2:F2');
+                const subTitleCell = sheet.getCell('A2');
+                subTitleCell.value = `ดึงข้อมูลจากประวัติคลินิกทั้งหมด | พิมพ์เมื่อ: ${new Date().toLocaleString('th-TH')}`;
+                subTitleCell.font = { name: 'Tahoma', size: 11, color: { argb: 'FF475569' } };
+                subTitleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+                sheet.addRow([]); 
+
+                const headerRow = sheet.addRow(['ช่วงเวลา (Period)', 'หมวดหมู่', 'ชื่อรายการพัสดุ/ยา', 'ราคา/หน่วย (฿)', 'จำนวนเบิกรวม', 'มูลค่ารวม (฿)']);
+                applyTableStyles(headerRow, true);
+
+                if (finalAggData.length === 0) {
+                    const emptyRow = sheet.addRow(["ไม่มีข้อมูลในระบบ", "", "", "", "", ""]);
+                    applyTableStyles(emptyRow);
+                    sheet.mergeCells(`A${emptyRow.number}:F${emptyRow.number}`);
+                    emptyRow.getCell(1).alignment = { horizontal: 'center' };
+                } else {
+                    finalAggData.forEach(item => {
+                        const r = sheet.addRow([item.timeKey, item.category, item.name, item.unitPrice, item.qty, item.totalValue]);
+                        applyTableStyles(r);
+                        r.getCell(1).alignment = { horizontal: 'center' };
+                        r.getCell(2).alignment = { horizontal: 'center' };
+                        r.getCell(4).alignment = { horizontal: 'right' }; r.getCell(4).numFmt = '#,##0.00';
+                        r.getCell(5).alignment = { horizontal: 'center' };
+                        r.getCell(6).alignment = { horizontal: 'right' }; r.getCell(6).numFmt = '#,##0.00';
+                    });
+                }
+            }
+
+            // ดาวน์โหลดไฟล์ Excel ออกมา
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            let postfix = exportType === 'current' ? 'Summary' : exportType.charAt(0).toUpperCase() + exportType.slice(1);
+            link.download = `Usage_Statistics_${postfix}_${new Date().toISOString().split('T')[0]}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+            
+            Swal.fire({
+                title: 'ดาวน์โหลดสำเร็จ!',
+                text: 'ไฟล์ Excel (.xlsx) แบบ Native สร้างสมบูรณ์แบบ',
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false
+            });
+
+        } catch (error) {
+            console.error(error);
+            Swal.fire('ข้อผิดพลาด', 'ไม่สามารถสร้างไฟล์ Excel ได้: ' + error.message, 'error');
+        }
     }
 }
 
-// 🌐 Expose Component สู่ระบบ Router
-const UsageStatisticsPage = new UsageStatisticsPageComponent();
+const UsageStatisticsPage = new UsageStatisticsComponent();
 window.UsageStatisticsPage = UsageStatisticsPage;

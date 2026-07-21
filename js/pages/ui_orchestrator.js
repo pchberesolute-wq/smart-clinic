@@ -1,301 +1,379 @@
 // js/pages/ui_orchestrator.js
-// 👑 TRUE GOD-MODE UI Orchestrator: ดักปล้นและยึดอำนาจคำสั่ง DataTables และ Responsive UI แบบ 100%
+// 👑 TRUE GOD-MODE UI Orchestrator: Omniscient Engine V4.5 (Zero-Shift Tab Update)
+// ควบคุมทุกอณูของ UI: ป้องกันแท็บยืดหด, คุมตาราง, ปุ่ม, ช่องกรอก, และแอนิเมชันระดับ Enterprise
 
 class UIOrchestratorService {
     constructor() {
+        this.resizeObserver = null;
+        this.mutationObserver = null;
         this.init();
     }
 
     init() {
-        this._injectAbsoluteStyles();
-        this._hijackDataTables(); 
-        this._setupRotationEngine(); 
-        this._setupGlobalSweetAlertFix(); // 🚨 แก้ป๊อปอัปหลบหลังเมนู
-        this._enforceTabletDesktopLayout(); // 🚨 แก้ iPad แนวนอนเมนูหด
-        
-        console.log("👑 [UI Orchestrator] TRUE GOD-MODE Activated (100% Override)");
+        try {
+            this._injectUltimateCSSDictator(); // 🚀 อัปเกรด V4.5: คุม CSS ทั้งจักรวาล (Zero-Shift)
+            this._setupGlobalMicroInteractions(); 
+            this._hijackDataTables(); 
+            this._setupAdvancedResizeEngine(); 
+            this._setupGlobalZIndexHierarchy(); 
+            this._enforceTabletDesktopLayout(); 
+            
+            console.log("%c👑 [UI Orchestrator] OMNISCIENT ENGINE V4.5 (Zero-Shift) Activated.", "color: #eab308; font-weight: bold; font-size: 14px; text-shadow: 0 0 5px rgba(234,179,8,0.5);");
+        } catch (error) {
+            console.error("🚨 [UI Orchestrator] Initialization Failed:", error);
+        }
     }
 
     // ==========================================
-    // 🛡️ 0. แฟกซ์ Z-Index ทะลุจักรวาล (แก้ป๊อปอัป Logout โดนเมนูบังในมือถือ)
+    // 🎨 1. THE DICTATOR CSS (ล้างบางและสร้างมาตรฐานใหม่ให้ทุก Element)
     // ==========================================
-    _setupGlobalSweetAlertFix() {
-        if (document.getElementById('orchestrator-swal-fix')) return;
+    _injectUltimateCSSDictator() {
+        if (document.getElementById('orchestrator-ultimate-styles')) return;
         const style = document.createElement('style');
-        style.id = 'orchestrator-swal-fix';
+        style.id = 'orchestrator-ultimate-styles';
         style.innerHTML = `
-            /* 🚨 บังคับป๊อปอัป SweetAlert ให้อยู่บนสุดเหนือทุกสิ่ง (Max 32-bit Integer) */
-            div.swal2-container {
-                z-index: 2147483647 !important;
+            /* 🖋️ 1. Typography Perfection (ลบเหลี่ยมตัวหนังสือให้คมกริบ) */
+            body, p, h1, h2, h3, h4, h5, h6, span, div, a, button, input, select, textarea {
+                -webkit-font-smoothing: antialiased !important;
+                -moz-osx-font-smoothing: grayscale !important;
+                text-rendering: optimizeLegibility !important;
+            }
+
+            /* 📜 2. Mac-Style Global Scrollbars (แถบเลื่อนแบบพรีเมียม) */
+            ::-webkit-scrollbar { width: 8px !important; height: 8px !important; }
+            ::-webkit-scrollbar-track { background: transparent !important; }
+            ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.4) !important; border-radius: 10px !important; }
+            ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.7) !important; }
+
+            /* 🔘 3. Button Micro-Interactions (ปุ่มลอยตัวและยุบตัว) */
+            .btn {
+                transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                letter-spacing: 0.3px;
+                position: relative;
+                overflow: hidden;
+            }
+            .btn:not(:disabled):hover {
+                transform: translateY(-1.5px) !important;
+                box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1) !important;
+            }
+            .btn:not(:disabled):active {
+                transform: translateY(1px) !important;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
+            }
+            .btn, .nav-link, .nav-item { user-select: none !important; -webkit-user-select: none !important; }
+
+            /* ⌨️ 4. Form & Input Dictator (ช่องกรอกข้อมูลเรืองแสง) */
+            .form-control, .form-select, .select2-selection {
+                transition: all 0.3s ease !important;
+                border-radius: 10px !important;
+                border: 1px solid #cbd5e1 !important;
+                background-color: #f8fafc !important;
+                padding: 0.6rem 1rem !important;
+            }
+            .form-control:focus, .form-select:focus {
+                background-color: #ffffff !important;
+                border-color: #3b82f6 !important;
+                box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15) !important;
+                outline: none !important;
+            }
+
+            /* 🪟 5. Glassmorphism Modals (พื้นหลังป๊อปอัปแบบกระจกฝ้า) */
+            .modal-backdrop {
+                background-color: rgba(15, 23, 42, 0.6) !important;
+                backdrop-filter: blur(5px) !important;
+                -webkit-backdrop-filter: blur(5px) !important;
+            }
+            .modal-content {
+                border: none !important;
+                border-radius: 16px !important;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2) !important;
+                overflow: hidden;
+            }
+
+            /* 🏷️ 6. Tabs & Navigations (แถบแท็บลื่นไหล) */
+            .nav-tabs {
+                border-bottom: 2px solid #e2e8f0 !important;
+                display: flex !important; flex-wrap: nowrap !important; overflow-x: auto !important; overflow-y: hidden !important;
+                scrollbar-width: none; /* Firefox */
+            }
+            .nav-tabs::-webkit-scrollbar { display: none !important; } /* Chrome/Safari */
+            .nav-tabs .nav-link {
+                border: none !important;
+                color: #64748b !important;
+                font-weight: 600 !important;
+                padding: 12px 20px !important;
+                border-bottom: 3px solid transparent !important;
+                transition: all 0.3s ease !important;
+                white-space: nowrap !important;
+            }
+            .nav-tabs .nav-link:hover { color: #3b82f6 !important; background: rgba(59,130,246,0.05) !important; }
+            .nav-tabs .nav-link.active {
+                color: #2563eb !important;
+                border-bottom: 3px solid #2563eb !important;
+                background: transparent !important;
+            }
+
+            /* 🚨 THE FIX V4.5: Zero-Shift Tab Engine (ป้องกันการ์ดยืดหดเวลาสลับแท็บ) */
+            .card .tab-content, .modern-panel .tab-content {
+                min-height: 60vh !important; /* ล็อคความสูงขั้นต่ำ ป้องกันหน้าต่างยุบตัว */
+                padding-top: 20px !important;
+                position: relative;
+            }
+            .tab-content > .tab-pane {
+                display: none !important; /* ปิดการซ่อนแบบเก่าของ Bootstrap */
+                opacity: 0;
+            }
+            .tab-content > .tab-pane.active {
+                display: block !important;
+                animation: smoothTabReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+            }
+            @keyframes smoothTabReveal {
+                0% { opacity: 0; transform: translateY(15px); }
+                100% { opacity: 1; transform: translateY(0); }
+            }
+
+            /* 📊 7. Ultimate DataTables (หัวตารางติดหนึบ) */
+            .dataTables_wrapper { width: 100% !important; overflow-x: auto !important; padding-bottom: 8px !important; }
+            table.dataTable { border-collapse: separate !important; border-spacing: 0 !important; width: 100% !important; min-width: 900px !important; }
+            table.dataTable thead th {
+                position: sticky !important; top: 0 !important; z-index: 10 !important;
+                background: #f1f5f9 !important; color: #334155 !important;
+                font-weight: 700 !important; text-transform: uppercase !important; font-size: 13px !important; letter-spacing: 0.5px !important;
+                padding: 16px !important; border-bottom: 2px solid #cbd5e1 !important; border-top: none !important;
+            }
+            table.dataTable tbody td { padding: 14px 16px !important; vertical-align: middle !important; border-bottom: 1px solid #e2e8f0 !important; font-size: 14px !important; transition: background 0.2s ease !important; }
+            table.dataTable tbody tr:hover td { background-color: #f8fafc !important; }
+            
+            /* DataTables Pagination & Search */
+            .dataTables_filter input { width: 250px !important; max-width: 100% !important; border-radius: 50px !important; padding: 6px 16px !important; }
+            .page-item .page-link { border-radius: 8px !important; margin: 0 3px !important; border: none !important; background: #f8fafc !important; color: #475569 !important; font-weight: 600 !important; transition: all 0.2s !important; }
+            .page-item.active .page-link { background: #3b82f6 !important; color: white !important; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3) !important; transform: scale(1.05) !important; }
+            .page-item .page-link:hover:not(.active) { background: #e2e8f0 !important; }
+
+            /* 📱 8. Card Layout */
+            .card, .modern-panel {
+                border-radius: 16px !important;
+                border: 1px solid rgba(255,255,255,0.1) !important;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.03) !important;
+                transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+                width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;
             }
             
-            /* 🚨 เวลาที่ป๊อปอัปแสดงขึ้นมา บังคับให้ Sidebar/Offcanvas มุดลงไปอยู่ข้างล่างทันที */
-            body.swal2-shown [class*="sidebar"],
-            body.swal2-shown [class*="offcanvas"],
-            body.swal2-shown [id*="sidebar"],
-            body.swal2-shown header {
-                z-index: 1000 !important;
+            /* 🚫 9. Anti-Double Click State */
+            .is-processing {
+                pointer-events: none !important;
+                opacity: 0.7 !important;
+                position: relative !important;
             }
         `;
         document.head.appendChild(style);
     }
 
     // ==========================================
-    // 📱 0.1 บังคับ iPad แนวนอนให้กางเมนูเต็ม (แก้ปัญหาปุ่ม 3 ขีด และเมนูหด)
+    // ⚔️ 2. Global Micro-Interactions (คุมพฤติกรรม JavaScript)
+    // ==========================================
+    _setupGlobalMicroInteractions() {
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn, button, .anti-double-click');
+            if (!btn) return;
+
+            if (!btn.classList.contains('allow-multiple') && !btn.classList.contains('is-processing')) {
+                const originalWidth = btn.offsetWidth;
+                btn.style.minWidth = `${originalWidth}px`;
+                btn.classList.add('is-processing');
+                
+                setTimeout(() => {
+                    if (btn) {
+                        btn.classList.remove('is-processing');
+                        btn.style.minWidth = '';
+                    }
+                }, 1000);
+            }
+        }, true);
+    }
+
+    // ==========================================
+    // 🛡️ 3. โครงสร้าง Z-Index ชั้นสููงสุด (Global Hierarchy)
+    // ==========================================
+    _setupGlobalZIndexHierarchy() {
+        if (document.getElementById('orchestrator-zindex-fix')) return;
+        const style = document.createElement('style');
+        style.id = 'orchestrator-zindex-fix';
+        style.innerHTML = `
+            div.swal2-container { z-index: 2147483647 !important; }
+            .modal, .dropdown-menu, .select2-container--open { z-index: 1055 !important; }
+            .modal-backdrop { z-index: 1050 !important; }
+            .main-sidebar, .sidebar, .main-header { z-index: 1030 !important; }
+            
+            body.swal2-shown [class*="sidebar"], body.swal2-shown [class*="offcanvas"], body.swal2-shown header,
+            body.modal-open [class*="sidebar"], body.modal-open header { z-index: 1000 !important; }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // ==========================================
+    // 📱 4. บังคับเลย์เอาต์ตามอุปกรณ์ (Tablet/Desktop vs Mobile)
     // ==========================================
     _enforceTabletDesktopLayout() {
         const fixLayout = () => {
-            // หน้าจอกว้างตั้งแต่ 992px ขึ้นไป (iPad แนวนอน และ คอมพิวเตอร์)
-            if (window.innerWidth >= 992) {
-                // 1. ถอดคลาสที่ทำให้ Sidebar หดตัวออกให้หมด (ครอบคลุมทุกคลาสมาตรฐาน)
-                document.body.classList.remove('sidebar-collapse', 'sidebar-mini', 'sidebar-collapsed', 'toggle-sidebar');
-                
-                // 2. ใส่คลาสที่บังคับให้ Sidebar กางออกเต็ม 100%
-                document.body.classList.add('sidebar-expanded', 'sidebar-open');
-                
-                // 3. ปิดปุ่ม 3 ขีด (Hamburger Menu) ทิ้งเด็ดขาด
-                const togglers = document.querySelectorAll('.sidebar-toggle, #sidebarToggle, .hamburger-menu, [data-bs-toggle="sidebar"], .mobile-toggle');
-                togglers.forEach(btn => btn.style.setProperty('display', 'none', 'important'));
-            } else {
-                // มือถือ และ iPad แนวตั้ง: ปล่อยให้ปุ่ม 3 ขีดแสดงตามปกติ
-                const togglers = document.querySelectorAll('.sidebar-toggle, #sidebarToggle, .hamburger-menu, [data-bs-toggle="sidebar"], .mobile-toggle');
-                togglers.forEach(btn => btn.style.removeProperty('display'));
-            }
+            try {
+                if (window.innerWidth >= 992) {
+                    document.body.classList.remove('sidebar-collapse', 'sidebar-mini', 'sidebar-collapsed', 'toggle-sidebar');
+                    document.body.classList.add('sidebar-expanded', 'sidebar-open');
+                    document.querySelectorAll('.sidebar-toggle, #sidebarToggle, .hamburger-menu, [data-bs-toggle="sidebar"], .mobile-toggle').forEach(btn => {
+                        btn.style.setProperty('display', 'none', 'important');
+                    });
+                } else {
+                    document.querySelectorAll('.sidebar-toggle, #sidebarToggle, .hamburger-menu, [data-bs-toggle="sidebar"], .mobile-toggle').forEach(btn => {
+                        btn.style.removeProperty('display');
+                    });
+                }
+            } catch (e) {}
         };
-
-        // ทำงานทันทีตอนโหลด
         fixLayout();
-        
-        // ทำงานทุกครั้งที่หมุนจอ หรือย่อขยายหน้าต่าง
-        window.addEventListener('resize', fixLayout);
-        window.addEventListener('orientationchange', () => {
-            setTimeout(fixLayout, 200);
-            setTimeout(fixLayout, 600); // ย้ำอีกครั้งเผื่อ Browser เรนเดอร์ช้า
-        });
+        window.addEventListener('resize', () => requestAnimationFrame(fixLayout));
+        window.addEventListener('orientationchange', () => { setTimeout(fixLayout, 200); setTimeout(fixLayout, 600); });
     }
 
     // ==========================================
-    // 🔄 1. ระบบดักจับการหมุนหน้าจอ (Orientation Change Engine)
+    // 🔄 5. ระบบดักจับการย่อขยายขั้นสูง (Advanced Resize Engine)
     // ==========================================
-    _setupRotationEngine() {
-        const adjustLayout = () => {
-            if (typeof $ !== 'undefined' && $.fn.DataTable) {
-                $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
-                console.log("🔄 [UI Orchestrator] Screen Rotated -> Tables Re-calculated");
+    _setupAdvancedResizeEngine() {
+        const adjustTables = () => {
+            if (typeof $ !== 'undefined' && $.fn && $.fn.DataTable) {
+                try { $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust(); } catch (e) {}
             }
         };
 
-        window.addEventListener('orientationchange', () => {
-            setTimeout(adjustLayout, 200); 
-            setTimeout(adjustLayout, 500); 
-        });
+        window.addEventListener('orientationchange', () => { setTimeout(adjustTables, 250); setTimeout(adjustTables, 700); });
 
-        window.addEventListener('resize', () => {
-            clearTimeout(this._resizeTimer);
-            this._resizeTimer = setTimeout(adjustLayout, 150); 
-        });
+        if (typeof ResizeObserver !== 'undefined') {
+            const wrapper = document.querySelector('.content-wrapper') || document.body;
+            this.resizeObserver = new ResizeObserver(() => {
+                clearTimeout(this._obsTimer);
+                this._obsTimer = setTimeout(adjustTables, 150);
+            });
+            this.resizeObserver.observe(wrapper);
+        } else {
+            window.addEventListener('resize', () => {
+                clearTimeout(this._resizeTimer);
+                this._resizeTimer = setTimeout(adjustTables, 150); 
+            });
+        }
     }
 
     // ==========================================
-    // ⚔️ 2. ระบบยึดอำนาจ DataTables (แก้ปุ่มตารางเพี้ยนให้คลุมทุกหน้า 100%)
+    // ⚔️ 6. ระบบยึดอำนาจ DataTables (ป้องกัน Error ทะลุ)
     // ==========================================
     _hijackDataTables() {
         let retries = 0;
         const applyHijack = () => {
             if (typeof $ !== 'undefined' && $.fn && $.fn.dataTable && !$.fn.dataTable.__godModeStatus) {
-                
-                // 1. ตั้งค่าพื้นฐาน (Defaults) ให้เป็นแบบที่เราต้องการ 100%
-                $.extend(true, $.fn.dataTable.defaults, {
-                    language: { 
-                        url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/th.json",
-                        search: "", searchPlaceholder: "🔍 พิมพ์ค้นหา...", lengthMenu: "แสดง _MENU_ รายการ",
-                        emptyTable: "<div class='py-4 text-muted text-center' style='font-family:Prompt;'><i class='fa-solid fa-folder-open fa-3x mb-3 opacity-25'></i><br>ไม่มีข้อมูลในระบบ</div>",
-                        zeroRecords: "<div class='py-4 text-muted text-center' style='font-family:Prompt;'><i class='fa-solid fa-search fa-3x mb-3 opacity-25'></i><br>ไม่พบข้อมูลที่ค้นหา</div>"
-                    },
-                    destroy: true,
-                    autoWidth: false,
-                    responsive: false, // ปิด Responsive ดั้งเดิมที่ทำให้ตารางหด
-                    scrollX: false, // ปิด ScrollX ของ DataTables ใช้ CSS แทน
-                    dom: '<"d-flex flex-wrap justify-content-between align-items-center mb-3 w-100 gap-2"lf>rt<"d-flex flex-wrap justify-content-between align-items-center mt-3 w-100 gap-2"ip>' // โครงสร้างบน-ล่าง
-                });
-
-                // 2. The Hijacker: ทับฟังก์ชันสร้างตาราง เพื่อกันไม่ให้ไฟล์อื่นล้างการตั้งค่าของเรา
-                const originalDataTable = $.fn.dataTable;
-                
-                $.fn.dataTable = function(options, ...args) {
-                    if (options && typeof options === 'object') {
-                        options.destroy = true;
-                        options.autoWidth = false;
-                        options.responsive = false; 
-                        options.scrollX = false; 
-                        options.dom = '<"d-flex flex-wrap justify-content-between align-items-center mb-3 w-100 gap-2"lf>rt<"d-flex flex-wrap justify-content-between align-items-center mt-3 w-100 gap-2"ip>';
-                    }
-                    return originalDataTable.apply(this, [options, ...args]);
-                };
-
-                Object.assign($.fn.dataTable, originalDataTable);
-                $.fn.DataTable = $.fn.dataTable;
-                $.fn.dataTable.__godModeStatus = true; 
-
-                // 3. สายลับแต่งหน้าตา (ทำงานทุกครั้งที่ตารางวาดเสร็จ หรือเปลี่ยนหน้า)
-                const styleDataTablesUI = () => {
-                    // จัดการกล่องค้นหา
-                    $('.dataTables_filter input').addClass('form-control shadow-sm').css({
-                        'border-radius': '50px', 'padding': '6px 16px', 'background': '#f8fafc', 'width': '100%', 'max-width': '250px', 'outline': 'none'
+                try {
+                    $.extend(true, $.fn.dataTable.defaults, {
+                        language: { 
+                            url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/th.json",
+                            search: "", searchPlaceholder: "🔍 ค้นหาอัจฉริยะ...", lengthMenu: "แสดง _MENU_ แถว",
+                            emptyTable: "<div class='py-5 text-muted text-center'><i class='fa-solid fa-folder-open fa-3x mb-3 opacity-25'></i><h5 class='fw-bold mt-2'>ไม่มีข้อมูลในระบบ</h5><p class='small'>กรุณาเพิ่มข้อมูลเพื่อแสดงผลในตารางนี้</p></div>",
+                            zeroRecords: "<div class='py-5 text-muted text-center'><i class='fa-solid fa-search fa-3x mb-3 opacity-25'></i><h5 class='fw-bold mt-2'>ไม่พบข้อมูลที่ค้นหา</h5><p class='small'>ลองเปลี่ยนคำค้นหาใหม่อีกครั้ง</p></div>"
+                        },
+                        destroy: true, autoWidth: false, responsive: false, scrollX: false,
+                        dom: '<"d-flex flex-wrap justify-content-between align-items-center mb-4 w-100 gap-3"lf>rt<"d-flex flex-wrap justify-content-between align-items-center mt-4 w-100 gap-3"ip>'
                     });
-                    
-                    // จัดการเมนูเลือกจำนวนหน้า
-                    $('.dataTables_length select').addClass('form-select shadow-sm').css({'border-radius': '12px'});
-                    
-                    // จัดการปุ่มหน้าถัดไป (Pagination) ให้ไม่เพี้ยน
-                    $('.dataTables_paginate > .pagination').addClass('pagination-sm mb-0 shadow-sm flex-wrap justify-content-center');
-                    
-                    // บังคับสไตล์ปุ่ม Pagination ให้สวยงาม
-                    $('.page-item .page-link').addClass('shadow-sm').css({
-                        'border-radius': '8px', 'color': '#475569', 'font-weight': '700', 'font-family': 'Prompt', 'padding': '6px 12px', 'background': '#f8fafc', 'margin': '0 2px', 'border': 'none'
-                    });
-                    $('.page-item.active .page-link').css({
-                        'background': '#3b82f6', 'color': 'white', 'box-shadow': '0 4px 10px rgba(59, 130, 246, 0.3)'
-                    });
-                    $('.page-item.disabled .page-link').css({
-                        'opacity': '0.5', 'background': '#f1f5f9'
-                    });
-                };
 
-                // วางสายลับดักจับทุกการวาดตารางในโปรแกรม
-                $(document).on('draw.dt', styleDataTablesUI);
-                $(document).on('init.dt', styleDataTablesUI);
-
-                // 🚨 NEW: ใช้ MutationObserver ดักจับเผื่อกรณีหน้าไหนโหลดช้า แล้วปุ่มตารางเพี้ยน
-                const observer = new MutationObserver((mutations) => {
-                    let shouldStyle = false;
-                    mutations.forEach(m => {
-                        if (m.target.classList && (m.target.classList.contains('dataTables_wrapper') || m.target.classList.contains('pagination'))) {
-                            shouldStyle = true;
+                    const originalDataTable = $.fn.dataTable;
+                    $.fn.dataTable = function(options, ...args) {
+                        try {
+                            if (options && typeof options === 'object') {
+                                options.destroy = true; options.autoWidth = false; options.responsive = false; options.scrollX = false;
+                                options.dom = '<"d-flex flex-wrap justify-content-between align-items-center mb-4 w-100 gap-3"lf>rt<"d-flex flex-wrap justify-content-between align-items-center mt-4 w-100 gap-3"ip>';
+                            }
+                            return originalDataTable.apply(this, [options, ...args]);
+                        } catch (e) {
+                            console.error("DataTable Init Error:", e);
+                            return this; 
                         }
-                    });
-                    if(shouldStyle) styleDataTablesUI();
-                });
-                observer.observe(document.body, { childList: true, subtree: true });
+                    };
 
+                    Object.assign($.fn.dataTable, originalDataTable);
+                    $.fn.DataTable = $.fn.dataTable;
+                    $.fn.dataTable.__godModeStatus = true; 
+
+                } catch (err) { console.error("DataTables Hijack Failed:", err); }
             } else if (retries < 100) {
                 retries++;
-                setTimeout(applyHijack, 50);
+                setTimeout(applyHijack, 100);
             }
         };
         applyHijack();
     }
 
     // ==========================================
-    // 💉 3. CSS Absolute Hard-Lock (ล็อคขั้นเด็ดขาด ทะลวงทุกหน้าเพจ)
-    // ==========================================
-    _injectAbsoluteStyles() {
-        if (document.getElementById('orchestrator-absolute-styles')) return;
-        const style = document.createElement('style');
-        style.id = 'orchestrator-absolute-styles';
-        style.innerHTML = `
-            /* 👑 บังคับกล่องนอกสุดห้ามล้นจอเด็ดขาด */
-            .modern-panel, .card { 
-                overflow: hidden !important; 
-                width: 100% !important; 
-                max-width: 100% !important;
-                box-sizing: border-box !important;
-            }
-
-            /* 👑 DataTables Wrapper ให้เป็นกรอบเลื่อนซ้ายขวาอย่างสมบูรณ์แบบ */
-            .dataTables_wrapper { 
-                width: 100% !important; 
-                max-width: 100vw !important;
-                overflow-x: auto !important; 
-                overflow-y: hidden !important;
-                -webkit-overflow-scrolling: touch !important; 
-                padding-bottom: 5px !important;
-            }
-            
-            /* 👑 ล็อคตารางให้กว้าง 900px */
-            table.dataTable, table.table { 
-                min-width: 900px !important; 
-                width: 100% !important; 
-                border-collapse: collapse !important; 
-                margin-top: 10px !important; 
-                margin-bottom: 10px !important; 
-            }
-            
-            table.dataTable th, table.dataTable td, table.table th, table.table td {
-                padding: 12px 16px !important;
-                white-space: nowrap !important;
-                vertical-align: middle !important;
-                font-size: 14px !important;
-                border-bottom: 1px solid #f1f5f9 !important;
-            }
-            
-            table.dataTable thead th, table.table thead th {
-                background: #f8fafc !important; 
-                color: #475569 !important; 
-                font-weight: 800 !important;
-                border-bottom: 2px solid #e2e8f0 !important; 
-                border-top: none !important;
-                text-transform: uppercase !important;
-                font-size: 13px !important;
-            }
-
-            table.dataTable tbody tr:hover td, table.table tbody tr:hover td {
-                background-color: #f1f5f9 !important;
-            }
-
-            .dataTables_filter input:focus { 
-                background: #ffffff !important; 
-                border-color: #3b82f6 !important; 
-                box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important; 
-            }
-            
-            /* ล็อกการพังของปุ่มหน้าถัดไป */
-            .dataTables_paginate .paginate_button { padding: 0 !important; margin: 0 !important; border: none !important; background: transparent !important; }
-            
-            /* ลบปุ่มบวกเขียวๆ ของ DataTables Responsive เดิมทิ้งไปให้หมด */
-            table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control:before, 
-            table.dataTable.dtr-inline.collapsed>tbody>tr>th.dtr-control:before {
-                display: none !important;
-            }
-        `;
-        document.head.appendChild(style);
-    }
-
-    // ==========================================
-    // 🛠️ 4. เครื่องมืออเนกประสงค์ให้ไฟล์ลูกเรียกใช้
+    // 🛠️ 7. OMNISCIENT RENDER UTILITIES 
     // ==========================================
     applyTableStandard(tableId, customOptions = {}) {
-        if (typeof $ === 'undefined' || !$('#' + tableId).length) return null;
-        return $('#' + tableId).DataTable(customOptions); 
+        try {
+            if (typeof $ === 'undefined' || !$('#' + tableId).length) return null;
+            return $('#' + tableId).DataTable(customOptions); 
+        } catch (error) { return null; }
     }
 
     destroyTable(tableId) {
-        if (typeof $ !== 'undefined' && $.fn.DataTable.isDataTable('#' + tableId)) {
-            $('#' + tableId).DataTable().clear().destroy();
-            $('#' + tableId).empty();
-        }
+        try {
+            if (typeof $ !== 'undefined' && $.fn.DataTable.isDataTable('#' + tableId)) {
+                $('#' + tableId).DataTable().clear().destroy();
+                $('#' + tableId).empty();
+            }
+        } catch (error) {}
     }
     
     renderBadge(text, type = 'primary') {
-        if (!text) return '';
-        const colors = { success: 'bg-success text-white', warning: 'bg-warning text-dark', danger: 'bg-danger text-white', info: 'bg-info text-white', primary: 'bg-primary text-white', secondary: 'bg-secondary text-white' };
+        if (!text && text !== 0) return '';
+        const colors = { 
+            success: 'bg-success bg-opacity-10 text-success border border-success border-opacity-25', 
+            warning: 'bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25', 
+            danger: 'bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25', 
+            info: 'bg-info bg-opacity-10 text-info border border-info border-opacity-25', 
+            primary: 'bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25', 
+            secondary: 'bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25' 
+        };
         const c = colors[type] || colors['primary'];
-        return `<span class="badge rounded-pill ${c} px-2 py-1 shadow-sm" style="font-weight: 500; font-size: 11px;">${text}</span>`;
+        return `<span class="badge rounded-pill ${c} px-3 py-2 shadow-sm" style="font-weight: 700; font-size: 12px; letter-spacing: 0.5px;">${text}</span>`;
     }
     
     renderTruncate(text, maxLength = 30) {
-        if (!text) return '-';
-        if (text.length <= maxLength) return text;
-        return `<span title="${text}" style="cursor: help; border-bottom: 1px dotted #cbd5e1;">${text.substring(0, maxLength)}...</span>`;
+        if (!text && text !== 0) return '-';
+        let str = String(text);
+        if (str.length <= maxLength) return str;
+        return `<span title="${str}" data-bs-toggle="tooltip" style="cursor: help; border-bottom: 1px dashed #cbd5e1; transition: color 0.2s;" onmouseover="this.style.color='#3b82f6'" onmouseout="this.style.color='inherit'">${str.substring(0, maxLength)}...</span>`;
     }
     
     renderCurrency(amount) {
         const num = parseFloat(amount);
-        if (isNaN(num)) return '0.00 ฿';
-        return `<span class="${num < 0 ? 'text-danger' : 'text-dark'} fw-bold">${num.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ฿</span>`;
+        if (isNaN(num)) return '<span class="text-muted fw-bold">0.00 ฿</span>';
+        return `<span class="${num < 0 ? 'text-danger' : 'text-dark'} fw-bold" style="font-variant-numeric: tabular-nums;">${num.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <small class="text-muted ms-1">฿</small></span>`;
+    }
+
+    renderTableSkeleton(columns = 5, rows = 3) {
+        let html = '';
+        for(let i=0; i<rows; i++) {
+            html += '<tr>';
+            for(let j=0; j<columns; j++) {
+                html += `<td><div style="height: 14px; background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; border-radius: 4px; width: ${Math.floor(Math.random() * 40 + 40)}%;"></div></td>`;
+            }
+            html += '</tr>';
+        }
+        if(!document.getElementById('skeleton-keyframes')) {
+            const style = document.createElement('style');
+            style.id = 'skeleton-keyframes';
+            style.innerHTML = `@keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`;
+            document.head.appendChild(style);
+        }
+        return html;
     }
 }
 
 // 🌐 Expose Global Singleton
-const UIOrchestrator = new UIOrchestratorService();
-window.UIOrchestrator = UIOrchestrator;
+if (!window.UIOrchestrator) {
+    window.UIOrchestrator = new UIOrchestratorService();
+}

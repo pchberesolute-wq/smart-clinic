@@ -1,5 +1,5 @@
 // js/pages/visits.js
-// 🚀 Enterprise Kanban Board Module: Atomic Checkouts, Leak-Free Intervals & Theme Native
+// 🚀 Enterprise Kanban Board Module: Active Isolation, True Auto-Status Timer & Safe Sync
 
 class VisitsPageComponent {
     constructor() {
@@ -13,7 +13,6 @@ class VisitsPageComponent {
         this.firebaseListeners = [];
         this.autoUpdateInterval = null;
         
-        // ผูกฟังก์ชันเพื่อใช้ใน Event Listeners
         this.boundHandleSearch = this.#handleSearch.bind(this);
     }
 
@@ -97,7 +96,6 @@ class VisitsPageComponent {
         `;
     }
 
-    // 🚀 Lifecycle: Mount
     init() {
         if (typeof db === 'undefined' || typeof firebase === 'undefined') return;
 
@@ -117,7 +115,6 @@ class VisitsPageComponent {
         }
     }
 
-    // 🧹 Lifecycle: Unmount (Kill Event & Interval)
     destroy() {
         this.firebaseListeners.forEach(l => db.ref(l.path).off('value', l.callback));
         this.firebaseListeners = [];
@@ -133,9 +130,6 @@ class VisitsPageComponent {
         console.log("🧹 [Visits Kanban] Cleaned up listeners and Auto-Update loop.");
     }
 
-    // ---------------------------------------------------------
-    // ⚙️ Core Logic & Data Loading
-    // ---------------------------------------------------------
     #bindEvents() {
         const dateInput = document.getElementById('visitDateSelector');
         if(dateInput) {
@@ -161,7 +155,6 @@ class VisitsPageComponent {
     }
 
     #executeLoad() {
-        // 1. ดึงข้อมูลคนไข้เพื่อหาชื่อ/รูปภาพ
         const refPt = db.ref('patients_database_v2/patients');
         const cbPt = refPt.on('value', snap => {
             const data = snap.val() || {};
@@ -171,7 +164,7 @@ class VisitsPageComponent {
 
         this.setToday(); 
         
-        // 2. เริ่มวงจร Auto Update แบบปลอดภัย
+        // 🚨 THE FIX: ตั้งเวลาเช็คออโต้ อัปเดตสถานะ "รอตรวจ" -> "กำลังฟอก" ทุกๆ ครึ่งนาที
         if (this.autoUpdateInterval) clearInterval(this.autoUpdateInterval);
         this.autoUpdateInterval = setInterval(() => { this.#checkAutoStart(); }, 30000);
     }
@@ -198,17 +191,22 @@ class VisitsPageComponent {
                 let todayVisits = Object.keys(data).map(k => ({ firebaseKey: k, ...data[k] })).filter(Boolean);
                 this.state.allVisits = todayVisits;
 
-                let activeVisits = todayVisits.filter(v => v.status !== "เสร็จสิ้น");
-                let finishedVisits = todayVisits.filter(v => v.status === "เสร็จสิ้น");
+                // 🚨 THE FIX: แยก Array ตามสถานะอย่างเด็ดขาด ป้องกันบั๊กแฝดสยาม
+                let activeVisits = todayVisits.filter(v => (v.status || "รอตรวจ") !== "เสร็จสิ้น");
+                let finishedVisits = todayVisits.filter(v => (v.status || "รอตรวจ") === "เสร็จสิ้น");
 
                 this.#renderStats(todayVisits);
 
+                // ดึงข้อมูลตามแท็บที่คุณหมอเลือกอยู่เท่านั้น!
                 let displayVisits = this.state.currentTab === 'active' ? activeVisits : finishedVisits;
+                
                 let mVisits = [], aVisits = [], eVisits = [];
                 
                 displayVisits.forEach(v => {
                     let hour = parseInt(String(v.time || "00:00").split(":")[0]) || 0;
-                    if(hour >= 0 && hour < 10) mVisits.push(v); else if(hour >= 10 && hour < 14) aVisits.push(v); else eVisits.push(v);
+                    if(hour >= 0 && hour < 10) mVisits.push(v); 
+                    else if(hour >= 10 && hour < 14) aVisits.push(v); 
+                    else eVisits.push(v);
                 });
 
                 this.#renderColumn('board-morning', mVisits, 'รอบเช้า');
@@ -223,124 +221,47 @@ class VisitsPageComponent {
         this.firebaseListeners.push({ id: 'visits', path: 'patients_database_v2/visits', callback: cbVisits });
     }
 
-    // ---------------------------------------------------------
-    // 🛡️ Atomic Auto Update & Mutations
-    // ---------------------------------------------------------
+    // 🚨 THE FIX: อัลกอริทึมอัปเดตสถานะอัตโนมัติ (True Auto-Status Timer)
     #checkAutoStart() {
         if (!this.state.allVisits || this.state.allVisits.length === 0) return;
-        const now = new Date(); 
-        const tzo = now.getTimezoneOffset() * 60000;
-        const todayStr = new Date(now.getTime() - tzo).toISOString().split('T')[0];
         
+        const now = new Date(); 
+        const todayStr = now.toLocaleDateString('en-CA'); // รูปแบบ YYYY-MM-DD
         let updates = {}; 
 
         this.state.allVisits.forEach(v => {
-            if (v.date === todayStr && v.status === "รอตรวจ" && v.time) {
+            // เช็คว่าถ้าเป็นคิวของ "วันนี้" และสถานะยังเป็น "รอตรวจ"
+            if (v.date === todayStr && (v.status === "รอตรวจ" || !v.status) && v.time) {
                 const parts = String(v.time).split(':');
-                if (parts.length === 2) {
+                if (parts.length >= 2) {
                     const hours = parseInt(parts[0], 10); 
                     const minutes = parseInt(parts[1], 10);
+                    
+                    // สร้างเวลาเป้าหมายของคนไข้
                     const scheduledTime = new Date(); 
                     scheduledTime.setHours(hours, minutes, 0, 0);
                     
-                    const diffMins = (now - scheduledTime) / 60000;
+                    // หาความต่างของเวลาเป็นนาที
+                    const diffMins = (now.getTime() - scheduledTime.getTime()) / 60000;
                     
+                    // ถ้าเลยเวลานัดมาแล้ว 5 นาที (หรือมากกว่า) ให้เปลี่ยนสถานะทันที
                     if (diffMins >= 5 && v.firebaseKey) { 
                         updates[`patients_database_v2/visits/${v.firebaseKey}/status`] = "กำลังฟอกไต";
+                        console.log(`[Auto-Status] Switched HN ${v.hn} to 'กำลังฟอกไต'`);
                     }
                 }
             }
         });
 
+        // ถ้ายิงคำสั่งอัปเดตแบบรวดเดียว (Atomic Update)
         if (Object.keys(updates).length > 0) {
             db.ref().update(updates);
         }
     }
 
-    async quickSwipeCheckOut() {
-        Swal.fire({
-            title: '🔌 ระบบดึงคิวออกด้วยบัตรประชาชน',
-            html: `<div class="py-3 text-center"><i class="fa-solid fa-id-card fa-4x text-primary mb-3 fa-beat"></i><h5 class="fw-bold" style="font-family:'Prompt'; color: var(--text-dark);">กรุณาเสียบบัตรประชาชนของคนไข้</h5><p class="small mb-0" style="color: var(--text-muted);">ระบบจะดึงคนไข้คนนี้ออกจากกระดานคิวและปิดสถานะเป็นเสร็จสิ้นทันที</p></div>`,
-            showCancelButton: true, cancelButtonText: 'ยกเลิก', allowOutsideClick: false, width: 500,
-            didOpen: async () => {
-                Swal.showLoading(Swal.getCancelButton());
-                try {
-                    const response = await fetch('http://localhost:8000/read-card', { signal: AbortSignal.timeout(10000) });
-                    if (!response.ok) throw new Error("Agent Offline");
-                    
-                    const result = await response.json();
-                    if(result.error || result.status === "error") { Swal.fire('เกิดข้อผิดพลาด', result.error || 'อ่านบัตรล้มเหลว', 'error'); return; }
-
-                    const data = result.data || result; const cid = data.cid || data.idcard || "";
-                    if(!cid) { Swal.fire('Error', 'ไม่พบเลขบัตรประชาชน', 'error'); return; }
-
-                    const cleanCid = cid.replace(/-/g, ""); 
-                    const ptObj = this.state.patientsList.find(p => (p.idcard || "").replace(/-/g, "") === cleanCid);
-                    if(!ptObj) { Swal.fire('ไม่พบคนไข้', 'ไม่พบประวัติเลขบัตรนี้ในฐานข้อมูลเวชระเบียน', 'warning'); return; }
-
-                    const currentDate = this.state.selectedDate;
-                    const activeVisit = this.state.allVisits.find(v => v.hn === ptObj.hn && v.status !== "เสร็จสิ้น"); 
-
-                    if(activeVisit && activeVisit.firebaseKey) {
-                        await db.ref(`patients_database_v2/visits/${activeVisit.firebaseKey}`).update({ status: "เสร็จสิ้น" });
-                        Swal.fire({ title: 'เช็คเอาท์สำเร็จ! 🎉', html: `ปิด Visit และย้ายการ์ดเตียง <b>${activeVisit.bed}</b> ของ <b>${this.#escapeHTML(activeVisit.name)}</b> ไปที่ประวัติเรียบร้อย`, icon: 'success', timer: 2500 });
-                    } else { 
-                        Swal.fire('ไม่พบข้อมูลคิว', `ไม่พบข้อมูลคิวฟอกไตที่กำลังทำงานอยู่ของ <b>${this.#escapeHTML(ptObj.name_th)}</b> ในวันนี้ครับ`, 'info'); 
-                    }
-                } catch(e) { 
-                    Swal.fire('ตัวเชื่อมต่อขัดข้อง', 'กรุณาตรวจสอบการเปิดโปรแกรม Local Bridge Agent หรือเครื่องอ่านบัตร', 'error'); 
-                }
-            }
-        });
-    }
-
-    manageVisit(firebaseKey) { 
-        const v = this.state.allVisits.find(x => x.firebaseKey === firebaseKey); 
-        if(!v) return;
-        
-        Swal.fire({
-            title: `<h5 class="fw-bold mb-0" style="font-family:'Prompt'; color: var(--text-dark);"><i class="fa-solid fa-gears text-primary me-2"></i>จัดการคิว: เตียง ${v.bed}</h5>`,
-            html: `
-                <div class="text-start mt-3" style="font-family:'Sarabun';">
-                    <div class="p-3 rounded-4 border mb-4 text-center shadow-sm" style="background-color: var(--bg-body); border-color: var(--border-color) !important;">
-                        <h5 class="fw-bold text-primary mb-1">${this.#escapeHTML(v.name)}</h5>
-                        <div class="small fw-bold" style="color: var(--text-muted);">HN: ${this.#escapeHTML(v.hn)} <span class="mx-2">|</span> รอบเวลา: ${v.time} น.</div>
-                    </div>
-                    <button class="btn btn-premium-primary btn-lg w-100 mb-4 fw-bold shadow-sm rounded-pill" onclick="Swal.close(); App.switchPage('visit_detail', null, '${v.id}')"><i class="fa-solid fa-file-medical me-2"></i> บันทึกข้อมูลฟอกไตเชิงลึก (HD Flowsheet)</button>
-                    <hr class="mb-4" style="border-color: var(--border-color);">
-                    <label class="form-label fw-bold small" style="color: var(--text-muted);">อัปเดตสถานะคิวด่วน</label>
-                    <select id="swal-update-status" class="form-select form-select-lg mb-3 shadow-sm fw-bold input-modern" style="color: var(--text-dark);">
-                        <option value="รอตรวจ" ${v.status === 'รอตรวจ' ? 'selected' : ''}>🔵 รอตรวจ</option>
-                        <option value="กำลังฟอกไต" ${v.status === 'กำลังฟอกไต' ? 'selected' : ''}>🟠 กำลังฟอกไต</option>
-                        <option value="เสร็จสิ้น" ${v.status === 'เสร็จสิ้น' ? 'selected' : ''}>🟢 เสร็จสิ้น / ดึงการ์ดออก</option>
-                    </select>
-                </div>
-            `,
-            showCancelButton: true, showDenyButton: true, width: 500, confirmButtonText: '<i class="fa-solid fa-save me-1"></i> บันทึกสถานะ', cancelButtonText: 'ปิด', denyButtonText: '<i class="fa-solid fa-trash me-1"></i> ลบคิว', confirmButtonColor: '#2563eb', denyButtonColor: '#ef4444',
-            preConfirm: () => { return document.getElementById('swal-update-status').value; }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                let newStatus = result.value; 
-                db.ref(`patients_database_v2/visits/${firebaseKey}`).update({ status: newStatus }).then(() => { 
-                    Swal.fire({ title: 'อัปเดตสถานะคิวสำเร็จ', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
-                });
-            } else if (result.isDenied) {
-                Swal.fire({ title: 'ยืนยันการลบ?', text: `ต้องการยกเลิกคิวเตียง ${v.bed} ของ ${this.#escapeHTML(v.name)} ใช่หรือไม่?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'ใช่, ยกเลิกคิว' }).then((delRes) => {
-                    if (delRes.isConfirmed) { 
-                        db.ref(`patients_database_v2/visits/${firebaseKey}`).remove().then(() => Swal.fire('ลบแล้ว!', 'คิวถูกยกเลิกออกจากกระดาน', 'success')); 
-                    }
-                });
-            }
-        });
-    }
-
-    // ---------------------------------------------------------
-    // 🎨 UI Manipulation
-    // ---------------------------------------------------------
     setToday() {
-        const today = new Date(); const tzo = today.getTimezoneOffset() * 60000;
-        const localDate = (new Date(Date.now() - tzo)).toISOString().split('T')[0];
-        
+        const now = new Date();
+        const localDate = now.toLocaleDateString('en-CA'); 
         const dateInput = document.getElementById('visitDateSelector');
         if(dateInput) { 
             dateInput.value = localDate; 
@@ -378,8 +299,10 @@ class VisitsPageComponent {
     }
 
     #renderStats(dailyVisits) {
-        let tTotal = dailyVisits.length; let tWait = dailyVisits.filter(v => v.status === 'รอตรวจ').length;
-        let tDialysis = dailyVisits.filter(v => v.status === 'กำลังฟอกไต').length; let tDone = dailyVisits.filter(v => v.status === 'เสร็จสิ้น').length;
+        let tTotal = dailyVisits.length; 
+        let tWait = dailyVisits.filter(v => (v.status || 'รอตรวจ') === 'รอตรวจ').length;
+        let tDialysis = dailyVisits.filter(v => v.status === 'กำลังฟอกไต').length; 
+        let tDone = dailyVisits.filter(v => v.status === 'เสร็จสิ้น').length;
 
         const statContainer = document.getElementById('visit-stats-container'); if(!statContainer) return;
         statContainer.innerHTML = `
@@ -401,13 +324,12 @@ class VisitsPageComponent {
 
         let html = "";
         visitList.forEach(v => {
-            let status = v.status || "รอตรวจ"; let bColor = "var(--info)"; let badgeClass = "badge-soft-info"; let opacityStyle = "";
+            let status = v.status || "รอตรวจ"; let bColor = "var(--primary)"; let badgeClass = "badge-soft-primary"; let opacityStyle = "";
             if(status.includes("กำลังฟอก")) { bColor = "var(--warning)"; badgeClass = "badge-soft-warning"; }
             if(status.includes("เสร็จสิ้น")) { bColor = "var(--success)"; badgeClass = "badge-soft-success"; opacityStyle = "opacity: 0.8;"; }
             
             const safeName = this.#escapeHTML(v.name);
 
-            // 🚨 THE FIX: นำคลาส .visit-bed และ .bg-white ออก ใช้ Component ที่อิงกับ CSS Variables
             html += `
             <div class="visit-card shadow-sm mb-3 p-3 border card-hover-float" style="background-color: var(--bg-surface); border-color: var(--border-color) !important; border-left: 5px solid ${bColor} !important; ${opacityStyle}" onclick="App.pages.visits.manageVisit('${v.firebaseKey}')">
                 <div class="d-flex justify-content-between align-items-start w-100 mb-2">
@@ -427,9 +349,6 @@ class VisitsPageComponent {
         el.innerHTML = html;
     }
 
-    // ---------------------------------------------------------
-    // ➕ Add New Visit (Modal Flow)
-    // ---------------------------------------------------------
     async openAddVisitModal() {
         if(this.state.patientsList.length === 0) { Swal.fire('ฐานข้อมูลว่างเปล่า', 'ยังไม่มีรายชื่อผู้ป่วยในระบบ กรุณาลงทะเบียนผู้ป่วยก่อนครับ', 'warning'); return; }
         
@@ -534,10 +453,88 @@ class VisitsPageComponent {
         } catch (err) { Swal.showValidationMessage('เปิดโปรแกรมอ่านบัตรไว้แล้วหรือไม่? (Agent Offline)'); btn.innerHTML = originalHtml; btn.disabled = false; }
     }
 
+    async quickSwipeCheckOut() {
+        Swal.fire({
+            title: '🔌 ระบบดึงคิวออกด้วยบัตรประชาชน',
+            html: `<div class="py-3 text-center"><i class="fa-solid fa-id-card fa-4x text-primary mb-3 fa-beat"></i><h5 class="fw-bold" style="font-family:'Prompt'; color: var(--text-dark);">กรุณาเสียบบัตรประชาชนของคนไข้</h5><p class="small mb-0" style="color: var(--text-muted);">ระบบจะดึงคนไข้คนนี้ออกจากกระดานคิวและปิดสถานะเป็นเสร็จสิ้นทันที</p></div>`,
+            showCancelButton: true, cancelButtonText: 'ยกเลิก', allowOutsideClick: false, width: 500,
+            didOpen: async () => {
+                Swal.showLoading(Swal.getCancelButton());
+                try {
+                    const response = await fetch('http://localhost:8000/read-card', { signal: AbortSignal.timeout(10000) });
+                    if (!response.ok) throw new Error("Agent Offline");
+                    
+                    const result = await response.json();
+                    if(result.error || result.status === "error") { Swal.fire('เกิดข้อผิดพลาด', result.error || 'อ่านบัตรล้มเหลว', 'error'); return; }
+
+                    const data = result.data || result; const cid = data.cid || data.idcard || "";
+                    if(!cid) { Swal.fire('Error', 'ไม่พบเลขบัตรประชาชน', 'error'); return; }
+
+                    const cleanCid = cid.replace(/-/g, ""); 
+                    const ptObj = this.state.patientsList.find(p => (p.idcard || "").replace(/-/g, "") === cleanCid);
+                    if(!ptObj) { Swal.fire('ไม่พบคนไข้', 'ไม่พบประวัติเลขบัตรนี้ในฐานข้อมูลเวชระเบียน', 'warning'); return; }
+
+                    const currentDate = this.state.selectedDate;
+                    const activeVisit = this.state.allVisits.find(v => v.hn === ptObj.hn && v.status !== "เสร็จสิ้น"); 
+
+                    if(activeVisit && activeVisit.firebaseKey) {
+                        await db.ref(`patients_database_v2/visits/${activeVisit.firebaseKey}`).update({ status: "เสร็จสิ้น" });
+                        Swal.fire({ title: 'เช็คเอาท์สำเร็จ! 🎉', html: `ปิด Visit และย้ายการ์ดเตียง <b>${activeVisit.bed}</b> ของ <b>${this.#escapeHTML(activeVisit.name)}</b> ไปที่ประวัติเรียบร้อย`, icon: 'success', timer: 2500 });
+                    } else { 
+                        Swal.fire('ไม่พบข้อมูลคิว', `ไม่พบข้อมูลคิวฟอกไตที่กำลังทำงานอยู่ของ <b>${this.#escapeHTML(ptObj.name_th)}</b> ในวันนี้ครับ`, 'info'); 
+                    }
+                } catch(e) { 
+                    Swal.fire('ตัวเชื่อมต่อขัดข้อง', 'กรุณาตรวจสอบการเปิดโปรแกรม Local Bridge Agent หรือเครื่องอ่านบัตร', 'error'); 
+                }
+            }
+        });
+    }
+
+    manageVisit(firebaseKey) { 
+        const v = this.state.allVisits.find(x => x.firebaseKey === firebaseKey); 
+        if(!v) return;
+        
+        Swal.fire({
+            title: `<h5 class="fw-bold mb-0" style="font-family:'Prompt'; color: var(--text-dark);"><i class="fa-solid fa-gears text-primary me-2"></i>จัดการคิว: เตียง ${v.bed}</h5>`,
+            html: `
+                <div class="text-start mt-3" style="font-family:'Sarabun';">
+                    <div class="p-3 rounded-4 border mb-4 text-center shadow-sm" style="background-color: var(--bg-body); border-color: var(--border-color) !important;">
+                        <h5 class="fw-bold text-primary mb-1">${this.#escapeHTML(v.name)}</h5>
+                        <div class="small fw-bold" style="color: var(--text-muted);">HN: ${this.#escapeHTML(v.hn)} <span class="mx-2">|</span> รอบเวลา: ${v.time} น.</div>
+                    </div>
+                    <button class="btn btn-premium-primary btn-lg w-100 mb-4 fw-bold shadow-sm rounded-pill" onclick="Swal.close(); App.switchPage('visit_detail', null, '${v.id}')"><i class="fa-solid fa-file-medical me-2"></i> บันทึกข้อมูลฟอกไตเชิงลึก (HD Flowsheet)</button>
+                    <hr class="mb-4" style="border-color: var(--border-color);">
+                    <label class="form-label fw-bold small" style="color: var(--text-muted);">อัปเดตสถานะคิวด่วน</label>
+                    <select id="swal-update-status" class="form-select form-select-lg mb-3 shadow-sm fw-bold input-modern" style="color: var(--text-dark);">
+                        <option value="รอตรวจ" ${v.status === 'รอตรวจ' ? 'selected' : ''}>🔵 รอตรวจ</option>
+                        <option value="กำลังฟอกไต" ${v.status === 'กำลังฟอกไต' ? 'selected' : ''}>🟠 กำลังฟอกไต</option>
+                        <option value="เสร็จสิ้น" ${v.status === 'เสร็จสิ้น' ? 'selected' : ''}>🟢 เสร็จสิ้น / ดึงการ์ดออก</option>
+                    </select>
+                </div>
+            `,
+            showCancelButton: true, showDenyButton: true, width: 500, confirmButtonText: '<i class="fa-solid fa-save me-1"></i> บันทึกสถานะ', cancelButtonText: 'ปิด', denyButtonText: '<i class="fa-solid fa-trash me-1"></i> ลบคิว', confirmButtonColor: '#2563eb', denyButtonColor: '#ef4444',
+            preConfirm: () => { return document.getElementById('swal-update-status').value; }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                let newStatus = result.value; 
+                db.ref(`patients_database_v2/visits/${firebaseKey}`).update({ status: newStatus }).then(() => { 
+                    Swal.fire({ title: 'อัปเดตสถานะคิวสำเร็จ', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+                });
+            } else if (result.isDenied) {
+                Swal.fire({ title: 'ยืนยันการลบ?', text: `ต้องการยกเลิกคิวเตียง ${v.bed} ของ ${this.#escapeHTML(v.name)} ใช่หรือไม่?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'ใช่, ยกเลิกคิว' }).then((delRes) => {
+                    if (delRes.isConfirmed) { 
+                        db.ref(`patients_database_v2/visits/${firebaseKey}`).remove().then(() => Swal.fire('ลบแล้ว!', 'คิวถูกยกเลิกออกจากกระดาน', 'success')); 
+                    }
+                });
+            }
+        });
+    }
+
     #escapeHTML(str) {
         if (!str && str !== 0) return '';
         return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
     }
 }
+
 const VisitsPage = new VisitsPageComponent();
 window.VisitsPage = VisitsPage;

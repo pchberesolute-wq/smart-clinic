@@ -1,5 +1,5 @@
 // js/pages/settings.js
-// 🚀 Enterprise Settings Module: Full Component, Memory-Leak Free, Dynamic RBAC, XSS Protected & Database Management
+// 🚀 Enterprise Settings Module: Bulletproof Zero-Shift Tabs, Memory-Leak Free, Dynamic RBAC & Database Management
 
 class SettingsPageComponent {
     constructor() {
@@ -46,15 +46,25 @@ class SettingsPageComponent {
         this.firebaseListeners = [];
     }
 
+    // 🚨 THE ZERO-SHIFT FIX: ฟังก์ชันสลับแท็บแบบข้าม Bootstrap
     switchTab(tabId) {
-        document.querySelectorAll('#settingsTabs .nav-link').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('#settingsTabContent .tab-pane').forEach(pane => pane.classList.remove('show', 'active'));
+        // ปิดปุ่มแท็บทั้งหมด
+        document.querySelectorAll('#settingsTabs .st-tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
         
-        const targetBtn = document.querySelector(`[data-bs-target="#${tabId}"]`);
+        // ซ่อนเนื้อหาทั้งหมดทันที 0ms
+        document.querySelectorAll('#settingsTabContent .st-tab-pane').forEach(pane => {
+            pane.classList.remove('active');
+        });
+        
+        // เปิดแท็บเป้าหมาย
+        const targetBtn = document.getElementById(`tab-${tabId}`);
         if (targetBtn) targetBtn.classList.add('active');
         
+        // โชว์เนื้อหาเป้าหมาย
         const targetPane = document.getElementById(tabId);
-        if (targetPane) targetPane.classList.add('show', 'active');
+        if (targetPane) targetPane.classList.add('active');
     }
 
     changeTheme(themeKey) {
@@ -169,6 +179,60 @@ class SettingsPageComponent {
 
         return `
             <style>
+                /* 🚨 THE BULLETPROOF ZERO-SHIFT TAB ENGINE (Settings Edition) 🚨 */
+                .st-tabs-wrapper {
+                    display: flex; gap: 8px; margin-bottom: 24px; overflow-x: auto;
+                    -webkit-overflow-scrolling: touch; scrollbar-width: none; align-items: center; padding-bottom: 5px;
+                }
+                .st-tabs-wrapper::-webkit-scrollbar { display: none; }
+
+                .st-tab-btn {
+                    flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
+                    padding: 12px 24px; background: transparent; border: 1px solid transparent; border-radius: 50px;
+                    font-family: 'Prompt', sans-serif; font-size: 15px; font-weight: 700; color: var(--text-muted);
+                    cursor: pointer; transition: all 0.3s ease; white-space: nowrap;
+                }
+                .st-tab-btn:hover { background: rgba(0,0,0,0.03); transform: translateY(-2px); }
+                html[data-bs-theme="dark"] .st-tab-btn:hover { background: rgba(255,255,255,0.05); }
+
+                .st-tab-btn.active {
+                    background: var(--bg-surface) !important; box-shadow: 0 4px 15px rgba(0,0,0,0.05) !important; color: var(--primary);
+                }
+                html[data-bs-theme="dark"] .st-tab-btn.active { border: 1px solid var(--border-color); }
+
+                /* Specific Colors for active tabs */
+                .st-tab-btn.text-info.active { color: #0ea5e9 !important; }
+                .st-tab-btn.text-danger.active { color: #ef4444 !important; }
+                .st-tab-btn.text-purple.active { color: #8b5cf6 !important; }
+
+                /* ยันต์ป้องกันหน้าต่างยุบ */
+                .st-tab-content { position: relative; min-height: 65vh; }
+                .st-tab-pane { display: none; opacity: 0; }
+                .st-tab-pane.active {
+                    display: block; animation: stTabFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                }
+                @keyframes stTabFade { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
+
+                /* 📝 Note Tabs Override */
+                .settings-note-tabs {
+                    display: flex; gap: 6px; flex-wrap: nowrap; overflow-x: auto;
+                    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+                    background: rgba(0,0,0,0.03); padding: 6px; border-radius: 50px;
+                }
+                .settings-note-tabs::-webkit-scrollbar { display: none; }
+                .settings-note-btn {
+                    border: none; background: transparent; padding: 8px 18px; border-radius: 50px;
+                    font-family: 'Prompt'; font-weight: 700; font-size: 14px; white-space: nowrap;
+                    transition: all 0.2s; color: var(--text-muted); cursor: pointer;
+                }
+                .settings-note-btn:hover { background: rgba(0,0,0,0.05); }
+                .settings-note-btn.active { background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+                html[data-bs-theme="dark"] .settings-note-tabs { background: rgba(255,255,255,0.05); }
+                html[data-bs-theme="dark"] .settings-note-btn:hover { background: rgba(255,255,255,0.1); }
+                html[data-bs-theme="dark"] .settings-note-btn.active { background: var(--bg-surface); color: #fff !important; }
+
+                /* ------------------------------------------- */
+                
                 html[data-bs-theme="dark"] .modern-panel { background-color: var(--bg-surface) !important; border-color: var(--border-color) !important; color: var(--text-dark) !important; }
                 html[data-bs-theme="dark"] .modern-panel h5, html[data-bs-theme="dark"] .modern-panel label { color: var(--text-dark) !important; }
                 html[data-bs-theme="dark"] .bg-white { background-color: var(--bg-surface) !important; border-color: var(--border-color) !important; }
@@ -187,13 +251,6 @@ class SettingsPageComponent {
                 html[data-bs-theme="dark"] .card:not(.preview-card-modern):not(.preview-card-midnight) h6 { color: var(--text-dark) !important; }
 
                 html[data-bs-theme="dark"] .input-modern { background-color: var(--bg-body) !important; border-color: var(--border-color) !important; color: var(--text-dark) !important; }
-                
-                html[data-bs-theme="dark"] .nav-link { color: var(--text-muted) !important; transition: all 0.2s ease; }
-                html[data-bs-theme="dark"] .nav-link:hover:not(.active) { 
-                    background-color: rgba(255, 255, 255, 0.05) !important; color: #f8fafc !important; border-radius: 12px 12px 0 0; 
-                }
-                html[data-bs-theme="dark"] .nav-link.active { color: var(--primary) !important; background-color: transparent !important; }
-                html[data-bs-theme="dark"] .nav-link.active:hover { background-color: transparent !important; }
                 
                 html[data-bs-theme="dark"] .badge.bg-white { background-color: rgba(255,255,255,0.08) !important; border-color: rgba(255,255,255,0.15) !important; color: var(--text-dark) !important; }
                 html[data-bs-theme="dark"] .badge.bg-light { background-color: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.1) !important; color: #cbd5e1 !important; }
@@ -214,49 +271,41 @@ class SettingsPageComponent {
                 html[data-bs-theme="dark"] #database-panel .border-danger-subtle { border-color: rgba(239, 68, 68, 0.3) !important; background: rgba(239, 68, 68, 0.05) !important;}
 
                 /* 🚨 THE FIX: ปุ่ม Action ป้องกัน Hover แล้วพื้นขาวกลืนตัวหนังสือ */
-                .btn-custom-manage {
-                    background-color: #f1f5f9 !important;
-                    color: #475569 !important;
-                    border: 1px solid #cbd5e1 !important;
-                    transition: all 0.3s ease;
-                }
-                .btn-custom-manage:hover {
-                    background-color: #475569 !important;
-                    color: #ffffff !important;
-                    border-color: #475569 !important;
-                }
+                .btn-custom-manage { background-color: #f1f5f9 !important; color: #475569 !important; border: 1px solid #cbd5e1 !important; transition: all 0.3s ease; }
+                .btn-custom-manage:hover { background-color: #475569 !important; color: #ffffff !important; border-color: #475569 !important; }
                 .btn-custom-manage i { color: inherit !important; }
-                
-                html[data-bs-theme="dark"] .btn-custom-manage {
-                    background-color: rgba(255,255,255,0.1) !important;
-                    color: #f8fafc !important;
-                    border-color: rgba(255,255,255,0.2) !important;
-                }
-                html[data-bs-theme="dark"] .btn-custom-manage:hover {
-                    background-color: #ffffff !important;
-                    color: #0f172a !important;
-                }
+                html[data-bs-theme="dark"] .btn-custom-manage { background-color: rgba(255,255,255,0.1) !important; color: #f8fafc !important; border-color: rgba(255,255,255,0.2) !important; }
+                html[data-bs-theme="dark"] .btn-custom-manage:hover { background-color: #ffffff !important; color: #0f172a !important; }
             </style>
 
-            <div class="page-header mb-4">
+            <div class="page-header mb-4 fade-in-up">
                 <div>
                     <h2 class="page-title text-primary"><i class="fa-solid fa-sliders me-2"></i> ตั้งค่าระบบและข้อมูลคลินิก</h2>
                     <p class="text-muted mt-1 mb-0">จัดการข้อมูลสถานพยาบาล, สิทธิ์การเข้าถึง และฐานข้อมูลทางการแพทย์ (Master Data)</p>
                 </div>
             </div>
 
-            <ul class="nav settings-nav-tabs mb-4 position-relative" id="settingsTabs" role="tablist" style="gap: 5px; z-index: 10;">
-                <li class="nav-item" role="presentation"><button class="nav-link active fw-bold px-4 rounded-pill" data-bs-target="#clinic-panel" type="button" role="tab" onclick="App.pages.settings.switchTab('clinic-panel')" style="border:none;"><i class="fa-solid fa-building-user me-2"></i> ข้อมูลคลินิกและบริษัท</button></li>
-                <li class="nav-item" role="presentation"><button class="nav-link text-info fw-bold px-4 rounded-pill" data-bs-target="#users-panel" type="button" role="tab" onclick="App.pages.settings.switchTab('users-panel')" style="border:none;"><i class="fa-solid fa-users-gear me-2"></i> จัดการไอดี</button></li>
-                <li class="nav-item" role="presentation"><button class="nav-link text-danger fw-bold px-4 rounded-pill" data-bs-target="#medical-panel" type="button" role="tab" onclick="App.pages.settings.switchTab('medical-panel')" style="border:none;"><i class="fa-solid fa-briefcase-medical me-2"></i> ตั้งค่าการแพทย์</button></li>
-                <li class="nav-item" role="presentation"><button class="nav-link fw-bold px-4 rounded-pill" style="color:#8b5cf6; border:none;" data-bs-target="#theme-panel" type="button" role="tab" onclick="App.pages.settings.switchTab('theme-panel')"><i class="fa-solid fa-palette me-2"></i> หน้าตา (Theme)</button></li>
-                
-                <li class="nav-item ms-auto" role="presentation"><button class="nav-link text-danger fw-bold px-4 rounded-pill bg-danger-subtle border border-danger-subtle" data-bs-target="#database-panel" type="button" role="tab" onclick="App.pages.settings.switchTab('database-panel')" style="position:relative; z-index: 50;"><i class="fa-solid fa-database me-2"></i> จัดการฐานข้อมูล (DB)</button></li>
-            </ul>
+            <div class="st-tabs-wrapper fade-in-up" id="settingsTabs" style="animation-delay: 0.1s;">
+                <button class="st-tab-btn active" id="tab-clinic-panel" onclick="App.pages.settings.switchTab('clinic-panel')">
+                    <i class="fa-solid fa-building-user me-2"></i> ข้อมูลคลินิกและบริษัท
+                </button>
+                <button class="st-tab-btn text-info" id="tab-users-panel" onclick="App.pages.settings.switchTab('users-panel')">
+                    <i class="fa-solid fa-users-gear me-2"></i> จัดการไอดี
+                </button>
+                <button class="st-tab-btn text-danger" id="tab-medical-panel" onclick="App.pages.settings.switchTab('medical-panel')">
+                    <i class="fa-solid fa-briefcase-medical me-2"></i> ตั้งค่าการแพทย์
+                </button>
+                <button class="st-tab-btn text-purple" style="color:#8b5cf6;" id="tab-theme-panel" onclick="App.pages.settings.switchTab('theme-panel')">
+                    <i class="fa-solid fa-palette me-2"></i> หน้าตา (Theme)
+                </button>
+                <button class="st-tab-btn text-danger ms-auto bg-danger-subtle border border-danger-subtle" id="tab-database-panel" onclick="App.pages.settings.switchTab('database-panel')" style="box-shadow: none !important;">
+                    <i class="fa-solid fa-database me-2"></i> จัดการฐานข้อมูล (DB)
+                </button>
+            </div>
 
-            <div class="tab-content" id="settingsTabContent">
+            <div class="st-tab-content fade-in-up" id="settingsTabContent" style="animation-delay: 0.2s;">
                 
-                <div class="tab-pane fade show active" id="clinic-panel" role="tabpanel">
+                <div class="st-tab-pane active" id="clinic-panel">
                     <div class="modern-panel p-4 pt-5 mb-4" style="border-top: 4px solid var(--primary); border-radius: 16px;">
                         <div style="position: absolute; top: -20px; right: -20px; opacity: 0.03; font-size: 250px;"><i class="fa-solid fa-hospital-user"></i></div>
                         <h5 class="fw-bold mb-4 position-relative"><i class="fa-solid fa-hospital text-primary me-2"></i> ข้อมูลพื้นฐานสถานพยาบาล (Clinic Info)</h5>
@@ -343,7 +392,7 @@ class SettingsPageComponent {
                     </div>
                 </div>
 
-                <div class="tab-pane fade" id="users-panel" role="tabpanel">
+                <div class="st-tab-pane" id="users-panel">
                     <div class="modern-panel p-4" style="border-top: 4px solid var(--info); border-radius: 16px;">
                         <div style="position: absolute; top: -30px; right: -30px; opacity: 0.02; font-size: 300px; pointer-events: none;"><i class="fa-solid fa-users-gear"></i></div>
                         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 position-relative z-1">
@@ -372,7 +421,7 @@ class SettingsPageComponent {
                     </div>
                 </div>
 
-                <div class="tab-pane fade" id="medical-panel" role="tabpanel">
+                <div class="st-tab-pane" id="medical-panel">
                     <div class="modern-panel mb-4 p-4" style="border-top: 4px solid var(--danger); border-radius: 16px;">
                         <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
                             <div><h5 class="fw-bold mb-1"><i class="fa-solid fa-vial-virus text-danger me-2"></i> 1. จัดการชุดผลแล็บ และ ราคา (Lab Sets)</h5><p class="small mb-0">ตั้งค่าชุดแล็บและราคาเหมาชุด สำหรับดึงข้อมูลในหน้า Flowsheet</p></div>
@@ -407,22 +456,24 @@ class SettingsPageComponent {
                             <div><h5 class="fw-bold mb-1"><i class="fa-solid fa-file-signature text-warning me-2"></i> 4. เทมเพลตบันทึกการรักษา (Progress Notes)</h5><p class="small mb-0">ข้อความมาตรฐานเพื่อช่วยให้พยาบาลบันทึกอาการได้รวดเร็ว</p></div>
                             <button class="btn btn-outline-warning fw-bold shadow-sm rounded-pill px-4" onclick="App.pages.settings.openNoteTemplateModal()"><i class="fa-solid fa-plus me-1"></i> สร้างเทมเพลต</button>
                         </div>
-                        <ul class="nav nav-pills mb-4 p-2 bg-light rounded-pill flex-wrap" id="note-category-tabs" role="tablist" style="gap: 5px; display: inline-flex;">
-                            <li class="nav-item"><button class="nav-link active fw-bold px-4 rounded-pill" onclick="App.pages.settings.filterNotes('all')"><i class="fa-solid fa-layer-group me-1"></i> ทั้งหมด</button></li>
-                            <li class="nav-item"><button class="nav-link fw-bold px-3 rounded-pill text-primary" onclick="App.pages.settings.filterNotes('pre')">อาการก่อนฟอก</button></li>
-                            <li class="nav-item"><button class="nav-link fw-bold px-3 rounded-pill text-danger" onclick="App.pages.settings.filterNotes('intra')">แทรกซ้อน (Intra)</button></li>
-                            <li class="nav-item"><button class="nav-link fw-bold px-3 rounded-pill text-success" onclick="App.pages.settings.filterNotes('post')">สรุปหลังฟอก</button></li>
-                            <li class="nav-item"><button class="nav-link fw-bold px-3 rounded-pill text-info" onclick="App.pages.settings.filterNotes('doctor')"><i class="fa-solid fa-user-doctor me-1"></i> คำสั่งแพทย์</button></li>
-                        </ul>
+                        
+                        <div class="settings-note-tabs mb-4" id="note-category-tabs">
+                            <button class="settings-note-btn active text-dark" onclick="App.pages.settings.filterNotes('all')"><i class="fa-solid fa-layer-group me-1"></i> ทั้งหมด</button>
+                            <button class="settings-note-btn" onclick="App.pages.settings.filterNotes('pre')">อาการก่อนฟอก</button>
+                            <button class="settings-note-btn" onclick="App.pages.settings.filterNotes('intra')">แทรกซ้อน (Intra)</button>
+                            <button class="settings-note-btn" onclick="App.pages.settings.filterNotes('post')">สรุปหลังฟอก</button>
+                            <button class="settings-note-btn" onclick="App.pages.settings.filterNotes('doctor')"><i class="fa-solid fa-user-doctor me-1"></i> คำสั่งแพทย์</button>
+                        </div>
+                        
                         <div class="row g-3" id="note-templates-container"></div>
                     </div>
                 </div>
 
-                <div class="tab-pane fade" id="theme-panel" role="tabpanel">
+                <div class="st-tab-pane" id="theme-panel">
                     ${themeUIHtml}
                 </div>
 
-                <div class="tab-pane fade" id="database-panel" role="tabpanel">
+                <div class="st-tab-pane" id="database-panel">
                     ${databaseUIHtml}
                 </div>
 
@@ -472,8 +523,18 @@ class SettingsPageComponent {
         });
         this.firebaseListeners.push({ path: 'clinic_settings_v2', callback: cbClinic });
 
+        // 🚨 THE FIX 1: ปรับวิธีดึงข้อมูล ให้จดจำรหัสพนักงาน (Firebase Key) เอาไว้ด้วย เพื่อใช้ล็อคเป้าตอนลบ
         const cbUsers = db.ref('clinic_users_v2').on('value', snap => { 
-            this.state.allUsers = toArray(snap.val()); 
+            const dataUsers = snap.val();
+            let rawUsers = [];
+            if (dataUsers) {
+                if (Array.isArray(dataUsers)) {
+                    rawUsers = dataUsers.map((u, i) => u ? { firebaseKey: String(i), ...u } : null).filter(Boolean);
+                } else {
+                    rawUsers = Object.keys(dataUsers).map(k => ({ firebaseKey: k, ...dataUsers[k] }));
+                }
+            }
+            this.state.allUsers = rawUsers;
             this.renderUsersTable(); 
         });
         this.firebaseListeners.push({ path: 'clinic_users_v2', callback: cbUsers });
@@ -528,19 +589,16 @@ class SettingsPageComponent {
     }
 
     // ---------------------------------------------------------
-    // ☢️ Database Management (Purge & Factory Reset) 🚨 Triple-Layer Security 🚨
+    // ☢️ Database Management (Purge & Factory Reset)
     // ---------------------------------------------------------
-    
     async promptCustomPurge() {
         const target = document.getElementById('db-purge-target').value;
         const years = document.getElementById('db-purge-time').value;
-        
         const labels = {
             'visits': 'ประวัติการฟอกเลือด (HD Flowsheet & EMR)',
             'ledger': 'บัญชีรายรับ-รายจ่าย (Department Ledger)',
             'inventory': 'ประวัติเข้า-ออกพัสดุ (Inventory History)'
         };
-
         const targetLabel = labels[target];
 
         this._verifyAdminPinAndExecute(`คุณกำลังจะลบ <b>${targetLabel}</b> ที่เก่ากว่า <b>${years} ปี</b>`, 'DELETE', () => {
@@ -608,15 +666,12 @@ class SettingsPageComponent {
             if (targets.wipePatients) {
                 promises.push(db.ref('patients_database_v2').remove());
             }
-            
             if (targets.wipeStockHistory) {
                 promises.push(db.ref('inventory_database_v2/transactions').remove());
             }
-
             if (targets.wipeInventoryItems) {
                 promises.push(db.ref('inventory_database_v2/items').remove());
             }
-
             if (targets.wipeLedger) {
                 promises.push(db.ref('department_ledger_v2').remove());
                 promises.push(db.ref('department_ledger_settings_v2/initial_balance').set(0));
@@ -795,7 +850,6 @@ class SettingsPageComponent {
     promptPrintCard(type) {
         let titleHtml = type === 'clinic' ? '<i class="fa-solid fa-hospital text-primary me-2"></i> สั่งพิมพ์นามบัตรคลินิก' : '<i class="fa-solid fa-building text-warning me-2"></i> สั่งพิมพ์นามบัตรใบกำกับภาษี';
         
-        // 🚨 THE FIX: เพิ่มตัวเลือกสีม่วง Amethyst Purple ลงใน Dropdown 🚨
         Swal.fire({
             title: `<h4 class="fw-bold mb-0" style="font-family:'Prompt';">${titleHtml}</h4>`,
             html: `
@@ -1120,10 +1174,8 @@ class SettingsPageComponent {
         }
         let html = '';
         this.state.allUsers.forEach(user => {
-            // 🚨 THE FIX: จัดการเรื่องสีป้ายกำกับ (Role Badge) ที่หายไป
             let roleInfo = this.roleConfig[user.role] || { label: 'พนักงานทั่วไป', icon: 'fa-user', color: 'secondary' };
             
-            // เปลี่ยนมาใช้ bg-[color]-subtle และ text-[color] ของ Bootstrap เพื่อการันตีว่าสีพื้นหลังและตัวหนังสือจะแสดงผล 100% แน่นอน
             let roleBadge = `<span class="badge bg-${roleInfo.color}-subtle text-${roleInfo.color} border border-${roleInfo.color}-subtle px-3 py-2 rounded-pill shadow-sm" style="font-size: 13px;"><i class="fa-solid ${roleInfo.icon} me-1"></i> ${roleInfo.label}</span>`;
             
             let statusBadge = user.status === 'active' 
@@ -1132,6 +1184,10 @@ class SettingsPageComponent {
             
             let safeName = this._escapeHTML(user.name || 'U');
             let imgSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(safeName)}&background=f8fafc&color=334155&bold=true`;
+            
+            // 🚨 THE FIX: ดึง Key ที่แท้จริงออกมาใช้ เพื่อส่งให้ปุ่มลบทำงานได้เป๊ะๆ
+            let userKey = user.firebaseKey || user.username;
+            let displayId = user.username || user.id || userKey;
             
             html += `
             <tr class="card-hover-float" style="cursor: default;">
@@ -1143,22 +1199,23 @@ class SettingsPageComponent {
                         </div>
                         <div>
                             <div class="fw-bold text-dark" style="font-size: 15px;">${safeName}</div>
-                            <div class="small text-muted" style="font-size: 12px;">ID: ${this._escapeHTML(user.id)}</div>
+                            <div class="small text-muted" style="font-size: 12px;">ID: ${this._escapeHTML(displayId)}</div>
                         </div>
                     </div>
                 </td>
-                <td class="fw-bold text-primary" style="font-size: 14.5px;">${this._escapeHTML(user.username)}</td>
+                <td class="fw-bold text-primary" style="font-size: 14.5px;">${this._escapeHTML(user.username || '-')}</td>
                 <td class="text-center">${roleBadge}</td>
                 <td class="text-center">${statusBadge}</td>
                 <td class="text-center">
-                    <button class="btn btn-sm btn-light border shadow-sm me-1 fw-bold text-dark" onclick="App.pages.settings.openUserModal('${user.id}')" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
-                    <button class="btn btn-sm btn-light border shadow-sm me-1 fw-bold text-info" onclick="App.pages.settings.openRolePermissionsModal('${user.role}', '${user.name}')" title="ตั้งค่าการมองเห็นเมนู"><i class="fa-solid fa-shield-halved"></i> แก้ไขสิทธิ์</button>
-                    <button class="btn btn-sm btn-outline-danger shadow-sm fw-bold" onclick="App.pages.settings.deleteUser('${user.id}')" title="ลบ"><i class="fa-solid fa-trash"></i></button>
+                    <button class="btn btn-sm btn-light border shadow-sm me-1 fw-bold text-dark" onclick="App.pages.settings.openUserModal('${userKey}')" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-sm btn-light border shadow-sm me-1 fw-bold text-info" onclick="App.pages.settings.openRolePermissionsModal('${user.role}', '${safeName}')" title="ตั้งค่าการมองเห็นเมนู"><i class="fa-solid fa-shield-halved"></i> แก้ไขสิทธิ์</button>
+                    <button class="btn btn-sm btn-outline-danger shadow-sm fw-bold" onclick="App.pages.settings.deleteUser('${userKey}')" title="ลบถาวร"><i class="fa-solid fa-trash"></i></button>
                 </td>
             </tr>`;
         });
         tbody.innerHTML = html;
     }
+
     openRolePermissionsModal(roleId, userName) {
         if (roleId === 'admin') {
             Swal.fire('สิทธิ์สูดสุด', 'ผู้ดูแลระบบ (Admin) มีสิทธิ์เข้าถึงทุกเมนูโดยอัตโนมัติ ไม่สามารถปิดกั้นสิทธิ์ได้ครับ', 'info');
@@ -1220,9 +1277,10 @@ class SettingsPageComponent {
         });
     }
 
-    openUserModal(userId = null) {
-        let isEdit = !!userId; 
-        let user = isEdit ? this.state.allUsers.find(u => u.id === userId) : { status: 'active', role: 'nurse' };
+    openUserModal(userKey = null) {
+        let isEdit = !!userKey; 
+        // 🚨 ดึงข้อมูลโดยเทียบจาก Key จริงของ Firebase
+        let user = isEdit ? this.state.allUsers.find(u => u.firebaseKey === userKey || u.username === userKey) : { status: 'active', role: 'nurse' };
         let roleOptionsHtml = Object.keys(this.roleConfig).map(key => `<option value="${key}" ${user.role === key ? 'selected' : ''}>${this.roleConfig[key].label}</option>`).join('');
         
         Swal.fire({
@@ -1267,7 +1325,6 @@ class SettingsPageComponent {
                 if (!isEdit && !password) { Swal.showValidationMessage('ตั้งรหัสผ่านสำหรับผู้ใช้งานใหม่'); return false; }
                 
                 return { 
-                    id: userId || 'USR-'+Date.now(), 
                     name, 
                     username, 
                     password: password ? password : user.password, 
@@ -1277,23 +1334,34 @@ class SettingsPageComponent {
             }
         }).then((result) => { 
             if (result.isConfirmed) { 
-                let updatedList = [...this.state.allUsers]; 
-                if (isEdit) updatedList[updatedList.findIndex(u => u.id === userId)] = result.value; 
-                else updatedList.push(result.value); 
-                db.ref('clinic_users_v2').set(updatedList).then(() => Swal.fire({title:'บันทึกสำเร็จ!', icon:'success', timer:1200, showConfirmButton:false})); 
+                Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
+                
+                // 🚨 THE FIX: บันทึกด้วยคำสั่ง .update(Object) แทนการเซฟทับทั้งตาราง
+                let targetKey = userKey || result.value.username;
+                let savePayload = { ...result.value };
+                
+                db.ref(`clinic_users_v2/${targetKey}`).update(savePayload).then(() => {
+                    Swal.fire({title:'บันทึกสำเร็จ!', icon:'success', timer:1200, showConfirmButton:false}); 
+                });
             } 
         });
     }
     
-    deleteUser(userId) {
-        const user = this.state.allUsers.find(u => u.id === userId);
+    deleteUser(userKey) {
+        const user = this.state.allUsers.find(u => u.firebaseKey === userKey || u.username === userKey);
+        if (!user) return;
         if(user.role === 'admin' && this.state.allUsers.filter(u => u.role === 'admin').length === 1) { Swal.fire('ลบไม่ได้!', 'ต้องมี Admin อย่างน้อย 1 คน', 'error'); return; }
         
         Swal.fire({ 
-            title: 'ยืนยันการลบ?', text:`ระงับสิทธิ์ของ ${user.name} ใช่หรือไม่?`, icon: 'warning', 
-            showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: '<i class="fa-solid fa-trash me-1"></i> ลบทิ้ง', cancelButtonText: 'ยกเลิก' 
+            title: 'ยืนยันการลบถาวร?', text:`ต้องการลบผู้ใช้งาน ${user.name} ออกจากระบบใช่หรือไม่?`, icon: 'warning', 
+            showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: '<i class="fa-solid fa-trash me-1"></i> ลบทิ้งถาวร', cancelButtonText: 'ยกเลิก' 
         }).then((res) => { 
-            if(res.isConfirmed) db.ref('clinic_users_v2').set(this.state.allUsers.filter(u => u.id !== userId)); 
+            if(res.isConfirmed) {
+                // 🚨 THE FIX: ใช้คำสั่ง Hard Delete ตัดทิ้งจากฐานข้อมูล ไม่ตกค้าง
+                db.ref(`clinic_users_v2/${userKey}`).remove().then(() => {
+                    Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'ลบทิ้งถาวรสำเร็จ', showConfirmButton: false, timer: 1500});
+                });
+            }
         });
     }
 
@@ -1471,7 +1539,7 @@ class SettingsPageComponent {
     // ---------------------------------------------------------
     filterNotes(cat) {
         this.state.currentNoteFilter = cat;
-        const buttons = document.querySelectorAll('#note-category-tabs .nav-link');
+        const buttons = document.querySelectorAll('#note-category-tabs .settings-note-btn');
         buttons.forEach(btn => {
             btn.classList.remove('active', 'badge-soft-warning', 'text-dark', 'badge-soft-primary', 'badge-soft-danger', 'badge-soft-success', 'badge-soft-info', 'text-white');
             if(btn.innerText.includes('ก่อน')) btn.classList.add('text-primary');
@@ -1483,12 +1551,7 @@ class SettingsPageComponent {
         
         let targetBtn = event.target.closest('button');
         if (targetBtn) {
-            targetBtn.className = "nav-link active fw-bold px-4 rounded-pill shadow-sm";
-            if(cat === 'pre') targetBtn.classList.add('badge-soft-primary');
-            else if(cat === 'intra') targetBtn.classList.add('badge-soft-danger');
-            else if(cat === 'post') targetBtn.classList.add('badge-soft-success');
-            else if(cat === 'doctor') targetBtn.classList.add('badge-soft-info');
-            else targetBtn.classList.add('badge-soft-warning');
+            targetBtn.classList.add('active');
         }
         
         this.renderNoteTemplates();
