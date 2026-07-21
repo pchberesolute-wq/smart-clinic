@@ -7,19 +7,25 @@
     
     <title>DIALYSIS PRO - Cloud OS</title>
 
+    <!-- 🚨 THE FIX: ระบบ Pre-Boot Cloaking ป้องกัน FOUC (จอแว็บ) อย่างเด็ดขาด -->
     <script>
         if (!sessionStorage.getItem('dialysis_session_active')) {
             sessionStorage.setItem('dialysis_session_active', 'true');
         }
-        if (!localStorage.getItem('dialysis_user_session')) {
+        // ถ้าไม่มี Session ถือว่ายังไม่ Login บังคับลบโครงสร้างจอหลักทิ้งให้เป็นหน้ากระดาษเปล่าทันที
+        if (!sessionStorage.getItem('dialysis_user_session')) {
             document.documentElement.classList.add('not-logged-in');
+            const style = document.createElement('style');
+            style.innerHTML = `
+                html.not-logged-in body { background: #f8fafc !important; }
+                html.not-logged-in #sidebar, html.not-logged-in .topbar { display: none !important; }
+                html.not-logged-in .main-content { margin: 0 !important; padding: 0 !important; width: 100vw !important; height: 100vh !important; background: #f8fafc !important; }
+                html.not-logged-in #app-content { opacity: 0; }
+            `;
+            document.head.appendChild(style);
         }
     </script>
-    <style>
-        html.not-logged-in #sidebar, html.not-logged-in .topbar { display: none !important; opacity: 0 !important; visibility: hidden !important; z-index: -1 !important; }
-        html.not-logged-in .main-content { margin-left: 0 !important; background-color: #f8fafc !important; }
-        html.not-logged-in body { background-color: #f8fafc !important; }
-    </style>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">

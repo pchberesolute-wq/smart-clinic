@@ -1,5 +1,5 @@
 // js/main.js
-// 🚀 Enterprise Core Router: Multi-Tab Enabled, Zero-Popup Paradigm & Real-time RBAC (v11.0)
+// 🚀 Enterprise Core Router: Multi-Tab Enabled, Zero-Popup Paradigm & Real-time RBAC (v11.1)
 
 document.addEventListener('click', function(e) {
     const link = e.target.closest('a[target="_blank"]');
@@ -236,6 +236,7 @@ const App = {
         }
     },
 
+    // 🚨 THE FIX: อัปเกรดระบบ SwitchPage ให้การันตีการลบคลาส Hide-Screen ทิ้งทุกครั้งที่ล็อคอิน
     switchPage: function(pageName, element, payload = null) {
         const sidebar = document.getElementById('sidebar');
         const topbar = document.querySelector('.topbar');
@@ -267,19 +268,18 @@ const App = {
             const ghostStyle = document.getElementById('anti-flash-style');
             if (ghostStyle) ghostStyle.remove();
 
-            if(sidebar) sidebar.style.display = '';
-            if(topbar) topbar.style.display = '';
-            if(mainContent) mainContent.style.marginLeft = '';
-            if(appContent) appContent.style.padding = '';
+            if(sidebar) { sidebar.style.display = ''; sidebar.style.opacity = '1'; sidebar.style.visibility = 'visible'; }
+            if(topbar) { topbar.style.display = 'flex'; topbar.style.opacity = '1'; topbar.style.visibility = 'visible'; }
+            if(mainContent) { mainContent.style.marginLeft = ''; mainContent.style.background = ''; }
+            if(appContent) { appContent.style.padding = ''; appContent.style.opacity = '1'; }
             
-            // 🚨 THE FIX: เปลี่ยนมาเช็คข้อมูลจาก SessionStorage
             if (!this.currentUser && sessionStorage.getItem('dialysis_user_session')) {
                 this.checkAuth();
             }
         } else {
             if(sidebar) sidebar.style.display = 'none';
             if(topbar) topbar.style.display = 'none';
-            if(mainContent) mainContent.style.marginLeft = '0';
+            if(mainContent) { mainContent.style.marginLeft = '0'; mainContent.style.background = '#f8fafc'; }
             if(appContent) appContent.style.padding = '0';
         }
 
@@ -347,7 +347,6 @@ const App = {
         }, 150);
     },
 
-    // 🚨 THE FIX: อัปเกรดฟังก์ชัน logout ทะลวงกำแพง Z-Index
     logout: function() {
         Swal.fire({
             title: 'ออกจากระบบ?',
@@ -359,7 +358,6 @@ const App = {
             confirmButtonText: '<i class="fa-solid fa-sign-out-alt me-2"></i> ออกจากระบบ', 
             cancelButtonText: 'ยกเลิก',
             customClass: { popup: 'shadow-lg border rounded-4' },
-            // 🌟 MAGIC FIX: ดันเลเยอร์ของกล่องข้อความให้ทะลุหน้าจอ Lock Screen ออกมา
             didOpen: () => {
                 const container = Swal.getContainer();
                 if (container) {
@@ -375,7 +373,6 @@ const App = {
                     try { this.activePageModule.destroy(); } catch (e) {}
                 }
 
-                // กวาดล้างข้อมูลใน SessionStorage
                 sessionStorage.removeItem('dialysis_user_session');
                 sessionStorage.removeItem('dialysis_is_locked'); 
                 sessionStorage.removeItem('dialysis_session_active'); 
@@ -412,7 +409,6 @@ const App = {
 
     lockScreen: function() {
         this.isLocked = true;
-        // 🚨 THE FIX: เปลี่ยนมาใช้ SessionStorage
         sessionStorage.setItem('dialysis_is_locked', 'true'); 
         
         let overlay = document.getElementById('lock-screen-overlay');
@@ -518,7 +514,6 @@ const App = {
             if (this.currentUser && this.currentUser.id === 'MASTER_ADMIN' && pw === 'admin1234') {
                 this.isLocked = false;
                 if(this.lockClockInterval) clearInterval(this.lockClockInterval);
-                // 🚨 THE FIX: เปลี่ยนมาใช้ SessionStorage
                 sessionStorage.removeItem('dialysis_is_locked'); 
                 const overlay = document.getElementById('lock-screen-overlay');
                 if (overlay) overlay.remove();
@@ -531,7 +526,6 @@ const App = {
             if (user) {
                 this.isLocked = false;
                 if(this.lockClockInterval) clearInterval(this.lockClockInterval); 
-                // 🚨 THE FIX: เปลี่ยนมาใช้ SessionStorage
                 sessionStorage.removeItem('dialysis_is_locked'); 
                 const overlay = document.getElementById('lock-screen-overlay');
                 if (overlay) overlay.remove();
@@ -549,7 +543,6 @@ const App = {
     },
 
     checkAuth: function() {
-        // 🚨 THE FIX: ดึงค่าสถานะการล็อคจอ และข้อมูลล็อกอินจาก SessionStorage
         const isLockedFromStorage = sessionStorage.getItem('dialysis_is_locked') === 'true';
         if (isLockedFromStorage) {
             this.isLocked = true;
@@ -573,14 +566,15 @@ const App = {
             return false;
         }
 
+        // 🚨 THE FIX: นำแสงสว่างและโครงสร้างหน้าจอหลักกลับมา 100%
         document.documentElement.classList.remove('not-logged-in');
         const ghostStyle = document.getElementById('anti-flash-style');
         if (ghostStyle) ghostStyle.remove();
 
-        if(sidebar) sidebar.style.display = '';
-        if(topbar) topbar.style.display = '';
-        if(mainContent) mainContent.style.marginLeft = '';
-        if(appContent) appContent.style.padding = '';
+        if(sidebar) { sidebar.style.display = ''; sidebar.style.opacity = '1'; sidebar.style.visibility = 'visible'; }
+        if(topbar) { topbar.style.display = 'flex'; topbar.style.opacity = '1'; topbar.style.visibility = 'visible'; }
+        if(mainContent) { mainContent.style.marginLeft = ''; mainContent.style.background = ''; }
+        if(appContent) { appContent.style.padding = ''; appContent.style.opacity = '1'; }
 
         try {
             this.currentUser = JSON.parse(sessionStr);
@@ -675,6 +669,7 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // 🚨 THE FIX: ประเมินการเข้าสู่ระบบแบบเงียบเชียบ ถ้ายังไม่ Login ระบบจะเด้งไปหน้า Login เลยโดยที่จอไม่กระพริบ
     const isAuthenticated = App.checkAuth();
     if (!isAuthenticated) return; 
 
@@ -692,7 +687,7 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 function syncWithLocalAgent() {
-    let currentVersion = "5.5.0 (Enterprise Ultimate Edition)";
+    let currentVersion = "6.0.0 (Quantum Resilient Edition)";
     if (typeof AboutPage !== 'undefined' && AboutPage.version) {
         currentVersion = AboutPage.version;
     }
@@ -700,12 +695,8 @@ function syncWithLocalAgent() {
     const agentUrl = `http://127.0.0.1:8000/health?v=${encodeURIComponent(currentVersion)}`;
     fetch(agentUrl, { method: 'GET' })
         .then(res => res.json())
-        .then(data => {
-            // ซิงค์สำเร็จ
-        })
-        .catch(err => {
-            // ปล่อยผ่าน
-        });
+        .then(data => {})
+        .catch(err => {});
 }
 
 setTimeout(syncWithLocalAgent, 1000);

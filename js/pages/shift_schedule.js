@@ -1,5 +1,5 @@
 // js/pages/shift_schedule.js
-// 🚀 Enterprise HR & Timesheet Matrix Module (v102.0 - Auto Leave Summary Aggregation)
+// 🚀 Enterprise HR & Timesheet Matrix Module (v104.0 - Dual-Timeframe Leave Aggregation & Unified Selector)
 
 class ShiftSchedulePageComponent {
     constructor() {
@@ -118,7 +118,7 @@ class ShiftSchedulePageComponent {
                     <p class="text-muted mt-2 mb-0 fw-bold">บันทึกรอบฟอกไต ลงเวรย่อย และจัดการโควตาวันหยุด</p>
                 </div>
                 <div class="d-flex gap-2 align-items-center flex-wrap">
-                    <button class="btn text-white fw-bold shadow-sm rounded-pill px-3 border-0" style="background: #8b5cf6;" onclick="window.ShiftSchedulePage.openMasterRosterModal()" title="ดูตาราง Master Roster สด">
+                    <button class="btn text-white fw-bold shadow-sm rounded-pill px-3 border-0" style="background: #8b5cf6;" onclick="window.ShiftSchedulePage.openExportOptionsModal('preview')" title="ดูตาราง Master Roster สด">
                         <i class="fa-solid fa-table-cells me-2"></i> ดูตารางภาพรวม
                     </button>
                     
@@ -452,6 +452,7 @@ class ShiftSchedulePageComponent {
         container.innerHTML = html;
     }
 
+    // 🚨 THE FIX: นำยอดหยุด "เฉพาะเดือนนี้" เข้าไปโชว์ในตารางหลัก
     renderGrid() {
         const thead = document.getElementById('ts-head');
         const tbody = document.getElementById('ts-body');
@@ -524,12 +525,21 @@ class ShiftSchedulePageComponent {
                 `;
 
                 let workRoundsCount = 0;
+                let monthLeaveCounts = {};
+                let monthTotalLeaves = 0;
 
                 for (let day = 1; day <= daysInMonth; day++) {
                     let dateStr = `${this.currentMonth}-${String(day).padStart(2, '0')}`;
                     let rawData = this.timesheetData[staffUname]?.[dateStr] || '';
                     let statusIds = rawData ? String(rawData).split(',') : [];
                     let cellContent = '';
+
+                    // คำนวณวันหยุดรวมเฉพาะเดือนนี้
+                    let fullDayLeaveId = statusIds.find(id => this.leaveTypes.some(l => l.id === id));
+                    if (fullDayLeaveId) {
+                        monthLeaveCounts[fullDayLeaveId] = (monthLeaveCounts[fullDayLeaveId] || 0) + 1;
+                        monthTotalLeaves++;
+                    }
 
                     statusIds.forEach(sid => {
                         if (String(sid).startsWith('RMK_')) return; 
@@ -564,8 +574,30 @@ class ShiftSchedulePageComponent {
                 }
 
                 let summaryHtml = `<div class="d-flex flex-column gap-1">`;
-                summaryHtml += `<div class="quota-box dynamic-badge" style="--badge-bg:var(--primary); --badge-color:#fff;" title="นับเฉพาะการลงเวรในเดือนนี้"><span>เข้ากะทำงาน (เดือนนี้)</span> <span>${workRoundsCount} รอบ</span></div>`;
                 
+                // สรุปกะทำงานเดือนนี้
+                summaryHtml += `<div class="quota-box dynamic-badge" style="--badge-bg:var(--primary); --badge-color:#fff;" title="นับเฉพาะการลงเวรในเดือนนี้"><span>เข้ากะ (เดือนนี้)</span> <span>${workRoundsCount} รอบ</span></div>`;
+                
+                // 🌟 ใหม่: สรุปวันหยุดเดือนนี้
+                if (monthTotalLeaves > 0) {
+                    let monthLeaveHtml = '';
+                    this.leaveTypes.forEach(l => {
+                        if (monthLeaveCounts[l.id]) {
+                            monthLeaveHtml += `<div style="font-size:8.5px; color:${l.color}; line-height:1.2;">• ${l.label}: ${monthLeaveCounts[l.id]}</div>`;
+                        }
+                    });
+                    summaryHtml += `<div class="quota-box dynamic-badge flex-column align-items-start" style="--badge-bg:#fef2f2; --badge-color:#dc2626; border:1px solid #fecaca;" title="รวมวันหยุดเฉพาะเดือนนี้">
+                        <div class="d-flex justify-content-between w-100 mb-1"><span>หยุด (เดือนนี้)</span> <span style="font-size:12px;">${monthTotalLeaves} วัน</span></div>
+                        <div class="w-100 ps-1">${monthLeaveHtml}</div>
+                    </div>`;
+                } else {
+                    summaryHtml += `<div class="quota-box dynamic-badge" style="--badge-bg:#f8fafc; --badge-color:#64748b; border:1px dashed #cbd5e1;" title="รวมวันหยุดเฉพาะเดือนนี้"><span>หยุด (เดือนนี้)</span> <span>0 วัน</span></div>`;
+                }
+
+                // เส้นแบ่งขอบเขต (Divider)
+                summaryHtml += `<div class="text-center mt-1 mb-1 fw-bold text-muted" style="font-size:9.5px; border-bottom:1px solid var(--border-color); padding-bottom:4px;"><i class="fa-solid fa-clock-rotate-left me-1"></i> โควตาและสะสมทั้งปี ${this.currentYear}</div>`;
+
+                // สรุปโควตาปี
                 this.leaveTypes.forEach(l => {
                     let limit = this.getStaffQuotaLimit(staffUname, l.id);
                     if (limit > 0 || ['OFF', 'HOL', 'SUB'].includes(l.id)) {
@@ -614,13 +646,14 @@ class ShiftSchedulePageComponent {
         let titleStr = '', btnIcon = '', btnColor = '';
         if(mode === 'excel') { titleStr = '<i class="fa-solid fa-file-excel text-success me-2"></i>ดาวน์โหลด Excel'; btnIcon = '<i class="fa-solid fa-download me-1"></i> สร้าง Excel'; btnColor = '#10b981'; } 
         else if (mode === 'pdf') { titleStr = '<i class="fa-solid fa-file-pdf text-danger me-2"></i>ดาวน์โหลด PDF'; btnIcon = '<i class="fa-solid fa-download me-1"></i> สร้าง PDF'; btnColor = '#ef4444'; } 
-        else { titleStr = '<i class="fa-solid fa-print text-primary me-2"></i>พิมพ์กระดานเวรรวม'; btnIcon = '<i class="fa-solid fa-print me-1"></i> สั่งพิมพ์'; btnColor = '#2563eb'; }
+        else if (mode === 'print') { titleStr = '<i class="fa-solid fa-print text-primary me-2"></i>พิมพ์กระดานเวรรวม'; btnIcon = '<i class="fa-solid fa-print me-1"></i> สั่งพิมพ์'; btnColor = '#2563eb'; }
+        else if (mode === 'preview') { titleStr = '<i class="fa-solid fa-table-cells text-primary me-2"></i>ดูตารางภาพรวม (Master Roster)'; btnIcon = '<i class="fa-solid fa-eye me-1"></i> สร้างตาราง'; btnColor = '#8b5cf6'; }
 
         Swal.fire({
             title: `<h4 class="fw-bold mb-0 text-dark" style="font-family:'Prompt';">${titleStr}</h4>`,
             html: `
                 <div class="text-start mt-3" style="font-family:'Prompt';">
-                    <div class="p-3 border rounded bg-light">
+                    <div class="p-3 border rounded bg-light mb-3">
                         <div class="fw-bold small mb-2 text-primary"><i class="fa-solid fa-filter me-1"></i> เลือกกลุ่มพนักงาน:</div>
                         <div class="d-flex justify-content-between mb-3 pb-2 border-bottom">
                             <button class="btn btn-sm btn-outline-secondary py-1 px-2 text-xs fw-bold" onclick="document.querySelectorAll('.role-print-cb').forEach(c=>c.checked=true)">✓ เลือกทั้งหมด</button>
@@ -630,30 +663,45 @@ class ShiftSchedulePageComponent {
                             ${roleCheckboxes}
                         </div>
                     </div>
+                    
+                    <div class="p-3 border rounded bg-light">
+                        <div class="fw-bold small mb-2 text-primary"><i class="fa-solid fa-table-columns me-1"></i> รูปแบบคอลัมน์สุดท้าย:</div>
+                        <div class="d-flex gap-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="last_col_type" id="lc_summary" value="summary" checked>
+                                <label class="form-check-label fw-bold cursor-pointer" for="lc_summary">สรุปวันหยุด (Auto)</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="last_col_type" id="lc_remark" value="remark">
+                                <label class="form-check-label fw-bold cursor-pointer" for="lc_remark">ช่องว่าง (หมายเหตุ)</label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             `,
             background: 'var(--bg-surface)', showCancelButton: true, cancelButtonText: 'ยกเลิก', confirmButtonText: btnIcon, confirmButtonColor: btnColor,
             preConfirm: () => {
                 let selectedRoles = Array.from(document.querySelectorAll('.role-print-cb:checked')).map(cb => cb.value);
                 if(selectedRoles.length === 0) { Swal.showValidationMessage('กรุณาติ๊กเลือกอย่างน้อย 1 ตำแหน่ง'); return false; }
-                return { selectedRoles };
+                let lastColType = document.querySelector('input[name="last_col_type"]:checked').value;
+                return { selectedRoles, lastColType };
             }
         }).then((res) => {
             if (res.isConfirmed) {
-                if (mode === 'excel') window.ShiftSchedulePage.generateExcelFile(res.value.selectedRoles);
-                else if (mode === 'pdf') window.ShiftSchedulePage.generatePDFFile(res.value.selectedRoles);
-                else window.ShiftSchedulePage.executePrint(res.value.selectedRoles);
+                if (mode === 'excel') window.ShiftSchedulePage.generateExcelFile(res.value.selectedRoles, res.value.lastColType);
+                else if (mode === 'pdf') window.ShiftSchedulePage.generatePDFFile(res.value.selectedRoles, res.value.lastColType);
+                else if (mode === 'print') window.ShiftSchedulePage.executePrint(res.value.selectedRoles, res.value.lastColType);
+                else if (mode === 'preview') window.ShiftSchedulePage.showMasterRosterPreview(res.value.selectedRoles, res.value.lastColType);
             }
         });
     }
 
-    openMasterRosterModal() {
+    showMasterRosterPreview(selectedRoles, lastColType) {
         Swal.fire({ title: 'กำลังประมวลผลตาราง...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: 'var(--bg-surface)' });
         
         setTimeout(() => {
             try {
-                let allRoles = this.customRoles.map(r => r.id);
-                let chunks = this.getExportHTMLChunks(allRoles, false);
+                let chunks = this.getExportHTMLChunks(selectedRoles, false, lastColType);
                 
                 let contentHtml = chunks.map(chunk => `
                     <div style="background: #ffffff; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 15px -3px rgba(0,0,0,0.1); border-radius: 8px; min-width: 1000px; text-align: left; overflow: hidden; border: 1px solid #e2e8f0;">
@@ -679,8 +727,7 @@ class ShiftSchedulePageComponent {
         }, 500); 
     }
 
-    // 🚨 THE FIX: อัปเกรดระบบ Export HTML ให้คอลัมน์ขวาสุดคำนวณวันหยุดรายเดือนแทนการปล่อยว่าง
-    getExportHTMLChunks(selectedRoles, isPDF = false) {
+    getExportHTMLChunks(selectedRoles, isPDF = false, lastColType = 'summary') {
         selectedRoles = selectedRoles || this.customRoles.map(r => r.id);
         
         const daysInMonth = this.getDaysInMonth(this.currentMonth);
@@ -716,6 +763,8 @@ class ShiftSchedulePageComponent {
             ? "width: 1122px; padding: 10mm; box-sizing: border-box; font-family: 'Sarabun', 'Prompt', sans-serif; background-color: #ffffff !important; color: #000000 !important; display: flex; flex-direction: column; color-scheme: light !important;"
             : "width: 100%; height: 98vh; padding: 3mm 4mm; box-sizing: border-box; font-family: 'Sarabun', 'Prompt', sans-serif; background-color: #ffffff !important; color: #000000 !important; display: flex; flex-direction: column; color-scheme: light !important;";
 
+        let lastColHeader = lastColType === 'summary' ? 'สรุปวันหยุด' : 'หมายเหตุ';
+
         staffChunks.forEach((chunk, pageIndex) => {
             let tableRows = '';
             if (chunk.length === 0) { tableRows = `<tr><td colspan="${daysInMonth + 4}" style="text-align:center; padding:25px; font-weight:bold; border:1px solid #000 !important; color:#000000 !important; background-color:#ffffff !important;">ไม่มีข้อมูลพนักงาน</td></tr>`; } 
@@ -725,30 +774,31 @@ class ShiftSchedulePageComponent {
                     let staffUname = staff.username || staff.firebaseKey;
                     let roleObj = this.customRoles.find(r => r.id === staff.role) || { name: 'ไม่ระบุ' };
                     
-                    // 🌟 คำนวณสรุปการหยุดเฉพาะเดือนปัจจุบันให้พนักงานคนนี้
-                    let leaveCounts = {};
-                    let totalOffDays = 0;
-                    for (let day = 1; day <= daysInMonth; day++) {
-                        let dateStr = `${this.currentMonth}-${String(day).padStart(2, '0')}`;
-                        let rawData = this.timesheetData[staffUname]?.[dateStr] || '';
-                        let statusIds = rawData ? String(rawData).split(',') : [];
-                        let fullDayLeaveId = statusIds.find(id => this.leaveTypes.some(l => l.id === id));
-                        if (fullDayLeaveId) {
-                            leaveCounts[fullDayLeaveId] = (leaveCounts[fullDayLeaveId] || 0) + 1;
-                            totalOffDays++;
-                        }
-                    }
-
                     let leaveSummaryHtml = '';
-                    this.leaveTypes.forEach(lType => {
-                        if (leaveCounts[lType.id]) {
-                            leaveSummaryHtml += `<div style="font-size:9.5px; line-height: 1.3; text-align:left;"><b style="color:${lType.color} !important;">${lType.label}:</b> ${leaveCounts[lType.id]}</div>`;
+                    if (lastColType === 'summary') {
+                        let leaveCounts = {};
+                        let totalOffDays = 0;
+                        for (let day = 1; day <= daysInMonth; day++) {
+                            let dateStr = `${this.currentMonth}-${String(day).padStart(2, '0')}`;
+                            let rawData = this.timesheetData[staffUname]?.[dateStr] || '';
+                            let statusIds = rawData ? String(rawData).split(',') : [];
+                            let fullDayLeaveId = statusIds.find(id => this.leaveTypes.some(l => l.id === id));
+                            if (fullDayLeaveId) {
+                                leaveCounts[fullDayLeaveId] = (leaveCounts[fullDayLeaveId] || 0) + 1;
+                                totalOffDays++;
+                            }
                         }
-                    });
-                    if (!leaveSummaryHtml) {
-                        leaveSummaryHtml = `<div style="font-size:9.5px; color:#94a3b8 !important; text-align:center; margin-top:10px;">ไม่มีวันหยุด</div>`;
-                    } else {
-                        leaveSummaryHtml += `<div style="font-size:10px; font-weight:bold; margin-top:4px; border-top:1px dashed #cbd5e1; padding-top:4px; color:#0f172a !important; text-align:left;">รวมหยุด: <span style="color:#ef4444 !important;">${totalOffDays} วัน</span></div>`;
+
+                        this.leaveTypes.forEach(lType => {
+                            if (leaveCounts[lType.id]) {
+                                leaveSummaryHtml += `<div style="font-size:9.5px; line-height: 1.3; text-align:left;"><b style="color:${lType.color} !important;">${lType.label}:</b> ${leaveCounts[lType.id]}</div>`;
+                            }
+                        });
+                        if (!leaveSummaryHtml) {
+                            leaveSummaryHtml = `<div style="font-size:9.5px; color:#94a3b8 !important; text-align:center; margin-top:10px;">ไม่มีวันหยุด</div>`;
+                        } else {
+                            leaveSummaryHtml += `<div style="font-size:10px; font-weight:bold; margin-top:4px; border-top:1px dashed #cbd5e1; padding-top:4px; color:#0f172a !important; text-align:left;">รวมหยุด: <span style="color:#ef4444 !important;">${totalOffDays} วัน</span></div>`;
+                        }
                     }
                     
                     workShifts.forEach((shift, sIdx) => {
@@ -787,9 +837,9 @@ class ShiftSchedulePageComponent {
                             tableRows += `<td style="border:1px solid #000 !important; background-color:${cellBg} !important; color:${cellColor} !important; font-weight:bold; text-align:center; vertical-align:middle; padding:0; font-size:10.5px; height:19px;">${cellText}</td>`;
                         }
                         
-                        // 🌟 ยัด HTML สรุปวันหยุดลงไปในช่องสุดท้าย
                         if(sIdx === 0) {
-                            tableRows += `<td rowspan="${shiftCount}" style="border:1px solid #000 !important; background-color:#ffffff !important; color:#000000 !important; padding:4px; vertical-align:top;">${leaveSummaryHtml}</td>`;
+                            let finalCellContent = lastColType === 'summary' ? leaveSummaryHtml : '';
+                            tableRows += `<td rowspan="${shiftCount}" style="border:1px solid #000 !important; background-color:#ffffff !important; color:#000000 !important; padding:4px; vertical-align:top;">${finalCellContent}</td>`;
                         }
                         tableRows += `</tr>`;
                     });
@@ -809,7 +859,7 @@ class ShiftSchedulePageComponent {
                                 <th style="border:1px solid #000 !important; background-color:#f1f5f9 !important; text-align:center; font-size:10px; color:#000000 !important; width:14%;">ชื่อ-นามสกุล / ตำแหน่ง</th>
                                 <th style="border:1px solid #000 !important; background-color:#f1f5f9 !important; text-align:center; font-size:10px; color:#000000 !important; width:3%;">กะ</th>
                                 ${thDays}
-                                <th style="border:1px solid #000 !important; background-color:#f1f5f9 !important; text-align:center; font-size:11px; font-weight:bold; color:#000000 !important; width:auto; white-space:normal;">สรุปวันหยุด</th>
+                                <th style="border:1px solid #000 !important; background-color:#f1f5f9 !important; text-align:center; font-size:11px; font-weight:bold; color:#000000 !important; width:auto; white-space:normal;">${lastColHeader}</th>
                             </tr>
                         </thead>
                         <tbody style="background-color:#ffffff !important;">${tableRows}</tbody>
@@ -824,12 +874,12 @@ class ShiftSchedulePageComponent {
         return htmlChunks;
     }
 
-    executePrint(selectedRoles) {
+    executePrint(selectedRoles, lastColType) {
         selectedRoles = selectedRoles || this.customRoles.map(r => r.id);
         let printZone = document.getElementById('print-request-form-zone');
         if (!printZone) return;
 
-        let chunks = this.getExportHTMLChunks(selectedRoles, false);
+        let chunks = this.getExportHTMLChunks(selectedRoles, false, lastColType);
         let printHtml = chunks.join('<div style="page-break-before: always;"></div>');
         
         let oldIframe = document.getElementById('hidden-print-frame'); 
@@ -888,7 +938,7 @@ class ShiftSchedulePageComponent {
         };
     }
 
-    async generatePDFFile(selectedRoles) {
+    async generatePDFFile(selectedRoles, lastColType) {
         selectedRoles = selectedRoles || this.customRoles.map(r => r.id);
         Swal.fire({ title: 'กำลังสร้างไฟล์ PDF...', html: 'ระบบกำลังเรนเดอร์กราฟิกความละเอียดสูง<br>กรุณารอสักครู่...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         
@@ -900,7 +950,7 @@ class ShiftSchedulePageComponent {
         }
 
         try {
-            const chunks = this.getExportHTMLChunks(selectedRoles, true);
+            const chunks = this.getExportHTMLChunks(selectedRoles, true, lastColType);
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF('landscape', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth(); 
@@ -950,21 +1000,21 @@ class ShiftSchedulePageComponent {
         }
     }
 
-    generateExcelFile(selectedRoles) {
+    generateExcelFile(selectedRoles, lastColType) {
         selectedRoles = selectedRoles || this.customRoles.map(r => r.id);
         if(typeof ExcelJS === 'undefined') {
             Swal.fire({ title: 'กำลังโหลด Excel Engine...', html: 'โปรดรอสักครู่...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: 'var(--bg-surface)' });
             const script = document.createElement('script');
             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js';
-            script.onload = () => { Swal.close(); this._generateExcelJS(selectedRoles); };
+            script.onload = () => { Swal.close(); this._generateExcelJS(selectedRoles, lastColType); };
             script.onerror = () => { Swal.fire('ระบบขัดข้อง', 'ไม่สามารถดาวน์โหลด Excel Engine ได้', 'error'); };
             document.head.appendChild(script);
             return;
         }
-        this._generateExcelJS(selectedRoles);
+        this._generateExcelJS(selectedRoles, lastColType);
     }
 
-    _generateExcelJS(selectedRoles) {
+    _generateExcelJS(selectedRoles, lastColType) {
         Swal.fire({ title: 'กำลังสร้างไฟล์ Excel...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: 'var(--bg-surface)' });
 
         setTimeout(async () => {
@@ -990,8 +1040,8 @@ class ShiftSchedulePageComponent {
                     let dayName = this.thaiFullDays[dateObj.getDay()];
                     headers.push(`${d}\n(${dayName})`);
                 }
-                // 🌟 เปลี่ยนหัวตารางจาก หมายเหตุ เป็น สรุปวันหยุด
-                headers.push("สรุปวันหยุด");
+                
+                headers.push(lastColType === 'summary' ? "สรุปวันหยุด" : "หมายเหตุ");
 
                 const headerRow = sheet.addRow(headers);
                 headerRow.height = 40; 
@@ -1016,27 +1066,29 @@ class ShiftSchedulePageComponent {
                     let staffUname = staff.username || staff.firebaseKey;
                     let roleObj = this.customRoles.find(r => r.id === staff.role) || { name: 'ไม่ระบุ' };
 
-                    // 🌟 คำนวณสรุปการหยุดเฉพาะเดือนปัจจุบันให้พนักงานคนนี้
-                    let leaveCounts = {};
-                    let totalOffDays = 0;
-                    for (let day = 1; day <= daysInMonth; day++) {
-                        let dateStr = `${this.currentMonth}-${String(day).padStart(2, '0')}`;
-                        let rawData = this.timesheetData[staffUname]?.[dateStr] || '';
-                        let statusIds = rawData ? String(rawData).split(',') : [];
-                        let fullDayLeaveId = statusIds.find(id => this.leaveTypes.some(l => l.id === id));
-                        if (fullDayLeaveId) {
-                            leaveCounts[fullDayLeaveId] = (leaveCounts[fullDayLeaveId] || 0) + 1;
-                            totalOffDays++;
+                    let summaryText = '';
+                    if (lastColType === 'summary') {
+                        let leaveCounts = {};
+                        let totalOffDays = 0;
+                        for (let day = 1; day <= daysInMonth; day++) {
+                            let dateStr = `${this.currentMonth}-${String(day).padStart(2, '0')}`;
+                            let rawData = this.timesheetData[staffUname]?.[dateStr] || '';
+                            let statusIds = rawData ? String(rawData).split(',') : [];
+                            let fullDayLeaveId = statusIds.find(id => this.leaveTypes.some(l => l.id === id));
+                            if (fullDayLeaveId) {
+                                leaveCounts[fullDayLeaveId] = (leaveCounts[fullDayLeaveId] || 0) + 1;
+                                totalOffDays++;
+                            }
                         }
-                    }
 
-                    let summaryTextArr = [];
-                    this.leaveTypes.forEach(lType => {
-                        if (leaveCounts[lType.id]) {
-                            summaryTextArr.push(`${lType.label}: ${leaveCounts[lType.id]} วัน`);
-                        }
-                    });
-                    let summaryText = summaryTextArr.length > 0 ? summaryTextArr.join('\n') + `\n---\nรวมหยุด: ${totalOffDays} วัน` : '-';
+                        let summaryTextArr = [];
+                        this.leaveTypes.forEach(lType => {
+                            if (leaveCounts[lType.id]) {
+                                summaryTextArr.push(`${lType.label}: ${leaveCounts[lType.id]} วัน`);
+                            }
+                        });
+                        summaryText = summaryTextArr.length > 0 ? summaryTextArr.join('\n') + `\n---\nรวมหยุด: ${totalOffDays} วัน` : '-';
+                    }
 
                     workShifts.forEach((shift, sIdx) => {
                         let rowData = [];
@@ -1072,8 +1124,8 @@ class ShiftSchedulePageComponent {
                             }
                             rowData.push(cellText);
                         }
-                        // 🌟 แทรกข้อความสรุปในคอลัมน์สุดท้ายของแถวแรก
-                        rowData.push(sIdx === 0 ? summaryText : ""); 
+                        
+                        rowData.push(sIdx === 0 ? (lastColType === 'summary' ? summaryText : "") : ""); 
 
                         let r = sheet.addRow(rowData);
                         r.height = 25; 
@@ -1907,3 +1959,4 @@ if (typeof App !== 'undefined') {
     if (!window.App.pages) window.App.pages = {};
     window.App.pages.shift_schedule = window.ShiftSchedulePage;
 }
+// EOF
