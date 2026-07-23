@@ -1,5 +1,5 @@
 // js/pages/patients.js
-// 🚀 Enterprise Patients Module: Atomic Mutations, Flawless Off-Screen Print Spooler & Two-Key Deletion Guard (v8.0)
+// 🚀 Enterprise Patients Module: Zero-Duplicate Sentinel, Atomic Mutations & Print Spooler (v9.0)
 
 class PatientsPageComponent {
     constructor() {
@@ -16,7 +16,6 @@ class PatientsPageComponent {
     get html() {
         return `
             <style>
-                /* 🚨 THE FIX: ยันต์เกราะเพชรป้องกันไอคอนโดนฟอนต์อื่นกลืนกลายเป็นสี่เหลี่ยม 🚨 */
                 .safe-icon { font-family: 'Font Awesome 6 Free', 'FontAwesome', sans-serif !important; font-weight: 900 !important; font-style: normal !important; }
             </style>
             
@@ -97,6 +96,79 @@ class PatientsPageComponent {
         this.firebaseListeners = [];
         this.stopCameraScanner(); 
         console.log("🧹 [Patients] Cleaned up listeners and hardware streams.");
+    }
+
+    // =========================================================================
+    // 🚀 ZERO-DUPLICATE SENTINEL ENGINE (ระบบตรวจจับป้องกันข้อมูลซ้ำข้ามหน้าต่าง)
+    // =========================================================================
+    verifyDuplicateBeforeSave(hn, idcard, fullNameTh) {
+        return new Promise((resolve) => {
+            // ทำความสะอาดตัวอักษร (Sanitization) ป้องกันช่องว่างหรือขีด (-) หลอกระบบ
+            const cleanHN = String(hn || '').trim().toLowerCase();
+            const cleanID = String(idcard || '').replace(/\D/g, ''); // เหลือแต่ตัวเลข
+            const cleanName = String(fullNameTh || '').replace(/\s+/g, '').toLowerCase(); // เอาช่องว่างออก
+
+            if (this.state.allData.length === 0) return resolve(true); // ข้อมูลยังไม่มี ยอมให้ผ่านได้
+
+            // 🛑 1. STRICT BLOCK: ตรวจสอบรหัส HN ซ้ำ
+            if (cleanHN) {
+                let dupHN = this.state.allData.find(p => String(p.hn || '').trim().toLowerCase() === cleanHN);
+                if (dupHN) {
+                    Swal.fire({
+                        title: '<h4 class="text-danger fw-bold mb-0"><i class="fa-solid fa-shield-virus me-2"></i>บล็อกการบันทึก!</h4>',
+                        html: `<div class="text-start mt-3" style="font-family:'Sarabun';">
+                               รหัส <b>HN: ${hn}</b> ถูกใช้งานแล้วโดย:<br>
+                               <b class="text-primary fs-5">${this.#escapeHTML(dupHN.title||'')}${this.#escapeHTML(dupHN.name_th||'')}</b><br><br>
+                               <small class="text-muted"><i class="fa-solid fa-circle-info"></i> ระบบไม่อนุญาตให้ใช้รหัส HN ซ้ำกัน กรุณาเปลี่ยนรหัสใหม่</small>
+                               </div>`,
+                        icon: 'error', confirmButtonColor: '#ef4444', customClass: { popup: 'premium-alert' }
+                    });
+                    return resolve(false); 
+                }
+            }
+
+            // 🛑 2. STRICT BLOCK: ตรวจสอบเลขบัตรประชาชนซ้ำ (เช็คเฉพาะที่มี 13 หลัก)
+            if (cleanID && cleanID.length >= 10) {
+                let dupID = this.state.allData.find(p => String(p.idcard || p.cid || '').replace(/\D/g, '') === cleanID);
+                if (dupID) {
+                    Swal.fire({
+                        title: '<h4 class="text-danger fw-bold mb-0"><i class="fa-solid fa-fingerprint me-2"></i>ข้อมูล ปชช. ซ้ำซ้อน!</h4>',
+                        html: `<div class="text-start mt-3" style="font-family:'Sarabun';">
+                               เลขประจำตัวประชาชนนี้ ถูกลงทะเบียนไว้แล้วในชื่อ:<br>
+                               <b class="text-primary fs-5">${this.#escapeHTML(dupID.title||'')}${this.#escapeHTML(dupID.name_th||'')}</b> (HN: ${dupID.hn})<br><br>
+                               <small class="text-muted"><i class="fa-solid fa-triangle-exclamation"></i> ข้อมูล ปชช. คือ Primary Key ระดับบุคคล ไม่สามารถลงทะเบียนซ้ำได้</small>
+                               </div>`,
+                        icon: 'error', confirmButtonColor: '#ef4444', customClass: { popup: 'premium-alert' }
+                    });
+                    return resolve(false);
+                }
+            }
+
+            // ⚠️ 3. SOFT WARN: ตรวจสอบชื่อ-นามสกุลซ้ำ (อาจจะกรอกคนละคนแต่ชื่อบังเอิญเหมือนกัน)
+            if (cleanName) {
+                let dupName = this.state.allData.find(p => {
+                    let existingName = String((p.title || '') + (p.name_th || '')).replace(/\s+/g, '').toLowerCase();
+                    return existingName.includes(cleanName) || cleanName.includes(existingName);
+                });
+                
+                if (dupName) {
+                    Swal.fire({
+                        title: '<h5 class="text-warning fw-bold mb-0"><i class="fa-solid fa-users-viewfinder me-2"></i>พบรายชื่อคล้ายคลึงกัน</h5>',
+                        html: `<div class="text-start mt-3" style="font-family:'Sarabun';">
+                               ระบบพบคนไข้ชื่อ <b class="text-primary">${this.#escapeHTML(dupName.title||'')}${this.#escapeHTML(dupName.name_th||'')}</b> (HN: ${dupName.hn}) อยู่ในระบบแล้ว<br><br>
+                               คุณแน่ใจหรือไม่ว่าเป็น <u class="text-danger fw-bold">คนละคนกัน</u> และต้องการบันทึกเวชระเบียนใหม่?
+                               </div>`,
+                        icon: 'warning', showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-user-plus me-1"></i> ยืนยันบันทึก', cancelButtonText: 'ยกเลิก (กลับไปเช็ค)',
+                        confirmButtonColor: '#f59e0b', cancelButtonColor: '#94a3b8', customClass: { popup: 'premium-alert' }
+                    }).then((res) => {
+                        resolve(res.isConfirmed); // ถ้ากดยืนยันก็ยอมให้บันทึกต่อได้
+                    });
+                    return; // รอ Promise ตอบกลับ
+                }
+            }
+
+            resolve(true); // ปลอดภัย 100% ผ่านทุกด่าน
+        });
     }
 
     #bindEvents() {
@@ -213,7 +285,6 @@ class PatientsPageComponent {
                         
                         <button class="btn btn-sm shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0; background: rgba(100,116,139,0.1); color: #64748b; border: 1px solid rgba(100,116,139,0.2);" onclick="event.stopPropagation(); App.pages.patients.changeStatus('${p.firebaseKey}', '${safeName}')" title="เปลี่ยนสถานะ/จำหน่ายผู้ป่วย"><i class="fa-solid fa-user-minus safe-icon"></i></button>
 
-                        <!-- 🚨 THE FIX: ปุ่มทำลายข้อมูล (Hard Delete) แดงเดือด -->
                         <button class="btn btn-sm shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0; background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5;" onclick="event.stopPropagation(); App.pages.patients.deletePatient('${p.firebaseKey}', '${p.hn}', '${safeName}')" title="ลบข้อมูลผู้ป่วย (ถาวร)"><i class="fa-solid fa-trash-can safe-icon"></i></button>
                     </div>
                 </td>
@@ -222,7 +293,6 @@ class PatientsPageComponent {
         tbody.innerHTML = html;
     }
 
-    // 🚨 THE FIX: กลไกสลักนิรภัย (Two-Key Deletion Guard)
     deletePatient(firebaseKey, hn, patientName) {
         Swal.fire({
             title: '<h4 class="fw-bold text-danger mb-0" style="font-family:\'Prompt\';"><i class="fa-solid fa-triangle-exclamation me-2 safe-icon"></i>คำเตือนอันตราย!</h4>',
@@ -256,7 +326,6 @@ class PatientsPageComponent {
                 Swal.fire({ title: 'กำลังทำลายข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), customClass: { popup: 'premium-alert' } });
                 
                 try {
-                    // ลบข้อมูลหลักของผู้ป่วยออกจาก Firebase
                     await db.ref(`patients_database_v2/patients/${firebaseKey}`).remove();
                     
                     Swal.fire({
@@ -699,8 +768,7 @@ class PatientsPageComponent {
                         .barcode-section { text-align: center; padding-top: 10px; border-top: 2px dashed #e2e8f0; flex-shrink: 0; margin-bottom: 0px; } 
                         .barcode-img { height: 40px; max-width: 100%; object-fit: contain; } 
                         .barcode-text { font-family: 'Prompt'; font-size: 11px; font-weight: bold; color: #64748b; letter-spacing: 2px; margin-top: 4px; }
-                    }
-                </style>
+                    </style>
                 </head>
                 <body>
                     <div class="opd-print-wrapper">
@@ -840,3 +908,5 @@ class PatientsPageComponent {
 
 const PatientsPage = new PatientsPageComponent();
 window.PatientsPage = PatientsPage;
+// 🚨 สร้างสะพานเชื่อมต่อ (Bridge) เพื่อให้หน้าฟอร์ม (patient_form) สามารถเรียกใช้ Engine ข้ามไฟล์ได้
+if (!window.PatientsPageGlobalGuard) window.PatientsPageGlobalGuard = PatientsPage;

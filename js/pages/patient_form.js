@@ -1,5 +1,5 @@
 // js/pages/patient_form.js
-// 🚀 Enterprise Patient Form Module: HTTP Cache-Busting, Zero-Trust Clear, Smart Timeout & Premium OPD Print Engine (v7.2)
+// 🚀 Enterprise Patient Form Module: HTTP Cache-Busting, Zero-Trust Clear, Smart Timeout & Duplicate Prevention Hook (v8.0)
 
 class PatientFormPageComponent {
     constructor() {
@@ -733,7 +733,6 @@ class PatientFormPageComponent {
         this.firebaseListeners = [];
     }
 
-    // 🚨 THE FIX: Zero-Trust State Wipe 
     clearFormBeforeScan() {
         this.state.scannedPhotoBase64 = null;
         
@@ -757,7 +756,7 @@ class PatientFormPageComponent {
         if (avatarEl) avatarEl.src = 'https://ui-avatars.com/api/?name=Patient&background=e2e8f0&color=94a3b8';
     }
 
-    // 🚨 THE FIX: ระบบสแกนทะลวง Cache พร้อม Smart Timeout Alert (15s Circuit Breaker)
+    // 🚨 THE FIX 1: Scanner Intercept - ฝังยามหน้าประตู ตรวจบัตร ปชช. ที่เสียบเข้ามาทันที
     async readSmartcard() {
         const btn = document.getElementById('btn-read-card'); 
         btn.innerHTML = `<i class="fas fa-spinner fa-spin me-2"></i> กำลังสื่อสาร... (สูงสุด 15 วิ)`; 
@@ -765,40 +764,55 @@ class PatientFormPageComponent {
         
         this.clearFormBeforeScan();
 
-        // 🚨 1. สร้างตัวตัดไฟ (AbortController)
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 วินาที ตัดจบ!
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
 
         try {
             const timestamp = new Date().getTime();
             const url = `http://127.0.0.1:8000/read-card?_t=${timestamp}`;
 
-            // 🚨 2. ผูกสายชนวนตัดไฟเข้ากับคำสั่ง fetch
             const response = await fetch(url, { 
-                method: 'GET',
-                mode: 'cors',
-                cache: 'no-store', 
-                headers: {
-                    'Pragma': 'no-cache',
-                    'Cache-Control': 'no-cache'
-                },
+                method: 'GET', mode: 'cors', cache: 'no-store', 
+                headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' },
                 signal: controller.signal 
             });
 
-            clearTimeout(timeoutId); // อ่านเสร็จก่อน ถอดชนวนทิ้ง
+            clearTimeout(timeoutId);
 
-            if (!response.ok) throw new Error("ไม่สามารถเชื่อมต่อ Local Agent ได้");
+            let result;
+            try {
+                result = await response.json();
+            } catch (parseError) {
+                throw new Error("AGENT_OFFLINE"); 
+            }
             
-            const result = await response.json();
-            
-            if (result.error || result.status === "error") { 
-                Swal.fire('Error', result.error, 'error', {customClass: {popup: 'premium-alert'}}); 
+            if (!response.ok || result.error || result.status === "error") { 
+                Swal.fire({
+                    title: 'ข้อผิดพลาดจากเครื่องอ่านบัตร',
+                    html: `<b>สาเหตุ:</b> <span class="text-danger">${result.error || 'ไม่ทราบสาเหตุ (Unknown Hardware Error)'}</span><br><br><small class="text-muted">กรุณาขยับสาย USB ของเครื่องอ่านบัตร หรือลองเสียบบัตรให้แน่นอีกครั้ง</small>`,
+                    icon: 'error',
+                    customClass: {popup: 'premium-alert'}
+                }); 
                 btn.innerHTML = `<i class="fa-solid fa-id-card me-2 fs-5"></i> <span class="fw-bold fs-6">สแกนบัตร ปชช.</span>`; 
                 btn.disabled = false; 
                 return; 
             }
             
             const data = result.data || result;
+
+            // 🚨 THE FIX 1 (Action): ส่งข้อมูลให้ยามหน้าประตูตรวจเช็คว่าซ้ำไหม ถ้าซ้ำให้หยุดการทำงานทันที
+            if (window.PatientsPageGlobalGuard) {
+                let fullNameTh = ((data.fname_th || "") + " " + (data.lname_th || "")).trim();
+                let idcardNum = data.cid || data.idcard || "";
+                
+                let isSafe = await window.PatientsPageGlobalGuard.verifyDuplicateBeforeSave('', idcardNum, fullNameTh);
+                
+                if (!isSafe) {
+                    btn.innerHTML = `<i class="fa-solid fa-id-card me-2 fs-5"></i> <span class="fw-bold fs-6">สแกนบัตร ปชช.</span>`; 
+                    btn.disabled = false;
+                    return; // ⛔ ไม่อนุญาตให้เอาข้อมูลบัตรมากรอกลงในช่องเด็ดขาด!
+                }
+            }
             
             document.getElementById('add_idcard').value = data.cid || data.idcard || "";
             document.getElementById('add_title').value = data.title_th || data.title || "นาย";
@@ -828,9 +842,8 @@ class PatientFormPageComponent {
             btn.disabled = false;
             
         } catch (err) {
-            clearTimeout(timeoutId); // ป้องกันบั๊กชนวนค้าง
+            clearTimeout(timeoutId);
 
-            // 🚨 3. วิเคราะห์สาเหตุ ว่าดึงไม่รอด หรือ หมดเวลา
             if (err.name === 'AbortError') {
                 Swal.fire({
                     title: 'หมดเวลารอ (Timeout)', 
@@ -840,33 +853,43 @@ class PatientFormPageComponent {
                 });
             } else {
                 Swal.fire({
-                    title: 'ไม่พบเครื่องอ่านบัตร ปชช.', 
-                    html: 'กรุณาตรวจสอบว่า:<br>1. เสียบสาย USB แล้ว<br>2. เปิดโปรแกรม <b>Local Bridge Agent</b> แล้ว', 
+                    title: 'ไม่สามารถสื่อสารกับระบบอ่านบัตรได้', 
+                    html: 'กรุณาตรวจสอบว่า:<br>1. โปรแกรม <b>Dialysis Pro EMR Agent</b> ถูกเปิดใช้งานอยู่หรือไม่<br>2. พอร์ต 8000 ของคอมพิวเตอร์ถูกบล็อกหรือไม่<br><br><small class="text-danger"><i>(Code: AGENT_OFFLINE)</i></small>', 
                     icon: 'warning',
                     customClass: { popup: 'premium-alert' }
                 }); 
             }
 
             btn.innerHTML = `<i class="fa-solid fa-id-card me-2 fs-5"></i> <span class="fw-bold fs-6">สแกนบัตร ปชช.</span>`; 
+            btn.className = "btn btn-premium btn-premium-primary w-100 mb-3 py-3 shadow-sm";
             btn.disabled = false;
         }
     }
 
-    saveData() {
+    // 🚨 THE FIX 2: Save Checkpoint - ฝังยามหน้าประตูตรงปุ่มบันทึก ป้องกันการพิมพ์มือแล้วข้อมูลซ้ำ
+    async saveData() {
         let hnInput = document.getElementById('add_hn').value.trim(); 
         hnInput = hnInput.replace(/^HN-?/i, ''); 
         const hn = hnInput ? `HN-${hnInput}` : ''; 
         
         const name = document.getElementById('add_name').value.trim();
+        const idcard = document.getElementById('add_idcard').value.trim();
+
         if (!hnInput || !name) { Swal.fire({title: 'ข้อมูลไม่สมบูรณ์', text: 'กรุณาระบุรหัส HN และ ชื่อ-นามสกุล', icon: 'warning', customClass: {popup: 'premium-alert'}}); return; }
         if (typeof db === 'undefined') return;
+
+        // 🚨 THE FIX 2 (Action): ดักจับก่อนบันทึก! ถ้าเป็นการลงทะเบียนใหม่ ให้ส่งข้อมูลไปถามยามหน้าประตูก่อน
+        if (!this.state.isEditMode && window.PatientsPageGlobalGuard) {
+            let isSafe = await window.PatientsPageGlobalGuard.verifyDuplicateBeforeSave(hn, idcard, name);
+            if (!isSafe) return; // ⛔ ถ้าเป็น false คือยามบอกว่า "ซ้ำ!" จะเบรกและหยุดการ Save ไว้แค่นี้เลย
+        }
 
         Swal.fire({ title: 'กำลังบันทึกข้อมูล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }, customClass: { popup: 'premium-alert' } });
 
         const underlyingValue = this.state.underlyingTags.length > 0 ? this.state.underlyingTags.join(', ') : "-";
 
         const updatedData = {
-            hn: hn, idcard: document.getElementById('add_idcard').value.trim() || "-", title: document.getElementById('add_title').value,
+            hn: hn, idcard: idcard || "-", title: document.getElementById('add_title').value,
             name_th: name, name_en: document.getElementById('add_name_en').value.trim(), dob: document.getElementById('add_dob').value,
             age: document.getElementById('add_age').value, gender: document.getElementById('add_gender').value, religion: document.getElementById('add_religion').value,
             blood_type: document.getElementById('add_blood').value, phone: document.getElementById('add_phone').value.trim() || "-",
@@ -885,10 +908,6 @@ class PatientFormPageComponent {
                 const targetIndex = currentList.findIndex(p => p.hn === this.state.editOriginalData.hn || p.hn === hn);
                 if (targetIndex !== -1) currentList[targetIndex] = { ...currentList[targetIndex], ...updatedData };
             } else {
-                if(currentList.some(p => p.hn === hn)) {
-                    Swal.fire('ข้อผิดพลาด', `รหัสผู้ป่วย ${hn} มีในระบบแล้ว กรุณาใช้รหัสอื่น`, 'error');
-                    return;
-                }
                 updatedData.id = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
                 updatedData.register_date = new Date().toISOString(); updatedData.history = []; updatedData.labs = []; updatedData.medications = [];
                 currentList.push(updatedData);
@@ -901,246 +920,6 @@ class PatientFormPageComponent {
                 })
                 .catch(err => { Swal.fire({title: 'เกิดข้อผิดพลาด', text: err.message, icon: 'error', customClass: {popup: 'premium-alert'}}); });
         });
-    }
-
-    async printOPDCard(hn) {
-        if (!hn) return;
-        
-        Swal.fire({ 
-            title: 'กำลังสร้างเลย์เอาต์บัตร OPD แบบพรีเมียม...', 
-            text: 'รอสักครู่ (Bypassing Pop-up Blocker)', 
-            allowOutsideClick: false, 
-            didOpen: () => Swal.showLoading(), 
-            customClass: { popup: 'premium-alert' } 
-        });
-
-        try {
-            const [ptSnap, clinicSnap] = await Promise.all([ db.ref('patients_database_v2/patients').once('value'), db.ref('clinic_settings_v2').once('value') ]);
-            const patients = ptSnap.val() ? (Array.isArray(ptSnap.val()) ? ptSnap.val() : Object.keys(ptSnap.val()).map(k => ptSnap.val()[k])) : [];
-            const pt = patients.find(p => String(p.hn) === String(hn));
-            
-            if (!pt) { Swal.fire({title: 'ข้อผิดพลาด', text: 'ไม่พบข้อมูลผู้ป่วย', icon: 'error', customClass: { popup: 'premium-alert' }}); return; }
-
-            const clinic = clinicSnap.val() || { clinic_name: 'DIALYSIS PRO CLINIC', phone: '-', address: '-', tax_id: '-' };
-
-            let liveAddress = pt.address || 'ไม่ได้ระบุที่อยู่';
-            let livePhone = pt.phone || '-';
-            let liveEmergency = pt.emergency_contact || '-';
-
-            const currentHnInput = document.getElementById('add_hn');
-            if (currentHnInput && currentHnInput.value.replace(/^HN-?/i, '') === String(hn).replace(/^HN-?/i, '')) {
-                const domAddress = document.getElementById('add_address')?.value.trim();
-                if (domAddress) liveAddress = domAddress;
-                
-                const domPhone = document.getElementById('add_phone')?.value.trim();
-                if (domPhone) livePhone = domPhone;
-
-                const domEmergency = document.getElementById('add_emergency')?.value.trim();
-                if (domEmergency) liveEmergency = domEmergency;
-            }
-
-            let imgSrc = pt.photo_base64 && typeof pt.photo_base64 === 'string' ? (pt.photo_base64.startsWith('data:image') ? pt.photo_base64 : 'data:image/jpeg;base64,' + pt.photo_base64) : '';
-            let photoHtml = imgSrc ? `<img src="${imgSrc}" style="width: 100px; height: 120px; object-fit: cover; border-radius: 12px; border: 3px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); flex-shrink: 0;">` : `<div style="width: 100px; height: 120px; background: #f1f5f9; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; border: 3px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); flex-shrink: 0;"><i class="fa-solid fa-user fa-2x mb-1"></i><span style="font-size:10px; font-weight:bold;">ติดรูปถ่าย</span></div>`;
-
-            const barcodeUrl = `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(pt.hn)}&scale=3&height=12&includetext=false`;
-
-            let oldContainer = document.getElementById('global-print-container');
-            if (oldContainer) oldContainer.remove();
-
-            const printContainer = document.createElement('div');
-            printContainer.id = 'global-print-container';
-            
-            const style = `
-                <style>
-                    @media screen {
-                        #global-print-container { display: none !important; }
-                    }
-                    @media print {
-                        body > *:not(#global-print-container) { display: none !important; }
-                        body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
-                        #global-print-container { display: block !important; position: absolute; top: 0; left: 0; width: 100%; }
-                        @page { size: A4 landscape; margin: 0; } 
-                        
-                        .opd-print-wrapper { font-family: 'Sarabun', 'Prompt', sans-serif; background: #fff; width: 297mm; height: 209mm; display: flex; box-sizing: border-box; overflow: hidden; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                        .page-half { width: 50%; height: 100%; padding: 12mm 15mm; position: relative; display: flex; flex-direction: column; box-sizing: border-box; } 
-                        .fold-line { position: absolute; right: 0; top: 0; height: 100%; border-right: 2px dashed #cbd5e1; z-index: 10; } 
-                        .fold-text { position: absolute; right: -12px; top: 15mm; background: #fff; color: #94a3b8; font-size: 10px; padding: 8px 0; font-family: 'Prompt'; writing-mode: vertical-rl; } 
-                        
-                        /* BACK COVER (Left Side) */
-                        .back-cover { justify-content: flex-start; padding-right: 20mm; } 
-                        .clinic-branding { margin-bottom: 20px; }
-                        .clinic-branding h2 { font-family: 'Prompt'; color: #1e3a8a; margin: 0 0 10px 0; font-size: 22px; font-weight: 800; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; display: inline-block;} 
-                        .clinic-info { color: #334155; font-size: 13px; line-height: 1.6; } 
-                        .rules-box { background: #f8fafc; padding: 15px 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-top: 20px; } 
-                        .rules-box h4 { font-family: 'Prompt'; color: #0f172a; margin: 0 0 10px 0; font-size: 14px; font-weight: bold; } 
-                        .rules-box ul { font-size: 12px; color: #475569; padding-left: 20px; line-height: 1.6; margin: 0; } 
-                        .rules-box li { margin-bottom: 6px; } 
-                        .footer-note { text-align: center; color: #94a3b8; font-size: 9px; margin-top: auto; padding-top: 20px;} 
-                        
-                        /* FRONT COVER (Right Side) - Premium Card Design */
-                        .right-half { padding-left: 20mm; justify-content: center; } 
-                        .front-cover { 
-                            background: #ffffff; 
-                            border-radius: 16px; 
-                            padding: 0; 
-                            box-shadow: 0 0 0 1px #cbd5e1; 
-                            overflow: hidden; 
-                            height: 100%; 
-                            max-height: 180mm;
-                            display: flex; 
-                            flex-direction: column; 
-                        } 
-                        .header-banner { 
-                            background: #1e3a8a !important; 
-                            color: white !important; 
-                            padding: 15px; 
-                            text-align: center; 
-                            border-bottom: 5px solid #3b82f6; 
-                            flex-shrink: 0; 
-                        } 
-                        .header-banner h1 { font-family: 'Prompt'; margin: 0; font-size: 20px; font-weight: 800; letter-spacing: 1.5px; color: white !important; } 
-                        .header-banner p { margin: 3px 0 0 0; font-size: 11px; opacity: 0.9; text-transform: uppercase; letter-spacing: 2px; color: white !important; } 
-                        
-                        .card-content { padding: 15px 20px; display: flex; flex-direction: column; flex: 1; overflow: hidden; } 
-                        
-                        .profile-section { display: flex; gap: 18px; align-items: center; flex-shrink: 0; margin-bottom: 15px; } 
-                        .profile-info { flex: 1; } 
-                        .hn-badge { display: inline-block; background: #eff6ff !important; color: #2563eb !important; padding: 5px 12px; border-radius: 8px; font-weight: 800; font-family: 'Prompt'; font-size: 16px; border: 1px solid #bfdbfe; margin-bottom: 6px; } 
-                        .profile-info h2 { font-family: 'Prompt'; margin: 0 0 4px 0; font-size: 20px; font-weight: 800; color: #0f172a; } 
-                        .profile-info .eng-name { color: #64748b; font-size: 12px; font-family: 'Prompt'; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;} 
-                        .right-badge { display: inline-flex; align-items: center; background: #ecfdf5 !important; color: #10b981 !important; border: 1px solid #a7f3d0; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; } 
-                        
-                        /* Premium Grid */
-                        .grid-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex-shrink: 0; margin-bottom: 12px; } 
-                        .info-box { background: #f8fafc !important; padding: 10px 12px; border-radius: 10px; border: 1px solid #e2e8f0; } 
-                        .info-label { font-size: 10px; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 3px; font-family: 'Prompt'; } 
-                        .info-value { font-size: 13px; color: #0f172a; font-weight: 700; } 
-                        
-                        /* Address Box Full Width */
-                        .address-box { 
-                            grid-column: 1 / -1; 
-                            background: #f0fdf4 !important; 
-                            border: 1px dashed #86efac !important; 
-                            padding: 10px 12px !important; 
-                        }
-                        
-                        /* High Contrast Alerts */
-                        .alert-section { background: #fff; border: 2px solid #fecaca; border-radius: 10px; padding: 12px; margin-bottom: auto; flex-shrink: 0; } 
-                        .alert-title { font-family: 'Prompt'; color: #b91c1c; font-size: 13px; font-weight: 800; margin: 0 0 8px 0; display: flex; align-items: center; } 
-                        .alert-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } 
-                        .alert-item { background: #fef2f2 !important; padding: 8px 10px; border-radius: 8px; border: 1px solid #fecaca; } 
-                        .alert-label { font-size: 9.5px; color: #b91c1c; font-weight: bold; margin-bottom: 2px; text-transform: uppercase;} 
-                        .alert-value { font-size: 12px; color: #991b1b; font-weight: 800; } 
-                        
-                        .barcode-section { text-align: center; padding-top: 10px; border-top: 2px dashed #e2e8f0; flex-shrink: 0; margin-bottom: 0px; } 
-                        .barcode-img { height: 40px; max-width: 100%; object-fit: contain; } 
-                        .barcode-text { font-family: 'Prompt'; font-size: 11px; font-weight: bold; color: #64748b; letter-spacing: 2px; margin-top: 4px; }
-                    }
-                </style>
-            `;
-
-            const htmlContent = `
-                <div class="opd-print-wrapper">
-                    <div class="page-half back-cover">
-                        <div class="fold-line"><div class="fold-text">รอยพับกึ่งกลางกระดาษ (Fold Here)</div></div>
-                        <div class="clinic-branding">
-                            <h2>${this._escapeHTML(clinic.clinic_name)}</h2>
-                            <div class="clinic-info">
-                                <strong>ที่อยู่:</strong><br>${this._escapeHTML(clinic.address)}<br><br>
-                                <strong>โทรศัพท์:</strong> ${this._escapeHTML(clinic.phone)}<br><br>
-                                <strong>เลขประจำตัวผู้เสียภาษี:</strong> ${this._escapeHTML(clinic.tax_id || '-')}<br><br>
-                                <strong>รหัสสถานพยาบาล:</strong> ${this._escapeHTML(clinic.clinic_id || '-')}
-                            </div>
-                        </div>
-                        <div class="rules-box">
-                            <h4>ข้อปฏิบัติสำหรับผู้ป่วย</h4>
-                            <ul>
-                                <li>กรุณานำบัตรประจำตัวผู้ป่วย (OPD Card) เล่มนี้มาด้วยทุกครั้งที่เข้ารับบริการฟอกเลือด</li>
-                                <li>กรุณามาก่อนเวลานัดหมายอย่างน้อย 15-30 นาที เพื่อเตรียมตัวและชั่งน้ำหนักก่อนฟอก</li>
-                                <li>หากไม่สามารถมาตามนัดได้ หรือต้องการเลื่อนคิว กรุณาโทรแจ้งล่วงหน้าอย่างน้อย 1 วัน</li>
-                                <li>แจ้งพยาบาลทันทีหากมีอาการผิดปกติ เช่น หอบเหนื่อย เจ็บหน้าอก หรือมีไข้</li>
-                            </ul>
-                        </div>
-                        <div class="footer-note">พิมพ์จากระบบ Dialysis Pro EMR System (Engine v7.2 - Premium UI Layout) เมื่อ ${new Date().toLocaleDateString('th-TH')} เวลา ${new Date().toLocaleTimeString('th-TH')} น.</div>
-                    </div>
-                    <div class="page-half right-half">
-                        <div class="front-cover">
-                            <div class="header-banner">
-                                <h1>บัตรประจำตัวผู้ป่วย (OPD CARD)</h1>
-                                <p>Hemodialysis Patient Identification</p>
-                            </div>
-                            <div class="card-content">
-                                <div class="profile-section">
-                                    ${photoHtml}
-                                    <div class="profile-info">
-                                        <div class="hn-badge">HN: ${this._escapeHTML(pt.hn)}</div>
-                                        <h2>${this._escapeHTML(pt.title || '')}${this._escapeHTML(pt.name_th)}</h2>
-                                        <div class="eng-name">${this._escapeHTML(pt.name_en ? pt.name_en.toUpperCase() : '-')}</div>
-                                        <div class="right-badge">สิทธิ: ${this._escapeHTML(pt.right || 'ไม่ระบุ')}</div>
-                                    </div>
-                                </div>
-                                
-                                <div class="grid-info">
-                                    <div class="info-box"><div class="info-label">เลขประจำตัว ปชช.</div><div class="info-value">${this._escapeHTML(pt.idcard || pt.cid || '-')}</div></div>
-                                    <div class="info-box"><div class="info-label">วันเกิด / อายุ</div><div class="info-value">${pt.dob ? new Date(pt.dob).toLocaleDateString('th-TH') : '-'} (${pt.age ? pt.age+' ปี' : '-'})</div></div>
-                                    <div class="info-box"><div class="info-label">กรุ๊ปเลือด</div><div class="info-value text-danger" style="font-size:16px;">${this._escapeHTML(pt.blood_type || '-')}</div></div>
-                                    <div class="info-box"><div class="info-label">Dry Wt.</div><div class="info-value text-primary" style="font-size:16px;">${pt.dry_bw ? pt.dry_bw + ' Kg' : '-'}</div></div>
-                                    
-                                    <div class="info-box address-box">
-                                        <div class="info-label" style="color: #15803d;">ที่อยู่ปัจจุบัน / ข้อมูลติดต่อ</div>
-                                        <div class="info-value" style="font-size: 11.5px; white-space: normal; line-height: 1.5;">
-                                            ${this._escapeHTML(liveAddress)} <br>
-                                            <span style="color:#475569; font-weight: normal; font-size: 10.5px; display: inline-block; margin-top: 4px;">
-                                                โทร: <b style="color:#0f172a;">${this._escapeHTML(livePhone)}</b> | 
-                                                ฉุกเฉิน: <b style="color:#dc2626;">${this._escapeHTML(liveEmergency)}</b>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="alert-section">
-                                    <div class="alert-title">ข้อมูลเฝ้าระวังทางการแพทย์</div>
-                                    <div class="alert-grid">
-                                        <div class="alert-item"><div class="alert-label">ประวัติแพ้ยา / แพ้อาหาร</div><div class="alert-value">${this._escapeHTML(pt.allergy || 'ไม่มีประวัติแพ้')}</div></div>
-                                        <div class="alert-item" style="background:#fffbeb !important; border-color:#fde68a !important;"><div class="alert-label" style="color:#b45309;">โรคติดต่อทางเลือด</div><div class="alert-value" style="color:#92400e;">${this._escapeHTML(pt.infection || 'Negative')}</div></div>
-                                    </div>
-                                </div>
-                                
-                                <div class="barcode-section">
-                                    <img src="${barcodeUrl}" class="barcode-img" id="opd-barcode-img" alt="Barcode HN">
-                                    <div class="barcode-text">SCAN HN BARCODE</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            printContainer.innerHTML = style + htmlContent;
-            document.body.appendChild(printContainer);
-
-            const executePrint = () => {
-                Swal.close();
-                window.print();
-                setTimeout(() => {
-                    const el = document.getElementById('global-print-container');
-                    if(el) el.remove();
-                }, 1000);
-            };
-
-            const img = document.getElementById('opd-barcode-img');
-            if (img) {
-                img.onload = executePrint;
-                img.onerror = executePrint;
-                setTimeout(executePrint, 2000);
-            } else {
-                executePrint();
-            }
-
-        } catch (error) {
-            console.error(error);
-            Swal.fire({title:'ข้อผิดพลาด', text:'ไม่สามารถสร้างเอกสารเพื่อพิมพ์ได้', icon:'error', customClass: { popup: 'premium-alert' }});
-        }
     }
 
     _escapeHTML(str) {

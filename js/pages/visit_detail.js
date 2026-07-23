@@ -1,12 +1,12 @@
 // js/pages/visit_detail.js
-// 🚀 Enterprise Flowsheet Module: Auto-Sync Engine, Smart Pricing & Medical Alert System
+// 🚀 Enterprise Flowsheet Module: Auto-Sync Engine, Smart Pricing & Medical Alert System (v7.5 Theme-Adaptive)
 
 class VisitDetailPageComponent {
     constructor() {
         this.state = {
             visitId: null,
             visitData: null,
-            patientProfile: {}, // 🔥 ดึงข้อมูลประวัติคนไข้หลักมาเก็บไว้ตรงนี้
+            patientProfile: {}, 
             isFormLoaded: false,
             inventoryItems: new Map(), 
             labSets: [], noteTemplates: [], medsList: [], xraysList: [], modalities: [], clinicRights: [],
@@ -46,7 +46,7 @@ class VisitDetailPageComponent {
                 @keyframes fadeInUpLocal{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}} 
                 .fade-in-up{animation:fadeInUpLocal 0.4s cubic-bezier(0.16,1,0.3,1) forwards;opacity:0;} 
                 #vd-main-screen .form-label,#vd-main-screen .text-secondary,#vd-main-screen .text-muted{color:#334155!important;font-weight:600!important;letter-spacing:0.2px;} 
-                #vd-main-screen .form-control,#vd-main-screen .form-select,#vd-main-screen .input-modern{color:#0f172a!important;font-weight:700!important;font-size:14.5px!important; border-radius: 12px;} 
+                #vd-main-screen .form-control,#vd-main-screen .form-select,#vd-main-screen .input-modern{color:var(--text-dark)!important;font-weight:700!important;font-size:14.5px!important; border-radius: 12px; background-color: var(--bg-body);} 
                 #vd-main-screen .badge{font-weight:700!important;letter-spacing:0.3px;} 
                 #vd-main-screen .modern-panel,#vd-main-screen .solid-input-group{box-shadow:0 4px 10px rgba(0,0,0,0.04)!important; border-radius: 20px;} 
                 .btn-outline-primary.bg-white:hover,.btn-outline-primary.bg-white:hover *{background-color:#3b82f6!important;border-color:#3b82f6!important;color:#ffffff!important;} 
@@ -147,7 +147,7 @@ class VisitDetailPageComponent {
                             <div class="col-12 col-md-4 col-xl-3 text-md-end mt-3 mt-md-0">
                                 <div class="d-inline-flex flex-column align-items-start align-items-md-end w-100">
                                     <label class="form-label fw-bold text-secondary small mb-2 px-1">สถานะการฟอกไต:</label>
-                                    <select id="vd-status" class="form-select fw-bold input-modern shadow-sm w-100 bg-white" style="color: #1e293b; border-color: #cbd5e1; font-size: 15px; padding: 10px;">
+                                    <select id="vd-status" class="form-select fw-bold input-modern shadow-sm w-100" style="background: var(--bg-surface); color: var(--text-dark); border-color: var(--border-color); font-size: 15px; padding: 10px;">
                                         <option value="รอตรวจ">🔵 รอตรวจ</option><option value="กำลังฟอกไต">🟠 กำลังฟอกไต</option><option value="เสร็จสิ้น">🟢 เสร็จสิ้น</option>
                                     </select>
                                 </div>
@@ -219,7 +219,7 @@ class VisitDetailPageComponent {
                                         <label class="form-label fw-bold text-dark mb-0"><i class="fa-solid fa-syringe text-danger me-2"></i> ยาฉีดอื่นๆ / เวชภัณฑ์</label>
                                     </div>
                                     <div id="vd-other-meds-container" class="mb-3"></div>
-                                    <button class="btn btn-outline-primary fw-bold rounded-pill w-100 shadow-sm py-2 bg-white" id="btn-add-med" onclick="window.VisitDetailPage.addOtherMed()">+ เพิ่มรายการยา / เวชภัณฑ์</button>
+                                    <button class="btn btn-outline-primary fw-bold rounded-pill w-100 shadow-sm py-2" style="background: var(--bg-surface);" id="btn-add-med" onclick="window.VisitDetailPage.addOtherMed()">+ เพิ่มรายการยา / เวชภัณฑ์</button>
                                 </div>
 
                                 <div class="p-3 rounded-4 border border-info-subtle mb-4 shadow-sm" style="background: var(--bg-body);">
@@ -227,7 +227,7 @@ class VisitDetailPageComponent {
                                         <label class="form-label fw-bold text-dark mb-0"><i class="fa-solid fa-x-ray text-info me-2"></i> X-Ray</label>
                                     </div>
                                     <div id="vd-xrays-container" class="mb-3"></div>
-                                    <button class="btn btn-outline-info fw-bold rounded-pill w-100 shadow-sm py-2 bg-white" onclick="window.VisitDetailPage.addXray()">+ เพิ่มรายการ X-Ray</button>
+                                    <button class="btn btn-outline-info fw-bold rounded-pill w-100 shadow-sm py-2" style="background: var(--bg-surface);" onclick="window.VisitDetailPage.addXray()">+ เพิ่มรายการ X-Ray</button>
                                 </div>
                                 
                                 <div class="modern-panel shadow-sm p-3" style="border-radius: 16px; border: 1px solid var(--border-color); background-color: var(--bg-body);">
@@ -260,7 +260,7 @@ class VisitDetailPageComponent {
                                         </div>
                                     </div>
                                     <div id="vd-labs-container" class="row g-2 mb-3"></div>
-                                    <button class="btn btn-outline-danger fw-bold rounded-pill w-100 shadow-sm py-2 bg-white" onclick="window.VisitDetailPage.addLabRow()">+ เพิ่มตัวตรวจ (Manual)</button>
+                                    <button class="btn btn-outline-danger fw-bold rounded-pill w-100 shadow-sm py-2" style="background: var(--bg-surface);" onclick="window.VisitDetailPage.addLabRow()">+ เพิ่มตัวตรวจ (Manual)</button>
                                 </div>
 
                                 <div class="row g-3 mb-4">
@@ -289,7 +289,7 @@ class VisitDetailPageComponent {
                                                 <i class="fa-solid fa-camera me-2"></i> ถ่ายรูป
                                                 <input type="file" id="doc-camera-input" accept="image/*" capture="environment" class="visually-hidden-input">
                                             </label>
-                                            <label class="btn btn-outline-primary fw-bold shadow-sm rounded-pill px-4 m-0 cursor-pointer bg-white">
+                                            <label class="btn btn-outline-primary fw-bold shadow-sm rounded-pill px-4 m-0 cursor-pointer" style="background: var(--bg-surface);">
                                                 <i class="fa-solid fa-folder-open me-2"></i> เลือกไฟล์ / PDF
                                                 <input type="file" id="doc-file-input" accept="image/*,application/pdf" multiple class="visually-hidden-input">
                                             </label>
@@ -382,7 +382,26 @@ class VisitDetailPageComponent {
                 let todayVisits = rawVisits.filter(v => v && v.date === this.state.selectedDate);
                 const container = document.getElementById('vd-active-visits-container'); if(!container) return;
                 
-                if (todayVisits.length === 0) { container.innerHTML = '<div class="col-12 text-center py-5 fade-in-up"><i class="fa-solid fa-bed text-muted fa-4x mb-4" style="opacity: 0.2;"></i><h4 class="text-muted fw-bold">ไม่มีรายชื่อคิวฟอกเลือด</h4><p class="text-muted mb-4">ไม่มีประวัติการจัดคิวในวันที่เลือก</p><button class="btn btn-premium btn-premium-primary px-5 rounded-pill" onclick="window.App.switchPage(\'visits\')"><i class="fa-solid fa-list-check me-2"></i> ไปหน้าจัดการคิว</button></div>'; return; }
+                // 🚨 THE FIX: อัปเกรด Chameleon UI ที่เปลี่ยนสีตาม Theme Engine อัตโนมัติ พร้อมเปลี่ยนเป็นไอคอน Data Box 3D
+                if (todayVisits.length === 0) { 
+                    container.innerHTML = `
+                        <div class="col-12 text-center py-5 fade-in-up">
+                            <div class="empty-state-icon-container" style="background: var(--bg-surface); width: 120px; height: 120px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; border: 2px dashed var(--border-color); box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
+                                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.8;">
+                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                </svg>
+                            </div>
+                            <h4 class="fw-bold" style="font-family:'Prompt'; color: var(--text-dark);">ไม่มีรายชื่อคิวฟอกเลือด</h4>
+                            <p style="margin-bottom: 24px; color: var(--text-muted);">ไม่มีประวัติการจัดคิวในวันที่เลือก</p>
+                            <button class="btn btn-premium btn-premium-primary px-5 py-3 rounded-pill shadow-sm" style="font-size:15px;" onclick="window.App.switchPage('visits')">
+                                <i class="fa-solid fa-list-check me-2"></i> ไปหน้าจัดการคิว
+                            </button>
+                        </div>
+                    `; 
+                    return; 
+                }
                 
                 todayVisits.sort((a, b) => { if(a.time !== b.time) return (a.time || "").localeCompare(b.time || ""); return (parseInt(a.bed) || 999) - (parseInt(b.bed) || 999); });
                 
@@ -397,7 +416,7 @@ class VisitDetailPageComponent {
                     
                     html += `
                     <div class="col-md-6 col-lg-4 fade-in-up" style="animation-delay: ${idx * 0.05}s">
-                        <div class="modern-panel p-4 h-100 d-flex flex-column card-hover-float" style="border-left: 5px solid ${bColor}; border-radius: 20px; cursor: pointer; ${opacityClass}" onclick="window.VisitDetailPage.init('${v.id}')">
+                        <div class="modern-panel p-4 h-100 d-flex flex-column card-hover-float" style="border-left: 5px solid ${bColor}; border-radius: 20px; cursor: pointer; ${opacityClass}; background: var(--bg-surface);" onclick="window.VisitDetailPage.init('${v.id}')">
                             <div class="d-flex justify-content-between align-items-start mb-3">
                                 <div class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill shadow-sm fs-6"><i class="fa-solid fa-bed me-2"></i> เตียง ${this.escapeHTML(v.bed||'-')}</div>
                                 <span class="badge ${badgeClass} rounded-pill px-3 py-2 shadow-sm" style="font-size:13px;">${this.escapeHTML(v.status || 'รอตรวจ')}</span>
@@ -428,7 +447,7 @@ class VisitDetailPageComponent {
         document.getElementById('vd-loading').style.display = 'block'; document.getElementById('vd-content').style.display = 'none';
 
         try {
-            this.setupRealtimeMasterData(); // จะโหลด clinicRights และ modalities เบื้องหลัง
+            this.setupRealtimeMasterData(); 
 
             const visitQuery = await db.ref('patients_database_v2/visits').orderByChild('id').equalTo(this.state.visitId).once('value');
             if (!visitQuery.exists()) throw new Error("ไม่พบข้อมูลคิวการรักษานี้");
@@ -438,7 +457,6 @@ class VisitDetailPageComponent {
                 this.state.visitData = child.val(); 
             });
 
-            // 🚨 THE FIX: ดึงประวัติคนไข้มาเชื่อมโยงทันที เพื่อออโต้ซิงค์ (Auto-Pull) สิทธิ / ยาแพ้ / โรคติดเชื้อ
             const pQuery = await db.ref('patients_database_v2/patients').orderByChild('hn').equalTo(this.state.visitData.hn).once('value');
             if(pQuery.exists()) {
                 pQuery.forEach(child => {
@@ -456,7 +474,6 @@ class VisitDetailPageComponent {
             
             this.state.isFormLoaded = true; 
             
-            // วาด UI รอบแรก (อาจจะยังไม่มี Options ใน Dropdown ถ้า Firebase โหลดช้า แต่จะอัปเดตอัตโนมัติทีหลัง)
             this.renderFormUI();
             
             document.getElementById('vd-loading').style.display = 'none'; document.getElementById('vd-content').style.display = 'block';
@@ -473,7 +490,6 @@ class VisitDetailPageComponent {
         const bindData = (path, stateKey, triggerRefresh = true) => {
             const cb = db.ref(path).on('value', snap => {
                 this.state[stateKey] = toArray(snap.val());
-                // 🚨 THE FIX: เมื่อข้อมูล Master เปลี่ยน ให้ Refresh ทันที
                 if (this.state.isFormLoaded && triggerRefresh) this.refreshDropdownsUI();
             });
             this.firebaseListeners.push({ path, callback: cb });
@@ -544,7 +560,6 @@ class VisitDetailPageComponent {
         document.getElementById('vd-pt-name').innerText = v.name || p.name_th || '-'; 
         document.getElementById('vd-pt-bed-display').innerText = v.bed || '-'; 
 
-        // 🚨 THE FIX: ประดับยศให้คนไข้ (Badges) ดึงจากประวัติเพื่อความปลอดภัยสูงสุด
         let extraBadges = '';
         if (p.infection && p.infection !== 'ไม่มี' && p.infection !== '-' && p.infection !== 'Negative') {
             extraBadges += `<span class="badge bg-danger text-white px-3 py-2 shadow-sm rounded-pill" style="font-size:13px; animation: pulse-live 2s infinite;"><i class="fa-solid fa-virus-covid me-1"></i> ${this.escapeHTML(p.infection)}</span>`;
@@ -561,7 +576,6 @@ class VisitDetailPageComponent {
 
         document.getElementById('vd-status').value = v.status || 'รอตรวจ'; 
         
-        // Auto-Pull ข้อมูลจาก Patient Profile (ถ้าบิลไม่มี ให้ดึงจากประวัติ)
         document.getElementById('vd-dialyzer').value = v.hd_dialyzer || p.hd_dialyzer || '';
         
         this.renderModalityDropdown(); 
@@ -570,13 +584,11 @@ class VisitDetailPageComponent {
         this.renderLabs(); 
         this.renderAttachments();
         
-        // เซ็ตค่าคงที่ 
         let defMed = this.state.clinicSettings.med_fee_default || ''; let defLab = this.state.clinicSettings.lab_fee_default || ''; let defXray = this.state.clinicSettings.xray_fee_default || '';
         if(document.getElementById('vd-med-fee')) document.getElementById('vd-med-fee').value = (v.med_fee !== undefined && v.med_fee !== "" && Number(v.med_fee) !== 0) ? v.med_fee : defMed;
         if(document.getElementById('vd-lab-fee')) document.getElementById('vd-lab-fee').value = (v.lab_fee !== undefined && v.lab_fee !== "" && Number(v.lab_fee) !== 0) ? v.lab_fee : defLab;
         if(document.getElementById('vd-xray-fee')) document.getElementById('vd-xray-fee').value = (v.xray_fee !== undefined && v.xray_fee !== "" && Number(v.xray_fee) !== 0) ? v.xray_fee : defXray;
         
-        // 🚨 THE FIX: Smart Pricing ดึงราคาอัตโนมัติ ถ้าค่าฟอกเป็น 0 หรือว่างเปล่า
         document.getElementById('vd-dialysis-fee').value = (v.dialysis_fee !== undefined && v.dialysis_fee !== null) ? v.dialysis_fee : '';
         if (!document.getElementById('vd-dialysis-fee').value) {
             if (document.getElementById('vd-right').value) this.onRightChange();
@@ -770,7 +782,6 @@ class VisitDetailPageComponent {
         if(quiet !== true) { Swal.fire({ title: 'คำนวณสำเร็จ', text: 'ระบบรวมยอดให้เรียบร้อยแล้ว', icon: 'success', timer: 1500, showConfirmButton: false }); }
     }
 
-    // 🚨 THE FIX: Refresh Dropdown UI ให้ Update เสมอ
     refreshDropdownsUI() {
         if (!this.state.isFormLoaded) return; 
         this.renderModalityDropdown();
@@ -779,7 +790,6 @@ class VisitDetailPageComponent {
         this.renderXrays();
     }
 
-    // 🚨 THE FIX: Auto-Pull Mode จากประวัติหลัก
     renderModalityDropdown() { 
         const select = document.getElementById('vd-mode'); if(!select) return; 
         let v = this.state.visitData || {};
@@ -795,7 +805,6 @@ class VisitDetailPageComponent {
         if (currentVal && !document.getElementById('vd-dialysis-fee').value) this.onModeChange();
     }
     
-    // 🚨 THE FIX: Auto-Pull Right จากประวัติหลัก
     renderRightDropdown() { 
         const select = document.getElementById('vd-right'); if(!select) return; 
         let v = this.state.visitData || {};
@@ -808,11 +817,9 @@ class VisitDetailPageComponent {
         }); 
         select.innerHTML = html; 
 
-        // คำนวณราคาอัตโนมัติถ้ายังว่าง
         if (currentVal && !document.getElementById('vd-dialysis-fee').value) this.onRightChange();
     }
 
-    // 🚨 THE FIX: Smart Pricing Engine
     onModeChange() { 
         const modeObj = this.state.modalities.find(m => m.name === document.getElementById('vd-mode').value); 
         if (modeObj && modeObj.price > 0) document.getElementById('vd-dialysis-fee').value = modeObj.price; 
@@ -1015,7 +1022,6 @@ class VisitDetailPageComponent {
                 }
             }
 
-            // 🚨 THE FIX: นำประวัติกลับไปซิงค์รวมที่ Patient Profile ด้วย
             const pQuery = await db.ref('patients_database_v2/patients').orderByChild('hn').equalTo(this.state.visitData.hn).once('value');
             if (pQuery.exists()) {
                 let ptUpdates = {};
@@ -1252,144 +1258,6 @@ class VisitDetailPageComponent {
 
                 } catch(e) { Swal.fire('Error', e.message, 'error'); }
             }
-        });
-    }
-
-    manageModalities() {
-        let html = '<div class="list-group mb-3 text-start shadow-sm" style="border-radius:12px; overflow:hidden;">';
-        this.state.modalities.forEach((m) => {
-            html += `
-            <div class="list-group-item d-flex justify-content-between align-items-center p-3 bg-white">
-                <div>
-                    <div class="fw-bold text-dark" style="font-size:15px;">${this.escapeHTML(m.name)}</div>
-                    <div class="text-info fw-bold small"><i class="fa-solid fa-tag me-1"></i> ค่าบริการ: ฿${Number(m.price || 0).toLocaleString()} / รอบ</div>
-                </div>
-                <div>
-                    <button class="btn btn-sm btn-light border border-warning-subtle text-warning-dark shadow-sm me-1" style="border-radius:8px;" onclick="Swal.close(); setTimeout(()=>window.VisitDetailPage.editModality('${m.id}'), 300)"><i class="fa-solid fa-pen"></i></button>
-                    <button class="btn btn-sm btn-light border border-danger-subtle text-danger shadow-sm" style="border-radius:8px;" onclick="Swal.close(); setTimeout(()=>window.VisitDetailPage.deleteModality('${m.id}'), 300)"><i class="fa-solid fa-trash"></i></button>
-                </div>
-            </div>`;
-        });
-        html += '</div>';
-        
-        Swal.fire({
-            title: '<h4 class="fw-bold text-info mb-0"><i class="fa-solid fa-pump-medical me-2"></i> ตั้งค่าราคาโหมดการฟอก</h4>',
-            html: html,
-            showCancelButton: true, cancelButtonText: 'ปิดหน้าต่าง',
-            showConfirmButton: true, confirmButtonText: '<i class="fa-solid fa-plus me-1"></i> เพิ่มโหมดใหม่', confirmButtonColor: '#0ea5e9', width: 600
-        }).then((res) => { if(res.isConfirmed) { setTimeout(() => this.editModality(null), 300); } });
-    }
-
-    editModality(id) {
-        let m = id ? this.state.modalities.find(x => x.id === id) : { name: '', price: 1500 };
-        Swal.fire({
-            title: `<h5 class="fw-bold text-info mb-0"><i class="fa-solid ${id?'fa-pen':'fa-plus'} me-2"></i>${id ? 'แก้ไขโหมด' : 'เพิ่มโหมดใหม่'}</h5>`,
-            html: `
-                <div class="text-start mt-3" style="font-family:'Prompt';">
-                    <label class="form-label fw-bold small text-secondary">ชื่อโหมด (Modality Name)</label>
-                    <input type="text" id="swal-mod-name" class="form-control input-modern mb-3 fw-bold text-dark" value="${this.escapeHTML(m.name)}" placeholder="เช่น HD ปกติ, HDF">
-                    <label class="form-label fw-bold small text-secondary">ราคา / ค่าบริการ (บาท)</label>
-                    <input type="number" id="swal-mod-price" class="form-control input-modern text-info fw-bold text-center" value="${m.price || 0}" style="font-size: 18px;" min="0">
-                </div>
-            `,
-            showCancelButton: true, cancelButtonText: 'ยกเลิก', confirmButtonText: '<i class="fa-solid fa-save me-1"></i> บันทึก', confirmButtonColor: '#0ea5e9',
-            preConfirm: () => {
-                let name = document.getElementById('swal-mod-name').value.trim();
-                let price = document.getElementById('swal-mod-price').value;
-                if(!name) { Swal.showValidationMessage('กรุณากรอกชื่อโหมด'); return false; }
-                return { id: id || 'MOD'+Date.now(), name, price: Number(price) };
-            }
-        }).then(res => {
-            if(res.isConfirmed) {
-                let updated = [...this.state.modalities];
-                if(id) updated[updated.findIndex(x=>x.id===id)] = res.value; else updated.push(res.value);
-                db.ref('clinic_modalities_v2').set(updated).then(() => {
-                    Swal.fire({title:'บันทึกสำเร็จ', icon:'success', timer:1000, showConfirmButton:false}).then(()=> this.manageModalities());
-                });
-            } else if (res.isDismissed) { this.manageModalities(); }
-        });
-    }
-
-    deleteModality(id) {
-        Swal.fire({
-            title: 'ยืนยันการลบ?', text: 'ต้องการลบโหมดการฟอกนี้ออกจากระบบใช่หรือไม่?', icon: 'warning', 
-            showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-trash me-1"></i> ลบ', confirmButtonColor: '#ef4444', cancelButtonText: 'ยกเลิก'
-        }).then(res => {
-            if(res.isConfirmed) {
-                let updated = this.state.modalities.filter(x=>x.id !== id);
-                db.ref('clinic_modalities_v2').set(updated).then(() => {
-                    Swal.fire({title:'ลบสำเร็จ', icon:'success', timer:1000, showConfirmButton:false}).then(()=> this.manageModalities());
-                });
-            } else { this.manageModalities(); }
-        });
-    }
-
-    manageRights() {
-        let html = '<div class="list-group mb-3 text-start shadow-sm" style="border-radius:12px; overflow:hidden;">';
-        this.state.clinicRights.forEach((r) => {
-            html += `
-            <div class="list-group-item d-flex justify-content-between align-items-center p-3 bg-white">
-                <div>
-                    <div class="fw-bold text-dark" style="font-size:15px;">${this.escapeHTML(r.name)}</div>
-                    <div class="text-success fw-bold small"><i class="fa-solid fa-hand-holding-dollar me-1"></i> เบิกจ่าย: ฿${Number(r.price).toLocaleString()} / รอบ</div>
-                </div>
-                <div>
-                    <button class="btn btn-sm btn-light border border-warning-subtle text-warning-dark shadow-sm me-1" style="border-radius:8px;" onclick="Swal.close(); setTimeout(()=>window.VisitDetailPage.editRight('${r.id}'), 300)"><i class="fa-solid fa-pen"></i></button>
-                    <button class="btn btn-sm btn-light border border-danger-subtle text-danger shadow-sm" style="border-radius:8px;" onclick="Swal.close(); setTimeout(()=>window.VisitDetailPage.deleteRight('${r.id}'), 300)"><i class="fa-solid fa-trash"></i></button>
-                </div>
-            </div>`;
-        });
-        html += '</div>';
-        
-        Swal.fire({
-            title: '<h4 class="fw-bold text-success mb-0"><i class="fa-solid fa-shield-heart me-2"></i> จัดการสิทธิการรักษา</h4>',
-            html: html,
-            showCancelButton: true, cancelButtonText: 'ปิดหน้าต่าง',
-            showConfirmButton: true, confirmButtonText: '<i class="fa-solid fa-plus me-1"></i> เพิ่มสิทธิใหม่', confirmButtonColor: '#10b981'
-        }).then((res) => { if(res.isConfirmed) { setTimeout(() => this.editRight(null), 300); } });
-    }
-
-    editRight(id) {
-        let r = id ? this.state.clinicRights.find(x => x.id === id) : { name: '', price: 1500 };
-        Swal.fire({
-            title: `<h5 class="fw-bold text-success mb-0"><i class="fa-solid ${id?'fa-pen':'fa-plus'} me-2"></i>${id ? 'แก้ไขสิทธิการรักษา' : 'เพิ่มสิทธิใหม่'}</h5>`,
-            html: `
-                <div class="text-start mt-3" style="font-family:'Prompt';">
-                    <label class="form-label fw-bold small text-secondary">ชื่อสิทธิ (เช่น บัตรทอง, ชำระเงินเอง)</label>
-                    <input type="text" id="swal-right-name" class="form-control input-modern mb-3 fw-bold text-dark" value="${this.escapeHTML(r.name)}">
-                    <label class="form-label fw-bold small text-secondary">ราคา / ค่าเบิกจ่าย (บาท)</label>
-                    <input type="number" id="swal-right-price" class="form-control input-modern text-success fw-bold text-center" value="${r.price}" style="font-size: 18px;" min="0">
-                </div>
-            `,
-            showCancelButton: true, cancelButtonText: 'ยกเลิก', confirmButtonText: '<i class="fa-solid fa-save me-1"></i> บันทึก', confirmButtonColor: '#10b981',
-            preConfirm: () => {
-                let name = document.getElementById('swal-right-name').value.trim();
-                let price = document.getElementById('swal-right-price').value;
-                if(!name) { Swal.showValidationMessage('กรุณากรอกชื่อสิทธิ'); return false; }
-                return { id: id || 'RIGHT'+Date.now(), name, price: Number(price) };
-            }
-        }).then(res => {
-            if(res.isConfirmed) {
-                let updated = [...this.state.clinicRights];
-                if(id) updated[updated.findIndex(x=>x.id===id)] = res.value; else updated.push(res.value);
-                db.ref('clinic_rights_v2').set(updated).then(() => {
-                    Swal.fire({title:'บันทึกสำเร็จ', icon:'success', timer:1000, showConfirmButton:false}).then(()=> this.manageRights());
-                });
-            } else if (res.isDismissed) { this.manageRights(); }
-        });
-    }
-
-    deleteRight(id) {
-        Swal.fire({
-            title: 'ยืนยันการลบ?', text: 'ต้องการลบสิทธิการรักษานี้ใช่หรือไม่?', icon: 'warning', 
-            showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-trash me-1"></i> ลบ', confirmButtonColor: '#ef4444', cancelButtonText: 'ยกเลิก'
-        }).then(res => {
-            if(res.isConfirmed) {
-                let updated = this.state.clinicRights.filter(x=>x.id !== id);
-                db.ref('clinic_rights_v2').set(updated).then(() => {
-                    Swal.fire({title:'ลบสำเร็จ', icon:'success', timer:1000, showConfirmButton:false}).then(()=> this.manageRights());
-                });
-            } else { this.manageRights(); }
         });
     }
 

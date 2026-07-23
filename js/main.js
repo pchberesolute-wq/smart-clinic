@@ -1,5 +1,5 @@
 // js/main.js
-// 🚀 Enterprise Core Router: Multi-Tab Enabled, Zero-Popup Paradigm & Real-time RBAC (v11.1)
+// 🚀 Enterprise Core Router: Multi-Tab Enabled, Zero-Popup Paradigm & Real-time RBAC (v11.2)
 
 document.addEventListener('click', function(e) {
     const link = e.target.closest('a[target="_blank"]');
@@ -236,7 +236,6 @@ const App = {
         }
     },
 
-    // 🚨 THE FIX: อัปเกรดระบบ SwitchPage ให้การันตีการลบคลาส Hide-Screen ทิ้งทุกครั้งที่ล็อคอิน
     switchPage: function(pageName, element, payload = null) {
         const sidebar = document.getElementById('sidebar');
         const topbar = document.querySelector('.topbar');
@@ -566,7 +565,6 @@ const App = {
             return false;
         }
 
-        // 🚨 THE FIX: นำแสงสว่างและโครงสร้างหน้าจอหลักกลับมา 100%
         document.documentElement.classList.remove('not-logged-in');
         const ghostStyle = document.getElementById('anti-flash-style');
         if (ghostStyle) ghostStyle.remove();
@@ -638,6 +636,30 @@ const App = {
     }
 };
 
+// 🚨 THE FIX: นวัตกรรม Cross-Tab Session Synchronization (Real-time Auth Sharing)
+// ระบบจะทำการยืม Session จากแท็บหลัก เพื่อให้แท็บใหม่ที่เปิดขึ้นมาไม่ต้อง Login ซ้ำซ้อน
+if (!sessionStorage.getItem('dialysis_user_session')) {
+    localStorage.setItem('DIALYSIS_AUTH_SYNC_REQUEST', Date.now().toString());
+}
+
+window.addEventListener('storage', (event) => {
+    if (event.key === 'DIALYSIS_AUTH_SYNC_REQUEST') {
+        // มีแท็บใหม่ขอข้อมูล Login -> แท็บเก่าส่งให้ทันที
+        const sessionData = sessionStorage.getItem('dialysis_user_session');
+        if (sessionData) {
+            localStorage.setItem('DIALYSIS_AUTH_SYNC_RESPONSE', sessionData);
+            setTimeout(() => localStorage.removeItem('DIALYSIS_AUTH_SYNC_RESPONSE'), 100); // ทำลายทิ้งป้องกันข้อมูลค้าง
+        }
+    }
+    if (event.key === 'DIALYSIS_AUTH_SYNC_RESPONSE' && event.newValue) {
+        // แท็บใหม่ได้รับข้อมูล Login แล้ว -> เซฟลงเครื่องและรีเฟรช 1 ครั้งเพื่อเข้าหน้าเว็บ
+        if (!sessionStorage.getItem('dialysis_user_session')) {
+            sessionStorage.setItem('dialysis_user_session', event.newValue);
+            window.location.reload(); 
+        }
+    }
+});
+
 window.addEventListener('DOMContentLoaded', () => {
     App.initPages();
     App.initMobileSidebar(); 
@@ -669,23 +691,44 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 🚨 THE FIX: ประเมินการเข้าสู่ระบบแบบเงียบเชียบ ถ้ายังไม่ Login ระบบจะเด้งไปหน้า Login เลยโดยที่จอไม่กระพริบ
-    const isAuthenticated = App.checkAuth();
-    if (!isAuthenticated) return; 
+    // 🚨 หน่วงเวลา 150ms เพื่อให้ระบบขอยืม Session จากแท็บหลักให้เสร็จก่อน
+    setTimeout(() => {
+        const isAuthenticated = App.checkAuth();
+        if (!isAuthenticated) return; 
 
-    const role = App.currentUser ? App.currentUser.role : 'nurse';
-    const permissionsSrc = Object.keys(App.rolePermissions).length > 0 ? App.rolePermissions : App.defaultRolePermissions;
-    const allowed = permissionsSrc[role] || [];
-    let defaultPage = 'dashboard';
-    
-    if (!allowed.includes('*') && !allowed.includes('dashboard')) {
-        defaultPage = allowed.length > 0 ? allowed[0] : 'login';
-    }
-    
-    const defaultMenu = document.querySelector(`.nav-item[data-page="${defaultPage}"]`);
-    App.switchPage(defaultPage, defaultMenu);
+        const role = App.currentUser ? App.currentUser.role : 'nurse';
+        const permissionsSrc = Object.keys(App.rolePermissions).length > 0 ? App.rolePermissions : App.defaultRolePermissions;
+        const allowed = permissionsSrc[role] || [];
+        
+        // 🚨 THE FIX: อ่าน Parameter จาก URL ?page= เพื่อเปิดหน้าเฉพาะในแท็บใหม่
+        const urlParams = new URLSearchParams(window.location.search);
+        const requestedPage = urlParams.get('page');
+        let defaultPage = 'dashboard';
+        
+        if (requestedPage && typeof App.getPages()[requestedPage] !== 'undefined') {
+            if (allowed.includes('*') || allowed.includes(requestedPage)) {
+                defaultPage = requestedPage;
+            } else {
+                if (typeof Swal !== 'undefined') Swal.fire('ปฏิเสธการเข้าถึง', 'บัญชีของคุณไม่มีสิทธิ์เข้าถึงหน้านี้', 'error');
+                defaultPage = allowed.length > 0 ? allowed[0] : 'login';
+            }
+        } else if (!allowed.includes('*') && !allowed.includes('dashboard')) {
+            defaultPage = allowed.length > 0 ? allowed[0] : 'login';
+        }
+        
+        const defaultMenu = document.querySelector(`.nav-item[data-page="${defaultPage}"]`);
+        App.switchPage(defaultPage, defaultMenu);
+
+        // 🚨 เก็บกวาด URL ให้สะอาดหลังจากพาไปถูกหน้าแล้ว
+        if (requestedPage) {
+            setTimeout(() => {
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }, 1000);
+        }
+    }, 150);
 });
 
+// Sync Agent
 function syncWithLocalAgent() {
     let currentVersion = "6.0.0 (Quantum Resilient Edition)";
     if (typeof AboutPage !== 'undefined' && AboutPage.version) {
@@ -693,10 +736,7 @@ function syncWithLocalAgent() {
     }
 
     const agentUrl = `http://127.0.0.1:8000/health?v=${encodeURIComponent(currentVersion)}`;
-    fetch(agentUrl, { method: 'GET' })
-        .then(res => res.json())
-        .then(data => {})
-        .catch(err => {});
+    fetch(agentUrl, { method: 'GET' }).then(res => res.json()).then(data => {}).catch(err => {});
 }
 
 setTimeout(syncWithLocalAgent, 1000);
@@ -706,9 +746,5 @@ window.App = App;
 
 window.addEventListener('beforeunload', function () {
     const agentUrl = 'http://127.0.0.1:8000/shutdown'; 
-    try {
-        navigator.sendBeacon(agentUrl);
-    } catch (e) {
-        console.warn("ไม่สามารถส่งสัญญาณปิด Agent ได้:", e);
-    }
+    try { navigator.sendBeacon(agentUrl); } catch (e) { console.warn("ไม่สามารถส่งสัญญาณปิด Agent ได้:", e); }
 });

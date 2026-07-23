@@ -1,5 +1,5 @@
 // js/pages/stock_forecast.js
-// 🚀 Enterprise Smart PO Engine: CSS Grid Stacking (Zero Layout Shift), Memory-Leak Free & O(1) Precalculation
+// 🚀 Enterprise Smart PO Engine: UI Re-hydration & State Persistence
 
 class StockForecastPageComponent {
     constructor() {
@@ -10,11 +10,9 @@ class StockForecastPageComponent {
             lastFluidForecast: []
         };
         this.firebaseListeners = [];
-        
         this.boundHandleInput = this.#handleTableInput.bind(this);
     }
 
-    // 🚨 THE FIX: กลไกสลับแท็บแบบ Custom ป้องกันการแทรกแซงจาก Bootstrap
     switchTab(tabId) {
         document.querySelectorAll('.forecast-nav-tabs .forecast-nav-link').forEach(btn => {
             btn.classList.remove('active');
@@ -36,45 +34,12 @@ class StockForecastPageComponent {
                 .table-premium th { color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px; padding: 14px 10px; border-bottom: 2px solid var(--border-color); }
                 .table-premium td { padding: 14px 10px; vertical-align: middle; border-bottom: 1px solid var(--border-color); transition: background 0.2s; }
                 
-                /* ========================================================
-                   🚨 THE ULTIMATE FIX: โครงสร้างแท็บใหม่ ตัดขาดจาก Bootstrap 100%
-                   ======================================================== */
-                ul.forecast-nav-tabs { 
-                    display: flex !important; 
-                    flex-direction: row !important;
-                    border-bottom: 2px solid var(--border-color) !important; 
-                    margin: 0 0 -1px 0 !important; 
-                    padding-left: 0 !important; 
-                    list-style-type: none !important; 
-                    gap: 5px !important; 
-                    overflow-x: auto !important;
-                    position: relative; z-index: 10;
-                }
+                ul.forecast-nav-tabs { display: flex !important; flex-direction: row !important; border-bottom: 2px solid var(--border-color) !important; margin: 0 0 -1px 0 !important; padding-left: 0 !important; list-style-type: none !important; gap: 5px !important; overflow-x: auto !important; position: relative; z-index: 10; }
                 ul.forecast-nav-tabs::-webkit-scrollbar { height: 4px; }
                 ul.forecast-nav-tabs::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
-                
-                ul.forecast-nav-tabs li {
-                    list-style: none !important;
-                    margin: 0 !important;
-                    padding: 0 !important;
-                }
+                ul.forecast-nav-tabs li { list-style: none !important; margin: 0 !important; padding: 0 !important; }
 
-                .forecast-nav-link { 
-                    display: inline-flex;
-                    align-items: center;
-                    background: transparent; 
-                    border: none !important; 
-                    padding: 14px 24px; 
-                    font-family: 'Prompt', sans-serif; 
-                    font-weight: 600; 
-                    font-size: 16px; 
-                    color: var(--text-muted); 
-                    cursor: pointer; 
-                    border-radius: 12px 12px 0 0; 
-                    position: relative; 
-                    transition: all 0.2s; 
-                    outline: none !important; 
-                }
+                .forecast-nav-link { display: inline-flex; align-items: center; background: transparent; border: none !important; padding: 14px 24px; font-family: 'Prompt', sans-serif; font-weight: 600; font-size: 16px; color: var(--text-muted); cursor: pointer; border-radius: 12px 12px 0 0; position: relative; transition: all 0.2s; outline: none !important; }
                 .forecast-nav-link:hover { background-color: rgba(139, 92, 246, 0.1) !important; color: #8b5cf6 !important; }
                 .forecast-nav-link.active { background-color: var(--bg-surface) !important; color: #8b5cf6 !important; font-weight: 700; box-shadow: 0 -4px 10px rgba(0,0,0,0.02);}
                 .forecast-nav-link.active::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 3px; background: #8b5cf6; border-radius: 3px 3px 0 0; }
@@ -83,57 +48,14 @@ class StockForecastPageComponent {
                 #btn-fluid-panel.active::after { background: #06b6d4 !important; }
                 #btn-fluid-panel:hover { background-color: rgba(6, 182, 212, 0.1) !important; color: #06b6d4 !important; }
                 
-                /* ========================================================
-                   🚨 CSS GRID STACKING ENGINE (ล็อกกล่องเหล็กกันจอยืดหด)
-                   ======================================================== */
-                #forecastTabContent {
-                    display: grid;
-                    grid-template-columns: 1fr;
-                    grid-template-rows: 1fr;
-                    height: 650px !important;       /* ล็อกความสูงตายตัว 650px */
-                    min-height: 650px !important;
-                    max-height: 650px !important;
-                    width: 100%;
-                    margin-bottom: 2rem;
-                }
+                #forecastTabContent { display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr; height: 650px !important; min-height: 650px !important; max-height: 650px !important; width: 100%; margin-bottom: 2rem; }
 
-                .custom-tab-pane {
-                    grid-area: 1 / 1;               /* ซ้อนทับ 3 มิติในช่อง 1x1 */
-                    opacity: 0;
-                    visibility: hidden;
-                    pointer-events: none;           
-                    transition: opacity 0.25s ease; 
-                    height: 100%;
-                    display: flex;
-                    flex-direction: column;
-                }
+                .custom-tab-pane { grid-area: 1 / 1; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.25s ease; height: 100%; display: flex; flex-direction: column; }
+                .custom-tab-pane.active { opacity: 1; visibility: visible; pointer-events: auto; z-index: 5; }
 
-                .custom-tab-pane.active {
-                    opacity: 1;
-                    visibility: visible;
-                    pointer-events: auto;
-                    z-index: 5;
-                }
+                .panel-locked { height: 100% !important; display: flex; flex-direction: column; margin-bottom: 0 !important; border-top-left-radius: 0 !important; }
 
-                .panel-locked {
-                    height: 100% !important;
-                    display: flex;
-                    flex-direction: column;
-                    margin-bottom: 0 !important; 
-                    border-top-left-radius: 0 !important;
-                }
-
-                .locked-table-wrapper {
-                    flex-grow: 1;
-                    min-height: 0; 
-                    overflow-y: auto;
-                    overflow-x: auto; 
-                    background-color: var(--bg-surface);
-                    border: 1px solid var(--border-color);
-                    border-radius: 16px;
-                    box-shadow: var(--shadow-sm);
-                }
-                
+                .locked-table-wrapper { flex-grow: 1; min-height: 0; overflow-y: auto; overflow-x: auto; background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 16px; box-shadow: var(--shadow-sm); }
                 .locked-table-wrapper::-webkit-scrollbar { width: 6px; height: 6px; }
                 .locked-table-wrapper::-webkit-scrollbar-track { background: transparent; }
                 .locked-table-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -150,6 +72,9 @@ class StockForecastPageComponent {
                         <p class="text-muted mt-1 mb-0">ดึงยอดตั้งต้นเบิกจากฐานข้อมูลคลัง เพื่อคำนวณและส่งไปหน้าฟอร์มเบิกของ (Excel) อัตโนมัติ</p>
                     </div>
                     <div class="d-flex gap-2 mt-3 mt-md-0">
+                        <button class="btn btn-outline-danger fw-bold shadow-sm rounded-pill px-3 py-2 card-hover-float" onclick="App.pages.stock_forecast.clearAllForecast()">
+                            <i class="fa-solid fa-trash-can me-2"></i> ล้างทั้งหมด
+                        </button>
                         <button class="btn btn-premium-success fw-bold shadow-sm rounded-pill px-4 py-2 card-hover-float" onclick="App.pages.stock_forecast.syncToMonthlyReq()">
                             <i class="fa-solid fa-paper-plane me-2"></i> นำยอดคำนวณไปสร้างฟอร์มเบิกของ
                         </button>
@@ -304,6 +229,16 @@ class StockForecastPageComponent {
             this.state.allLogs = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
         });
         this.firebaseListeners.push({ path: 'inventory_database_v2/transactions', callback: cbTrans });
+
+        // 🚨 UI Re-hydration & State Restoration
+        setTimeout(() => {
+            if (this.state.lastGeneralForecast && this.state.lastGeneralForecast.length > 0) {
+                this.renderGeneralTable(this.state.lastGeneralForecast);
+            }
+            if (this.state.lastFluidForecast && this.state.lastFluidForecast.length > 0) {
+                this.renderFluidTable(this.state.lastFluidForecast);
+            }
+        }, 100);
     }
 
     destroy() {
@@ -336,6 +271,29 @@ class StockForecastPageComponent {
                 this.state.lastFluidForecast[index].adjustedReq = value;
             }
         }
+    }
+
+    // 🚨 ปุ่มล้างข้อมูลทั้งหมดในหน้า Smart PO
+    clearAllForecast() {
+        Swal.fire({
+            title: 'ยืนยันการล้างข้อมูล?',
+            text: 'ต้องการล้างรายการผลการคำนวณทั้งหมดบนหน้าจอใช่หรือไม่?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            confirmButtonText: 'ใช่, ล้างข้อมูล',
+            cancelButtonText: 'ยกเลิก',
+            customClass: { popup: 'premium-alert' }
+        }).then((res) => {
+            if (res.isConfirmed) {
+                this.state.lastGeneralForecast = [];
+                this.state.lastFluidForecast = [];
+                document.getElementById('sf-result-body').innerHTML = '<tr><td colspan="8" class="text-center py-5 text-muted"><i class="fa-solid fa-calculator fa-3x mb-3" style="opacity: 0.2;"></i><br>กรุณากดปุ่ม <b>ประมวลผลยอดสั่งซื้อ</b> เพื่อคำนวณ</td></tr>';
+                document.getElementById('sf-fluid-result-body').innerHTML = '<tr><td colspan="7" class="text-center py-5 text-muted"><i class="fa-solid fa-calculator fa-3x mb-3" style="opacity: 0.2;"></i><br>กรุณากดปุ่ม <b>คำนวณน้ำยาฟอกไต</b> เพื่อคำนวณ</td></tr>';
+                localStorage.removeItem('smart_po_sync_data');
+                if(window.SecurityShield) window.SecurityShield.showNativeToast('ล้างข้อมูลหน้าคำนวณเรียบร้อยแล้ว');
+            }
+        });
     }
 
     calculateForecast(tabType) {
@@ -396,7 +354,6 @@ class StockForecastPageComponent {
             let baseReq = Math.ceil(totalReq - totalBal);
             if (baseReq < 0) baseReq = 0; 
             
-            // ปัดเศษให้พอดีแพ็คเกจ
             let pkgSize = Number(item.package_size) || 1;
             if(pkgSize > 1 && baseReq > 0) {
                 let remainder = baseReq % pkgSize;
@@ -482,7 +439,6 @@ class StockForecastPageComponent {
         document.getElementById('sf-fluid-result-body').innerHTML = html;
     }
 
-    // 🚨 THE FIX 1: (ไฟล์ stock_forecast.js) เพิ่มคำสั่งให้เขียนข้อมูลลง LocalStorage ก่อนกระโดดข้ามหน้า
     syncToMonthlyReq() {
         let combined = [...this.state.lastGeneralForecast, ...this.state.lastFluidForecast];
         let itemsToOrder = combined.filter(i => i.adjustedReq > 0);
@@ -503,10 +459,7 @@ class StockForecastPageComponent {
             customClass: { popup: 'premium-alert' }
         }).then((result) => {
             if (result.isConfirmed) {
-                // 🚨 สร้าง Data Bridge: เซฟข้อมูลลง LocalStorage เพื่อให้หน้าปลายทางดึงไปใช้ได้ทันที
                 localStorage.setItem('smart_po_sync_data', JSON.stringify(itemsToOrder));
-                
-                // สลับหน้าพร้อมโยน Payload เผื่อไว้เป็นแผนสำรอง
                 App.switchPage('monthly_requisition', null, { syncedItems: itemsToOrder });
             }
         });

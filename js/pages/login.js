@@ -174,7 +174,6 @@ class LoginPageComponent {
                             
                             <div class="profile-selector-btn" onclick="LoginPage.toggleCustomDropdown(event)">
                                 <div class="selected-user-info" id="display-user-container">
-                                    <!-- 🚨 THE FIX: เปลี่ยนจาก fa-circle-notch เป็น fas fa-spinner เพื่อรับประกันผลในทุกเบราว์เซอร์ -->
                                     <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 46px; height: 46px; border: 2px solid var(--border-color); background: var(--bg-body);">
                                         <i class="fas fa-spinner fa-spin text-primary safe-icon"></i>
                                     </div>
@@ -204,7 +203,6 @@ class LoginPageComponent {
 
                         <div class="d-flex justify-content-between align-items-center mb-2 ps-2 pe-1 position-relative" style="z-index: 50;">
                             <label class="form-label fw-bold small mb-0" style="color: var(--text-muted);">รหัสผ่าน (Secure Password)</label>
-                            <!-- 🚨 THE FIX: ให้ลิงก์ทำงานได้ 100% โดยไม่ต้องพึ่ง Z-Index แบบบีบบังคับ -->
                             <a href="javascript:void(0)" onclick="LoginPage.forgotPassword(); return false;" class="text-primary small fw-bold text-decoration-none" style="transition: all 0.2s; position: relative; z-index: 60;"><i class="fa-solid fa-fingerprint me-1 safe-icon"></i> ลืมรหัสผ่าน?</a>
                         </div>
                         <div class="input-group mb-3 position-relative" style="z-index: 40;">
@@ -377,18 +375,22 @@ class LoginPageComponent {
         this.onUserSelectChange(username);
     }
 
+    // 🚨 THE FIX: กรองรายชื่อ (Filter) เพื่อวาด UI เฉพาะคนที่เปิดสวิตช์ ShowOnLogin หรือเป็น Admin เท่านั้น!
     renderUserDropdown() {
         const listItemsContainer = document.getElementById('custom-list-items');
         if(!listItemsContainer) return;
 
-        // 🚨 THE FIX: เปลี่ยนไอคอนเป็นวงกลมคนให้ปลอดภัย 100%
         document.getElementById('display-user-container').innerHTML = `
             <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 46px; height: 46px; border: 2px solid var(--border-color); background: var(--bg-body);"><i class="fa-solid fa-user-shield text-muted fs-5 safe-icon"></i></div>
             <div class="selected-text-group"><span class="selected-name" style="color: var(--text-muted);">คลิกเพื่อเลือกบัญชีผู้ใช้</span><span class="selected-role">พนักงาน / ผู้ดูแลระบบ</span></div>
         `;
         
         let html = '';
-        this.allUsers.forEach(user => {
+        
+        // 🚨 กรองข้อมูล: โชว์เฉพาะคนที่ showOnLogin ไม่ใช่ false หรือเป็น admin
+        const visibleUsers = this.allUsers.filter(user => user.showOnLogin !== false || user.role === 'admin');
+
+        visibleUsers.forEach(user => {
             let roleData = this.roleConfig[user.role] || { label: 'พนักงานทั่วไป', iconHtml: '<i class="fa-solid fa-user-tag text-secondary safe-icon"></i>' };
             let avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=3b82f6&color=fff&bold=true&rounded=true`;
             
@@ -414,12 +416,16 @@ class LoginPageComponent {
         `;
         listItemsContainer.innerHTML = html;
 
+        // เช็คว่าเคยล็อคอินด้วยไอดีที่ยังมีสิทธิ์โชว์อยู่ไหม ถ้ามีให้เลือกไว้เหมือนเดิม
         const savedUser = localStorage.getItem('dialysis_remember_username');
-        if(savedUser && this.allUsers.some(u => u.username === savedUser)) {
-            const userObj = this.allUsers.find(u => u.username === savedUser);
+        if(savedUser && visibleUsers.some(u => u.username === savedUser)) {
+            const userObj = visibleUsers.find(u => u.username === savedUser);
             let avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userObj.name)}&background=3b82f6&color=fff&bold=true&rounded=true`;
             this.processUserSelection(userObj.username, userObj.name, avatarUrl, userObj.role);
             document.getElementById('login-remember').checked = true;
+        } else if (savedUser) {
+            // ถ้าชื่อถูกซ่อนไปแล้ว ให้ล้างความจำ
+            localStorage.removeItem('dialysis_remember_username');
         }
     }
 

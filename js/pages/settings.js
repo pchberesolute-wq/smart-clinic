@@ -46,23 +46,18 @@ class SettingsPageComponent {
         this.firebaseListeners = [];
     }
 
-    // 🚨 THE ZERO-SHIFT FIX: ฟังก์ชันสลับแท็บแบบข้าม Bootstrap
     switchTab(tabId) {
-        // ปิดปุ่มแท็บทั้งหมด
         document.querySelectorAll('#settingsTabs .st-tab-btn').forEach(btn => {
             btn.classList.remove('active');
         });
         
-        // ซ่อนเนื้อหาทั้งหมดทันที 0ms
         document.querySelectorAll('#settingsTabContent .st-tab-pane').forEach(pane => {
             pane.classList.remove('active');
         });
         
-        // เปิดแท็บเป้าหมาย
         const targetBtn = document.getElementById(`tab-${tabId}`);
         if (targetBtn) targetBtn.classList.add('active');
         
-        // โชว์เนื้อหาเป้าหมาย
         const targetPane = document.getElementById(tabId);
         if (targetPane) targetPane.classList.add('active');
     }
@@ -179,7 +174,6 @@ class SettingsPageComponent {
 
         return `
             <style>
-                /* 🚨 THE BULLETPROOF ZERO-SHIFT TAB ENGINE (Settings Edition) 🚨 */
                 .st-tabs-wrapper {
                     display: flex; gap: 8px; margin-bottom: 24px; overflow-x: auto;
                     -webkit-overflow-scrolling: touch; scrollbar-width: none; align-items: center; padding-bottom: 5px;
@@ -200,12 +194,10 @@ class SettingsPageComponent {
                 }
                 html[data-bs-theme="dark"] .st-tab-btn.active { border: 1px solid var(--border-color); }
 
-                /* Specific Colors for active tabs */
                 .st-tab-btn.text-info.active { color: #0ea5e9 !important; }
                 .st-tab-btn.text-danger.active { color: #ef4444 !important; }
                 .st-tab-btn.text-purple.active { color: #8b5cf6 !important; }
 
-                /* ยันต์ป้องกันหน้าต่างยุบ */
                 .st-tab-content { position: relative; min-height: 65vh; }
                 .st-tab-pane { display: none; opacity: 0; }
                 .st-tab-pane.active {
@@ -213,7 +205,6 @@ class SettingsPageComponent {
                 }
                 @keyframes stTabFade { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
 
-                /* 📝 Note Tabs Override */
                 .settings-note-tabs {
                     display: flex; gap: 6px; flex-wrap: nowrap; overflow-x: auto;
                     -webkit-overflow-scrolling: touch; scrollbar-width: none;
@@ -231,8 +222,6 @@ class SettingsPageComponent {
                 html[data-bs-theme="dark"] .settings-note-btn:hover { background: rgba(255,255,255,0.1); }
                 html[data-bs-theme="dark"] .settings-note-btn.active { background: var(--bg-surface); color: #fff !important; }
 
-                /* ------------------------------------------- */
-                
                 html[data-bs-theme="dark"] .modern-panel { background-color: var(--bg-surface) !important; border-color: var(--border-color) !important; color: var(--text-dark) !important; }
                 html[data-bs-theme="dark"] .modern-panel h5, html[data-bs-theme="dark"] .modern-panel label { color: var(--text-dark) !important; }
                 html[data-bs-theme="dark"] .bg-white { background-color: var(--bg-surface) !important; border-color: var(--border-color) !important; }
@@ -270,12 +259,18 @@ class SettingsPageComponent {
                 html[data-bs-theme="dark"] #database-panel .bg-white { background: rgba(0,0,0,0.2) !important; }
                 html[data-bs-theme="dark"] #database-panel .border-danger-subtle { border-color: rgba(239, 68, 68, 0.3) !important; background: rgba(239, 68, 68, 0.05) !important;}
 
-                /* 🚨 THE FIX: ปุ่ม Action ป้องกัน Hover แล้วพื้นขาวกลืนตัวหนังสือ */
                 .btn-custom-manage { background-color: #f1f5f9 !important; color: #475569 !important; border: 1px solid #cbd5e1 !important; transition: all 0.3s ease; }
                 .btn-custom-manage:hover { background-color: #475569 !important; color: #ffffff !important; border-color: #475569 !important; }
                 .btn-custom-manage i { color: inherit !important; }
                 html[data-bs-theme="dark"] .btn-custom-manage { background-color: rgba(255,255,255,0.1) !important; color: #f8fafc !important; border-color: rgba(255,255,255,0.2) !important; }
                 html[data-bs-theme="dark"] .btn-custom-manage:hover { background-color: #ffffff !important; color: #0f172a !important; }
+
+                .login-toggle-switch { position: relative; width: 44px; height: 24px; appearance: none; -webkit-appearance: none; background: #cbd5e1; outline: none; border-radius: 50px; cursor: pointer; box-shadow: inset 0 0 5px rgba(0,0,0,0.1); transition: background 0.3s; margin: 0; }
+                .login-toggle-switch:checked { background: #10b981; }
+                .login-toggle-switch::before { content: ""; position: absolute; width: 20px; height: 20px; border-radius: 50%; top: 2px; left: 2px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: 0.3s; transform: scale(1); }
+                .login-toggle-switch:checked::before { left: 22px; }
+                html[data-bs-theme="dark"] .login-toggle-switch { background: rgba(255,255,255,0.2); }
+                html[data-bs-theme="dark"] .login-toggle-switch:checked { background: #059669; }
             </style>
 
             <div class="page-header mb-4 fade-in-up">
@@ -409,7 +404,7 @@ class SettingsPageComponent {
                                         <th style="width: 25%;"><i class="fa-solid fa-user-tag me-2"></i> ผู้ใช้งาน (Name)</th>
                                         <th style="width: 20%;"><i class="fa-solid fa-fingerprint me-2"></i> ไอดี (Username)</th>
                                         <th class="text-center" style="width: 15%;"><i class="fa-solid fa-shield-halved me-2"></i> ระดับสิทธิ์</th>
-                                        <th class="text-center" style="width: 15%;"><i class="fa-solid fa-toggle-on me-2"></i> สถานะ</th>
+                                        <th class="text-center" style="width: 15%;"><i class="fa-solid fa-id-card-clip me-2"></i> โชว์หน้าล็อกอิน</th>
                                         <th class="text-center" style="width: 25%;"><i class="fa-solid fa-gears me-2"></i> จัดการ</th>
                                     </tr>
                                 </thead>
@@ -481,7 +476,6 @@ class SettingsPageComponent {
         `;
     }
 
-    // 🚀 Lifecycle: Mount
     init() {
         if (typeof db === 'undefined') return;
         
@@ -523,7 +517,6 @@ class SettingsPageComponent {
         });
         this.firebaseListeners.push({ path: 'clinic_settings_v2', callback: cbClinic });
 
-        // 🚨 THE FIX 1: ปรับวิธีดึงข้อมูล ให้จดจำรหัสพนักงาน (Firebase Key) เอาไว้ด้วย เพื่อใช้ล็อคเป้าตอนลบ
         const cbUsers = db.ref('clinic_users_v2').on('value', snap => { 
             const dataUsers = snap.val();
             let rawUsers = [];
@@ -582,7 +575,6 @@ class SettingsPageComponent {
         this.firebaseListeners.push({ path: 'clinic_note_templates_v2', callback: cbNotes });
     }
 
-    // 🧹 Lifecycle: Unmount
     destroy() {
         this.firebaseListeners.forEach(l => db.ref(l.path).off('value', l.callback));
         this.firebaseListeners = [];
@@ -801,7 +793,7 @@ class SettingsPageComponent {
             return; 
         }
         
-        Swal.fire({ title: 'กำลังจัดเตรียมภาพโลโก้...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        Swal.fire({ title: 'กำลังจัดเตรียมภาพโลโก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -1059,7 +1051,7 @@ class SettingsPageComponent {
                     .theme-rose-wave .divider { background: linear-gradient(90deg, #e11d48, transparent); height: 1.5px; }
                     .theme-rose-wave .tax-id-box { background: linear-gradient(135deg, #e11d48, #9f1239) !important; box-shadow: 0 2px 4px rgba(225,29,72,0.2); }
 
-                    /* 🚨 THE FIX: 🪻 Amethyst Purple (สีม่วงอเมทิสต์) 🚨 */
+                    /* 🪻 Amethyst Purple (สีม่วงอเมทิสต์) */
                     .theme-amethyst-purple.clinic-card { border-left: 4px solid #8b5cf6 !important; } 
                     .theme-amethyst-purple.company-card { border-top: 4px solid #8b5cf6 !important; }
                     .theme-amethyst-purple .card-bg-wash { background: linear-gradient(135deg, #ffffff 30%, #f5f3ff 100%); }
@@ -1162,9 +1154,6 @@ class SettingsPageComponent {
         db.ref('clinic_settings_v2').update(data).then(() => { Swal.fire({ title: 'สำเร็จ!', text: 'บันทึกข้อมูลเรียบร้อย', icon: 'success', timer: 1500, showConfirmButton: false }); });
     }
 
-    // ---------------------------------------------------------
-    // 👥 Users Table
-    // ---------------------------------------------------------
     renderUsersTable() {
         const tbody = document.getElementById('users-table-body');
         if(!tbody) return;
@@ -1178,14 +1167,22 @@ class SettingsPageComponent {
             
             let roleBadge = `<span class="badge bg-${roleInfo.color}-subtle text-${roleInfo.color} border border-${roleInfo.color}-subtle px-3 py-2 rounded-pill shadow-sm" style="font-size: 13px;"><i class="fa-solid ${roleInfo.icon} me-1"></i> ${roleInfo.label}</span>`;
             
-            let statusBadge = user.status === 'active' 
-                ? '<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 shadow-sm"><i class="fa-solid fa-check-circle me-1"></i> ปกติ</span>' 
-                : '<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 shadow-sm"><i class="fa-solid fa-lock me-1"></i> ระงับ</span>';
-            
+            let isShowOnLogin = user.showOnLogin === true;
+            let isAdminProtection = user.role === 'admin' ? `disabled title="Admin จำเป็นต้องโชว์บนหน้าล็อกอินเสมอ"` : ``;
+            if (user.role === 'admin') isShowOnLogin = true; 
+
+            let toggleSwitchHtml = `
+                <div class="d-flex justify-content-center">
+                    <input type="checkbox" class="login-toggle-switch" 
+                           id="toggle-login-${user.firebaseKey}" 
+                           ${isShowOnLogin ? 'checked' : ''} 
+                           ${isAdminProtection}
+                           onchange="App.pages.settings.toggleShowOnLogin('${user.firebaseKey}', this.checked, '${user.role}')">
+                </div>
+            `;
+
             let safeName = this._escapeHTML(user.name || 'U');
             let imgSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(safeName)}&background=f8fafc&color=334155&bold=true`;
-            
-            // 🚨 THE FIX: ดึง Key ที่แท้จริงออกมาใช้ เพื่อส่งให้ปุ่มลบทำงานได้เป๊ะๆ
             let userKey = user.firebaseKey || user.username;
             let displayId = user.username || user.id || userKey;
             
@@ -1205,7 +1202,7 @@ class SettingsPageComponent {
                 </td>
                 <td class="fw-bold text-primary" style="font-size: 14.5px;">${this._escapeHTML(user.username || '-')}</td>
                 <td class="text-center">${roleBadge}</td>
-                <td class="text-center">${statusBadge}</td>
+                <td class="text-center">${toggleSwitchHtml}</td>
                 <td class="text-center">
                     <button class="btn btn-sm btn-light border shadow-sm me-1 fw-bold text-dark" onclick="App.pages.settings.openUserModal('${userKey}')" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
                     <button class="btn btn-sm btn-light border shadow-sm me-1 fw-bold text-info" onclick="App.pages.settings.openRolePermissionsModal('${user.role}', '${safeName}')" title="ตั้งค่าการมองเห็นเมนู"><i class="fa-solid fa-shield-halved"></i> แก้ไขสิทธิ์</button>
@@ -1214,6 +1211,24 @@ class SettingsPageComponent {
             </tr>`;
         });
         tbody.innerHTML = html;
+    }
+
+    toggleShowOnLogin(userKey, isChecked, role) {
+        if (role === 'admin' && !isChecked) {
+            Swal.fire('ข้อควรระวัง', 'ผู้ดูแลระบบ (Admin) ไม่สามารถซ่อนตัวเองจากหน้าล็อกอินได้ครับ เพื่อป้องกันการเข้าสู่ระบบไม่ได้', 'warning');
+            document.getElementById(`toggle-login-${userKey}`).checked = true; 
+            return;
+        }
+
+        db.ref(`clinic_users_v2/${userKey}`).update({ showOnLogin: isChecked }).then(() => {
+            const statusText = isChecked ? 'แสดง' : 'ซ่อน';
+            if(window.SecurityShield && typeof window.SecurityShield.showNativeToast === 'function') {
+                window.SecurityShield.showNativeToast(`ตั้งค่าให้ ${statusText} ในหน้าล็อกอินเรียบร้อย`);
+            }
+        }).catch(err => {
+            Swal.fire('ข้อผิดพลาด', `บันทึกสถานะไม่สำเร็จ: ${err.message}`, 'error');
+            document.getElementById(`toggle-login-${userKey}`).checked = !isChecked; 
+        });
     }
 
     openRolePermissionsModal(roleId, userName) {
@@ -1279,8 +1294,7 @@ class SettingsPageComponent {
 
     openUserModal(userKey = null) {
         let isEdit = !!userKey; 
-        // 🚨 ดึงข้อมูลโดยเทียบจาก Key จริงของ Firebase
-        let user = isEdit ? this.state.allUsers.find(u => u.firebaseKey === userKey || u.username === userKey) : { status: 'active', role: 'nurse' };
+        let user = isEdit ? this.state.allUsers.find(u => u.firebaseKey === userKey || u.username === userKey) : { status: 'active', role: 'nurse', showOnLogin: true };
         let roleOptionsHtml = Object.keys(this.roleConfig).map(key => `<option value="${key}" ${user.role === key ? 'selected' : ''}>${this.roleConfig[key].label}</option>`).join('');
         
         Swal.fire({
@@ -1312,6 +1326,12 @@ class SettingsPageComponent {
                                 <option value="inactive" ${user.status==='inactive'?'selected':''}>🔴 ระงับการใช้งาน</option>
                             </select>
                         </div>
+                        <div class="col-12 mt-4 pt-3 border-top">
+                            <label class="perm-check-item" style="margin-bottom:0;">
+                                <input type="checkbox" id="swal-user-showlogin" ${user.showOnLogin !== false ? 'checked' : ''}>
+                                <span>แสดงปุ่มล็อคอินของบุคคลนี้ในหน้าแรก (Login Page)</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
             `,
@@ -1320,23 +1340,27 @@ class SettingsPageComponent {
                 const name = document.getElementById('swal-user-name').value.trim(); 
                 const username = document.getElementById('swal-user-username').value.trim(); 
                 const password = document.getElementById('swal-user-password').value.trim();
+                const showOnLogin = document.getElementById('swal-user-showlogin').checked;
                 
                 if (!name || !username) { Swal.showValidationMessage('กรอกข้อมูลให้ครบถ้วน'); return false; }
                 if (!isEdit && !password) { Swal.showValidationMessage('ตั้งรหัสผ่านสำหรับผู้ใช้งานใหม่'); return false; }
+                
+                let finalRole = document.getElementById('swal-user-role').value;
+                let finalShowOnLogin = finalRole === 'admin' ? true : showOnLogin; 
                 
                 return { 
                     name, 
                     username, 
                     password: password ? password : user.password, 
-                    role: document.getElementById('swal-user-role').value, 
-                    status: document.getElementById('swal-user-status').value 
+                    role: finalRole, 
+                    status: document.getElementById('swal-user-status').value,
+                    showOnLogin: finalShowOnLogin
                 };
             }
         }).then((result) => { 
             if (result.isConfirmed) { 
                 Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
                 
-                // 🚨 THE FIX: บันทึกด้วยคำสั่ง .update(Object) แทนการเซฟทับทั้งตาราง
                 let targetKey = userKey || result.value.username;
                 let savePayload = { ...result.value };
                 
@@ -1357,7 +1381,6 @@ class SettingsPageComponent {
             showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: '<i class="fa-solid fa-trash me-1"></i> ลบทิ้งถาวร', cancelButtonText: 'ยกเลิก' 
         }).then((res) => { 
             if(res.isConfirmed) {
-                // 🚨 THE FIX: ใช้คำสั่ง Hard Delete ตัดทิ้งจากฐานข้อมูล ไม่ตกค้าง
                 db.ref(`clinic_users_v2/${userKey}`).remove().then(() => {
                     Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'ลบทิ้งถาวรสำเร็จ', showConfirmButton: false, timer: 1500});
                 });
@@ -1366,7 +1389,7 @@ class SettingsPageComponent {
     }
 
     // ---------------------------------------------------------
-    // 🧪 Medical Master Data
+    // 🧪 Medical Master Data (🚨 THE FIX: เพิ่มยืนยันก่อนลบ ป้องกันลั่น)
     // ---------------------------------------------------------
     renderLabSets() {
         const container = document.getElementById('lab-sets-container');
@@ -1432,7 +1455,19 @@ class SettingsPageComponent {
         });
     }
     
-    deleteLabSet(id) { db.ref('clinic_lab_sets_v2').set(this.state.labSets.filter(s=>s.id!==id)); }
+    deleteLabSet(id) { 
+        const item = this.state.labSets.find(s => s.id === id);
+        if (!item) return;
+        Swal.fire({ 
+            title: 'ยืนยันการลบ?', text: `ต้องการลบชุดผลแล็บ "${item.name}" ใช่หรือไม่?`, icon: 'warning', 
+            showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: '<i class="fa-solid fa-trash me-1"></i> ลบทิ้ง', cancelButtonText: 'ยกเลิก' 
+        }).then((res) => { 
+            if(res.isConfirmed) {
+                db.ref('clinic_lab_sets_v2').set(this.state.labSets.filter(s=>s.id!==id)); 
+                if(window.SecurityShield) window.SecurityShield.showNativeToast('ลบชุดผลแล็บเรียบร้อยแล้ว');
+            }
+        });
+    }
 
     renderMedsList() {
         const container = document.getElementById('meds-list-container');
@@ -1482,7 +1517,19 @@ class SettingsPageComponent {
         });
     }
     
-    deleteMedItem(id) { db.ref('clinic_meds_list_v2').set(this.state.medsList.filter(x=>x.id!==id)); }
+    deleteMedItem(id) { 
+        const item = this.state.medsList.find(s => s.id === id);
+        if (!item) return;
+        Swal.fire({ 
+            title: 'ยืนยันการลบ?', text: `ต้องการลบยา/เวชภัณฑ์ "${item.name}" ใช่หรือไม่?`, icon: 'warning', 
+            showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: '<i class="fa-solid fa-trash me-1"></i> ลบทิ้ง', cancelButtonText: 'ยกเลิก' 
+        }).then((res) => { 
+            if(res.isConfirmed) {
+                db.ref('clinic_meds_list_v2').set(this.state.medsList.filter(x=>x.id!==id)); 
+                if(window.SecurityShield) window.SecurityShield.showNativeToast('ลบรายการยาเรียบร้อยแล้ว');
+            }
+        });
+    }
 
     renderXrayList() {
         const container = document.getElementById('xrays-list-container');
@@ -1532,7 +1579,19 @@ class SettingsPageComponent {
         });
     }
     
-    deleteXrayItem(id) { db.ref('clinic_xray_list_v2').set(this.state.xraysList.filter(x=>x.id!==id)); }
+    deleteXrayItem(id) { 
+        const item = this.state.xraysList.find(s => s.id === id);
+        if (!item) return;
+        Swal.fire({ 
+            title: 'ยืนยันการลบ?', text: `ต้องการลบรายการเอ็กซเรย์ "${item.name}" ใช่หรือไม่?`, icon: 'warning', 
+            showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: '<i class="fa-solid fa-trash me-1"></i> ลบทิ้ง', cancelButtonText: 'ยกเลิก' 
+        }).then((res) => { 
+            if(res.isConfirmed) {
+                db.ref('clinic_xray_list_v2').set(this.state.xraysList.filter(x=>x.id!==id)); 
+                if(window.SecurityShield) window.SecurityShield.showNativeToast('ลบรายการเอ็กซเรย์เรียบร้อยแล้ว');
+            }
+        });
+    }
 
     // ---------------------------------------------------------
     // 📝 Note Templates
@@ -1641,7 +1700,17 @@ class SettingsPageComponent {
     }
     
     deleteNoteTemplate(id) { 
-        db.ref('clinic_note_templates_v2').set(this.state.noteTemplates.filter(x=>x.id!==id)); 
+        const item = this.state.noteTemplates.find(s => s.id === id);
+        if (!item) return;
+        Swal.fire({ 
+            title: 'ยืนยันการลบ?', text: `ต้องการลบเทมเพลต "${item.title}" ใช่หรือไม่?`, icon: 'warning', 
+            showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: '<i class="fa-solid fa-trash me-1"></i> ลบทิ้ง', cancelButtonText: 'ยกเลิก' 
+        }).then((res) => { 
+            if(res.isConfirmed) {
+                db.ref('clinic_note_templates_v2').set(this.state.noteTemplates.filter(x=>x.id!==id)); 
+                if(window.SecurityShield) window.SecurityShield.showNativeToast('ลบเทมเพลตเรียบร้อยแล้ว');
+            }
+        });
     }
 
     // 🛡️ Helper
