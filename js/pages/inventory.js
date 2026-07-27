@@ -1,5 +1,5 @@
 // js/pages/inventory.js
-// 🚀 Enterprise Inventory Module: Atomic Writes, Auto-Suggest Meds Binding & Bulk Print
+// 🚀 Enterprise Inventory Module: Atomic Writes, Auto-Suggest Meds Binding & Bulk Print (v9.7 FULL)
 
 class InventoryPageComponent {
     constructor() {
@@ -59,9 +59,11 @@ class InventoryPageComponent {
                     <p class="text-muted mt-1 mb-0">จัดการรายการพัสดุ รหัสสินค้า บาร์โค้ด และจัดลำดับการแสดงผลเพื่อรองรับระบบ Smart PO</p>
                 </div>
                 <div class="d-flex gap-2 mt-3 mt-md-0 flex-wrap justify-content-md-end">
-                    <button class="btn btn-outline-dark fw-bold shadow-sm rounded-pill px-3 card-hover-float" onclick="App.pages.inventory.printAllBarcodes()" title="พิมพ์บาร์โค้ดของพัสดุทั้งหมดในระบบ" style="color: var(--text-dark); border-color: var(--border-color);">
+                    <!-- 🚨 THE FIX 1: แก้ไขปุ่มพิมพ์บาร์โค้ดทั้งหมดให้เป็นสีทึบ (btn-dark) อ่านง่ายแน่นอน -->
+                    <button class="btn btn-dark text-white fw-bold shadow-sm rounded-pill px-3 card-hover-float" onclick="App.pages.inventory.printAllBarcodes()" title="พิมพ์บาร์โค้ดของพัสดุทั้งหมดในระบบ">
                         <i class="fa-solid fa-print me-1 text-warning safe-icon"></i> พิมพ์บาร์โค้ดทั้งหมด
                     </button>
+                    
                     <button class="btn btn-outline-secondary fw-bold shadow-sm rounded-pill px-3 card-hover-float" onclick="App.pages.inventory.openOptionsModal()" title="จัดการตัวเลือกหมวดหมู่และหน่วยนับ">
                         <i class="fa-solid fa-tags me-1 safe-icon"></i> จัดการหมวดหมู่/หน่วยนับ
                     </button>
@@ -379,7 +381,6 @@ class InventoryPageComponent {
         if(input) input.value = `INV${Math.floor(10000000 + Math.random() * 90000000)}`; 
     }
 
-    // 🚨 THE FIX: เปลี่ยนกลับมาเป็น <datalist> (Auto-Suggest) ทะลุทะลวงง่ายๆ พิมพ์ปุ๊บเด้งปั๊บ!
     openItemModal(itemId = null) {
         let isEdit = !!itemId;
         let item = isEdit ? this.allItems.find(i => i.id === itemId) : {};
@@ -395,7 +396,6 @@ class InventoryPageComponent {
         let catOptions = this.savedCategories.map(c => `<option value="${this.#escapeHTML(c)}"></option>`).join('');
         let unitOptions = this.savedUnits.map(u => `<option value="${this.#escapeHTML(u)}"></option>`).join('');
 
-        // 🌟 สร้าง Datalist Option จากตั้งค่าแพทย์
         let medOptions = '';
         if (this.medItems && this.medItems.length > 0) {
             this.medItems.forEach(m => {
@@ -405,7 +405,7 @@ class InventoryPageComponent {
         }
 
         Swal.fire({
-            title: `<h4 class="text-primary fw-bold mb-0"><i class="fa-solid fa-box-open me-2 safe-icon"></i> ${isEdit ? 'แก้ไขข้อมูลพัสดุ' : 'ลงทะเบียนพัสดุใหม่'}</h4>`,
+            title: `<h4 class="text-primary fw-bold mb-0"><i class="fa-solid ${isEdit?'fa-user-pen':'fa-user-plus'} me-2"></i>${isEdit ? 'แก้ไขข้อมูลพัสดุ' : 'ลงทะเบียนพัสดุใหม่'}</h4>`,
             html: `
                 <div class="text-start px-2 mt-3" style="font-family:'Sarabun';">
                     
@@ -592,6 +592,7 @@ class InventoryPageComponent {
                 .btn-print { background: #4361ee; color: white; } 
                 .btn-print:hover { background: #3730a3; transform: translateY(-2px); } 
                 
+                /* 🚨 THE FIX: กล่องสติ๊กเกอร์ 1 ชิ้น อนุญาตให้ตัดบรรทัดได้แบบสวยงาม */
                 .label-box { 
                     width: 520px; height: 100px; background: #ffffff; 
                     display: flex; align-items: center; justify-content: space-between; 
@@ -599,8 +600,13 @@ class InventoryPageComponent {
                     position: relative; border: 1px dashed #cbd5e1; border-radius: 8px;
                 } 
                 .label-info { flex: 1; text-align: left; overflow: hidden; padding-right: 10px; min-width: 0; } 
-                .item-name { font-size: 20px; font-weight: 700; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; margin-bottom: 4px; } 
-                .item-cat { font-size: 12px; color: #64748b; font-weight: 500; } 
+                
+                .item-name { 
+                    font-size: 16px; font-weight: 700; color: #0f172a; line-height: 1.3; margin-bottom: 4px; 
+                    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal; overflow: hidden; text-overflow: ellipsis;
+                } 
+                
+                .item-cat { font-size: 11px; color: #64748b; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } 
                 .barcode-wrap { display: flex; align-items: center; justify-content: center; height: 100%; flex-shrink: 0; background: #fff; } 
                 svg { max-width: 100%; height: auto; display: block; } 
                 
@@ -735,6 +741,7 @@ class InventoryPageComponent {
                     box-sizing: border-box;
                 }
                 
+                /* 🚨 THE FIX 2: ปรับกล่องพิมพ์ทั้งหมด (Grid Layout) ให้ข้อความขึ้นบรรทัดใหม่ได้แบบไม่เพี้ยน */
                 .label-box { 
                     width: 100%; height: 100px;
                     background: #ffffff; border: 1px dashed #cbd5e1; border-radius: 8px;
@@ -743,12 +750,13 @@ class InventoryPageComponent {
                     page-break-inside: avoid; 
                 } 
                 .label-info { flex: 1; text-align: left; overflow: hidden; padding-right: 10px; min-width: 0; } 
+                
                 .item-name { 
-                    font-size: 20px; font-weight: 700; color: #0f172a; 
-                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;
-                    margin-bottom: 4px;
+                    font-size: 16px; font-weight: 700; color: #0f172a; line-height: 1.3; margin-bottom: 4px;
+                    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal; overflow: hidden; text-overflow: ellipsis;
                 } 
-                .item-cat { font-size: 12px; color: #64748b; font-weight: 500; } 
+                
+                .item-cat { font-size: 11px; color: #64748b; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } 
                 .barcode-wrap { display: flex; align-items: center; justify-content: center; height: 100%; background: #fff; flex-shrink: 0; } 
                 svg { max-width: 100%; height: auto; display: block; } 
                 

@@ -1,5 +1,5 @@
 # local_agent.py
-# 🚀 Enterprise Thai Smartcard Agent: Flawless UI & APDU Fault Tolerance Edition
+# 🚀 Enterprise Thai Smartcard Agent: Native App Mode Edition (v7.6.0)
 
 import uvicorn
 from fastapi import FastAPI, Request
@@ -18,12 +18,21 @@ import ctypes
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any
 
-# กระตุ้นให้ Windows CMD รองรับสี ANSI
-os.system('')
+IS_DAEMON = False
 
-# =========================================================
-# 🎨 UI & STYLING CONSTANTS
-# =========================================================
+if sys.stdout is None or sys.stderr is None:
+    devnull = open(os.devnull, 'w')
+    sys.stdout = devnull
+    sys.stderr = devnull
+    IS_DAEMON = True
+
+if sys.stdin is None:
+    sys.stdin = open(os.devnull, 'r')
+    IS_DAEMON = True
+
+if not IS_DAEMON:
+    os.system('')
+
 class CLIColor:
     MAGENTA = '\033[95m'
     BLUE = '\033[94m'
@@ -38,13 +47,10 @@ class CLIColor:
 logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# =========================================================
-# 🧠 STATE MANAGEMENT (SINGLETON & EVENT QUEUE)
-# =========================================================
 class AgentState:
     def __init__(self):
         self.start_time: float = time.time()
-        self.app_version: str = "6.0.0 (INSTALLER EDITION)"
+        self.app_version: str = "7.6.0 (NATIVE APP EDITION)"
         self.is_shutdown_intentional: bool = False
         self.shutdown_event: threading.Event = threading.Event()
         self.shutdown_event.set()
@@ -52,11 +58,7 @@ class AgentState:
         self.is_restarted: bool = "--restarted" in sys.argv
         self.auto_open_web: bool = True
         
-        self.logs = [
-            "Kernel Boot Successful",
-            "System Mutex Established",
-            "Uvicorn Threads Running"
-        ]
+        self.logs = ["Kernel Boot Successful", "System Mutex Established", "Uvicorn Threads Running"]
         
         try:
             from smartcard.System import readers
@@ -74,47 +76,47 @@ class AgentState:
     def add_log(self, msg: str):
         ts = time.strftime("%H:%M:%S")
         self.logs.append(f"[{ts}] {msg}")
-        if len(self.logs) > 3:
-            self.logs.pop(0)
+        if len(self.logs) > 3: self.logs.pop(0)
 
 STATE = AgentState()
 
-# =========================================================
-# 🛡️ SYSTEM PROTECTOR
-# =========================================================
 class SystemProtector:
     MUTEX_NAME = "Global\\DIALYSIS_PRO_AGENT_MUTEX"
 
     @staticmethod
     def enforce_single_instance():
         mutex = ctypes.windll.kernel32.CreateMutexW(None, False, SystemProtector.MUTEX_NAME)
-        if ctypes.windll.kernel32.GetLastError() == 183: 
-            return None, False 
+        if ctypes.windll.kernel32.GetLastError() == 183: return None, False 
         return mutex, True 
 
     @staticmethod
     def apply_kernel_security():
         if os.name != 'nt': return
-        os.system('title DIALYSIS PRO - ENTERPRISE AGENT')
-        try:
-            handle = ctypes.windll.kernel32.GetStdHandle(-10)
-            mode = ctypes.c_uint32()
-            ctypes.windll.kernel32.GetConsoleMode(handle, ctypes.byref(mode))
-            mode.value &= ~0x0040
-            ctypes.windll.kernel32.SetConsoleMode(handle, mode)
-            
-            hwnd = ctypes.windll.kernel32.GetConsoleWindow()
-            if hwnd:
-                hmenu = ctypes.windll.user32.GetSystemMenu(hwnd, False)
-                if hmenu: ctypes.windll.user32.DeleteMenu(hmenu, 0xF060, 0)
-        except Exception: pass
+        if not IS_DAEMON:
+            os.system('title DIALYSIS PRO - ENTERPRISE AGENT')
+            try:
+                handle = ctypes.windll.kernel32.GetStdHandle(-10)
+                mode = ctypes.c_uint32()
+                ctypes.windll.kernel32.GetConsoleMode(handle, ctypes.byref(mode))
+                mode.value &= ~0x0040
+                ctypes.windll.kernel32.SetConsoleMode(handle, mode)
+                
+                hwnd = ctypes.windll.kernel32.GetConsoleWindow()
+                if hwnd:
+                    hmenu = ctypes.windll.user32.GetSystemMenu(hwnd, False)
+                    if hmenu: ctypes.windll.user32.DeleteMenu(hmenu, 0xF060, 0)
+            except Exception: pass
 
         @ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_uint)
         def ctrl_handler(ctrl_type):
             if ctrl_type == 2 and not STATE.is_shutdown_intentional:
-                print(f"\n\a{CLIColor.RED}╔══════════════════════════════════════════════════════════╗{CLIColor.RESET}")
-                print(f"{CLIColor.RED}║ 🚨 [SECURITY BREACH]: ปฏิเสธการปิด! สร้างร่างโคลน...     ║{CLIColor.RESET}")
-                print(f"{CLIColor.RED}╚══════════════════════════════════════════════════════════╝{CLIColor.RESET}")
+                if not IS_DAEMON:
+                    try:
+                        print(f"\n\a{CLIColor.RED}╔══════════════════════════════════════════════════════════╗{CLIColor.RESET}")
+                        print(f"{CLIColor.RED}║ 🚨 [SECURITY BREACH]: ปฏิเสธการปิด! สร้างร่างโคลน...     ║{CLIColor.RESET}")
+                        print(f"{CLIColor.RED}╚══════════════════════════════════════════════════════════╝{CLIColor.RESET}")
+                    except: pass
+                
                 if getattr(sys, 'frozen', False): subprocess.Popen([sys.executable, "--restarted"])
                 else: subprocess.Popen([sys.executable, sys.argv[0], "--restarted"], creationflags=subprocess.CREATE_NEW_CONSOLE)
                 return False
@@ -123,9 +125,6 @@ class SystemProtector:
         SystemProtector._ctrl_handler = ctrl_handler
         ctypes.windll.kernel32.SetConsoleCtrlHandler(SystemProtector._ctrl_handler, True)
 
-# =========================================================
-# 🪪 SMARTCARD ENGINE (RESILIENT I/O EDITION)
-# =========================================================
 class ThaiSmartCardReader:
     def __init__(self):
         self.SELECT_APPLET = [0x00, 0xA4, 0x04, 0x00, 0x08, 0xA0, 0x00, 0x00, 0x00, 0x54, 0x48, 0x00, 0x01]
@@ -144,12 +143,9 @@ class ThaiSmartCardReader:
         for attempt in range(retries):
             try:
                 res, sw1, sw2 = conn.transmit(cmd)
-                if sw1 == 0x61: 
-                    res, sw1, sw2 = conn.transmit([0x00, 0xC0, 0x00, 0x00, sw2])
-                if sw1 == 0x90 or sw1 == 0x61:
-                    return bytes(res)
-            except Exception as e:
-                time.sleep(delay) 
+                if sw1 == 0x61: res, sw1, sw2 = conn.transmit([0x00, 0xC0, 0x00, 0x00, sw2])
+                if sw1 == 0x90 or sw1 == 0x61: return bytes(res)
+            except Exception: time.sleep(delay) 
         return None
 
     def read_card(self, read_photo: bool = True) -> Dict[str, Any]:
@@ -159,20 +155,21 @@ class ThaiSmartCardReader:
         try:
             rlist = readers()
             if not rlist: return {"error": "❌ ไม่พบเครื่องอ่านบัตร"}
-            
             conn = rlist[0].createConnection()
             conn.connect()
             
             res, sw1, sw2 = conn.transmit(self.SELECT_APPLET)
             if sw1 not in [0x90, 0x61]: return {"error": "❌ บัตรประชาชนไม่ตอบสนอง หรือเสียบผิดด้าน"}
             
-            sys.stdout.write(f"\r{CLIColor.YELLOW} ⚡ [HARDWARE] กำลังถอดรหัส APDU Payload...{CLIColor.RESET}                    ")
-            sys.stdout.flush()
+            if not IS_DAEMON:
+                try:
+                    sys.stdout.write(f"\r{CLIColor.YELLOW} ⚡ [HARDWARE] กำลังถอดรหัส APDU Payload...{CLIColor.RESET}                    ")
+                    sys.stdout.flush()
+                except: pass
 
             def get_data_safe(cmd):
                 raw_bytes = self._transmit_with_retry(conn, cmd)
-                if raw_bytes:
-                    return raw_bytes.decode('tis-620', errors='ignore').strip().replace('\x00', '').replace('#', ' ')
+                if raw_bytes: return raw_bytes.decode('tis-620', errors='ignore').strip().replace('\x00', '').replace('#', ' ')
                 return ""
 
             cid = get_data_safe(self.CMD_CID).replace(' ', '')
@@ -190,25 +187,28 @@ class ThaiSmartCardReader:
 
             photo_b64 = ""
             if read_photo:
-                sys.stdout.write(f"\r{CLIColor.CYAN} 📸 [HARDWARE] กำลังดึงรูปภาพจากชิป (Downloading Photo)...{CLIColor.RESET}       ")
-                sys.stdout.flush()
-                photo_data = bytearray()
+                if not IS_DAEMON:
+                    try:
+                        sys.stdout.write(f"\r{CLIColor.CYAN} 📸 [HARDWARE] กำลังดึงรูปภาพจากชิป (Downloading Photo)...{CLIColor.RESET}       ")
+                        sys.stdout.flush()
+                    except: pass
                 
+                photo_data = bytearray()
                 for i in range(21):
                     offset = 379 + (i * 254)
                     cmd_photo = [0x80, 0xb0, (offset >> 8) & 0xFF, offset & 0xFF, 0x02, 0x00, 0xFE]
                     res_bytes = self._transmit_with_retry(conn, cmd_photo, retries=4, delay=0.1) 
-                    if res_bytes:
-                        photo_data.extend(res_bytes)
-                    else:
-                        break 
+                    if res_bytes: photo_data.extend(res_bytes)
+                    else: break 
                         
-                if photo_data: 
-                    photo_b64 = base64.b64encode(bytes(photo_data)).decode('utf-8')
+                if photo_data: photo_b64 = base64.b64encode(bytes(photo_data)).decode('utf-8')
             
             STATE.add_log(f"Card Sync OK: {cid[:4]}XXXXXXX")
             BootloaderUI.draw_main_dashboard(synced=True)
-            print(f"{CLIColor.GREEN} >_ SUCCESS: อ่านข้อมูลบัตรสมบูรณ์ (CID: {cid[:4]}XXXXXXX){CLIColor.RESET}")
+            
+            if not IS_DAEMON:
+                try: print(f"{CLIColor.GREEN} >_ SUCCESS: อ่านข้อมูลบัตรสมบูรณ์ (CID: {cid[:4]}XXXXXXX){CLIColor.RESET}")
+                except: pass
             
             return {
                 "success": True, "cid": cid, "gender": gender_str,
@@ -227,9 +227,6 @@ class ThaiSmartCardReader:
                 try: conn.disconnect()
                 except Exception: pass
 
-# =========================================================
-# 🪟 WINDOW ORCHESTRATOR
-# =========================================================
 class WindowOrchestrator:
     @staticmethod
     def get_default_browser():
@@ -263,7 +260,8 @@ class WindowOrchestrator:
             file_uri = f"file:///{html_path.replace(os.sep, '/')}"
 
             if is_chromium:
-                flags = [browser_path, f'--app={file_uri}', '--start-maximized', '--new-window', f'--user-data-dir={profile_dir}']
+                # 🚨 THE FIX: บังคับโหมด --app เพื่อล้างแถบ URL/Bookmarks ทิ้งให้หมดจด 100%
+                flags = [browser_path, f'--app={file_uri}', '--start-maximized', f'--user-data-dir={profile_dir}']
                 startup_info = subprocess.STARTUPINFO()
                 startup_info.dwFlags |= subprocess.STARTF_USESHOWWINDOW
                 startup_info.wShowWindow = 3 
@@ -275,9 +273,6 @@ class WindowOrchestrator:
         except Exception as e:
             logger.error(f"UI Launch Error: {e}")
 
-# =========================================================
-# 🌐 FASTAPI SERVER ROUTING
-# =========================================================
 app = FastAPI(title="Dialysis Pro Smartcard Agent")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 thread_pool = ThreadPoolExecutor(max_workers=4)
@@ -315,18 +310,18 @@ async def shutdown_server(request: Request):
     threading.Thread(target=wait_and_kill, daemon=True).start()
     return {"status": "waiting_for_reconnect"}
 
-# =========================================================
-# 🎬 BOOTLOADER UI
-# =========================================================
 class BootloaderUI:
     @staticmethod
     def draw_hacker_sequence():
-        print(f"{CLIColor.GREEN}")
-        for _ in range(12):
-            hex_line = " ".join([f"{random.randint(0, 255):02X}" for _ in range(16)])
-            print(f"  0x{random.randint(0x10000, 0xFFFFF):05X}   {hex_line}   [{''.join([chr(random.randint(33, 126)) for _ in range(8)])}]")
-            time.sleep(0.015)
-        print(f"{CLIColor.RESET}")
+        if IS_DAEMON: return
+        try:
+            print(f"{CLIColor.GREEN}")
+            for _ in range(12):
+                hex_line = " ".join([f"{random.randint(0, 255):02X}" for _ in range(16)])
+                print(f"  0x{random.randint(0x10000, 0xFFFFF):05X}   {hex_line}   [{''.join([chr(random.randint(33, 126)) for _ in range(8)])}]")
+                time.sleep(0.015)
+            print(f"{CLIColor.RESET}")
+        except: pass
 
     @staticmethod
     def format_header(left_title, right_title):
@@ -360,92 +355,84 @@ class BootloaderUI:
 
     @staticmethod
     def draw_main_dashboard(synced=False):
-        os.system('cls' if os.name == 'nt' else 'clear') 
-        
-        hw_val = "[ ONLINE ] READY" if STATE.smartcard_available else "MISSING (PySCard)"
-        hw_col = CLIColor.GREEN if STATE.smartcard_available else CLIColor.RED
-        reader_val = "Generic Smartcard 0" if STATE.smartcard_available else "Driver missing"
-        
-        if synced:
-            net_val, net_col = "[ CONNECTED ] SECURE", CLIColor.GREEN
-            sync_val, sync_col = "[ ACTIVE ] REAL-TIME", CLIColor.GREEN
-            ver_val, ver_col = STATE.app_version[:24], CLIColor.MAGENTA
-        else:
-            net_val, net_col = "WAITING FOR HOST...", CLIColor.YELLOW
-            sync_val, sync_col = "PENDING (Standby)", CLIColor.YELLOW
-            ver_val, ver_col = "WAITING FOR DATA...", CLIColor.YELLOW
+        if IS_DAEMON: return
+        try:
+            os.system('cls' if os.name == 'nt' else 'clear') 
+            
+            hw_val = "[ ONLINE ] READY" if STATE.smartcard_available else "MISSING (PySCard)"
+            hw_col = CLIColor.GREEN if STATE.smartcard_available else CLIColor.RED
+            reader_val = "Generic Smartcard 0" if STATE.smartcard_available else "Driver missing"
+            
+            if synced:
+                net_val, net_col = "[ CONNECTED ] SECURE", CLIColor.GREEN
+                sync_val, sync_col = "[ ACTIVE ] REAL-TIME", CLIColor.GREEN
+                ver_val, ver_col = STATE.app_version[:24], CLIColor.MAGENTA
+            else:
+                net_val, net_col = "WAITING FOR HOST...", CLIColor.YELLOW
+                sync_val, sync_col = "PENDING (Standby)", CLIColor.YELLOW
+                ver_val, ver_col = "WAITING FOR DATA...", CLIColor.YELLOW
 
-        print(f"{CLIColor.CYAN}{CLIColor.BOLD}")
-        print(f"  ██████╗ ██╗ █████╗ ██╗  ██╗   ██╗███████╗██╗███████╗    ██████╗ ██████╗  ██████╗ ")
-        print(f"  ██╔══██╗██║██╔══██╗██║  ╚██╗ ██╔╝██╔════╝██║██╔════╝    ██╔══██╗██╔══██╗██╔═══██╗")
-        print(f"{CLIColor.WHITE}  ██║  ██║██║███████║██║   ╚████╔╝ ███████╗██║███████╗    ██████╔╝██████╔╝██║   ██║{CLIColor.CYAN}")
-        print(f"{CLIColor.WHITE}  ██║  ██║██║██╔══██║██║    ╚██╔╝  ╚════██║██║╚════██║    ██╔═══╝ ██╔══██╗██║   ██║{CLIColor.CYAN}")
-        print(f"  ██████╔╝██║██║  ██║███████╗██║   ███████║██║███████║    ██║     ██║  ██║╚██████╔╝")
-        print(f"  ╚═════╝ ╚═╝╚═╝  ╚═╝╚══════╝╚═╝   ╚══════╝╚═╝╚══════╝    ╚═╝     ╚═╝  ╚═╝ ╚═════╝ {CLIColor.RESET}")
-        print(f"{CLIColor.BOLD}                     [ CLOUD EMR & SMARTCARD GATEWAY v6.0.0 ]{CLIColor.RESET}\n")
+            print(f"{CLIColor.CYAN}{CLIColor.BOLD}")
+            print(f"  ██████╗ ██╗ █████╗ ██╗  ██╗   ██╗███████╗██╗███████╗    ██████╗ ██████╗  ██████╗ ")
+            print(f"  ██╔══██╗██║██╔══██╗██║  ╚██╗ ██╔╝██╔════╝██║██╔════╝    ██╔══██╗██╔══██╗██╔═══██╗")
+            print(f"{CLIColor.WHITE}  ██║  ██║██║███████║██║   ╚████╔╝ ███████╗██║███████╗    ██████╔╝██████╔╝██║   ██║{CLIColor.CYAN}")
+            print(f"{CLIColor.WHITE}  ██║  ██║██║██╔══██║██║    ╚██╔╝  ╚════██║██║╚════██║    ██╔═══╝ ██╔══██╗██║   ██║{CLIColor.CYAN}")
+            print(f"  ██████╔╝██║██║  ██║███████╗██║   ███████║██║███████║    ██║     ██║  ██║╚██████╔╝")
+            print(f"  ╚═════╝ ╚═╝╚═╝  ╚═╝╚══════╝╚═╝   ╚══════╝╚═╝╚══════╝    ╚═╝     ╚═╝  ╚═╝ ╚═════╝ {CLIColor.RESET}")
+            print(f"{CLIColor.BOLD}                     [ CLOUD EMR & SMARTCARD GATEWAY v7.6.0 ]{CLIColor.RESET}\n")
 
-        print(f"{CLIColor.BLUE}╠══════════════════════════════════════════╦═════════════════════════════════════════════╣{CLIColor.RESET}")
-        print(BootloaderUI.format_header("█ SYSTEM TELEMETRY", "█ NETWORK & SECURITY"))
-        print(BootloaderUI.format_divider())
-        print(BootloaderUI.format_row("CPU THREADS", "4 Active Worker(s)", "ENDPOINT", "http://127.0.0.1:8000"))
-        print(BootloaderUI.format_row("OS KERNEL", "Windows NT (Enterprise)", "STATUS", net_val, "", net_col))
-        print(BootloaderUI.format_row("UPTIME", STATE.uptime, "SYNC ROLE", sync_val, CLIColor.CYAN, sync_col))
-        print(BootloaderUI.format_row("VERSION", ver_val, "CORS", "STRICT / ENFORCED", ver_col, ""))
+            print(f"{CLIColor.BLUE}╠══════════════════════════════════════════╦═════════════════════════════════════════════╣{CLIColor.RESET}")
+            print(BootloaderUI.format_header("█ SYSTEM TELEMETRY", "█ NETWORK & SECURITY"))
+            print(BootloaderUI.format_divider())
+            print(BootloaderUI.format_row("CPU THREADS", "4 Active Worker(s)", "ENDPOINT", "http://127.0.0.1:8000"))
+            print(BootloaderUI.format_row("OS KERNEL", "Windows NT (Enterprise)", "STATUS", net_val, "", net_col))
+            print(BootloaderUI.format_row("UPTIME", STATE.uptime, "SYNC ROLE", sync_val, CLIColor.CYAN, sync_col))
+            print(BootloaderUI.format_row("VERSION", ver_val, "CORS", "STRICT / ENFORCED", ver_col, ""))
 
-        print(f"{CLIColor.BLUE}╠══════════════════════════════════════════╬═════════════════════════════════════════════╣{CLIColor.RESET}")
-        print(BootloaderUI.format_header("█ HARDWARE DIAGNOSTICS", "█ EVENT QUEUE & LOGS"))
-        print(BootloaderUI.format_divider())
+            print(f"{CLIColor.BLUE}╠══════════════════════════════════════════╬═════════════════════════════════════════════╣{CLIColor.RESET}")
+            print(BootloaderUI.format_header("█ HARDWARE DIAGNOSTICS", "█ EVENT QUEUE & LOGS"))
+            print(BootloaderUI.format_divider())
 
-        log1 = STATE.logs[0] if len(STATE.logs) > 0 else ""
-        log2 = STATE.logs[1] if len(STATE.logs) > 1 else ""
-        log3 = STATE.logs[2] if len(STATE.logs) > 2 else ""
+            log1 = STATE.logs[0] if len(STATE.logs) > 0 else ""
+            log2 = STATE.logs[1] if len(STATE.logs) > 1 else ""
+            log3 = STATE.logs[2] if len(STATE.logs) > 2 else ""
 
-        print(BootloaderUI.format_log_row("MODULE", "PySCard Smartcard API", log1, CLIColor.CYAN))
-        print(BootloaderUI.format_log_row("STATUS", hw_val, log2, hw_col))
-        print(BootloaderUI.format_log_row("READER", reader_val, log3, CLIColor.CYAN))
-        print(f"{CLIColor.BLUE}╚══════════════════════════════════════════╩═════════════════════════════════════════════╝{CLIColor.RESET}")
+            print(BootloaderUI.format_log_row("MODULE", "PySCard Smartcard API", log1, CLIColor.CYAN))
+            print(BootloaderUI.format_log_row("STATUS", hw_val, log2, hw_col))
+            print(BootloaderUI.format_log_row("READER", reader_val, log3, CLIColor.CYAN))
+            print(f"{CLIColor.BLUE}╚══════════════════════════════════════════╩═════════════════════════════════════════════╝{CLIColor.RESET}")
 
-        print(f"\n{CLIColor.YELLOW}  ⚠️  DO NOT CLOSE THIS WINDOW (Minimize to Taskbar or Close via Web){CLIColor.RESET}")
-        print(f"{CLIColor.CYAN}{CLIColor.BOLD}\n >_ LIVE TERMINAL FEED:{CLIColor.RESET}\n")
+            print(f"\n{CLIColor.YELLOW}  ⚠️  DO NOT CLOSE THIS WINDOW (Minimize to Taskbar or Close via Web){CLIColor.RESET}")
+            print(f"{CLIColor.CYAN}{CLIColor.BOLD}\n >_ LIVE TERMINAL FEED:{CLIColor.RESET}\n")
+        except: pass
 
     @staticmethod
     def run():
-        if not STATE.is_restarted:
-            os.system('cls' if os.name == 'nt' else 'clear') 
-            BootloaderUI.draw_hacker_sequence()
-            time.sleep(0.2)
-            os.system('cls' if os.name == 'nt' else 'clear') 
-            
-            print(f"{CLIColor.CYAN}{CLIColor.BOLD}\n  [ DIALYSIS PRO KERNEL BOOTSTRAP ]\n{CLIColor.RESET}")
-            for name, dll in [("Initializing Memory", "kernel32"), ("Mounting Cryptography", "bcrypt"), ("Loading Interface", "winscard"), ("Starting Server", "uvicorn")]:
-                sys.stdout.write(f"\r  {CLIColor.WHITE}>> {name:<25} {CLIColor.GREEN}[ OK ] {dll}{CLIColor.RESET}   \n")
-                time.sleep(0.1)
-            time.sleep(0.3)
+        if IS_DAEMON: return
+        try:
+            if not STATE.is_restarted:
+                os.system('cls' if os.name == 'nt' else 'clear') 
+                BootloaderUI.draw_hacker_sequence()
+                time.sleep(0.2)
+                os.system('cls' if os.name == 'nt' else 'clear') 
+                
+                print(f"{CLIColor.CYAN}{CLIColor.BOLD}\n  [ DIALYSIS PRO KERNEL BOOTSTRAP ]\n{CLIColor.RESET}")
+                for name, dll in [("Initializing Memory", "kernel32"), ("Mounting Cryptography", "bcrypt"), ("Loading Interface", "winscard"), ("Starting Server", "uvicorn")]:
+                    sys.stdout.write(f"\r  {CLIColor.WHITE}>> {name:<25} {CLIColor.GREEN}[ OK ] {dll}{CLIColor.RESET}   \n")
+                    time.sleep(0.1)
+                time.sleep(0.3)
+        except: pass
 
         SystemProtector.apply_kernel_security()
         BootloaderUI.draw_main_dashboard(synced=False)
 
-# =========================================================
-# 🚀 1. THE FIX: ฟังก์ชันดึง Path ครอบจักรวาล (PyInstaller Compatible)
-# =========================================================
 def get_resource_path(relative_path):
-    """ ค้นหาไฟล์ Asset ไม่ว่าจะรันแบบ .py ปกติ หรือแพ็คเป็น .exe ผ่าน PyInstaller """
-    try:
-        # PyInstaller จะสร้างโฟลเดอร์ Temp (MEIPASS) และเก็บไฟล์ไว้ในนั้น
-        base_path = sys._MEIPASS
-    except Exception:
-        # ถ้ารันแบบปกติ (Dev Mode) ให้ใช้ Path ปัจจุบัน
-        base_path = os.path.dirname(os.path.abspath(__file__))
+    try: base_path = sys._MEIPASS
+    except Exception: base_path = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(base_path, relative_path)
 
-
-# =========================================================
-# 🚀 THE ENTRY POINT
-# =========================================================
 if __name__ == "__main__":
     global_mutex, is_primary = SystemProtector.enforce_single_instance()
-    
-    # 🚨 THE FIX: ใช้ get_resource_path เพื่อรับประกันว่าเจอ index.html แน่นอน 100%
     html_file = get_resource_path("index.html")
 
     if not is_primary:
@@ -456,11 +443,14 @@ if __name__ == "__main__":
     try:
         BootloaderUI.run()
         WindowOrchestrator.launch_ui(html_file)
-        
         time.sleep(0.1)
         uvicorn.run(app, host="127.0.0.1", port=8000, log_level="critical", access_log=False)
         
     except Exception as fatal_error:
-        print(f"\n{CLIColor.RED}💥 FATAL ERROR: {str(fatal_error)}{CLIColor.RESET}")
+        if not IS_DAEMON:
+            try: print(f"\n{CLIColor.RED}💥 FATAL ERROR: {str(fatal_error)}{CLIColor.RESET}")
+            except: pass
         if global_mutex: ctypes.windll.kernel32.ReleaseMutex(global_mutex)
-        input(f"{CLIColor.YELLOW}Press ENTER to exit...{CLIColor.RESET}")
+        if not IS_DAEMON:
+            try: input(f"{CLIColor.YELLOW}Press ENTER to exit...{CLIColor.RESET}")
+            except: pass

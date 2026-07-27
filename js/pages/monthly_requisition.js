@@ -1,5 +1,5 @@
 // js/pages/monthly_requisition.js
-// 👑 Enterprise Monthly Requisition: Scroll-Fix PDF Engine, Smart Typeahead & Session OS
+// 👑 Enterprise Monthly Requisition: Self-Healing State, Smart Typeahead & Master Order Sync (v9.9 FULL - A4 Pagination Engine)
 
 class MonthlyRequisitionPageComponent {
     constructor() {
@@ -41,33 +41,37 @@ class MonthlyRequisitionPageComponent {
                 .history-item-badge { font-size: 12px; padding: 4px 12px; background: #dcfce7; color: #059669; border-radius: 6px; display: inline-block; font-weight: 700; margin-bottom: 8px; font-family: 'Sarabun'; border: 1px solid #bbf7d0; }
                 html[data-bs-theme="dark"] .history-item-badge { background: rgba(5,150,105,0.15); border-color: rgba(5,150,105,0.3); color: #34d399; }
 
+                .sig-table, .sig-table tr, .sig-table td, .sig-table th { border: 0 !important; border-color: transparent !important; box-shadow: none !important; outline: none !important; background: transparent !important; }
+
                 @media print { 
                     @page { size: A4 portrait; margin: 12mm 10mm; } 
-                    body * { visibility: hidden; } 
                     body { background: #fff !important; color: #000 !important; } 
-                    .main-content, .content-wrapper, #app-content { margin: 0 !important; padding: 0 !important; width: 100% !important; max-width: 100% !important; overflow: visible !important; } 
-                    #print-area, #print-area * { visibility: visible; } 
-                    #print-area { position: absolute; left: 0; top: 0; width: 100%; font-family: Calibri, Tahoma, 'Sarabun', sans-serif; } 
                     .req-header-ui, .floating-action-bar, .topbar, #sidebar, .d-print-none { display: none !important; } 
+                    .main-content, .content-wrapper, #app-content { margin: 0 !important; padding: 0 !important; width: 100% !important; max-width: 100% !important; overflow: visible !important; } 
+                    
                     .print-only-header { display: block; margin-bottom: 12px; } 
                     .print-title-1 { font-family: Calibri, Tahoma, 'Sarabun', sans-serif; font-size: 16pt; font-weight: bold !important; text-align: center; margin-bottom: 6px; color: #000 !important; } 
                     .print-title-2 { font-family: Calibri, Tahoma, 'Sarabun', sans-serif; font-size: 14pt; font-weight: bold !important; text-align: left; margin-bottom: 15px; color: #000 !important; } 
-                    html[data-bs-theme="dark"] body #print-area #print-month-display, html body #print-area #print-month-display, #print-area #print-month-display, #print-month-display { color: #000000 !important; -webkit-text-fill-color: #000000 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; font-weight: 900 !important; opacity: 1 !important; text-shadow: none !important; }
+                    #print-month-display { color: #000000 !important; -webkit-text-fill-color: #000000 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; font-weight: 900 !important; opacity: 1 !important; text-shadow: none !important; }
+                    
                     .req-table-wrapper { box-shadow: none !important; border: none !important; border-radius: 0 !important; margin: 0 !important; padding: 0 !important; background: transparent !important; overflow: visible !important; } 
                     .req-table-ui { border: 1px solid #000 !important; font-size: 12pt !important; color: #000 !important; border-collapse: collapse !important; width: 100% !important; font-family: Calibri, Tahoma, 'Sarabun', sans-serif; } 
                     .req-table-ui thead { display: table-header-group; } 
+                    .req-table-ui tbody { display: table-row-group; }
                     .req-table-ui tr { page-break-inside: avoid; height: 28px; } 
-                    html[data-bs-theme="dark"] body #print-area .req-table-ui th, html body #print-area .req-table-ui th, #print-area .req-table-ui th { background: #fdba74 !important; background-color: #fdba74 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color: #000 !important; font-weight: bold !important; border: 1px solid #000 !important; padding: 6px !important; text-align: center !important; vertical-align: middle !important; font-size: 12pt !important; } 
-                    html[data-bs-theme="dark"] body #print-area .req-table-ui td, html body #print-area .req-table-ui td, #print-area .req-table-ui td { background: transparent !important; background-color: transparent !important; border: 1px solid #000 !important; padding: 4px 6px !important; color: #000 !important; font-weight: 600 !important; vertical-align: middle !important; } 
-                    html[data-bs-theme="dark"] body #print-area .print-val-display, html body #print-area .print-val-display, #print-area .print-val-display { display: block !important; width: 100%; height: 100%; min-height: 18px; text-align: center; font-family: Calibri, Tahoma, 'Sarabun', sans-serif; font-size: 12pt !important; font-weight: bold !important; color: #000 !important; border: none !important; outline: none !important; box-shadow: none !important; background: transparent !important; } 
-                    html[data-bs-theme="dark"] body #print-area .sig-table td, html[data-bs-theme="dark"] body #print-area .sig-table tr, html body #print-area .sig-table td, #print-area .sig-table td, #print-area .sig-table th, #print-area .sig-table tr { border: none !important; font-size: 12pt !important; font-weight: 600 !important; color: #000 !important; background: transparent !important; padding: 5px !important; } 
+                    .req-table-ui th { background: #fdba74 !important; background-color: #fdba74 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color: #000 !important; font-weight: bold !important; border: 1px solid #000 !important; padding: 6px !important; text-align: center !important; vertical-align: middle !important; font-size: 12pt !important; } 
+                    .req-table-ui td { background: transparent !important; background-color: transparent !important; border: 1px solid #000 !important; padding: 4px 6px !important; color: #000 !important; font-weight: 600 !important; vertical-align: middle !important; } 
+                    .print-val-display { display: block !important; width: 100%; height: 100%; min-height: 18px; text-align: center; font-family: Calibri, Tahoma, 'Sarabun', sans-serif; font-size: 12pt !important; font-weight: bold !important; color: #000 !important; border: none !important; outline: none !important; box-shadow: none !important; background: transparent !important; } 
+                    
+                    .sig-table td, .sig-table tr, .sig-table th { border: 0 !important; border-color: transparent !important; font-size: 12pt !important; font-weight: 600 !important; color: #000 !important; background: transparent !important; padding: 5px !important; } 
+                    
                     .print-val-left { text-align: left !important; padding-left: 4px !important; } 
                     .print-val-center { text-align: center !important; } 
-                    .col-no { width: 5%; text-align: center; } .col-code { width: 12%; text-align: center; } .col-name { width: 40%; } .col-unit { width: 10%; text-align: center; } .col-qty { width: 13%; text-align: center; font-weight: bold !important; } .col-remark { width: 20%; } 
-                    .print-signature-section { width: 100%; margin-top: 60px; page-break-inside: avoid; font-family: Calibri, Tahoma, 'Sarabun', sans-serif; } 
-                    .sig-table { width: 100%; border: none !important; border-collapse: collapse; } 
+                    .col-no { width: 8%; text-align: center; } .col-code { width: 15%; text-align: center; } .col-name { width: 35%; } .col-unit { width: 10%; text-align: center; } .col-qty { width: 12%; text-align: center; font-weight: bold !important; } .col-remark { width: 20%; } 
+                    .print-signature-section { width: 100%; margin-top: 60px; page-break-inside: avoid; font-family: Calibri, Tahoma, 'Sarabun', sans-serif; border: 0 !important; } 
+                    .sig-table { width: 100%; border: 0 !important; border-collapse: collapse; } 
                     .excel-checkbox { display: inline-block; width: 16px; height: 16px; border: 1px solid #000; vertical-align: middle; margin-right: 8px; position: relative; top: -2px; } 
-                    .sig-line { margin-bottom: 8px; white-space: nowrap; border: none !important; } 
+                    .sig-line { margin-bottom: 8px; white-space: nowrap; border: 0 !important; } 
                     .text-center { text-align: center !important; } 
                 } 
                 @media screen { .print-val-display, .print-only-header, .print-signature-section { display: none !important; } } 
@@ -105,10 +109,10 @@ class MonthlyRequisitionPageComponent {
                     <table class="req-table-ui" id="export-table">
                         <thead>
                             <tr>
-                                <th class="col-no">ลำดับ</th>
+                                <th class="col-no">ลำดับคลัง</th>
                                 <th class="col-code">รหัสสินค้า</th>
-                                <th class="col-name">Consumable</th>
-                                <th class="col-unit">หน่วย</th>
+                                <th class="col-name">รายการพัสดุ (Consumable)</th>
+                                <th class="col-unit">หน่วยนับ</th>
                                 <th class="col-qty">จำนวนเบิก</th>
                                 <th class="col-remark">หมายเหตุ</th>
                                 <th class="d-print-none text-center" style="width: 50px;"><i class="fa-solid fa-gear"></i></th>
@@ -125,14 +129,14 @@ class MonthlyRequisitionPageComponent {
                 </div>
 
                 <div class="print-signature-section">
-                    <table class="sig-table" style="border: none !important; width: 100%;">
-                        <tr style="border: none !important;">
-                            <td style="width: 50%; vertical-align: top; text-align: center; border: none !important;">
+                    <table class="sig-table" style="border: 0 !important; width: 100%;">
+                        <tr style="border: 0 !important;">
+                            <td style="width: 50%; vertical-align: top; text-align: center; border: 0 !important;">
                                 <div class="sig-line" style="margin-top: 20px;">ลงชื่อผู้เบิก.......................................................</div>
                                 <div class="sig-line" style="margin-top: 8px;">(.......................................................)</div>
                                 <div class="sig-line" style="margin-top: 8px;">วันที่........../........../..........</div>
                             </td>
-                            <td style="width: 50%; vertical-align: top; text-align: left; padding-left: 60px; border: none !important;">
+                            <td style="width: 50%; text-align: left; padding-left: 60px; vertical-align: top; border: 0 !important;">
                                 <div style="margin-bottom: 12px;"><span class="excel-checkbox"></span> อนุมัติ</div>
                                 <div style="margin-bottom: 25px;"><span class="excel-checkbox"></span> ไม่อนุมัติ</div>
                                 <div class="sig-line">ลงชื่อผู้อนุมัติ...................................................</div>
@@ -189,6 +193,10 @@ class MonthlyRequisitionPageComponent {
             const cbItems = db.ref('inventory_database_v2/items').on('value', snap => {
                 const data = snap.val();
                 this.allItems = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })).filter(i => !i.isArchived) : [];
+                
+                if(this.syncedItems.length > 0) {
+                    this.renderTable();
+                }
             });
             this.firebaseListeners.push({ path: 'inventory_database_v2/items', callback: cbItems });
 
@@ -228,9 +236,7 @@ class MonthlyRequisitionPageComponent {
         }
     }
 
-    // =========================================================================
-    // 🚀 THE FIX: SCROLL-FIXED jsPDF + html2canvas ENGINE (แก้ปัญหาจอดำ/จอขาว)
-    // =========================================================================
+    // 🚨 THE FIX: อัปเกรด Smart A4 Pagination (โชว์หัวเอกสารเฉพาะหน้า 1 เท่านั้น!)
     async downloadPDF() {
         if(this.syncedItems.length === 0) { 
             Swal.fire('ตารางว่างเปล่า', 'กรุณาเพิ่มรายการพัสดุก่อนโหลด PDF ครับ', 'warning'); 
@@ -238,13 +244,14 @@ class MonthlyRequisitionPageComponent {
         }
 
         Swal.fire({ 
-            title: 'กำลังสร้างไฟล์ PDF...', 
-            html: 'ระบบกำลังเรนเดอร์กราฟิกและจัดหน้ากระดาษ<br>กรุณารอสักครู่...', 
+            title: 'กำลังคำนวณหน้ากระดาษ...', 
+            html: 'ระบบกำลังจัดเรียงข้อมูลลงหน้า A4 อย่างแม่นยำ<br>กรุณารอสักครู่...', 
             allowOutsideClick: false, 
             didOpen: () => Swal.showLoading(),
             customClass: { popup: 'premium-alert' }
         });
 
+        // 1. นำเข้า Library ที่จำเป็น
         if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
             await Promise.all([
                 new Promise(r => { let s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'; s.onload=r; document.head.appendChild(s); }),
@@ -254,62 +261,93 @@ class MonthlyRequisitionPageComponent {
 
         try {
             const monthStr = this.getThaiMonth();
-            let tableRowsHtml = '';
-            const rows = document.querySelectorAll('#req-table-body tr');
-            
-            rows.forEach((tr) => {
-                if(tr.id === 'empty-state-row') return;
-                let orderText = tr.querySelector('.order-val-cell').innerText.trim();
-                let code = tr.querySelector('.code-inp').value || "";
-                let name = tr.querySelector('.name-inp').value || "";
-                let unit = tr.querySelector('.unit-inp').value || "";
-                let qty = tr.querySelector('.qty-inp').value || "";
-                let remark = tr.querySelector('.remark-inp').value || "";
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('portrait', 'mm', 'a4');
 
-                tableRowsHtml += `
-                <tr style="height: 35px; background-color:#ffffff !important;">
-                    <td style="border: 1px solid #000 !important; padding: 6px; text-align: center; color: #000 !important; font-size: 14px;">${this.#escapeHTML(orderText)}</td>
-                    <td style="border: 1px solid #000 !important; padding: 6px; text-align: center; color: #000 !important; font-size: 14px;">${this.#escapeHTML(code)}</td>
-                    <td style="border: 1px solid #000 !important; padding: 6px; text-align: left; color: #000 !important; font-size: 14px; padding-left: 10px;">${this.#escapeHTML(name)}</td>
-                    <td style="border: 1px solid #000 !important; padding: 6px; text-align: center; color: #000 !important; font-size: 14px;">${this.#escapeHTML(unit)}</td>
-                    <td style="border: 1px solid #000 !important; padding: 6px; text-align: center; color: #000 !important; font-weight: bold; font-size: 15px;">${this.#escapeHTML(qty)}</td>
-                    <td style="border: 1px solid #000 !important; padding: 6px; text-align: left; color: #000 !important; font-size: 14px; padding-left: 10px;">${this.#escapeHTML(remark)}</td>
-                </tr>`;
+            // 2. ดึงข้อมูลแถวทั้งหมดจาก DOM
+            const rowsList = [];
+            document.querySelectorAll('#req-table-body tr').forEach(tr => {
+                if (tr.id === 'empty-state-row') return;
+                rowsList.push(tr);
             });
 
-            const htmlContent = `
-                <div style="padding: 40px; font-family: 'Sarabun', sans-serif; background: #ffffff !important; width: 100%; box-sizing: border-box; min-height: 1122px;">
-                    <div style="text-align: center; font-size: 20px; font-weight: bold; color: #000 !important; margin-bottom: 10px;">
+            // 3. กำหนดค่า Configuration สำหรับกระดาษ A4
+            const ROWS_PER_PAGE = 25; // จำนวนแถวต่อ 1 หน้าปกติ
+            const ROWS_PER_LAST_PAGE = 16; // จำนวนแถวหน้าสุดท้าย (เผื่อที่ให้ลายเซ็นด้านล่าง)
+            
+            let chunks = [];
+            let currentIndex = 0;
+
+            // 4. Algorithm ตัดแบ่งข้อมูล (Chunking) เป็นหน้าๆ แบบชาญฉลาด
+            while (currentIndex < rowsList.length) {
+                let remainingRows = rowsList.length - currentIndex;
+                let takeCount = ROWS_PER_PAGE;
+
+                if (remainingRows <= ROWS_PER_LAST_PAGE) {
+                    takeCount = remainingRows; // ถ้าเหลือบรรทัดน้อย ยัดลงหน้าสุดท้ายพร้อมลายเซ็นได้เลย
+                } else if (remainingRows <= ROWS_PER_PAGE) {
+                    takeCount = ROWS_PER_PAGE - 10; 
+                }
+
+                chunks.push(rowsList.slice(currentIndex, currentIndex + takeCount));
+                currentIndex += takeCount;
+            }
+
+            // 5. สร้าง Container ล่องหนที่เหมือนกระดาษ A4 เป๊ะๆ
+            const container = document.createElement('div');
+            container.style.position = 'absolute';
+            container.style.top = '-9999px';
+            container.style.left = '0';
+            container.style.width = '210mm'; // ฟิกความกว้าง A4
+            container.style.backgroundColor = '#ffffff';
+            document.body.appendChild(container);
+
+            // 6. วนลูปวาด HTML และถ่ายรูป (Canvas) ทีละหน้ากระดาษ
+            for (let i = 0; i < chunks.length; i++) {
+                const chunk = chunks[i];
+                const isFirstPage = (i === 0); // 🚨 เช็คว่าเป็นหน้าแรกหรือไม่
+                const isLastPage = (i === chunks.length - 1); // 🚨 เช็คว่าเป็นหน้าสุดท้ายหรือไม่
+
+                let tableRowsHtml = '';
+                chunk.forEach(tr => {
+                    let orderText = tr.querySelector('.order-val-cell').innerText.trim();
+                    let code = tr.querySelector('.code-inp').value || "";
+                    let name = tr.querySelector('.name-inp').value || "";
+                    let unit = tr.querySelector('.unit-inp').value || "";
+                    let qty = tr.querySelector('.qty-inp').value || "";
+                    let remark = tr.querySelector('.remark-inp').value || "";
+
+                    tableRowsHtml += `
+                    <tr style="height: 35px; background-color: #ffffff;">
+                        <td style="border: 1px solid #000; padding: 6px; text-align: center; color: #000; font-size: 14px;">${this.#escapeHTML(orderText)}</td>
+                        <td style="border: 1px solid #000; padding: 6px; text-align: center; color: #000; font-size: 14px;">${this.#escapeHTML(code)}</td>
+                        <td style="border: 1px solid #000; padding: 6px; text-align: left; color: #000; font-size: 14px; padding-left: 10px;">${this.#escapeHTML(name)}</td>
+                        <td style="border: 1px solid #000; padding: 6px; text-align: center; color: #000; font-size: 14px;">${this.#escapeHTML(unit)}</td>
+                        <td style="border: 1px solid #000; padding: 6px; text-align: center; color: #000; font-weight: bold; font-size: 15px;">${this.#escapeHTML(qty)}</td>
+                        <td style="border: 1px solid #000; padding: 6px; text-align: left; color: #000; font-size: 14px; padding-left: 10px;">${this.#escapeHTML(remark)}</td>
+                    </tr>`;
+                });
+
+                // 🚨 สร้างส่วนหัวเอกสารเฉพาะหน้า 1 เท่านั้น ถ้าเป็นหน้าอื่นให้เว้นขอบบนเล็กน้อย
+                const documentHeaderHtml = isFirstPage ? `
+                    <div style="text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 10px;">
                         ใบขอเบิกสินค้าหน่วยไตเทียม : หน่วยไตเทียม โรงพยาบาลแพร่คริสเตียน
                     </div>
-                    <div style="text-align: left; font-size: 16px; font-weight: bold; color: #000 !important; margin-bottom: 20px;">
+                    <div style="text-align: left; font-size: 16px; font-weight: bold; margin-bottom: 20px;">
                         ประจำเดือน ${monthStr}
                     </div>
-                    
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px; background-color:#ffffff !important;">
-                        <thead>
-                            <tr style="background-color: #fdba74 !important;">
-                                <th style="border: 1px solid #000 !important; padding: 10px; text-align: center; color: #000 !important; font-size: 14px; font-weight: bold; width: 6%;">ลำดับ</th>
-                                <th style="border: 1px solid #000 !important; padding: 10px; text-align: center; color: #000 !important; font-size: 14px; font-weight: bold; width: 15%;">รหัสสินค้า</th>
-                                <th style="border: 1px solid #000 !important; padding: 10px; text-align: center; color: #000 !important; font-size: 14px; font-weight: bold; width: 39%;">Consumable</th>
-                                <th style="border: 1px solid #000 !important; padding: 10px; text-align: center; color: #000 !important; font-size: 14px; font-weight: bold; width: 10%;">หน่วย</th>
-                                <th style="border: 1px solid #000 !important; padding: 10px; text-align: center; color: #000 !important; font-size: 14px; font-weight: bold; width: 12%;">จำนวนเบิก</th>
-                                <th style="border: 1px solid #000 !important; padding: 10px; text-align: center; color: #000 !important; font-size: 14px; font-weight: bold; width: 18%;">หมายเหตุ</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${tableRowsHtml}
-                        </tbody>
-                    </table>
+                ` : `<div style="height: 20px;"></div>`;
 
-                    <table style="width: 100%; border: none; margin-top: 30px; page-break-inside: avoid; background-color:#ffffff !important;">
-                        <tr>
-                            <td style="width: 50%; text-align: center; vertical-align: top; border: none; color: #000 !important; font-size: 14px; font-weight: 600;">
+                // สร้างส่วนลายเซ็นเฉพาะหน้าสุดท้าย
+                const signatureHtml = isLastPage ? `
+                    <table style="width: 100%; border: 0 !important; margin-top: 40px; border-collapse: collapse; font-family: 'Sarabun', sans-serif;">
+                        <tr style="border: 0 !important; background-color: transparent;">
+                            <td style="width: 50%; text-align: center; vertical-align: top; border: 0 !important; color: #000; font-size: 14px; font-weight: 600;">
                                 <div style="margin-bottom: 15px;">ลงชื่อผู้เบิก.......................................................</div>
                                 <div style="margin-bottom: 15px;">(.......................................................)</div>
                                 <div style="margin-bottom: 15px;">วันที่........../........../..........</div>
                             </td>
-                            <td style="width: 50%; text-align: left; padding-left: 40px; vertical-align: top; border: none; color: #000 !important; font-size: 14px; font-weight: 600;">
+                            <td style="width: 50%; text-align: left; padding-left: 40px; vertical-align: top; border: 0 !important; color: #000; font-size: 14px; font-weight: 600;">
                                 <div style="margin-bottom: 15px;">
                                     <span style="display: inline-block; width: 14px; height: 14px; border: 1px solid #000; margin-right: 10px; vertical-align: middle;"></span> อนุมัติ
                                 </div>
@@ -322,64 +360,49 @@ class MonthlyRequisitionPageComponent {
                             </td>
                         </tr>
                     </table>
-                </div>
-            `;
+                ` : '';
 
-            // 🚨 THE FIX: ปรับจุดกางเอกสารให้ยิงออกนอกจอทางด้านซ้าย แต่ดึงค่า Z-Index เป็นบวก เพื่อไม่ให้โดนตัดขอบ (Culling)
-            const container = document.createElement('div');
-            container.style.position = 'absolute';
-            container.style.top = '0px';
-            container.style.left = '-9999px'; 
-            container.style.width = '800px'; 
-            container.style.backgroundColor = '#ffffff';
-            container.innerHTML = htmlContent;
-            document.body.appendChild(container);
+                // ประกอบร่างหน้า A4
+                const pageHtml = `
+                    <div class="pdf-page-chunk" style="width: 210mm; height: 297mm; padding: 15mm 10mm; box-sizing: border-box; background: #fff; position: relative; font-family: 'Sarabun', sans-serif; color: #000;">
+                        ${documentHeaderHtml}
+                        
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                            <thead>
+                                <tr style="background-color: #fdba74;">
+                                    <th style="border: 1px solid #000; padding: 10px; text-align: center; font-size: 14px; font-weight: bold; width: 8%;">ลำดับ</th>
+                                    <th style="border: 1px solid #000; padding: 10px; text-align: center; font-size: 14px; font-weight: bold; width: 15%;">รหัสสินค้า</th>
+                                    <th style="border: 1px solid #000; padding: 10px; text-align: center; font-size: 14px; font-weight: bold; width: 37%;">Consumable</th>
+                                    <th style="border: 1px solid #000; padding: 10px; text-align: center; font-size: 14px; font-weight: bold; width: 10%;">หน่วย</th>
+                                    <th style="border: 1px solid #000; padding: 10px; text-align: center; font-size: 14px; font-weight: bold; width: 12%;">จำนวนเบิก</th>
+                                    <th style="border: 1px solid #000; padding: 10px; text-align: center; font-size: 14px; font-weight: bold; width: 18%;">หมายเหตุ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRowsHtml}
+                            </tbody>
+                        </table>
 
-            await document.fonts.ready;
-            await new Promise(r => setTimeout(r, 800)); 
+                        ${signatureHtml}
+                        
+                        <div style="position: absolute; bottom: 15mm; right: 15mm; font-size: 12px; color: #666; font-family: 'Prompt', sans-serif;">
+                            หน้า ${i+1}/${chunks.length}
+                        </div>
+                    </div>
+                `;
 
-            // 🚨 THE FIX 2: ดักจับและแช่แข็งค่า ScrollY ของเบราว์เซอร์ เพื่อบังคับให้กล้องถ่ายจากบรรทัดบนสุดเสมอ
-            const originalScrollY = window.scrollY;
-            window.scrollTo(0, 0);
+                container.innerHTML = pageHtml;
 
-            // วาด Canvas
-            const canvas = await html2canvas(container, {
-                scale: 2, 
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                scrollY: 0, // บังคับโฟกัสจุดกำเนิดแกน Y
-                scrollX: 0  // บังคับโฟกัสจุดกำเนิดแกน X
-            });
+                // รอ Font โหลดให้เสร็จก่อนวาด
+                await document.fonts.ready;
+                const canvas = await html2canvas(container.querySelector('.pdf-page-chunk'), { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+                const imgData = canvas.toDataURL('image/jpeg', 1.0);
 
-            // คืนค่า Scroll กลับให้ผู้ใช้โดยที่ผู้ใช้แทบไม่รู้สึก (เพราะมี Swal Loading บังอยู่)
-            window.scrollTo(0, originalScrollY);
-
-            // ปั้นไฟล์ PDF
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF('portrait', 'mm', 'a4');
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
-            
-            const imgData = canvas.toDataURL('image/jpeg', 1.0);
-            const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-            
-            // 🚨 ระบบ Pagination (ตัดหน้าอัตโนมัติ)
-            let heightLeft = imgHeight;
-            let position = 0;
-
-            pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-            heightLeft -= pdfHeight;
-
-            while (heightLeft > 0) {
-                position = heightLeft - imgHeight; // ชดเชยพิกัดแกน Y ตามความสูงแผ่นที่ถูกตัดไป
-                pdf.addPage();
-                pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-                heightLeft -= pdfHeight;
+                if (i > 0) pdf.addPage();
+                pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297); // ใส่ลง A4 พอดีเป๊ะ
             }
 
             container.remove();
-            
-            // โหลด PDF ทันที
             pdf.save(`ใบเบิกพัสดุ_${document.getElementById('req-month-picker').value}.pdf`);
             Swal.fire({title:'ดาวน์โหลดสำเร็จ!', icon:'success', timer:1500, showConfirmButton: false});
 
@@ -389,9 +412,102 @@ class MonthlyRequisitionPageComponent {
         }
     }
 
-    // ---------------------------------------------------------
-    // 🔍 Smart Typeahead & Keyboard Navigation
-    // ---------------------------------------------------------
+    printExcelForm() {
+        if(this.syncedItems.length === 0) { 
+            Swal.fire('ตารางว่างเปล่า', 'กรุณาบันทึกหรือดึงข้อมูลก่อนพิมพ์ครับ', 'warning'); 
+            return; 
+        }
+
+        Swal.fire({
+            title: 'กำลังเตรียมเอกสารพิมพ์...',
+            text: 'ระบบกำลังจัดหน้ากระดาษ (Pagination)',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading(),
+            customClass: { popup: 'premium-alert' }
+        });
+
+        document.getElementById('print-month-display').innerText = this.getThaiMonth();
+        
+        const allInputs = document.querySelectorAll('#print-area .print-sync-input');
+        allInputs.forEach(input => { 
+            const span = input.nextElementSibling; 
+            if(span) span.innerText = input.value ? input.value : ""; 
+        });
+
+        const printContent = document.getElementById('print-area').innerHTML;
+
+        let oldIframe = document.getElementById('req-print-iframe');
+        if (oldIframe) oldIframe.remove();
+
+        let iframe = document.createElement('iframe');
+        iframe.id = 'req-print-iframe';
+        iframe.style.cssText = 'position: fixed; right: 0; bottom: 0; width: 0; height: 0; border: 0; z-index: -9999;';
+        document.body.appendChild(iframe);
+
+        const html = `
+            <!DOCTYPE html>
+            <html lang="th">
+            <head>
+                <meta charset="UTF-8">
+                <title>พิมพ์ใบเบิกสินค้า</title>
+                <style>
+                    @page { size: A4 portrait; margin: 15mm 10mm; } 
+                    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; box-sizing: border-box !important; }
+                    body { background: #fff !important; color: #000 !important; font-family: Calibri, Tahoma, 'Sarabun', sans-serif; margin: 0; padding: 0; } 
+                    
+                    /* Hide UI elements from screen */
+                    .d-print-none, .req-input, .autocomplete-dropdown, .btn { display: none !important; } 
+                    
+                    .print-val-display { display: block !important; width: 100%; height: 100%; min-height: 18px; text-align: center; font-size: 12pt !important; font-weight: bold !important; color: #000 !important; } 
+                    .print-val-left { text-align: left !important; padding-left: 4px !important; } 
+                    .print-val-center { text-align: center !important; } 
+                    
+                    .print-only-header { display: block; margin-bottom: 20px; } 
+                    .print-title-1 { font-size: 16pt; font-weight: bold !important; text-align: center; margin-bottom: 8px; color: #000 !important; } 
+                    .print-title-2 { font-size: 14pt; font-weight: bold !important; text-align: left; margin-bottom: 15px; color: #000 !important; } 
+                    
+                    .req-table-wrapper { width: 100%; } 
+                    .req-table-ui { border: 1px solid #000 !important; font-size: 12pt !important; color: #000 !important; border-collapse: collapse !important; width: 100% !important; } 
+                    
+                    /* 🚨 PAGINATION FIX: หัวใจสำคัญของการตัดหน้ากระดาษ */
+                    .req-table-ui thead { display: table-header-group; } 
+                    .req-table-ui tbody { display: table-row-group; }
+                    .req-table-ui tr { page-break-inside: avoid; height: 32px; } 
+                    
+                    .req-table-ui th { background: #fdba74 !important; color: #000 !important; font-weight: bold !important; border: 1px solid #000 !important; padding: 8px !important; text-align: center !important; vertical-align: middle !important; font-size: 12pt !important; } 
+                    .req-table-ui td { border: 1px solid #000 !important; padding: 6px 8px !important; color: #000 !important; font-weight: 600 !important; vertical-align: middle !important; } 
+                    
+                    .col-no { width: 8%; text-align: center; } .col-code { width: 15%; text-align: center; } .col-name { width: 35%; } .col-unit { width: 10%; text-align: center; } .col-qty { width: 12%; text-align: center; font-weight: bold !important; } .col-remark { width: 20%; } 
+                    
+                    .print-signature-section { width: 100%; margin-top: 60px; page-break-inside: avoid; border: 0 !important; } 
+                    .sig-table { width: 100%; border: 0 !important; border-collapse: collapse; } 
+                    .sig-table td, .sig-table tr { border: 0 !important; font-size: 12pt !important; font-weight: 600 !important; color: #000 !important; padding: 5px !important; } 
+                    .excel-checkbox { display: inline-block; width: 16px; height: 16px; border: 1px solid #000; vertical-align: middle; margin-right: 8px; position: relative; top: -2px; } 
+                    .sig-line { margin-bottom: 8px; white-space: nowrap; border: 0 !important; } 
+                </style>
+            </head>
+            <body>
+                ${printContent}
+                <script>
+                    window.onload = function() {
+                        setTimeout(function() {
+                            window.focus();
+                            window.print();
+                        }, 500);
+                    };
+                </script>
+            </body>
+            </html>
+        `;
+
+        let doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(html);
+        doc.close();
+
+        setTimeout(() => { Swal.close(); }, 1500);
+    }
+
     handleSearchInput(input) {
         const query = input.value.toLowerCase().trim();
         const dropdown = input.parentElement.querySelector('.autocomplete-dropdown');
@@ -499,12 +615,10 @@ class MonthlyRequisitionPageComponent {
             if(qtyInput) { qtyInput.focus(); qtyInput.select(); }
         }
 
+        this.updateRowNumbers();
         this.handleInputChanged();
     }
 
-    // ---------------------------------------------------------
-    // 🗓️ Cloud Sync & 7-Year TTL Archive Engine
-    // ---------------------------------------------------------
     getCurrentMonthKey() {
         const picker = document.getElementById('req-month-picker');
         return picker ? picker.value : new Date().toISOString().slice(0, 7);
@@ -756,7 +870,7 @@ class MonthlyRequisitionPageComponent {
         rows.forEach((row, idx) => {
             if(row.id === 'empty-state-row') return;
             data.push({
-                order: idx + 1,
+                order: row.querySelector('.order-val-cell').innerText, 
                 item_code: row.querySelector('.code-inp').value,
                 name: row.querySelector('.name-inp').value,
                 unit: row.querySelector('.unit-inp').value,
@@ -775,7 +889,7 @@ class MonthlyRequisitionPageComponent {
         const tr = document.createElement('tr');
         
         tr.innerHTML = `
-            <td class="col-no text-center text-dark fw-normal order-val-cell">-</td>
+            <td class="col-no text-center text-dark fw-bold order-val-cell fs-5">-</td>
             <td class="col-code">
                 <input type="text" class="req-input text-center d-print-none print-sync-input code-inp" value="" oninput="App.pages.monthly_requisition.handleInputChanged()">
                 <span class="print-val-display print-val-center"></span>
@@ -841,11 +955,15 @@ class MonthlyRequisitionPageComponent {
 
     updateRowNumbers() {
         const rows = document.querySelectorAll('#req-table-body tr');
-        let index = 1;
         rows.forEach((row) => {
             if(row.id === 'empty-state-row') return;
+            const nameInp = row.querySelector('.name-inp');
             const numCell = row.querySelector('.order-val-cell');
-            if(numCell) { numCell.innerText = index; index++; }
+            if(nameInp && numCell) {
+                let itemName = nameInp.value.trim();
+                let masterItem = this.allItems.find(m => m.name === itemName);
+                numCell.innerText = (masterItem && masterItem.order !== undefined && masterItem.order !== "") ? masterItem.order : "-";
+            }
         });
     }
 
@@ -860,14 +978,21 @@ class MonthlyRequisitionPageComponent {
         }
 
         this.syncedItems.forEach((item, index) => {
-            let orderVal = (item.order !== undefined && item.order !== null && item.order !== "" && item.order !== 999) ? item.order : (index + 1);
-            let itemCodeVal = item.item_code || item.code || '';
+            let masterItem = this.allItems.find(m => m.id === item.id || m.name === item.name);
+            
+            let realCode = item.item_code || item.code || (masterItem ? (masterItem.item_code || masterItem.code) : '');
+            let realUnit = item.unit || (masterItem ? (masterItem.unit_small || masterItem.unit) : '');
+            let realOrder = (masterItem && masterItem.order !== undefined && masterItem.order !== "") ? masterItem.order : "-";
+
+            item.item_code = realCode;
+            item.unit = realUnit;
+            item.order = realOrder;
 
             rowsHtml += `
             <tr>
-                <td class="col-no text-center text-dark fw-normal order-val-cell">${this.#escapeHTML(String(orderVal))}</td>
+                <td class="col-no text-center text-dark fw-bold order-val-cell fs-5">${this.#escapeHTML(String(realOrder))}</td>
                 <td class="col-code">
-                    <input type="text" class="req-input text-center d-print-none print-sync-input code-inp" value="${this.#escapeHTML(itemCodeVal)}" oninput="App.pages.monthly_requisition.handleInputChanged()">
+                    <input type="text" class="req-input text-center d-print-none print-sync-input code-inp" value="${this.#escapeHTML(realCode)}" oninput="App.pages.monthly_requisition.handleInputChanged()">
                     <span class="print-val-display print-val-center"></span>
                 </td>
                 <td class="col-name" style="position: relative;">
@@ -880,7 +1005,7 @@ class MonthlyRequisitionPageComponent {
                     <div class="autocomplete-dropdown d-none d-print-none"></div>
                 </td>
                 <td class="col-unit">
-                    <input type="text" class="req-input text-center d-print-none print-sync-input unit-inp" value="${this.#escapeHTML(item.unit || '')}" oninput="App.pages.monthly_requisition.handleInputChanged()">
+                    <input type="text" class="req-input text-center d-print-none print-sync-input unit-inp" value="${this.#escapeHTML(realUnit)}" oninput="App.pages.monthly_requisition.handleInputChanged()">
                     <span class="print-val-display print-val-center"></span>
                 </td>
                 <td class="col-qty">
@@ -898,7 +1023,6 @@ class MonthlyRequisitionPageComponent {
         });
 
         tbody.innerHTML = rowsHtml;
-        this.updateRowNumbers();
         this.calculateTotal(); 
     }
 
@@ -924,14 +1048,6 @@ class MonthlyRequisitionPageComponent {
         return this.getThaiMonthFromKey(document.getElementById('req-month-picker').value);
     }
 
-    printExcelForm() {
-        if(this.syncedItems.length === 0) { Swal.fire('ตารางว่างเปล่า', 'กรุณาบันทึกหรือดึงข้อมูลก่อนพิมพ์ครับ', 'warning'); return; }
-        document.getElementById('print-month-display').innerText = this.getThaiMonth();
-        const allInputs = document.querySelectorAll('.print-sync-input');
-        allInputs.forEach(input => { const span = input.nextElementSibling; if(span) span.innerText = input.value ? input.value : ""; });
-        window.print();
-    }
-
     downloadExcel() {
         if(this.syncedItems.length === 0) { Swal.fire('ตารางว่างเปล่า', 'ไม่มีข้อมูลให้โหลด', 'warning'); return; }
         Swal.fire({ title: 'กำลังเขียนไฟล์ Excel...', didOpen: () => Swal.showLoading() });
@@ -955,8 +1071,8 @@ class MonthlyRequisitionPageComponent {
             worksheet.mergeCells('A2:F2'); const subtitleRow = worksheet.getRow(2);
             subtitleRow.getCell(1).value = "ประจำเดือน " + this.getThaiMonth(); subtitleRow.getCell(1).font = { name: 'Tahoma', size: 14, bold: true, color: { argb: 'FF000000' } }; subtitleRow.getCell(1).alignment = { horizontal: 'left', vertical: 'middle' }; subtitleRow.height = 25;
 
-            worksheet.columns = [ { width: 8 }, { width: 16 }, { width: 45 }, { width: 10 }, { width: 16 }, { width: 25 }  ];
-            const headers = ["ลำดับ", "รหัสสินค้า", "Consumable", "หน่วย", "จำนวนเบิก", "หมายเหตุ"];
+            worksheet.columns = [ { width: 10 }, { width: 16 }, { width: 45 }, { width: 10 }, { width: 16 }, { width: 25 }  ];
+            const headers = ["ลำดับคลัง", "รหัสสินค้า", "Consumable", "หน่วย", "จำนวนเบิก", "หมายเหตุ"];
             const headerRow = worksheet.getRow(4); headerRow.values = headers; headerRow.height = 30;
             const thinBorder = { top: { style: 'thin', color: { argb: 'FF000000' } }, left: { style: 'thin', color: { argb: 'FF000000' } }, bottom: { style: 'thin', color: { argb: 'FF000000' } }, right: { style: 'thin', color: { argb: 'FF000000' } } };
 
@@ -967,6 +1083,7 @@ class MonthlyRequisitionPageComponent {
                 if(tr.id === 'empty-state-row') return;
                 let orderText = tr.querySelector('.order-val-cell').innerText.trim(); let code = tr.querySelector('.code-inp').value || ""; let name = tr.querySelector('.name-inp').value || ""; let unit = tr.querySelector('.unit-inp').value || ""; let qty = tr.querySelector('.qty-inp').value || ""; let remark = tr.querySelector('.remark-inp').value || "";
                 const row = worksheet.getRow(currentRowNum);
+                
                 row.values = [ isNaN(Number(orderText)) ? orderText : Number(orderText), code, name, unit, qty ? Number(qty) : "", remark ]; row.height = 26; 
                 for (let c = 1; c <= 6; c++) { const cell = row.getCell(c); cell.font = { name: 'Tahoma', size: 12, bold: (c === 3 || c === 5), color: { argb: 'FF000000' } }; cell.border = thinBorder; if (c === 3 || c === 6) cell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 }; else cell.alignment = { horizontal: 'center', vertical: 'middle' }; }
                 currentRowNum++;

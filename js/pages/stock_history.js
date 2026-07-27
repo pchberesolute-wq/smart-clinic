@@ -1,5 +1,5 @@
 // js/pages/stock_history.js
-// 🚀 Enterprise Stock History Module: Pagination, FinOps Queries & Theme Native Ready
+// 🚀 Enterprise Stock History Module: Pagination, FinOps Queries & Smart Relational Mapping (v9.5)
 
 class StockHistoryPageComponent {
     constructor() {
@@ -26,8 +26,44 @@ class StockHistoryPageComponent {
                 .date-filter-input { position: absolute; opacity: 0; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer; z-index: 10; }
                 .date-clear-btn { position: relative; z-index: 20; border: none; background: transparent; color: #ef4444; margin-left: 10px; cursor: pointer; display: none; }
                 
-                /* 🚨 THE FIX: ยันต์เกราะเพชรป้องกันไอคอนโดนฟอนต์อื่นกลืนกลายเป็นสี่เหลี่ยม 🚨 */
                 .safe-icon { font-family: 'Font Awesome 6 Free', 'FontAwesome', sans-serif !important; font-weight: 900 !important; font-style: normal !important; }
+
+                .btn-page-nav {
+                    display: inline-flex; align-items: center; justify-content: center;
+                    background-color: var(--bg-surface);
+                    color: var(--primary);
+                    border: 1px solid var(--primary);
+                    font-weight: 700; font-family: 'Prompt', sans-serif;
+                    padding: 8px 24px; border-radius: 50px;
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                    cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                }
+                .btn-page-nav:hover:not(:disabled) {
+                    background-color: var(--primary);
+                    color: #ffffff;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+                }
+                .btn-page-nav:active:not(:disabled) {
+                    transform: translateY(0);
+                }
+                .btn-page-nav:disabled {
+                    background-color: var(--bg-body);
+                    color: var(--text-muted);
+                    border-color: var(--border-color);
+                    cursor: not-allowed;
+                    box-shadow: none;
+                    opacity: 0.6;
+                }
+                html[data-bs-theme="dark"] .btn-page-nav {
+                    background-color: rgba(59, 130, 246, 0.1); 
+                    border-color: rgba(59, 130, 246, 0.5);
+                    color: #60a5fa;
+                }
+                html[data-bs-theme="dark"] .btn-page-nav:hover:not(:disabled) {
+                    background-color: var(--primary);
+                    color: #ffffff;
+                }
             </style>
 
             <div class="page-header mb-4">
@@ -57,14 +93,12 @@ class StockHistoryPageComponent {
                     <div class="col-md-9 d-flex justify-content-md-end gap-3 flex-wrap align-items-center">
                         <div class="date-filter-wrapper">
                             <input type="date" id="sh-date-filter" class="date-filter-input" onchange="App.pages.stock_history.onDateFilterChange(this.value)" onfocus="this.showPicker && this.showPicker()">
-                            <!-- 🚨 เติมคลาส safe-icon -->
                             <i class="fa-solid fa-calendar-day text-primary me-2 position-relative safe-icon" style="z-index: 1;"></i>
                             <span id="sh-date-display" class="fw-bold position-relative" style="font-family:'Prompt'; z-index: 1; font-size: 14px; color: var(--text-dark);">ค้นหาตามวันที่...</span>
                             <button id="sh-date-clear" class="date-clear-btn" onclick="App.pages.stock_history.clearDateFilter()"><i class="fa-solid fa-circle-xmark safe-icon"></i></button>
                         </div>
 
                         <div class="search-box-modern shadow-sm" style="width: 180px; background-color: var(--bg-body); border: 1px solid var(--border-color); padding: 6px 15px; border-radius: 50px;">
-                            <!-- 🚨 THE FIX: เติมคลาส safe-icon ป้องกันสี่เหลี่ยมกากบาท -->
                             <i class="fa-solid fa-list-ol text-muted me-2 safe-icon"></i>
                             <select id="sh-limit-select" class="form-select fw-bold border-0 bg-transparent p-0 m-0 w-100 d-inline-block" onchange="App.pages.stock_history.changeLimit(this.value)" style="outline:none; box-shadow:none; color: var(--text-dark);">
                                 <option value="100">100 ล่าสุด</option><option value="500" selected>500 ล่าสุด</option><option value="1000">1,000 ล่าสุด</option><option value="999999">ทั้งหมด</option>
@@ -72,7 +106,6 @@ class StockHistoryPageComponent {
                         </div>
 
                         <div class="search-box-modern shadow-sm" style="width: 250px; background-color: var(--bg-body); border: 1px solid var(--border-color); padding: 8px 15px; border-radius: 50px; display: flex; align-items: center;">
-                            <!-- 🚨 เติมคลาส safe-icon -->
                             <i class="fa-solid fa-search text-primary safe-icon"></i>
                             <input type="text" id="sh-search" class="border-0 bg-transparent ms-2 w-100 fw-bold" placeholder="ค้นหาชื่อ, รหัส, บาร์โค้ด..." onkeyup="App.pages.stock_history.filterData()" style="outline:none; color: var(--text-dark);">
                         </div>
@@ -103,16 +136,19 @@ class StockHistoryPageComponent {
                         </select> รายการ
                     </div>
                     <div class="d-flex align-items-center gap-2">
-                        <button id="sh-btn-prev" class="btn btn-outline-primary fw-bold px-4 rounded-pill shadow-sm" style="background-color: var(--bg-surface);" onclick="App.pages.stock_history.changePage(-1)"><i class="fa-solid fa-chevron-left me-1 safe-icon"></i> ก่อนหน้า</button>
+                        <button id="sh-btn-prev" class="btn-page-nav" onclick="App.pages.stock_history.changePage(-1)">
+                            <i class="fa-solid fa-chevron-left me-1 safe-icon"></i> ก่อนหน้า
+                        </button>
                         <div class="badge border border-primary text-primary px-4 py-2 fs-6 shadow-sm rounded-pill" style="background-color: var(--bg-body);" id="sh-page-info">หน้า 1 / 1</div>
-                        <button id="sh-btn-next" class="btn btn-outline-primary fw-bold px-4 rounded-pill shadow-sm" style="background-color: var(--bg-surface);" onclick="App.pages.stock_history.changePage(1)">ถัดไป <i class="fa-solid fa-chevron-right ms-1 safe-icon"></i></button>
+                        <button id="sh-btn-next" class="btn-page-nav" onclick="App.pages.stock_history.changePage(1)">
+                            ถัดไป <i class="fa-solid fa-chevron-right ms-1 safe-icon"></i>
+                        </button>
                     </div>
                 </div>
             </div>
         `;
     }
 
-    // 🚀 Lifecycle: Mount
     init() {
         if (typeof db === 'undefined') {
             Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error');
@@ -121,26 +157,20 @@ class StockHistoryPageComponent {
         
         this.state.selectedDate = ''; 
         this.updateDateDisplay('');
-
         this.#loadData();
     }
 
-    // 🧹 Lifecycle: Unmount
     destroy() {
         this.firebaseListeners.forEach(l => db.ref(l.path).off('value', l.callback));
         this.firebaseListeners = [];
-        console.log("🧹 [Stock History] Cleaned up listeners.");
     }
 
-    // ---------------------------------------------------------
-    // 📡 Data Fetching
-    // ---------------------------------------------------------
     #loadData() {
         document.getElementById('sh-table-body').innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fas fa-spinner fa-spin fa-2x mb-3 text-primary"></i><br>กำลังโหลดข้อมูล...</td></tr>`;
         
         db.ref('inventory_database_v2/items').once('value').then(itemSnap => {
             const itemData = itemSnap.val();
-            let rawItems = itemData ? (Array.isArray(itemData) ? itemData : Object.keys(itemData).map(k => itemData[k])) : [];
+            let rawItems = itemData ? (Array.isArray(itemData) ? itemData : Object.keys(itemData).map(k => ({ id: k, ...itemData[k] }))) : [];
             this.state.inventoryItems = rawItems.filter(Boolean);
 
             const refTrans = db.ref('inventory_database_v2/transactions').orderByChild('timestamp').limitToLast(this.state.currentLimit);
@@ -158,9 +188,6 @@ class StockHistoryPageComponent {
         });
     }
 
-    // ---------------------------------------------------------
-    // 🗑️ Data Mutation
-    // ---------------------------------------------------------
     deleteAllHistory() {
         if(this.state.allLogs.length === 0) return;
         Swal.fire({
@@ -184,9 +211,6 @@ class StockHistoryPageComponent {
         });
     }
 
-    // ---------------------------------------------------------
-    // 🎛️ Filtering & UI Actions
-    // ---------------------------------------------------------
     onDateFilterChange(dateVal) {
         this.state.selectedDate = dateVal;
         this.updateDateDisplay(dateVal);
@@ -304,10 +328,22 @@ class StockHistoryPageComponent {
             const dateStr = d.toLocaleDateString('th-TH', { day:'2-digit', month:'short', year:'2-digit' });
             const timeStr = d.toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit' });
 
-            const matchedItem = this.state.inventoryItems.find(i => i.id === log.itemId);
+            const safeItemName = this.#escapeHTML(log.itemName || 'ไม่ทราบชื่อ');
+
+            // 🚨 THE FIX: Advanced Relational Mapping (ค้นหาด้วย ID ก่อน ถ้าไม่เจอ หาด้วย Name เพื่อรองรับข้อมูลเก่า)
+            let matchedItem = this.state.inventoryItems.find(i => i.id === log.itemId);
+            if (!matchedItem && log.itemName) {
+                matchedItem = this.state.inventoryItems.find(i => i.name === log.itemName);
+            }
+
             let itemOrderVal = (matchedItem && matchedItem.order !== undefined && matchedItem.order !== null && matchedItem.order !== "" && matchedItem.order !== 999) ? matchedItem.order : '-';
-            let finalItemCode = log.itemCode || (matchedItem ? matchedItem.item_code : '-');
-            let finalBarcode = log.barcode || (matchedItem ? matchedItem.barcode : '-');
+            
+            // ดึงค่า Code/Barcode ทั้งจาก Log และจาก Master Data (ครอบคลุมทั้งตัวแปร .code และ .item_code)
+            let rawCode = log.itemCode || log.code || (matchedItem ? (matchedItem.item_code || matchedItem.code) : null);
+            let rawBarcode = log.barcode || (matchedItem ? matchedItem.barcode : null);
+
+            let finalItemCode = (rawCode && String(rawCode).trim() !== '') ? rawCode : '-';
+            let finalBarcode = (rawBarcode && String(rawBarcode).trim() !== '') ? rawBarcode : '-';
 
             let modeHtml = `<span class="badge bg-secondary">ไม่ระบุ</span>`;
             let detailHtml = ''; 
@@ -340,8 +376,6 @@ class StockHistoryPageComponent {
                 modeHtml = `<span class="badge border border-success text-success px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-rotate-left me-1 safe-icon"></i> ดึงของคืน (เล็ก)</span>`;
                 detailHtml = `ดึงของคืนกลับเข้าสต๊อกเคาน์เตอร์ <b>${log.qty}</b> หน่วย <br><small class="text-muted"><i class="fa-solid fa-tag safe-icon"></i> ${this.#escapeHTML(log.note || 'การยกเลิก Flowsheet')}</small>`;
             }
-
-            const safeItemName = this.#escapeHTML(log.itemName || 'ไม่ทราบชื่อ');
 
             html += `
             <tr class="align-middle card-hover-float" style="cursor:default;">

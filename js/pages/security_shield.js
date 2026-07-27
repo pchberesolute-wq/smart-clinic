@@ -326,7 +326,6 @@ class SecurityShieldService {
             });
         });
         
-        // 🚨 THE FIX: บันทึกลง sessionStorage แทน เพื่อให้เคลียร์อัตโนมัติเมื่อปิดโปรแกรม
         sessionStorage.setItem('dialysis_os_session_windows', JSON.stringify(state));
     }
 
@@ -334,7 +333,6 @@ class SecurityShieldService {
         if (window.self !== window.top) return; 
 
         try {
-            // 🚨 THE FIX: ดึงข้อมูลจาก sessionStorage
             const savedStateStr = sessionStorage.getItem('dialysis_os_session_windows');
             if (!savedStateStr) return;
             
@@ -827,18 +825,35 @@ class SecurityShieldService {
         this.selectedTextToCopy = ""; this.#closeMenu();
     }
 
+    // 🟢 WAY 1: The "Permission Granted" Approach
     async handlePaste() {
         try {
+            // 🚨 บรรทัดนี้คือการล้วงกระเป๋า ซึ่งจะทำให้ Browser เด้งป๊อปอัปถามในครั้งแรกเสมอ!
+            // ต้องบอกให้ User กดปุ่ม "Allow" แล้วชีวิตจะสบายขึ้นครับ
             const text = await navigator.clipboard.readText();
             const activeEl = this.lastTargetInput || document.activeElement;
+            
             if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
-                const start = activeEl.selectionStart || 0; const end = activeEl.selectionEnd || 0; const val = activeEl.value || '';
+                const start = activeEl.selectionStart || 0; 
+                const end = activeEl.selectionEnd || 0; 
+                const val = activeEl.value || '';
+                
                 activeEl.value = val.slice(0, start) + text + val.slice(end);
                 activeEl.selectionStart = activeEl.selectionEnd = start + text.length;
-                activeEl.dispatchEvent(new Event('input', { bubbles: true })); activeEl.focus();
+                activeEl.dispatchEvent(new Event('input', { bubbles: true })); 
+                activeEl.focus();
+                
                 this.showNativeToast("วางข้อความสำเร็จ");
-            } else { document.execCommand('insertText', false, text); this.showNativeToast("วางข้อความสำเร็จ"); }
-        } catch (err) { this.showNativeToast("กรุณากด Ctrl+V เพื่อวางข้อความแทน", true); }
+            } else { 
+                document.execCommand('insertText', false, text); 
+                this.showNativeToast("วางข้อความสำเร็จ"); 
+            }
+        } catch (err) { 
+            // หาก User เผลอกด "Block" หรือลืมกด Allow
+            console.warn("Clipboard access denied:", err);
+            if (this.lastTargetInput) this.lastTargetInput.focus();
+            this.showNativeToast("⚠️ ถูกบล็อกสิทธิ์: กรุณากด 'Allow' หรือใช้ Ctrl+V เพื่อวาง", true); 
+        }
         this.#closeMenu();
     }
 

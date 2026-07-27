@@ -1,19 +1,24 @@
 // js/main.js
-// 🚀 Enterprise Core Router: Multi-Tab Enabled, Zero-Popup Paradigm & Real-time RBAC (v11.2)
+// 🚀 Enterprise Core Router: Multi-Tab Enabled, Zero-Popup Paradigm, Smart Context Yield & Real-time RBAC (v12.1)
+
+// 🚨 THE FIX: โค้ชลบโค้ด document.addEventListener('contextmenu') ออกไปแล้วครับ
+// เพื่อคืนอิสระให้ระบบ SMART OS MENU (Custom Context Menu) ของคุณ Sky ทำงานได้ตามปกติ!
 
 document.addEventListener('click', function(e) {
     const link = e.target.closest('a[target="_blank"]');
     if (link) {
         e.preventDefault();
-        Swal.fire({
-            title: '<span style="font-family:Prompt; font-size:18px; font-weight:bold;"><i class="fa-solid fa-file-lines text-primary me-2"></i> เปิดเอกสาร / หน้าต่างใหม่</span>',
-            html: `<iframe src="${link.href}" style="width:100%; height:80vh; border:none; border-radius:12px; background:#fff; box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);"></iframe>`,
-            width: '90%',
-            padding: '15px',
-            showConfirmButton: false,
-            showCloseButton: true,
-            customClass: { popup: 'premium-alert' }
-        });
+        if(typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: '<span style="font-family:Prompt; font-size:18px; font-weight:bold;"><i class="fa-solid fa-file-lines text-primary me-2"></i> เอกสารอ้างอิง</span>',
+                html: `<iframe src="${link.href}" style="width:100%; height:80vh; border:none; border-radius:12px; background:#fff; box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);"></iframe>`,
+                width: '90%',
+                padding: '15px',
+                showConfirmButton: false,
+                showCloseButton: true,
+                customClass: { popup: 'premium-alert' }
+            });
+        }
     }
 });
 
@@ -22,13 +27,12 @@ const App = {
     idleTimeout: null,
     isLocked: false,
     lockTimeLimit: 15 * 60 * 1000, 
-    lockClockInterval: null, 
-    mainClockInterval: null, 
-    activePageModule: null, 
-    mobileBackdrop: null, 
+    lockClockInterval: null,
+    mainClockInterval: null,
+    activePageModule: null,
+    mobileBackdrop: null,
     
-    pages: {}, 
-
+    pages: {},
     defaultRolePermissions: {
         'admin': ['*'],
         'doctor': ['dashboard', 'visits', 'visit_detail', 'patients', 'patient_history', 'document_center', 'search_copy', 'about'],
@@ -38,7 +42,6 @@ const App = {
         'finance': ['dashboard', 'finance', 'department_ledger', 'search_copy', 'about'],
         'stock': ['dashboard', 'inventory', 'stock_manage', 'stock_history', 'monthly_requisition', 'stock_forecast', 'usage_statistics', 'search_copy', 'about']
     },
-
     rolePermissions: {},
 
     initPages: function() {
@@ -80,7 +83,6 @@ const App = {
             this.mobileBackdrop.id = 'app-mobile-backdrop';
             this.mobileBackdrop.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.6); z-index:990; opacity:0; visibility:hidden; transition:opacity 0.3s ease, visibility 0.3s ease;';
             document.body.appendChild(this.mobileBackdrop);
-
             this.mobileBackdrop.addEventListener('click', () => {
                 this.toggleSidebar(false);
             });
@@ -110,7 +112,7 @@ const App = {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
 
-        if (forceOpen && window.innerWidth <= 1024) { 
+        if (forceOpen && window.innerWidth <= 1024) {
             sidebar.classList.add('active');
             if (this.mobileBackdrop) {
                 this.mobileBackdrop.style.visibility = 'visible';
@@ -138,16 +140,14 @@ const App = {
                 if (lockOverlay) lockOverlay.remove();
                 document.body.style.pointerEvents = 'auto';
             }
-
             if (typeof Swal !== 'undefined' && Swal.isVisible()) {
                 Swal.close();
             }
-
             document.body.classList.remove('swal2-shown', 'swal2-height-auto');
             document.querySelectorAll('.swal2-container').forEach(el => el.remove());
             
-            if (this.mobileBackdrop && this.mobileBackdrop.style.visibility === 'visible' && window.innerWidth > 1024) {
-                 this.toggleSidebar(false);
+            if (this.mobileBackdrop && this.mobileBackdrop.style.visibility === 'visible' && window.innerWidth > 1024) { 
+                this.toggleSidebar(false);
             }
         } catch(e) { console.warn("Overlay Cleanup Error:", e); }
     },
@@ -223,15 +223,20 @@ const App = {
         if (currentPageEl) {
             const currentPage = currentPageEl.getAttribute('data-page');
             if (currentPage !== 'login' && !isAdmin && !allowedPages.includes(currentPage)) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'สิทธิ์ถูกเปลี่ยนแปลง',
-                    text: 'สิทธิ์การเข้าถึงหน้านี้ของคุณถูกเพิกถอนโดยผู้ดูแลระบบแล้ว',
-                    confirmButtonColor: '#ef4444'
-                }).then(() => {
+                if(typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'ไม่มีสิทธิ์เข้าถึง',
+                        text: 'สิทธิ์ของตำแหน่งคุณถูกระงับการเข้าหน้าต่างนี้ครับ',
+                        confirmButtonColor: '#ef4444'
+                    }).then(() => {
+                        let defaultPage = allowedPages.length > 0 ? allowedPages[0] : 'login';
+                        this.switchPage(defaultPage);
+                    });
+                } else {
                     let defaultPage = allowedPages.length > 0 ? allowedPages[0] : 'login';
                     this.switchPage(defaultPage);
-                });
+                }
             }
         }
     },
@@ -248,7 +253,7 @@ const App = {
             const allowedPages = permissionsSrc[role] || [];
             
             if (!allowedPages.includes('*') && !allowedPages.includes(pageName)) {
-                Swal.fire({ icon: 'error', title: 'ปฏิเสธการเข้าถึง (Access Denied)', text: 'บัญชีของคุณไม่มีสิทธิ์เข้าถึงหน้าจอนี้ครับ', confirmButtonColor: '#ef4444' });
+                if(typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: 'ละเมิดสิทธิ์ (Access Denied)', text: 'บัญชีของคุณไม่ได้รับอนุญาตให้เข้าหน้านี้', confirmButtonColor: '#ef4444' });
                 return; 
             }
         }
@@ -304,7 +309,7 @@ const App = {
         }
         
         appContent.style.opacity = 0; 
-        
+
         setTimeout(() => {
             try {
                 const availablePages = this.getPages();
@@ -325,8 +330,8 @@ const App = {
                     appContent.innerHTML = `
                         <div class="text-center py-5 shadow-sm mx-auto mt-5" style="max-width: 600px; background:var(--bg-surface); border-radius:16px; border:1px solid var(--border-color);">
                             <i class="fa-solid fa-triangle-exclamation fa-4x text-warning mb-4"></i>
-                            <h3 class="fw-bold" style="font-family:'Prompt'; color:var(--text-dark);">ฟังก์ชัน [${pageName}] ยังไม่พร้อมใช้งาน</h3>
-                            <p class="mb-0" style="color:var(--text-muted);">โปรดตรวจสอบการเชื่อมต่อไฟล์โมดูล</p>
+                            <h3 class="fw-bold" style="font-family:'Prompt'; color:var(--text-dark);">ยังไม่ได้เชื่อมต่อ [${pageName}]</h3>
+                            <p class="mb-0" style="color:var(--text-muted);">ระบบหน้านี้กำลังอยู่ระหว่างการพัฒนาครับ</p>
                         </div>`;
                     this.activePageModule = null;
                 }
@@ -335,7 +340,7 @@ const App = {
                 appContent.innerHTML = `
                     <div class="text-center py-5 shadow-sm mx-auto mt-5" style="max-width: 600px; background:var(--bg-surface); border-radius:16px; border:1px solid #fecaca;">
                         <i class="fa-solid fa-bug fa-4x text-danger mb-4"></i>
-                        <h3 class="fw-bold text-danger" style="font-family:'Prompt';">เกิดข้อผิดพลาดในการแสดงผล</h3>
+                        <h3 class="fw-bold text-danger" style="font-family:'Prompt';">โปรแกรมหน้าต่างนี้ขัดข้องชั่วคราว</h3>
                         <p class="text-danger mb-0">${fatalError.message}</p>
                     </div>`;
             } finally {
@@ -347,14 +352,19 @@ const App = {
     },
 
     logout: function() {
+        if(typeof Swal === 'undefined') {
+            sessionStorage.removeItem('dialysis_user_session');
+            window.location.reload();
+            return;
+        }
         Swal.fire({
-            title: 'ออกจากระบบ?',
-            text: "คุณต้องการออกจากระบบเวชระเบียนใช่หรือไม่?",
+            title: 'ออกจากระบบ',
+            text: "ต้องการออกจากระบบ DIALYSIS PRO ใช่หรือไม่?",
             icon: 'question',
             showCancelButton: true, 
             confirmButtonColor: '#ef4444', 
             cancelButtonColor: '#cbd5e1',
-            confirmButtonText: '<i class="fa-solid fa-sign-out-alt me-2"></i> ออกจากระบบ', 
+            confirmButtonText: '<i class="fa-solid fa-sign-out-alt me-2"></i> ออกจากระบบ',
             cancelButtonText: 'ยกเลิก',
             customClass: { popup: 'shadow-lg border rounded-4' },
             didOpen: () => {
@@ -397,10 +407,8 @@ const App = {
         const toast = document.getElementById('lock-screen-toast');
         const toastText = document.getElementById('lock-screen-toast-text');
         if(!toast || !toastText) return;
-
         toastText.innerText = message;
         toast.classList.add('show');
-
         setTimeout(() => {
             toast.classList.remove('show');
         }, 2500);
@@ -439,34 +447,30 @@ const App = {
                 }
                 .lock-custom-toast.show { transform: translate3d(-50%, 0, 0); opacity: 1; }
             </style>
-
             <div id="lock-screen-toast" class="lock-custom-toast">
                 <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center shadow-sm" style="width:26px; height:26px;">
                     <i class="fa-solid fa-exclamation" style="font-size:13px;"></i>
                 </div>
-                <span id="lock-screen-toast-text">ข้อความแจ้งเตือน</span>
+                <span id="lock-screen-toast-text">รหัสผ่านผิดพลาด!</span>
             </div>
-
             <div class="text-center" style="width: 100%; max-width: 420px; padding: 40px; background: var(--bg-surface); border-radius: 24px; border: 1px solid var(--border-color); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); animation: slideDownFadeSafe 0.4s ease forwards; transform: translate3d(0,0,0); position: relative;">
                 <div class="mb-4">
                     <div id="lock-time-display" style="font-size: 3.5rem; font-weight: 800; color: var(--text-dark); line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -1px;">--:--:--</div>
                     <div id="lock-date-display" style="font-size: 1.1rem; font-weight: 600; color: var(--text-muted); margin-top: 5px;">กำลังโหลด...</div>
                 </div>
-
                 <img src="${userImg}" class="rounded-circle mb-3" style="width: 80px; height: 80px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 3px solid var(--bg-surface);">
                 <h4 class="fw-bold mb-1" style="font-family:'Prompt'; color: var(--text-dark);">${safeName}</h4>
-                <p class="small mb-4" style="color: var(--text-muted);"><i class="fa-solid fa-lock text-warning me-1"></i> หน้าจอถูกล็อคเนื่องจากไม่มีการใช้งาน</p>
+                <p class="small mb-4" style="color: var(--text-muted);"><i class="fa-solid fa-lock text-warning me-1"></i> เซสชันถูกพักชั่วคราวเพื่อความปลอดภัย</p>
                 
                 <div class="input-group mb-4" style="border-radius: 14px; overflow:hidden; background: var(--bg-body); border: 1px solid var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
                     <span class="input-group-text border-0" style="background: var(--bg-body);"><i class="fa-solid fa-key" style="color: var(--text-muted);"></i></span>
                     <input type="password" id="unlock-password" class="form-control form-control-lg border-0 fw-bold" placeholder="กรอกรหัสผ่านเพื่อปลดล็อค" onkeypress="if(event.key === 'Enter') App.unlockScreen()" style="outline:none; box-shadow:none; background:transparent; color: var(--text-dark);">
                 </div>
-
                 <button class="btn btn-premium-primary btn-lg w-100 mb-3 fw-bold rounded-pill" id="btn-unlock" style="box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);" onclick="App.unlockScreen()">
-                    <i class="fa-solid fa-unlock-keyhole me-2"></i> ปลดล็อคหน้าจอ
+                    <i class="fa-solid fa-unlock-keyhole me-2"></i> กลับเข้าสู่ระบบ
                 </button>
                 <button class="btn w-100 fw-bold rounded-pill text-danger shadow-sm" style="background: var(--bg-body); border: 1px solid var(--border-color);" onclick="App.logout()">
-                    <i class="fa-solid fa-sign-out-alt me-1"></i> สลับบัญชีผู้ใช้ (Logout)
+                    <i class="fa-solid fa-sign-out-alt me-1"></i> เปลี่ยนบัญชี (Logout)
                 </button>
             </div>
         `;
@@ -479,7 +483,7 @@ const App = {
             if(timeEl) timeEl.innerText = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             if(dateEl) dateEl.innerText = now.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
         };
-        updateLockClock(); 
+        updateLockClock();
         this.lockClockInterval = setInterval(updateLockClock, 1000);
 
         setTimeout(() => {
@@ -491,17 +495,17 @@ const App = {
     unlockScreen: function() {
         const pw = document.getElementById('unlock-password').value.trim();
         if (!pw) { 
-            this.showLockScreenToast('กรุณากรอกรหัสผ่าน');
+            this.showLockScreenToast('กรุณากรอกรหัสผ่านก่อนครับ');
             return; 
         }
 
         const btn = document.getElementById('btn-unlock');
         const origText = btn.innerHTML;
-        btn.innerHTML = `<i class="fas fa-spinner fa-spin me-2"></i> ตรวจสอบ...`;
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin me-2"></i> กำลังตรวจสอบ...`;
         btn.disabled = true;
 
         if (typeof db === 'undefined') { 
-            this.showLockScreenToast('ไม่สามารถเชื่อมต่อฐานข้อมูลได้');
+            this.showLockScreenToast('ไม่พบการเชื่อมต่อฐานข้อมูล');
             btn.innerHTML = origText; btn.disabled = false; 
             return; 
         }
@@ -524,7 +528,7 @@ const App = {
 
             if (user) {
                 this.isLocked = false;
-                if(this.lockClockInterval) clearInterval(this.lockClockInterval); 
+                if(this.lockClockInterval) clearInterval(this.lockClockInterval);
                 sessionStorage.removeItem('dialysis_is_locked'); 
                 const overlay = document.getElementById('lock-screen-overlay');
                 if (overlay) overlay.remove();
@@ -536,7 +540,7 @@ const App = {
                 document.getElementById('unlock-password').focus();
             }
         }).catch(err => {
-            this.showLockScreenToast('เกิดข้อผิดพลาดในการตรวจสอบ');
+            this.showLockScreenToast('ข้อผิดพลาดจากเซิร์ฟเวอร์');
             btn.innerHTML = origText; btn.disabled = false;
         });
     },
@@ -582,13 +586,13 @@ const App = {
                     'admin': '(ผู้ดูแลระบบ)',
                     'doctor': '(แพทย์)',
                     'head_nurse': '(หัวหน้าพยาบาล)',
-                    'nurse': '(พยาบาล)',
+                    'nurse': '(พยาบาลไตเทียม)',
                     'assistant': '(ผู้ช่วย PN/NA)',
-                    'finance': '(การเงิน/บัญชี)',
+                    'finance': '(การเงิน)',
                     'stock': '(เจ้าหน้าที่พัสดุ)'
                 };
                 let roleTitle = roleLabels[this.currentUser.role] || '(พนักงานทั่วไป)';
-                let safeName = this.currentUser.name || 'ผู้ใช้งาน';
+                let safeName = this.currentUser.name || 'ไม่ระบุชื่อ';
                 userInfoName.innerText = `${safeName} ${roleTitle}`;
                 
                 const avatar = document.querySelector('.user-avatar');
@@ -597,9 +601,7 @@ const App = {
                     avatar.innerText = initials;
                 }
             }
-
             this._syncAgentVersion();
-
         } catch (e) {
             console.error("Session parse error", e);
             sessionStorage.removeItem('dialysis_user_session');
@@ -620,14 +622,13 @@ const App = {
         try {
             if (typeof AboutPage !== 'undefined' && AboutPage.version) {
                 const appVersion = AboutPage.version;
-                
                 fetch(`http://127.0.0.1:8000/health?v=${encodeURIComponent(appVersion)}`, { method: 'GET', mode: 'cors' })
                     .then(res => res.json())
                     .then(data => {
-                        console.log("✅ [Agent Sync]: Version synced to Python Agent ->", appVersion);
+                        console.log("🟢 [Agent Sync]: Version synced to Python Agent ->", appVersion);
                     })
                     .catch(err => {
-                        console.log("ℹ️ [Agent Sync]: Agent not running, skip version sync.");
+                        console.log("🟡 [Agent Sync]: Agent not running, skip version sync.");
                     });
             }
         } catch(e) {
@@ -636,23 +637,37 @@ const App = {
     }
 };
 
-// 🚨 THE FIX: นวัตกรรม Cross-Tab Session Synchronization (Real-time Auth Sharing)
-// ระบบจะทำการยืม Session จากแท็บหลัก เพื่อให้แท็บใหม่ที่เปิดขึ้นมาไม่ต้อง Login ซ้ำซ้อน
+// =========================================================================
+// 🚨 THE FIX: นำ Context Menu ลอยๆ ออกไป หรือเขียนโค้ดซ่อนเมนูให้มิดชิด!
+// =========================================================================
+
+// จัดการปิด Context Menu อัตโนมัติเวลาคลิกที่อื่น
+document.addEventListener('click', function(e) {
+    const customMenu = document.getElementById('custom-context-menu');
+    // ถ้ามีเมนู Context Menu โผล่ขึ้นมา และผู้ใช้คลิกที่อื่น ให้ซ่อนมันซะ!
+    if (customMenu && !e.target.closest('#custom-context-menu')) {
+        customMenu.style.display = 'none';
+        customMenu.style.opacity = '0';
+    }
+});
+
+// 🚨 THE FIX: ระบบแจ้งเกิด Cross-Tab Session Synchronization (Real-time Auth Sharing) 🚨
+// ถ้าแท็บนี้ไม่มี Session ให้ตะโกนถามแท็บอื่นเผื่อใคร Login ไว้แล้ว
 if (!sessionStorage.getItem('dialysis_user_session')) {
     localStorage.setItem('DIALYSIS_AUTH_SYNC_REQUEST', Date.now().toString());
 }
 
 window.addEventListener('storage', (event) => {
     if (event.key === 'DIALYSIS_AUTH_SYNC_REQUEST') {
-        // มีแท็บใหม่ขอข้อมูล Login -> แท็บเก่าส่งให้ทันที
+        // แท็บนี้ Login อยู่ -> ส่งข้อมูลกลับไปบอกแท็บที่เพิ่งเปิดใหม่
         const sessionData = sessionStorage.getItem('dialysis_user_session');
         if (sessionData) {
             localStorage.setItem('DIALYSIS_AUTH_SYNC_RESPONSE', sessionData);
-            setTimeout(() => localStorage.removeItem('DIALYSIS_AUTH_SYNC_RESPONSE'), 100); // ทำลายทิ้งป้องกันข้อมูลค้าง
+            setTimeout(() => localStorage.removeItem('DIALYSIS_AUTH_SYNC_RESPONSE'), 100); // เคลียร์ทันทีป้องกันขยะ
         }
     }
     if (event.key === 'DIALYSIS_AUTH_SYNC_RESPONSE' && event.newValue) {
-        // แท็บใหม่ได้รับข้อมูล Login แล้ว -> เซฟลงเครื่องและรีเฟรช 1 ครั้งเพื่อเข้าหน้าเว็บ
+        // แท็บนี้เพิ่งเปิดใหม่ -> อัปเดต Session ตามที่เพื่อนบ้านส่งมาให้
         if (!sessionStorage.getItem('dialysis_user_session')) {
             sessionStorage.setItem('dialysis_user_session', event.newValue);
             window.location.reload(); 
@@ -660,10 +675,10 @@ window.addEventListener('storage', (event) => {
     }
 });
 
+
 window.addEventListener('DOMContentLoaded', () => {
     App.initPages();
     App.initMobileSidebar(); 
-
     try { App.initClock(); } catch (e) { console.error("Clock Init Error:", e); }
 
     if (!sessionStorage.getItem('dialysis_session_active')) {
@@ -691,16 +706,16 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 🚨 หน่วงเวลา 150ms เพื่อให้ระบบขอยืม Session จากแท็บหลักให้เสร็จก่อน
+    // ดีเลย์ 150ms เพื่อให้ Session มั่นคง
     setTimeout(() => {
         const isAuthenticated = App.checkAuth();
-        if (!isAuthenticated) return; 
+        if (!isAuthenticated) return;
 
         const role = App.currentUser ? App.currentUser.role : 'nurse';
         const permissionsSrc = Object.keys(App.rolePermissions).length > 0 ? App.rolePermissions : App.defaultRolePermissions;
         const allowed = permissionsSrc[role] || [];
         
-        // 🚨 THE FIX: อ่าน Parameter จาก URL ?page= เพื่อเปิดหน้าเฉพาะในแท็บใหม่
+        // 🚨 THE FIX: อ่าน Parameter จาก URL ?page= เข้ามาแทนที่ค่าเริ่มต้น 🚨
         const urlParams = new URLSearchParams(window.location.search);
         const requestedPage = urlParams.get('page');
         let defaultPage = 'dashboard';
@@ -709,7 +724,7 @@ window.addEventListener('DOMContentLoaded', () => {
             if (allowed.includes('*') || allowed.includes(requestedPage)) {
                 defaultPage = requestedPage;
             } else {
-                if (typeof Swal !== 'undefined') Swal.fire('ปฏิเสธการเข้าถึง', 'บัญชีของคุณไม่มีสิทธิ์เข้าถึงหน้านี้', 'error');
+                if (typeof Swal !== 'undefined') Swal.fire('ห้ามเข้า', 'คุณไม่มีสิทธิ์เข้าถึงหน้านี้', 'error');
                 defaultPage = allowed.length > 0 ? allowed[0] : 'login';
             }
         } else if (!allowed.includes('*') && !allowed.includes('dashboard')) {
@@ -719,26 +734,25 @@ window.addEventListener('DOMContentLoaded', () => {
         const defaultMenu = document.querySelector(`.nav-item[data-page="${defaultPage}"]`);
         App.switchPage(defaultPage, defaultMenu);
 
-        // 🚨 เก็บกวาด URL ให้สะอาดหลังจากพาไปถูกหน้าแล้ว
+        // ล้าง URL หลังจากโหลดสำเร็จให้ดูสวยงาม
         if (requestedPage) {
             setTimeout(() => {
                 window.history.replaceState({}, document.title, window.location.pathname);
             }, 1000);
         }
+
     }, 150);
 });
 
-// Sync Agent
+// Sync Agent function
 function syncWithLocalAgent() {
     let currentVersion = "6.0.0 (Quantum Resilient Edition)";
     if (typeof AboutPage !== 'undefined' && AboutPage.version) {
         currentVersion = AboutPage.version;
     }
-
     const agentUrl = `http://127.0.0.1:8000/health?v=${encodeURIComponent(currentVersion)}`;
     fetch(agentUrl, { method: 'GET' }).then(res => res.json()).then(data => {}).catch(err => {});
 }
-
 setTimeout(syncWithLocalAgent, 1000);
 setInterval(syncWithLocalAgent, 3000);
 
@@ -746,5 +760,5 @@ window.App = App;
 
 window.addEventListener('beforeunload', function () {
     const agentUrl = 'http://127.0.0.1:8000/shutdown'; 
-    try { navigator.sendBeacon(agentUrl); } catch (e) { console.warn("ไม่สามารถส่งสัญญาณปิด Agent ได้:", e); }
+    try { navigator.sendBeacon(agentUrl); } catch (e) { console.warn("ปิด Agent ขัดข้อง:", e); }
 });

@@ -320,8 +320,10 @@ class VisitDetailPageComponent {
 
         window.removeEventListener('click', this.boundGlobalClickAway);
         window.addEventListener('click', this.boundGlobalClickAway);
+        
+        // 🚨 THE FIX 1: ถอดสายไฟระเบิดทิ้ง! เลิกดักจับ Scroll แบบบ้าคลั่ง 
         window.removeEventListener('scroll', this.boundScrollClose, true);
-        window.addEventListener('scroll', this.boundScrollClose, true);
+        // (ลบบรรทัด window.addEventListener('scroll', this.boundScrollClose, true); ทิ้งอย่างถาวร)
 
         if (!this.state.hasCleanedUp) this.autoCleanUpOldRecords();
 
@@ -333,7 +335,8 @@ class VisitDetailPageComponent {
         this.firebaseListeners = [];
         
         window.removeEventListener('click', this.boundGlobalClickAway);
-        window.removeEventListener('scroll', this.boundScrollClose, true);
+        // 🚨 THE FIX 2: ลบบรรทัด removeEventListener ของ scroll ออกด้วย
+        
         this.closeActiveDropdown();
         
         const dropzone = document.getElementById('doc-dropzone');

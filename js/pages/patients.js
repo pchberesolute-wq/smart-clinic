@@ -1,5 +1,5 @@
 // js/pages/patients.js
-// 🚀 Enterprise Patients Module: Zero-Duplicate Sentinel, Atomic Mutations & Print Spooler (v9.0)
+// 🚀 Enterprise Patients Module: Dynamic Theme Rendering, Allergy Alert & Excel Pro (v9.3 FULL)
 
 class PatientsPageComponent {
     constructor() {
@@ -17,6 +17,64 @@ class PatientsPageComponent {
         return `
             <style>
                 .safe-icon { font-family: 'Font Awesome 6 Free', 'FontAwesome', sans-serif !important; font-weight: 900 !important; font-style: normal !important; }
+                
+                /* 🚨 THE FIX: สถาปัตยกรรมสี Dynamic Theme สำหรับป้าย (Badges) */
+                .badge-status-active { background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.2); }
+                .badge-infect-safe { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+                .badge-infect-warn { background: rgba(245,158,11,0.1); color: #d97706; border: 1px solid rgba(245,158,11,0.2); }
+                .badge-infect-danger { background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
+                .badge-allergy { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+
+                /* 🚨 Dark Mode Badges Override */
+                html[data-bs-theme="dark"] .badge-status-active { background: rgba(16,185,129,0.15); color: #34d399; border-color: rgba(16,185,129,0.3); }
+                html[data-bs-theme="dark"] .badge-infect-safe { background: rgba(255,255,255,0.05); color: #94a3b8; border-color: rgba(255,255,255,0.1); }
+                html[data-bs-theme="dark"] .badge-infect-warn { background: rgba(245,158,11,0.15); color: #fbbf24; border-color: rgba(245,158,11,0.3); }
+                html[data-bs-theme="dark"] .badge-infect-danger { background: rgba(239,68,68,0.15); color: #f87171; border-color: rgba(239,68,68,0.3); }
+                html[data-bs-theme="dark"] .badge-allergy { background: rgba(239,68,68,0.15); color: #fca5a5; border-color: rgba(239,68,68,0.3); }
+
+                /* 🚨 THE FIX: สถาปัตยกรรมสี Dynamic Theme สำหรับปุ่มจัดการ (Action Buttons) */
+                .btn-action-icon { width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; transition: all 0.2s ease; }
+                
+                .btn-action-emr { background: rgba(37,99,235,0.1); color: #2563eb; border: 1px solid rgba(37,99,235,0.2); }
+                html[data-bs-theme="dark"] .btn-action-emr { background: rgba(59,130,246,0.15); color: #60a5fa; border-color: rgba(59,130,246,0.3); }
+
+                .btn-action-edit { background: rgba(245,158,11,0.1); color: #d97706; border: 1px solid rgba(245,158,11,0.2); }
+                html[data-bs-theme="dark"] .btn-action-edit { background: rgba(245,158,11,0.15); color: #fbbf24; border-color: rgba(245,158,11,0.3); }
+
+                .btn-action-print { background: rgba(14,165,233,0.1); color: #0ea5e9; border: 1px solid rgba(14,165,233,0.2); }
+                html[data-bs-theme="dark"] .btn-action-print { background: rgba(14,165,233,0.15); color: #38bdf8; border-color: rgba(14,165,233,0.3); }
+
+                .btn-action-status { background: rgba(100,116,139,0.1); color: #64748b; border: 1px solid rgba(100,116,139,0.2); }
+                html[data-bs-theme="dark"] .btn-action-status { background: rgba(148,163,184,0.15); color: #94a3b8; border-color: rgba(148,163,184,0.3); }
+
+                .btn-action-delete { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+                html[data-bs-theme="dark"] .btn-action-delete { background: rgba(239,68,68,0.15); color: #f87171; border-color: rgba(239,68,68,0.3); }
+                
+                .btn-action-icon:hover { filter: brightness(0.9); transform: translateY(-2px); }
+                html[data-bs-theme="dark"] .btn-action-icon:hover { filter: brightness(1.2); }
+                
+                /* 🚨 NEW: ล็อกความสูงตาราง ให้ Scroll ภายใน ไม่ยืดดันหน้าจอ */
+                .pt-table-container {
+                    max-height: calc(100vh - 260px); /* คำนวณหักลบพื้นที่ส่วนหัว Header */
+                    min-height: 400px;
+                    overflow-y: auto;
+                    overflow-x: auto;
+                }
+                
+                /* ปรับแต่ง Scrollbar ให้ดูหรูหรา (FinOps/UX Optimization) */
+                .pt-table-container::-webkit-scrollbar { width: 6px; height: 6px; }
+                .pt-table-container::-webkit-scrollbar-track { background: transparent; }
+                .pt-table-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+                html[data-bs-theme="dark"] .pt-table-container::-webkit-scrollbar-thumb { background: #475569; }
+                
+                /* ตรึงหัวตาราง (Sticky Header) ไม่ให้เลื่อนตามตอน Scroll ลงมา */
+                .table-premium thead th {
+                    position: sticky;
+                    top: 0;
+                    z-index: 10;
+                    background-color: var(--bg-surface) !important;
+                    box-shadow: inset 0 -2px 0 var(--border-color); /* ใช้แทน border-bottom เพื่อให้คงอยู่ตอน Scroll */
+                }
             </style>
             
             <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 fade-in-up">
@@ -46,16 +104,18 @@ class PatientsPageComponent {
                 </div>
             </div>
             
-            <div class="modern-panel shadow-sm p-4 position-relative overflow-hidden fade-in-up" style="animation-delay: 0.1s;">
+            <div class="modern-panel shadow-sm p-4 position-relative overflow-hidden fade-in-up" style="animation-delay: 0.1s; display: flex; flex-direction: column;">
                 <div style="position: absolute; top: -30px; right: -30px; opacity: 0.02; font-size: 300px; pointer-events: none;"><i class="fa-solid fa-users-medical safe-icon"></i></div>
-                <div class="table-responsive bg-white rounded-4 border position-relative z-1 shadow-sm pb-2" style="background-color: var(--bg-surface) !important; border-color: var(--border-color) !important;">
+                
+                <!-- 🚨 THE FIX: นำคลาส pt-table-container มาครอบตารางเพื่อจัดการ Scroll -->
+                <div class="table-responsive pt-table-container bg-white rounded-4 border position-relative z-1 shadow-sm pb-2" style="background-color: var(--bg-surface) !important; border-color: var(--border-color) !important;">
                     <table class="table table-premium w-100 mb-0">
-                        <thead style="position: sticky; top: 0; z-index: 10;">
+                        <thead>
                             <tr>
                                 <th style="width: 25%;"><i class="fa-solid fa-id-card-clip text-primary me-2 safe-icon"></i> ผู้ป่วย (HN & ชื่อ)</th>
                                 <th style="width: 20%;"><i class="fa-solid fa-clock-rotate-left text-info me-2 safe-icon"></i> ข้อมูลเวร/ติดต่อ</th>
                                 <th style="width: 15%;"><i class="fa-solid fa-shield-heart text-success me-2 safe-icon"></i> สิทธิรักษา</th>
-                                <th style="width: 15%;"><i class="fa-solid fa-virus text-danger me-2 safe-icon"></i> ผลเลือด (Infection)</th>
+                                <th style="width: 15%;"><i class="fa-solid fa-triangle-exclamation text-danger me-2 safe-icon"></i> เฝ้าระวัง (Infect/Allergy)</th>
                                 <th class="text-center" style="width: 10%;"><i class="fa-solid fa-chart-simple text-warning me-2 safe-icon"></i> สถานะ</th>
                                 <th class="text-center" style="width: 15%;"><i class="fa-solid fa-gears text-secondary me-2 safe-icon"></i> จัดการ</th>
                             </tr>
@@ -95,56 +155,40 @@ class PatientsPageComponent {
         this.firebaseListeners.forEach(l => db.ref(l.path).off('value', l.callback));
         this.firebaseListeners = [];
         this.stopCameraScanner(); 
-        console.log("🧹 [Patients] Cleaned up listeners and hardware streams.");
     }
 
-    // =========================================================================
-    // 🚀 ZERO-DUPLICATE SENTINEL ENGINE (ระบบตรวจจับป้องกันข้อมูลซ้ำข้ามหน้าต่าง)
-    // =========================================================================
     verifyDuplicateBeforeSave(hn, idcard, fullNameTh) {
         return new Promise((resolve) => {
-            // ทำความสะอาดตัวอักษร (Sanitization) ป้องกันช่องว่างหรือขีด (-) หลอกระบบ
             const cleanHN = String(hn || '').trim().toLowerCase();
-            const cleanID = String(idcard || '').replace(/\D/g, ''); // เหลือแต่ตัวเลข
-            const cleanName = String(fullNameTh || '').replace(/\s+/g, '').toLowerCase(); // เอาช่องว่างออก
+            const cleanID = String(idcard || '').replace(/\D/g, ''); 
+            const cleanName = String(fullNameTh || '').replace(/\s+/g, '').toLowerCase(); 
 
-            if (this.state.allData.length === 0) return resolve(true); // ข้อมูลยังไม่มี ยอมให้ผ่านได้
+            if (this.state.allData.length === 0) return resolve(true);
 
-            // 🛑 1. STRICT BLOCK: ตรวจสอบรหัส HN ซ้ำ
             if (cleanHN) {
                 let dupHN = this.state.allData.find(p => String(p.hn || '').trim().toLowerCase() === cleanHN);
                 if (dupHN) {
                     Swal.fire({
                         title: '<h4 class="text-danger fw-bold mb-0"><i class="fa-solid fa-shield-virus me-2"></i>บล็อกการบันทึก!</h4>',
-                        html: `<div class="text-start mt-3" style="font-family:'Sarabun';">
-                               รหัส <b>HN: ${hn}</b> ถูกใช้งานแล้วโดย:<br>
-                               <b class="text-primary fs-5">${this.#escapeHTML(dupHN.title||'')}${this.#escapeHTML(dupHN.name_th||'')}</b><br><br>
-                               <small class="text-muted"><i class="fa-solid fa-circle-info"></i> ระบบไม่อนุญาตให้ใช้รหัส HN ซ้ำกัน กรุณาเปลี่ยนรหัสใหม่</small>
-                               </div>`,
+                        html: `<div class="text-start mt-3" style="font-family:'Sarabun';">รหัส <b>HN: ${hn}</b> ถูกใช้งานแล้วโดย:<br><b class="text-primary fs-5">${this.#escapeHTML(dupHN.title||'')}${this.#escapeHTML(dupHN.name_th||'')}</b><br><br><small class="text-muted"><i class="fa-solid fa-circle-info"></i> ระบบไม่อนุญาตให้ใช้รหัส HN ซ้ำกัน กรุณาเปลี่ยนรหัสใหม่</small></div>`,
                         icon: 'error', confirmButtonColor: '#ef4444', customClass: { popup: 'premium-alert' }
                     });
                     return resolve(false); 
                 }
             }
 
-            // 🛑 2. STRICT BLOCK: ตรวจสอบเลขบัตรประชาชนซ้ำ (เช็คเฉพาะที่มี 13 หลัก)
             if (cleanID && cleanID.length >= 10) {
                 let dupID = this.state.allData.find(p => String(p.idcard || p.cid || '').replace(/\D/g, '') === cleanID);
                 if (dupID) {
                     Swal.fire({
                         title: '<h4 class="text-danger fw-bold mb-0"><i class="fa-solid fa-fingerprint me-2"></i>ข้อมูล ปชช. ซ้ำซ้อน!</h4>',
-                        html: `<div class="text-start mt-3" style="font-family:'Sarabun';">
-                               เลขประจำตัวประชาชนนี้ ถูกลงทะเบียนไว้แล้วในชื่อ:<br>
-                               <b class="text-primary fs-5">${this.#escapeHTML(dupID.title||'')}${this.#escapeHTML(dupID.name_th||'')}</b> (HN: ${dupID.hn})<br><br>
-                               <small class="text-muted"><i class="fa-solid fa-triangle-exclamation"></i> ข้อมูล ปชช. คือ Primary Key ระดับบุคคล ไม่สามารถลงทะเบียนซ้ำได้</small>
-                               </div>`,
+                        html: `<div class="text-start mt-3" style="font-family:'Sarabun';">เลขประจำตัวประชาชนนี้ ถูกลงทะเบียนไว้แล้วในชื่อ:<br><b class="text-primary fs-5">${this.#escapeHTML(dupID.title||'')}${this.#escapeHTML(dupID.name_th||'')}</b> (HN: ${dupID.hn})<br><br><small class="text-muted"><i class="fa-solid fa-triangle-exclamation"></i> ข้อมูล ปชช. คือ Primary Key ระดับบุคคล ไม่สามารถลงทะเบียนซ้ำได้</small></div>`,
                         icon: 'error', confirmButtonColor: '#ef4444', customClass: { popup: 'premium-alert' }
                     });
                     return resolve(false);
                 }
             }
 
-            // ⚠️ 3. SOFT WARN: ตรวจสอบชื่อ-นามสกุลซ้ำ (อาจจะกรอกคนละคนแต่ชื่อบังเอิญเหมือนกัน)
             if (cleanName) {
                 let dupName = this.state.allData.find(p => {
                     let existingName = String((p.title || '') + (p.name_th || '')).replace(/\s+/g, '').toLowerCase();
@@ -154,20 +198,16 @@ class PatientsPageComponent {
                 if (dupName) {
                     Swal.fire({
                         title: '<h5 class="text-warning fw-bold mb-0"><i class="fa-solid fa-users-viewfinder me-2"></i>พบรายชื่อคล้ายคลึงกัน</h5>',
-                        html: `<div class="text-start mt-3" style="font-family:'Sarabun';">
-                               ระบบพบคนไข้ชื่อ <b class="text-primary">${this.#escapeHTML(dupName.title||'')}${this.#escapeHTML(dupName.name_th||'')}</b> (HN: ${dupName.hn}) อยู่ในระบบแล้ว<br><br>
-                               คุณแน่ใจหรือไม่ว่าเป็น <u class="text-danger fw-bold">คนละคนกัน</u> และต้องการบันทึกเวชระเบียนใหม่?
-                               </div>`,
+                        html: `<div class="text-start mt-3" style="font-family:'Sarabun';">ระบบพบคนไข้ชื่อ <b class="text-primary">${this.#escapeHTML(dupName.title||'')}${this.#escapeHTML(dupName.name_th||'')}</b> (HN: ${dupName.hn}) อยู่ในระบบแล้ว<br><br>คุณแน่ใจหรือไม่ว่าเป็น <u class="text-danger fw-bold">คนละคนกัน</u> และต้องการบันทึกเวชระเบียนใหม่?</div>`,
                         icon: 'warning', showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-user-plus me-1"></i> ยืนยันบันทึก', cancelButtonText: 'ยกเลิก (กลับไปเช็ค)',
                         confirmButtonColor: '#f59e0b', cancelButtonColor: '#94a3b8', customClass: { popup: 'premium-alert' }
                     }).then((res) => {
-                        resolve(res.isConfirmed); // ถ้ากดยืนยันก็ยอมให้บันทึกต่อได้
+                        resolve(res.isConfirmed); 
                     });
-                    return; // รอ Promise ตอบกลับ
+                    return; 
                 }
             }
-
-            resolve(true); // ปลอดภัย 100% ผ่านทุกด่าน
+            resolve(true); 
         });
     }
 
@@ -248,12 +288,27 @@ class PatientsPageComponent {
 
         let html = "";
         dataList.forEach(p => {
-            let statusBadge = '<span class="badge px-3 py-2 rounded-pill shadow-sm" style="font-size:12px; background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.2);"><i class="fa-solid fa-check-circle me-1 safe-icon"></i> ปกติ (Active)</span>';
-            let infHtml = '<span class="badge bg-light text-secondary border px-3 py-2 rounded-pill shadow-sm" style="font-size:11px; background: rgba(0,0,0,0.03) !important;">ปลอดภัย</span>';
+            // 🚨 THE FIX: เปลี่ยนมาใช้คลาส CSS ที่เราออกแบบไว้สำหรับ Theme Switcher แทน Inline Styles
+            let statusBadge = '<span class="badge badge-status-active px-3 py-2 rounded-pill shadow-sm" style="font-size:12px;"><i class="fa-solid fa-check-circle me-1 safe-icon"></i> ปกติ (Active)</span>';
+            
+            let infHtml = '<span class="badge badge-infect-safe px-3 py-2 rounded-pill shadow-sm" style="font-size:11px;">ปลอดภัย</span>';
             let inf = p.infection || "ไม่มี";
-            if (inf === "HCV") infHtml = '<span class="badge px-3 py-2 shadow-sm rounded-pill" style="font-size:11px; background: rgba(245,158,11,0.1); color: #d97706; border: 1px solid rgba(245,158,11,0.2);"><i class="fa-solid fa-virus me-1 safe-icon"></i> HCV +</span>';
-            if (inf === "HIV") infHtml = '<span class="badge px-3 py-2 shadow-sm rounded-pill" style="font-size:11px; background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2);"><i class="fa-solid fa-virus me-1 safe-icon"></i> HIV +</span>';
-            if (inf === "HBV") infHtml = '<span class="badge px-3 py-2 shadow-sm rounded-pill" style="font-size:11px; background: rgba(245,158,11,0.1); color: #d97706; border: 1px solid rgba(245,158,11,0.2);"><i class="fa-solid fa-virus me-1 safe-icon"></i> HBV +</span>';
+            
+            if (inf === "HCV") infHtml = '<span class="badge badge-infect-warn px-3 py-2 shadow-sm rounded-pill" style="font-size:11px;"><i class="fa-solid fa-virus me-1 safe-icon"></i> HCV +</span>';
+            if (inf === "HIV") infHtml = '<span class="badge badge-infect-danger px-3 py-2 shadow-sm rounded-pill" style="font-size:11px;"><i class="fa-solid fa-virus me-1 safe-icon"></i> HIV +</span>';
+            if (inf === "HBV") infHtml = '<span class="badge badge-infect-warn px-3 py-2 shadow-sm rounded-pill" style="font-size:11px;"><i class="fa-solid fa-virus me-1 safe-icon"></i> HBV +</span>';
+
+            let allergyHtml = '';
+            let allergyVal = (p.allergy || "").trim();
+            if (allergyVal && !['-', 'ไม่มี', 'ไม่มีประวัติแพ้ยา', 'ไม่มีประวัติแพ้', 'none', 'n/a'].includes(allergyVal.toLowerCase())) {
+                allergyHtml = `
+                    <div class="mt-2">
+                        <span class="badge badge-allergy px-2 py-1 shadow-sm rounded-pill" style="font-size:11px; max-width: 150px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; display: inline-block;" title="แพ้ยา: ${this.#escapeHTML(allergyVal)}">
+                            <i class="fa-solid fa-ban me-1 safe-icon"></i> แพ้: ${this.#escapeHTML(allergyVal)}
+                        </span>
+                    </div>
+                `;
+            }
 
             const safeName = this.#escapeHTML(`${p.title || ''}${p.name_th || 'ไม่ระบุชื่อ'}`);
             let imgSrc = p.photo_base64 && typeof p.photo_base64 === 'string' ? (p.photo_base64.startsWith('data:image') ? p.photo_base64 : 'data:image/jpeg;base64,' + p.photo_base64) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(safeName||'X') + '&background=3b82f6&color=fff&bold=true';
@@ -273,19 +328,23 @@ class PatientsPageComponent {
                     <div class="text-muted fw-bold mt-2" style="font-size:12px;"><i class="fa-solid fa-phone text-secondary me-2 safe-icon"></i> ${this.#escapeHTML(p.phone || '-')}</div>
                 </td>
                 <td class="fw-bold text-secondary" onclick="App.pages.patients.viewHistory('${p.hn}')" style="font-size:14px;">${this.#escapeHTML(p.right || '-')}</td>
-                <td onclick="App.pages.patients.viewHistory('${p.hn}')">${infHtml}</td>
+                <td onclick="App.pages.patients.viewHistory('${p.hn}')">
+                    ${infHtml}
+                    ${allergyHtml}
+                </td>
                 <td class="text-center" onclick="App.pages.patients.viewHistory('${p.hn}')">${statusBadge}</td>
                 <td class="text-center">
                     <div class="d-flex justify-content-center gap-2">
-                        <button class="btn btn-sm shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0; background: rgba(37,99,235,0.1); color: #2563eb; border: 1px solid rgba(37,99,235,0.2);" onclick="event.stopPropagation(); App.pages.patients.viewHistory('${p.hn}')" title="แฟ้มประวัติ (EMR)"><i class="fa-solid fa-folder-open safe-icon"></i></button>
+                        <!-- 🚨 THE FIX: นำคลาสปุ่ม Theme Engine มาสวมให้ปุ่ม Action ทั้งหมด -->
+                        <button class="btn btn-sm shadow-sm btn-action-icon btn-action-emr" onclick="event.stopPropagation(); App.pages.patients.viewHistory('${p.hn}')" title="แฟ้มประวัติ (EMR)"><i class="fa-solid fa-folder-open safe-icon"></i></button>
                         
-                        <button class="btn btn-sm shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0; background: rgba(245,158,11,0.1); color: #d97706; border: 1px solid rgba(245,158,11,0.2);" onclick="event.stopPropagation(); App.pages.patients.editPatient('${p.firebaseKey}')" title="แก้ไขข้อมูล"><i class="fa-solid fa-pen safe-icon"></i></button>
+                        <button class="btn btn-sm shadow-sm btn-action-icon btn-action-edit" onclick="event.stopPropagation(); App.pages.patients.editPatient('${p.firebaseKey}')" title="แก้ไขข้อมูล"><i class="fa-solid fa-pen safe-icon"></i></button>
                         
-                        <button class="btn btn-sm shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0; background: rgba(14,165,233,0.1); color: #0ea5e9; border: 1px solid rgba(14,165,233,0.2);" onclick="event.stopPropagation(); App.pages.patients.printOPDCard('${p.hn}')" title="พิมพ์บัตร OPD"><i class="fa-solid fa-print safe-icon"></i></button>
+                        <button class="btn btn-sm shadow-sm btn-action-icon btn-action-print" onclick="event.stopPropagation(); App.pages.patients.printOPDCard('${p.hn}')" title="พิมพ์บัตร OPD"><i class="fa-solid fa-print safe-icon"></i></button>
                         
-                        <button class="btn btn-sm shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0; background: rgba(100,116,139,0.1); color: #64748b; border: 1px solid rgba(100,116,139,0.2);" onclick="event.stopPropagation(); App.pages.patients.changeStatus('${p.firebaseKey}', '${safeName}')" title="เปลี่ยนสถานะ/จำหน่ายผู้ป่วย"><i class="fa-solid fa-user-minus safe-icon"></i></button>
+                        <button class="btn btn-sm shadow-sm btn-action-icon btn-action-status" onclick="event.stopPropagation(); App.pages.patients.changeStatus('${p.firebaseKey}', '${safeName}')" title="เปลี่ยนสถานะ/จำหน่ายผู้ป่วย"><i class="fa-solid fa-user-minus safe-icon"></i></button>
 
-                        <button class="btn btn-sm shadow-sm" style="border-radius:10px; width:34px; height:34px; padding:0; background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5;" onclick="event.stopPropagation(); App.pages.patients.deletePatient('${p.firebaseKey}', '${p.hn}', '${safeName}')" title="ลบข้อมูลผู้ป่วย (ถาวร)"><i class="fa-solid fa-trash-can safe-icon"></i></button>
+                        <button class="btn btn-sm shadow-sm btn-action-icon btn-action-delete" onclick="event.stopPropagation(); App.pages.patients.deletePatient('${p.firebaseKey}', '${p.hn}', '${safeName}')" title="ลบข้อมูลผู้ป่วย (ถาวร)"><i class="fa-solid fa-trash-can safe-icon"></i></button>
                     </div>
                 </td>
             </tr>`;
@@ -337,12 +396,7 @@ class PatientsPageComponent {
                         customClass: { popup: 'premium-alert' }
                     });
                 } catch(err) {
-                    Swal.fire({
-                        title: 'เกิดข้อผิดพลาด', 
-                        text: err.message, 
-                        icon: 'error', 
-                        customClass: { popup: 'premium-alert' }
-                    });
+                    Swal.fire({ title: 'เกิดข้อผิดพลาด', text: err.message, icon: 'error', customClass: { popup: 'premium-alert' } });
                 }
             }
         });
@@ -369,7 +423,6 @@ class PatientsPageComponent {
                         status: newStatus,
                         last_updated: new Date().toISOString()
                     });
-                    
                     Swal.fire({title:'จำหน่ายสำเร็จ!', text:`ย้ายผู้ป่วยเข้าสู่หมวด "${newStatus}" เรียบร้อยแล้ว`, icon:'success', customClass: { popup: 'premium-alert' }});
                 } catch(err) {
                     Swal.fire({title:'เกิดข้อผิดพลาด', text:err.message, icon:'error', customClass: { popup: 'premium-alert' }});
@@ -539,7 +592,7 @@ class PatientsPageComponent {
                     ${optionsHtml}
                 </select>
                 <div class="mt-3 p-3 bg-light rounded-3 border">
-                    <small class="text-muted"><i class="fa-solid fa-circle-info text-primary me-1 safe-icon"></i> ระบบจะจัดเรียงข้อมูล ตกแต่งสีสันตาราง และกำหนดขนาดคอลัมน์ให้สวยงามอ่านง่ายโดยอัตโนมัติ</small>
+                    <small class="text-muted"><i class="fa-solid fa-circle-info text-primary me-1 safe-icon"></i> ระบบจะจัดเรียงข้อมูล ตกแต่งสีสันตาราง ไฮไลท์ข้อมูลโรคติดต่อ/แพ้ยา และกำหนดขนาดคอลัมน์ให้สวยงามอ่านง่ายโดยอัตโนมัติ</small>
                 </div>
             </div>
         `;
@@ -559,7 +612,11 @@ class PatientsPageComponent {
     }
 
     executeExcelExport(rightFilter) {
-        Swal.fire({ title: 'กำลังประมวลผล Excel...', html: 'ระบบกำลังจัดรูปเล่มตาราง กรุณารอสักครู่', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }, customClass: { popup: 'premium-alert' } });
+        if (!XLSX.utils.book_new) {
+            Swal.fire('ข้อผิดพลาด', 'ไลบรารีสร้าง Excel ขัดข้อง', 'error'); return;
+        }
+
+        Swal.fire({ title: 'กำลังประมวลผล Excel...', html: 'ระบบกำลังจัดรูปเล่มตารางและสาดสีแจ้งเตือน กรุณารอสักครู่', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }, customClass: { popup: 'premium-alert' } });
         
         setTimeout(() => {
             let filteredPatients = this.state.allData;
@@ -574,13 +631,16 @@ class PatientsPageComponent {
 
             let excelData = [];
             filteredPatients.forEach((p, index) => {
+                let cleanId = (p.idcard || p.cid || "").replace(/\D/g, "");
+                let displayIdCard = this.#formatIdCardDisplay(cleanId);
+
                 excelData.push({
                     "ลำดับ": index + 1,
                     "รหัสผู้ป่วย (HN)": p.hn || "-",
                     "ชื่อ-นามสกุล": (p.title || '') + (p.name_th || '-'),
                     "วันเกิด": p.dob ? new Date(p.dob).toLocaleDateString('th-TH') : "-",
                     "อายุ (ปี)": p.age || "-",
-                    "เลขประจำตัว ปชช.": p.idcard || p.cid || "-", 
+                    "เลขประจำตัว ปชช.": displayIdCard, 
                     "สิทธิการรักษา": p.right || "ไม่ระบุ",
                     "รอบเวรที่ฟอก": p.shift || "-",
                     "โรคติดต่อ": p.infection || "ไม่มี",
@@ -595,6 +655,7 @@ class PatientsPageComponent {
 
             const worksheet = XLSX.utils.json_to_sheet(excelData);
             const range = XLSX.utils.decode_range(worksheet['!ref']);
+            
             for (let R = range.s.r; R <= range.e.r; ++R) {
                 for (let C = range.s.c; C <= range.e.c; ++C) {
                     const cellAddress = { c: C, r: R };
@@ -613,12 +674,24 @@ class PatientsPageComponent {
                     };
 
                     if (R === 0) {
-                        cellStyle.fill = { fgColor: { rgb: "2563EB" } }; 
+                        cellStyle.fill = { fgColor: { rgb: "1E3A8A" } }; 
                         cellStyle.font = { name: "Tahoma", sz: 11, color: { rgb: "FFFFFF" }, bold: true }; 
                         cellStyle.alignment = { horizontal: "center", vertical: "center" };
                     } else {
                         cellStyle.fill = { fgColor: (R % 2 !== 0) ? { rgb: "F8FAFC" } : { rgb: "FFFFFF" } }; 
                         if ([0, 1, 3, 4, 5, 7, 8, 9, 10].includes(C)) cellStyle.alignment.horizontal = "center";
+
+                        const cellValue = String(worksheet[cellRef].v).toLowerCase();
+                        
+                        if (C === 8 && cellValue && cellValue !== 'ไม่มี') {
+                            cellStyle.font = { name: "Tahoma", sz: 10, color: { rgb: "DC2626" }, bold: true };
+                            cellStyle.fill = { fgColor: { rgb: "FEE2E2" } }; 
+                        }
+                        
+                        if (C === 13 && cellValue && !['-', 'ไม่มี', 'ไม่มีประวัติแพ้ยา', 'ไม่มีประวัติแพ้', 'none', 'n/a'].includes(cellValue)) {
+                            cellStyle.font = { name: "Tahoma", sz: 10, color: { rgb: "B91C1C" }, bold: true };
+                            cellStyle.fill = { fgColor: { rgb: "FFEDD5" } }; 
+                        }
                     }
                     worksheet[cellRef].s = cellStyle;
                 }
@@ -630,19 +703,20 @@ class PatientsPageComponent {
                 for (let j = 0; j < value.length; j++) {
                     if (typeof objectMaxLength[j] === 'undefined') objectMaxLength[j] = Object.keys(excelData[0])[j].length; 
                     const valLength = value[j] ? String(value[j]).length : 0;
-                    if (valLength > objectMaxLength[j]) objectMaxLength[j] = valLength;
+                    if ((valLength * 1.5) > objectMaxLength[j]) objectMaxLength[j] = Math.ceil(valLength * 1.5);
                 }
             }
             
-            worksheet['!cols'] = objectMaxLength.map(w => { return { width: Math.min(Math.max(w + 4, 10), 45) } });
-            worksheet['!rows'] = [{ hpt: 30 }]; 
+            worksheet['!cols'] = objectMaxLength.map(w => { return { width: Math.min(Math.max(w + 2, 10), 60) } });
+            worksheet['!rows'] = [{ hpt: 35 }]; 
 
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "ทะเบียนผู้ป่วย");
             
             let fileName = rightFilter === 'ALL' ? "ทะเบียนผู้ป่วยทั้งหมด_Active" : "ทะเบียนผู้ป่วย_สิทธิ_" + rightFilter;
             XLSX.writeFile(workbook, fileName + "_" + new Date().toISOString().split('T')[0] + ".xlsx");
-            Swal.fire({title:'ดาวน์โหลดสำเร็จ!', text:'ไฟล์ Excel ถูกตกแต่งและจัดเรียงอย่างสวยงามแล้ว', icon:'success', customClass: { popup: 'premium-alert' }});
+            
+            Swal.fire({title:'ดาวน์โหลดสำเร็จ!', text:'ไฟล์ Excel ถูกตกแต่ง สีสันจัดเรียง และจัดฟอร์แมตเลข ปชช. ให้เรียบร้อยแล้ว', icon:'success', customClass: { popup: 'premium-alert' }});
         }, 800); 
     }
 
@@ -779,7 +853,6 @@ class PatientsPageComponent {
                                 <div class="clinic-info">
                                     <strong>ที่อยู่:</strong><br>${this.#escapeHTML(clinic.address)}<br><br>
                                     <strong>โทรศัพท์:</strong> ${this.#escapeHTML(clinic.phone)}<br><br>
-                                    <strong>เลขประจำตัวผู้เสียภาษี:</strong> ${this.#escapeHTML(clinic.tax_id || '-')}<br><br>
                                     <strong>รหัสสถานพยาบาล:</strong> ${this.#escapeHTML(clinic.clinic_id || '-')}
                                 </div>
                             </div>
@@ -792,7 +865,7 @@ class PatientsPageComponent {
                                     <li>แจ้งพยาบาลทันทีหากมีอาการผิดปกติ เช่น หอบเหนื่อย เจ็บหน้าอก หรือมีไข้</li>
                                 </ul>
                             </div>
-                            <div class="footer-note">พิมพ์จากระบบ Dialysis Pro EMR System (Engine v8.0) เมื่อ ${new Date().toLocaleDateString('th-TH')} เวลา ${new Date().toLocaleTimeString('th-TH')} น.</div>
+                            <div class="footer-note">พิมพ์จากระบบ Dialysis Pro EMR System (Engine v9.3) เมื่อ ${new Date().toLocaleDateString('th-TH')} เวลา ${new Date().toLocaleTimeString('th-TH')} น.</div>
                         </div>
                         <div class="page-half right-half">
                             <div class="front-cover">
@@ -904,9 +977,18 @@ class PatientsPageComponent {
         if (!str && str !== 0) return '';
         return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
     }
+
+    // 🚨 THE FIX: ฟังก์ชันจัดฟอร์แมตเลขบัตรประชาชน (X-XXXX-XXXXX-XX-X)
+    #formatIdCardDisplay(id) {
+        if (!id) return '-';
+        const clean = String(id).replace(/\D/g, ''); 
+        if (clean.length === 13) {
+            return clean.replace(/(\d{1})(\d{4})(\d{5})(\d{2})(\d{1})/, "$1-$2-$3-$4-$5");
+        }
+        return clean; 
+    }
 }
 
 const PatientsPage = new PatientsPageComponent();
 window.PatientsPage = PatientsPage;
-// 🚨 สร้างสะพานเชื่อมต่อ (Bridge) เพื่อให้หน้าฟอร์ม (patient_form) สามารถเรียกใช้ Engine ข้ามไฟล์ได้
 if (!window.PatientsPageGlobalGuard) window.PatientsPageGlobalGuard = PatientsPage;

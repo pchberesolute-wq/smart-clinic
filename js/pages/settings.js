@@ -1,5 +1,5 @@
 // js/pages/settings.js
-// 🚀 Enterprise Settings Module: Bulletproof Zero-Shift Tabs, Memory-Leak Free, Dynamic RBAC & Database Management
+// 🚀 Enterprise Settings Module: Bulletproof Typography, Memory-Leak Free & Dynamic RBAC (v9.2 FULL)
 
 class SettingsPageComponent {
     constructor() {
@@ -926,7 +926,7 @@ class SettingsPageComponent {
                         <div class="brand-zone clinic-brand">
                             ${logoHtml}
                             <div class="text-zone">
-                                <div class="company-name company-name-text">${this._escapeHTML(cardName)}</div>
+                                <div class="company-name company-name-text">${this._escapeHTML(cardName).replace(/(โรงพยาบาล|คลินิก)/g, '<span style="white-space: nowrap;">$1</span>')}</div>
                                 <div class="tax-id clinic-id"><i class="fa-solid fa-hospital-user me-1"></i> ${idLabel}: ${this._escapeHTML(idValue)}</div>
                             </div>
                         </div>
@@ -951,13 +951,16 @@ class SettingsPageComponent {
                         <div class="corp-brand">
                             ${logoHtml}
                             <div class="text-zone">
-                                <div class="company-name company-name-text">${this._escapeHTML(cardName)}</div>
-                                <div class="tax-id-box">${idLabel}: ${this._escapeHTML(idValue)}</div>
+                                <div class="company-name company-name-text">${this._escapeHTML(cardName).replace(/(โรงพยาบาล|คลินิก)/g, '<span style="white-space: nowrap;">$1</span>')}</div>
+                                <div class="tax-id-box">
+                                    <div class="tax-id-label">${idLabel}</div>
+                                    <div class="tax-id-number">${this._escapeHTML(idValue)}</div>
+                                </div>
                             </div>
                         </div>
                         <div class="corp-contact">
-                            <div class="contact-item mb-1"><i class="fa-solid fa-building contact-icon"></i> <span>${this._escapeHTML(cardAddress)}</span></div>
-                            <div class="contact-item"><i class="fa-solid fa-phone contact-icon"></i> <span>${this._escapeHTML(cardPhone)}${cardEmail !== '-' ? ' &nbsp;|&nbsp; <i class="fa-solid fa-envelope contact-icon"></i> ' + this._escapeHTML(cardEmail) : ''}</span></div>
+                            <!-- 🚨 THE FIX: เอาเบอร์โทรและอีเมลออกตามที่ผู้ใช้รีเควส เหลือแค่ที่อยู่สำหรับออกบิล/ใบกำกับภาษี -->
+                            <div class="contact-item"><i class="fa-solid fa-building contact-icon"></i> <span>${this._escapeHTML(cardAddress)}</span></div>
                         </div>
                     </div>
                 </div>`;
@@ -1065,7 +1068,16 @@ class SettingsPageComponent {
                     .logo-img { max-width: 100%; max-height: 100%; width: auto; object-fit: contain; object-position: left center; } 
                     .placeholder-logo { background: rgba(0,0,0,0.05); border-radius: 8px; color: #94a3b8; font-size: 20px; justify-content: center; width: 16mm; }
                     .text-zone { display: flex; flex-direction: column; justify-content: center; overflow: hidden; } 
-                    .company-name { font-size: 13.5pt; font-weight: 800; line-height: 1.2; color: #0f172a; font-family: 'Prompt', sans-serif; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; letter-spacing: -0.2px; } 
+                    
+                    .company-name { 
+                        font-size: 13pt; font-weight: 800; line-height: 1.35; color: #0f172a; 
+                        font-family: 'Prompt', sans-serif; display: -webkit-box; 
+                        -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; 
+                        letter-spacing: -0.2px; 
+                        word-break: normal; 
+                        overflow-wrap: break-word;
+                    } 
+                    
                     .contact-icon { color: #64748b; font-size: 7.5pt; padding-top: 2px; text-align: center; }
 
                     /* -------------------------------------- */
@@ -1084,7 +1096,18 @@ class SettingsPageComponent {
                     .company-card .corp-header { text-align: right; margin-bottom: 2mm; border-bottom: 1px solid rgba(128,128,128,0.15); padding-bottom: 1mm; }
                     .company-card .corp-badge { font-size: 5.5pt; font-weight: 800; letter-spacing: 0.5px; color: #64748b; text-transform: uppercase; }
                     .company-card .corp-brand { display: flex; align-items: center; gap: 4mm; margin-bottom: auto; }
-                    .company-card .tax-id-box { display: inline-block; background: #0f172a; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 7.5pt; margin-top: 1.5mm; font-weight: 700; font-family: 'Prompt', sans-serif; letter-spacing: 0.5px; }
+                    
+                    .company-card .tax-id-box { 
+                        display: inline-flex; flex-direction: column; align-items: flex-start; justify-content: center;
+                        background: #0f172a; color: #fff; padding: 4px 10px; border-radius: 6px; 
+                        margin-top: 1.5mm; font-weight: 700; 
+                        font-family: 'Prompt', sans-serif;
+                        width: fit-content;
+                        line-height: 1.2;
+                    }
+                    .company-card .tax-id-label { font-size: 5.5pt; color: #94a3b8; letter-spacing: 0.5px; }
+                    .company-card .tax-id-number { font-size: 8pt; letter-spacing: 0.5px; }
+                    
                     .company-card .corp-contact { font-size: 7.5pt; color: #334155; line-height: 1.3; font-weight: 600; padding-top: 2mm; border-top: 1px dashed rgba(128,128,128,0.25); display: grid; gap: 1mm; }
                     .company-card .contact-item { display: grid; grid-template-columns: 4mm 1fr; align-items: start; } 
                 </style>
@@ -1100,13 +1123,14 @@ class SettingsPageComponent {
                     setTimeout(function() {
                         const texts = document.querySelectorAll(".company-name-text");
                         texts.forEach(textEl => {
-                            let currentSize = 13.5; 
-                            while(textEl.scrollHeight > 36 && currentSize > 9) { 
+                            let currentSize = 13; 
+                            while(textEl.scrollHeight > 42 && currentSize > 8) { 
                                 currentSize -= 0.5;
                                 textEl.style.fontSize = currentSize + "pt";
+                                textEl.style.lineHeight = "1.15"; 
                             }
                         });
-                    }, 100);
+                    }, 150);
                 </script>
             </body>
         </html>`;
@@ -1389,7 +1413,7 @@ class SettingsPageComponent {
     }
 
     // ---------------------------------------------------------
-    // 🧪 Medical Master Data (🚨 THE FIX: เพิ่มยืนยันก่อนลบ ป้องกันลั่น)
+    // 🧪 Medical Master Data
     // ---------------------------------------------------------
     renderLabSets() {
         const container = document.getElementById('lab-sets-container');
