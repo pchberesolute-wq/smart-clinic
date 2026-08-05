@@ -1,5 +1,5 @@
 // js/pages/finance.js
-// 🚀 Enterprise Finance Module: Immutable ID Binding, Unified Selector Sync & Zero-CLS
+// 🚀 Enterprise Finance Module: Immutable ID Binding, Fluid-Scroll Grid & Zero-CLS (v13.0 THE OVERFLOW FIX)
 
 class FinancePageComponent {
     constructor() {
@@ -47,7 +47,7 @@ class FinancePageComponent {
                 .btn-outline-info.bg-white:hover { background-color: #0ea5e9 !important; border-color: #0ea5e9 !important; color: #ffffff !important; }
                 .btn-outline-info.bg-white:hover i { color: #ffffff !important; }
 
-                /* 🚨 THE ULTIMATE FIX: ซิงค์ชื่อ Class CSS & ล้างจุดไข่ปลา 100% */
+                /* 🚨 ซิงค์ชื่อ Class CSS & ล้างจุดไข่ปลา 100% */
                 ul.fin-nav-tabs { 
                     display: flex !important; 
                     flex-direction: row !important;
@@ -89,17 +89,17 @@ class FinancePageComponent {
                 .fin-nav-link.active::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 3px; background: var(--primary); border-radius: 3px 3px 0 0; }
                 
                 /* ========================================================
-                   🚨 CSS GRID STACKING ENGINE (ล็อกกล่องเหล็ก)
+                    🚨 THE ULTIMATE FIX: FLUID SCROLL GRID ENGINE 
                    ======================================================== */
                 #financeTabContent {
                     display: grid;
                     grid-template-columns: 1fr;
                     grid-template-rows: 1fr;
-                    height: 580px !important;       
-                    min-height: 580px !important;
-                    max-height: 580px !important;
                     width: 100%;
                     margin-bottom: 2rem;
+                    /* ปลดล็อก max-height 580px ออก แล้วใช้วิธีคำนวณตามความสูงจอแทน */
+                    min-height: 450px !important;
+                    height: calc(100vh - 420px) !important;
                 }
 
                 .custom-tab-pane {
@@ -111,6 +111,7 @@ class FinancePageComponent {
                     height: 100%;
                     display: flex;
                     flex-direction: column;
+                    min-height: 0; /* 🚨 บังคับให้ Grid ขังเนื้อหาไว้ ห้ามเบ่งตัวออก */
                 }
 
                 .custom-tab-pane.active {
@@ -126,29 +127,33 @@ class FinancePageComponent {
                     flex-direction: column;
                     margin-bottom: 0 !important; 
                     border-top-left-radius: 0 !important;
+                    min-height: 0; /* 🚨 บังคับให้ Flexbox ขังเนื้อหาไว้ */
                 }
 
                 .locked-table-wrapper {
-                    flex-grow: 1;
-                    min-height: 0; 
-                    overflow-y: auto;
-                    overflow-x: auto; 
+                    flex: 1 1 auto; /* ให้ตารางขยายกินพื้นที่ที่เหลือทั้งหมด และหดตัวได้ */
+                    min-height: 0; /* 🚨 จุดสำคัญที่สุด! ถ้าไม่มีตัวนี้ ตารางจะทะลุจอ */
+                    overflow-y: auto !important;
+                    overflow-x: auto !important; 
                     background-color: var(--bg-surface);
                     border: 1px solid var(--border-color);
                     border-radius: 16px;
                     box-shadow: var(--shadow-sm);
                 }
                 
-                .locked-table-wrapper::-webkit-scrollbar { width: 6px; height: 6px; }
+                .locked-table-wrapper::-webkit-scrollbar { width: 8px; height: 8px; }
                 .locked-table-wrapper::-webkit-scrollbar-track { background: transparent; }
                 .locked-table-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+                .locked-table-wrapper::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+                /* ======================================================== */
 
                 .stat-card-finance { transition: all 0.3s ease; border: 1px solid var(--border-color); border-radius: 20px; padding: 24px; position: relative; overflow: hidden; background: var(--bg-surface); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); height: 100%; display: flex; flex-direction: column; }
                 .stat-card-finance:hover { transform: translateY(-5px); box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.1); border-color: var(--primary); }
                 .stat-icon-bg { position: absolute; top: -20px; right: -20px; opacity: 0.04; font-size: 150px; pointer-events: none; z-index: 0; color: var(--text-dark); }
                 
                 .table-finance { border-collapse: collapse !important; margin-bottom: 0; width: 100%; min-width: 1100px; table-layout: fixed; }
-                .table-finance th { background: var(--bg-body); color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 13px; padding: 14px 12px; border-bottom: 2px solid var(--border-color); border-top: none; white-space: nowrap; position: sticky; top: 0; z-index: 10; }
+                .table-finance th { background: var(--bg-body); color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 13px; padding: 14px 12px; border-bottom: 2px solid var(--border-color); border-top: none; white-space: nowrap; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
                 .table-finance td { padding: 14px 12px; vertical-align: middle; border-bottom: 1px solid var(--border-color); font-size: 14px; background: transparent; color: var(--text-dark); }
                 
                 .native-date-wrapper {
@@ -297,7 +302,6 @@ class FinancePageComponent {
                 </div>
             </div>
 
-            <!-- 🚨 โครงสร้าง TAB ใหม่ แก้จุดไข่ปลา -->
             <ul class="fin-nav-tabs">
                 <li>
                     <button class="fin-nav-link active" id="btn-ledger-panel" onclick="window.FinancePage.switchTab('ledger-panel')">
@@ -350,7 +354,7 @@ class FinancePageComponent {
                                         <th class="text-end" style="width: 15%; color: var(--primary) !important;">ยอดสะสม (BAL)</th>
                                     </tr>
                                 </thead>
-                                <tbody id="fin-ledger-body"><tr><td colspan="6" class="text-center py-5">...</td></tr></tbody>
+                                <tbody id="fin-ledger-body"><tr><td colspan="6" class="text-center py-5">...กำลังโหลดข้อมูล...</td></tr></tbody>
                             </table>
                         </div>
                     </div>
@@ -378,7 +382,7 @@ class FinancePageComponent {
                                         <th class="text-center" style="width: 8%;"><i class="fa-solid fa-gear safe-icon"></i></th>
                                     </tr>
                                 </thead>
-                                <tbody id="fin-income-body"><tr><td colspan="9" class="text-center py-5">...</td></tr></tbody>
+                                <tbody id="fin-income-body"><tr><td colspan="9" class="text-center py-5">...กำลังโหลดข้อมูล...</td></tr></tbody>
                             </table>
                         </div>
                     </div>
@@ -406,7 +410,7 @@ class FinancePageComponent {
                                         <th class="text-center" style="width: 13%;">จัดการ</th>
                                     </tr>
                                 </thead>
-                                <tbody id="fin-expense-body"><tr><td colspan="6" class="text-center py-5">...</td></tr></tbody>
+                                <tbody id="fin-expense-body"><tr><td colspan="6" class="text-center py-5">...กำลังโหลดข้อมูล...</td></tr></tbody>
                             </table>
                         </div>
                     </div>
@@ -415,7 +419,6 @@ class FinancePageComponent {
         `;
     }
 
-    // 🚨 THE ULTIMATE FIX: ดักจับและบังคับยัด Key ป้องกันการเป็น Array แล้วคีย์หาย (แก้บั๊ก Edit Button เงียบ)
     parseFBArray(data) {
         if (!data) return [];
         if (Array.isArray(data)) {
@@ -512,18 +515,26 @@ class FinancePageComponent {
             this.state.inventoryItems = this.parseFBArray(snap.val());
         });
 
+        let loadingCount = 0;
+        const triggerProcessData = () => {
+            loadingCount++;
+            if (loadingCount >= 3) {
+                this.processData();
+            }
+        };
+
         const cbTrans = db.ref('inventory_database_v2/transactions').on('value', snap => {
             if (!document.getElementById('fin-ledger-body')) return;
             const data = snap.val();
             this.state.stockTransactions = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
-            this.processData();
+            triggerProcessData();
         });
         this.firebaseListeners.push({ path: 'inventory_database_v2/transactions', callback: cbTrans });
 
         const cbVisits = db.ref('patients_database_v2/visits').on('value', snap => {
             if (!document.getElementById('fin-ledger-body')) return;
             this.state.allVisits = this.parseFBArray(snap.val());
-            this.processData();
+            triggerProcessData();
         });
         this.firebaseListeners.push({ path: 'patients_database_v2/visits', callback: cbVisits });
 
@@ -531,7 +542,7 @@ class FinancePageComponent {
             if (!document.getElementById('fin-ledger-body')) return;
             const data = snap.val();
             this.state.allExpenses = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
-            this.processData();
+            triggerProcessData();
         });
         this.firebaseListeners.push({ path: 'clinic_expenses_v2', callback: cbExp });
     }
@@ -583,11 +594,12 @@ class FinancePageComponent {
                 incomeHtml = `<tr><td colspan="9" class="text-center py-5" style="color: var(--text-muted);"><i class="fa-solid fa-file-invoice-dollar fa-3x mb-3" style="opacity:0.2;"></i><br>ไม่มีรายรับในช่วงเวลานี้</td></tr>`;
             } else {
                 filteredVisits.forEach(v => {
-                    let base_fee = parseFloat(String(v.dialysis_fee || 0).replace(/,/g, '')); 
-                    if (isNaN(base_fee) || base_fee < 0) base_fee = 1500; 
-                    let med_fee = Number(v.med_fee || 0);
-                    let lab_fee = Number(v.lab_fee || 0);
-                    let xray_fee = Number(v.xray_fee || 0);
+                    let base_fee = Number(v.dialysis_fee) || 0; 
+                    if (base_fee <= 0) base_fee = 1500; 
+
+                    let med_fee = Number(v.med_fee) || 0;
+                    let lab_fee = Number(v.lab_fee) || 0;
+                    let xray_fee = Number(v.xray_fee) || 0;
                     let total_visit_fee = base_fee + med_fee + lab_fee + xray_fee;
                     
                     sumDialysis += base_fee;
@@ -611,7 +623,6 @@ class FinancePageComponent {
                                    `</div>`;
                     }
 
-                    // 🚨 THE FIX: ป้องกันปุ่มแก้ไขพัง โดยการดึง v.firebaseKey หรือ v.id 
                     let safeKey = v.firebaseKey || v.id;
 
                     incomeHtml += `
@@ -775,10 +786,7 @@ class FinancePageComponent {
         }
     }
 
-    // 🚨 THE FIX: ป้องกันบั๊กกด Edit แล้วเงียบ 
     editIncome(targetId) {
-        console.log("✏️ กำลังพยายามแก้ไขบิล ID:", targetId);
-        
         let v = this.state.allVisits.find(x => x.firebaseKey === targetId || x.id === targetId);
         
         if(!v) {
@@ -818,7 +826,6 @@ class FinancePageComponent {
             }
         }).then((result) => { 
             if (result.isConfirmed) {
-                // ใช้อันที่มีค่า เพื่ออัปเดตลง Firebase ให้ถูก Node
                 const exactDbKey = v.firebaseKey || v.id;
                 
                 db.ref(`patients_database_v2/visits/${exactDbKey}`).update(result.value).then(() => {
@@ -1050,7 +1057,7 @@ class FinancePageComponent {
             applyTableStyles(sheet3.getRow(1), true);
 
             data.incomeLogs.forEach(v => {
-                let base_fee = parseFloat(String(v.dialysis_fee || 0).replace(/,/g, '')); if (isNaN(base_fee) || base_fee <= 0) base_fee = 1500; 
+                let base_fee = Number(v.dialysis_fee) || 0; if (base_fee <= 0) base_fee = 1500; 
                 let med_fee = Number(v.med_fee || 0); let lab_fee = Number(v.lab_fee || 0); let xray_fee = Number(v.xray_fee || 0);
                 
                 let allItems = [];

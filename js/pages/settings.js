@@ -1,5 +1,5 @@
 // js/pages/settings.js
-// 🚀 Enterprise Settings Module: Bulletproof Typography, Memory-Leak Free & Dynamic RBAC (v9.2 FULL)
+// 🚀 Enterprise Settings Module: Fluid Tab Engine, Sticky Headers & Dynamic RBAC (v10.0 FULL)
 
 class SettingsPageComponent {
     constructor() {
@@ -131,6 +131,10 @@ class SettingsPageComponent {
                                     <option value="visits">ประวัติการฟอกเลือด (HD Flowsheet & EMR)</option>
                                     <option value="ledger">บัญชีรายรับ-รายจ่าย (Department Ledger)</option>
                                     <option value="inventory">ประวัติเข้า-ออกพัสดุ (Inventory History)</option>
+                                    <optgroup label="ศูนย์รวมเอกสาร (Gallery)">
+                                        <option value="gallery_image">รูปภาพคนไข้ (เฉพาะไฟล์ภาพ JPG/PNG)</option>
+                                        <option value="gallery_pdf">ไฟล์เอกสารแนบ (เฉพาะไฟล์ PDF)</option>
+                                    </optgroup>
                                 </select>
                             </div>
                             <div class="mb-4">
@@ -157,6 +161,10 @@ class SettingsPageComponent {
                             
                             <div class="row g-2 mb-4">
                                 <div class="col-12"><label class="perm-check-item" style="background:#fff;"><input type="checkbox" id="wipe-patients" value="patients_database_v2"> <span>ล้างทะเบียนผู้ป่วย และ ประวัติการรักษาทั้งหมด</span></label></div>
+                                
+                                <div class="col-12"><label class="perm-check-item" style="background:#fff;"><input type="checkbox" id="wipe-gallery-image" value="gallery_image"> <span>ล้างเฉพาะรูปภาพคนไข้ทั้งหมด <span class="text-warning-dark fw-bold">(ลดขนาด Base64)</span></span></label></div>
+                                <div class="col-12"><label class="perm-check-item" style="background:#fff;"><input type="checkbox" id="wipe-gallery-pdf" value="gallery_pdf"> <span>ล้างเฉพาะไฟล์เอกสาร (PDF) ทั้งหมด</span></label></div>
+                                
                                 <div class="col-12"><label class="perm-check-item" style="background:#fff;"><input type="checkbox" id="wipe-inventory-items" value="inventory_items"> <span>ล้างรายการคลังพัสดุทั้งหมด (ลบชื่อสินค้าออกจากระบบ)</span></label></div>
                                 <div class="col-12"><label class="perm-check-item" style="background:#fff;"><input type="checkbox" id="wipe-stock-history" value="inventory_transactions"> <span>ล้างประวัติทำรายการเข้า-ออก สต๊อกทั้งหมด</span></label></div>
                                 <div class="col-12"><label class="perm-check-item" style="background:#fff;"><input type="checkbox" id="wipe-ledger" value="department_ledger_v2"> <span>ล้างบัญชีรายรับ-รายจ่ายหน่วยงานทั้งหมด</span></label></div>
@@ -198,12 +206,62 @@ class SettingsPageComponent {
                 .st-tab-btn.text-danger.active { color: #ef4444 !important; }
                 .st-tab-btn.text-purple.active { color: #8b5cf6 !important; }
 
-                .st-tab-content { position: relative; min-height: 65vh; }
-                .st-tab-pane { display: none; opacity: 0; }
+                /* 🚨 THE ULTIMATE FIX: Fluid Scroll Grid สำหรับ Tab Content 🚨 */
+                .st-tab-content { 
+                    position: relative; 
+                    height: calc(100vh - 200px); /* สำรองที่ให้ Header และ Tabs */
+                    min-height: 500px;
+                    display: flex;
+                    flex-direction: column;
+                }
+                .st-tab-pane { 
+                    display: none; 
+                    opacity: 0; 
+                    flex: 1;
+                    min-height: 0; /* 🚨 บังคับให้ขังเนื้อหา */
+                }
                 .st-tab-pane.active {
-                    display: block; animation: stTabFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                    display: flex; 
+                    flex-direction: column;
+                    animation: stTabFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
                 }
                 @keyframes stTabFade { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
+
+                /* ตัวช่วยเลื่อนสำหรับแท็บที่มีเนื้อหายาวๆ */
+                .pane-scrollable-content {
+                    flex: 1;
+                    overflow-y: auto;
+                    overflow-x: hidden;
+                    min-height: 0;
+                    padding-right: 6px;
+                    padding-bottom: 20px;
+                }
+                .pane-scrollable-content::-webkit-scrollbar { width: 6px; }
+                .pane-scrollable-content::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+                .pane-scrollable-content::-webkit-scrollbar-track { background: transparent; }
+
+                /* สำหรับแท็บ Users ให้เลื่อนเฉพาะตาราง */
+                .users-table-wrapper {
+                    flex: 1;
+                    min-height: 0; /* บังคับกักขัง */
+                    overflow-y: auto;
+                    overflow-x: auto;
+                    border-radius: 12px;
+                    border: 1px solid var(--border-color);
+                    background: var(--bg-surface);
+                }
+                .users-table-wrapper::-webkit-scrollbar { width: 8px; height: 8px; }
+                .users-table-wrapper::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+                
+                .table-premium th {
+                    position: sticky;
+                    top: 0;
+                    z-index: 10;
+                    background-color: var(--bg-body);
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                }
+                html[data-bs-theme="dark"] .table-premium th { background-color: var(--bg-surface); }
+                /* ---------------------------------------------------- */
 
                 .settings-note-tabs {
                     display: flex; gap: 6px; flex-wrap: nowrap; overflow-x: auto;
@@ -300,104 +358,110 @@ class SettingsPageComponent {
 
             <div class="st-tab-content fade-in-up" id="settingsTabContent" style="animation-delay: 0.2s;">
                 
+                <!-- Tab: Clinic Panel -->
                 <div class="st-tab-pane active" id="clinic-panel">
-                    <div class="modern-panel p-4 pt-5 mb-4" style="border-top: 4px solid var(--primary); border-radius: 16px;">
-                        <div style="position: absolute; top: -20px; right: -20px; opacity: 0.03; font-size: 250px;"><i class="fa-solid fa-hospital-user"></i></div>
-                        <h5 class="fw-bold mb-4 position-relative"><i class="fa-solid fa-hospital text-primary me-2"></i> ข้อมูลพื้นฐานสถานพยาบาล (Clinic Info)</h5>
-                        <div class="row g-4 position-relative">
+                    <div class="pane-scrollable-content">
+                        <div class="modern-panel p-4 pt-5 mb-4" style="border-top: 4px solid var(--primary); border-radius: 16px;">
+                            <div style="position: absolute; top: -20px; right: -20px; opacity: 0.03; font-size: 250px;"><i class="fa-solid fa-hospital-user"></i></div>
+                            <h5 class="fw-bold mb-4 position-relative"><i class="fa-solid fa-hospital text-primary me-2"></i> ข้อมูลพื้นฐานสถานพยาบาล (Clinic Info)</h5>
+                            <div class="row g-4 position-relative">
+                                
+                                <div class="col-md-12">
+                                    <label class="form-label fw-bold small">โลโก้คลินิก (สำหรับแสดงหน้าระบบและนามบัตร)</label>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="logo-preview-box" id="clinic-logo-preview-container">
+                                            <span class="small"><i class="fa-solid fa-image fa-2x"></i></span>
+                                        </div>
+                                        <div>
+                                            <input type="file" id="file-clinic-logo" class="form-control input-modern mb-2" accept="image/jpeg, image/png, image/webp" onchange="App.pages.settings.handleLogoUpload(event, 'hidden-clinic-logo-base64', 'clinic-logo-preview-container')">
+                                            <div class="d-flex gap-2">
+                                                <button class="btn btn-outline-primary fw-bold btn-sm rounded-pill px-3 shadow-sm" onclick="App.pages.settings.promptPrintCard('clinic')"><i class="fa-solid fa-print me-1"></i> พิมพ์นามบัตรสถานพยาบาล</button>
+                                                <button class="btn btn-outline-danger fw-bold btn-sm rounded-pill px-3 shadow-sm" onclick="App.pages.settings.deleteLogo('clinic')"><i class="fa-solid fa-trash me-1"></i> ลบโลโก้</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="hidden-clinic-logo-base64">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small">ชื่อคลินิก / สถานพยาบาล</label>
+                                    <input type="text" id="set-clinic-name" class="form-control input-modern text-primary fw-bold">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small">รหัสสถานพยาบาล 11 หลัก</label>
+                                    <input type="text" id="set-clinic-id" class="form-control input-modern">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small">เบอร์โทรศัพท์คลินิก</label>
+                                    <input type="text" id="set-clinic-phone" class="form-control input-modern">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small">Email คลินิก (ถ้ามี)</label>
+                                    <input type="text" id="set-clinic-email" class="form-control input-modern">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-bold small">ที่อยู่คลินิก (สำหรับพิมพ์ลงเอกสารใบรับรอง)</label>
+                                    <textarea id="set-clinic-address" class="form-control input-modern" rows="2"></textarea>
+                                </div>
+                            </div>
                             
-                            <div class="col-md-12">
-                                <label class="form-label fw-bold small">โลโก้คลินิก (สำหรับแสดงหน้าระบบและนามบัตร)</label>
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="logo-preview-box" id="clinic-logo-preview-container">
-                                        <span class="small"><i class="fa-solid fa-image fa-2x"></i></span>
-                                    </div>
-                                    <div>
-                                        <input type="file" id="file-clinic-logo" class="form-control input-modern mb-2" accept="image/jpeg, image/png, image/webp" onchange="App.pages.settings.handleLogoUpload(event, 'hidden-clinic-logo-base64', 'clinic-logo-preview-container')">
-                                        <div class="d-flex gap-2">
-                                            <button class="btn btn-outline-primary fw-bold btn-sm rounded-pill px-3 shadow-sm" onclick="App.pages.settings.promptPrintCard('clinic')"><i class="fa-solid fa-print me-1"></i> พิมพ์นามบัตรสถานพยาบาล</button>
-                                            <button class="btn btn-outline-danger fw-bold btn-sm rounded-pill px-3 shadow-sm" onclick="App.pages.settings.deleteLogo('clinic')"><i class="fa-solid fa-trash me-1"></i> ลบโลโก้</button>
+                            <hr class="my-5 border-light">
+
+                            <h5 class="fw-bold mb-4 position-relative"><i class="fa-solid fa-building text-warning me-2"></i> ข้อมูลบริษัทจดทะเบียน (Company & Tax Info)</h5>
+                            <div class="row g-4 position-relative">
+                                <div class="col-md-12">
+                                    <label class="form-label fw-bold small">โลโกบริษัท (สำหรับใบเสร็จรับเงิน/ใบกำกับภาษี)</label>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="logo-preview-box" id="company-logo-preview-container">
+                                            <span class="small"><i class="fa-solid fa-image fa-2x"></i></span>
+                                        </div>
+                                        <div>
+                                            <input type="file" id="file-company-logo" class="form-control input-modern mb-2" accept="image/jpeg, image/png, image/webp" onchange="App.pages.settings.handleLogoUpload(event, 'hidden-company-logo-base64', 'company-logo-preview-container')">
+                                            <div class="d-flex gap-2">
+                                                <button class="btn btn-outline-warning fw-bold btn-sm rounded-pill px-4 shadow-sm" onclick="App.pages.settings.promptPrintCard('company')"><i class="fa-solid fa-print me-2"></i> พิมพ์นามบัตรใบกำกับภาษี</button>
+                                                <button class="btn btn-outline-danger fw-bold btn-sm rounded-pill px-3 shadow-sm" onclick="App.pages.settings.deleteLogo('company')"><i class="fa-solid fa-trash me-1"></i> ลบโลโก้</button>
+                                            </div>
                                         </div>
                                     </div>
+                                    <input type="hidden" id="hidden-company-logo-base64">
                                 </div>
-                                <input type="hidden" id="hidden-clinic-logo-base64">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold small">ชื่อคลินิก / สถานพยาบาล</label>
-                                <input type="text" id="set-clinic-name" class="form-control input-modern text-primary fw-bold">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold small">รหัสสถานพยาบาล 11 หลัก</label>
-                                <input type="text" id="set-clinic-id" class="form-control input-modern">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold small">เบอร์โทรศัพท์คลินิก</label>
-                                <input type="text" id="set-clinic-phone" class="form-control input-modern">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold small">Email คลินิก (ถ้ามี)</label>
-                                <input type="text" id="set-clinic-email" class="form-control input-modern">
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label fw-bold small">ที่อยู่คลินิก (สำหรับพิมพ์ลงเอกสารใบรับรอง)</label>
-                                <textarea id="set-clinic-address" class="form-control input-modern" rows="2"></textarea>
-                            </div>
-                        </div>
-                        
-                        <hr class="my-5 border-light">
-
-                        <h5 class="fw-bold mb-4 position-relative"><i class="fa-solid fa-building text-warning me-2"></i> ข้อมูลบริษัทจดทะเบียน (Company & Tax Info)</h5>
-                        <div class="row g-4 position-relative">
-                            <div class="col-md-12">
-                                <label class="form-label fw-bold small">โลโก้บริษัท (สำหรับใบเสร็จรับเงิน/ใบกำกับภาษี)</label>
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="logo-preview-box" id="company-logo-preview-container">
-                                        <span class="small"><i class="fa-solid fa-image fa-2x"></i></span>
-                                    </div>
-                                    <div>
-                                        <input type="file" id="file-company-logo" class="form-control input-modern mb-2" accept="image/jpeg, image/png, image/webp" onchange="App.pages.settings.handleLogoUpload(event, 'hidden-company-logo-base64', 'company-logo-preview-container')">
-                                        <div class="d-flex gap-2">
-                                            <button class="btn btn-outline-warning fw-bold btn-sm rounded-pill px-4 shadow-sm" onclick="App.pages.settings.promptPrintCard('company')"><i class="fa-solid fa-print me-2"></i> พิมพ์นามบัตรใบกำกับภาษี</button>
-                                            <button class="btn btn-outline-danger fw-bold btn-sm rounded-pill px-3 shadow-sm" onclick="App.pages.settings.deleteLogo('company')"><i class="fa-solid fa-trash me-1"></i> ลบโลโก้</button>
-                                        </div>
-                                    </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small">ชื่อบริษัท / นิติบุคคล (Company Name)</label>
+                                    <input type="text" id="set-company-name" class="form-control input-modern fw-bold">
                                 </div>
-                                <input type="hidden" id="hidden-company-logo-base64">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small">เลขประจำตัวผู้เสียภาษี (Tax ID)</label>
+                                    <input type="text" id="set-clinic-tax" class="form-control input-modern text-danger fw-bold" placeholder="เลข 13 หลัก">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-bold small">ที่อยู่บริษัทจดทะเบียน (สำหรับออกใบกำกับภาษี / ใบเสร็จรับเงิน)</label>
+                                    <textarea id="set-company-address" class="form-control input-modern" rows="2"></textarea>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold small">ชื่อบริษัท / นิติบุคคล (Company Name)</label>
-                                <input type="text" id="set-company-name" class="form-control input-modern fw-bold">
+                            
+                            <div class="text-end mt-5 pt-4 border-top">
+                                <button class="btn btn-premium btn-premium-primary px-5" onclick="App.pages.settings.saveClinicInfo()">
+                                    <i class="fa-solid fa-cloud-arrow-up me-2"></i> บันทึกข้อมูลบริษัทและคลินิก
+                                </button>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold small">เลขประจำตัวผู้เสียภาษี (Tax ID)</label>
-                                <input type="text" id="set-clinic-tax" class="form-control input-modern text-danger fw-bold" placeholder="เลข 13 หลัก">
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label fw-bold small">ที่อยู่บริษัทจดทะเบียน (สำหรับออกใบกำกับภาษี / ใบเสร็จรับเงิน)</label>
-                                <textarea id="set-company-address" class="form-control input-modern" rows="2"></textarea>
-                            </div>
-                        </div>
-                        
-                        <div class="text-end mt-5 pt-4 border-top">
-                            <button class="btn btn-premium btn-premium-primary px-5" onclick="App.pages.settings.saveClinicInfo()">
-                                <i class="fa-solid fa-cloud-arrow-up me-2"></i> บันทึกข้อมูลบริษัทและคลินิก
-                            </button>
                         </div>
                     </div>
                 </div>
 
+                <!-- Tab: Users Panel (🚨 THE FIX: ล็อกตารางด้วย users-table-wrapper) -->
                 <div class="st-tab-pane" id="users-panel">
-                    <div class="modern-panel p-4" style="border-top: 4px solid var(--info); border-radius: 16px;">
+                    <div class="modern-panel p-4 d-flex flex-column h-100" style="border-top: 4px solid var(--info); border-radius: 16px;">
                         <div style="position: absolute; top: -30px; right: -30px; opacity: 0.02; font-size: 300px; pointer-events: none;"><i class="fa-solid fa-users-gear"></i></div>
-                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 position-relative z-1">
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 position-relative z-1 flex-shrink-0">
                             <div><h5 class="fw-bold mb-1"><i class="fa-solid fa-users-viewfinder text-info me-2"></i> รายชื่อผู้ใช้งานในระบบ</h5><p class="small mb-0">จัดการไอดีล็อคอิน, สิทธิ์การเข้าถึง (Role) และสถานะบัญชี</p></div>
                             <div class="d-flex gap-2">
                                 <button class="btn btn-outline-danger fw-bold shadow-sm rounded-pill px-4" onclick="App.pages.settings.setAdminPin()"><i class="fa-solid fa-key me-2"></i> ตั้งค่า PIN รีเซ็ตรหัส</button>
                                 <button class="btn btn-premium btn-premium-primary text-white fw-bold shadow-sm rounded-pill px-4" onclick="App.pages.settings.openUserModal()"><i class="fa-solid fa-user-plus me-2"></i> เพิ่มผู้ใช้งานใหม่</button>
                             </div>
                         </div>
-                        <div class="table-responsive rounded-3 shadow-sm border border-light position-relative z-1">
+                        
+                        <div class="users-table-wrapper position-relative z-1 shadow-sm">
                             <table class="table table-premium w-100 mb-0">
                                 <thead>
                                     <tr>
@@ -416,60 +480,67 @@ class SettingsPageComponent {
                     </div>
                 </div>
 
+                <!-- Tab: Medical Panel -->
                 <div class="st-tab-pane" id="medical-panel">
-                    <div class="modern-panel mb-4 p-4" style="border-top: 4px solid var(--danger); border-radius: 16px;">
-                        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-                            <div><h5 class="fw-bold mb-1"><i class="fa-solid fa-vial-virus text-danger me-2"></i> 1. จัดการชุดผลแล็บ และ ราคา (Lab Sets)</h5><p class="small mb-0">ตั้งค่าชุดแล็บและราคาเหมาชุด สำหรับดึงข้อมูลในหน้า Flowsheet</p></div>
-                            <button class="btn btn-outline-danger fw-bold shadow-sm rounded-pill px-4" onclick="App.pages.settings.openLabSetModal()"><i class="fa-solid fa-plus me-1"></i> สร้างชุดแล็บใหม่</button>
+                    <div class="pane-scrollable-content">
+                        <div class="modern-panel mb-4 p-4" style="border-top: 4px solid var(--danger); border-radius: 16px;">
+                            <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                                <div><h5 class="fw-bold mb-1"><i class="fa-solid fa-vial-virus text-danger me-2"></i> 1. จัดการชุดผลแล็บ และ ราคา (Lab Sets)</h5><p class="small mb-0">ตั้งค่าชุดแล็บและราคาเหมาชุด สำหรับดึงข้อมูลในหน้า Flowsheet</p></div>
+                                <button class="btn btn-outline-danger fw-bold shadow-sm rounded-pill px-4" onclick="App.pages.settings.openLabSetModal()"><i class="fa-solid fa-plus me-1"></i> สร้างชุดแล็บใหม่</button>
+                            </div>
+                            <div class="row g-3" id="lab-sets-container"><div class="col-12 text-center py-4"><i class="fas fa-spinner fa-spin"></i> กำลังโหลดข้อมูล...</div></div>
                         </div>
-                        <div class="row g-3" id="lab-sets-container"><div class="col-12 text-center py-4"><i class="fas fa-spinner fa-spin"></i> กำลังโหลดข้อมูล...</div></div>
-                    </div>
 
-                    <div class="row g-4 mb-4">
-                        <div class="col-xl-6">
-                            <div class="modern-panel p-4 h-100" style="border-top: 4px solid #8b5cf6; border-radius: 16px;">
-                                <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-                                    <div><h5 class="fw-bold mb-1" style="color: #8b5cf6 !important;"><i class="fa-solid fa-syringe me-2"></i> 2. ยาฉีด/เวชภัณฑ์ (Meds)</h5></div>
-                                    <button class="btn text-white fw-bold shadow-sm rounded-pill px-3" style="background:#8b5cf6;" onclick="App.pages.settings.openMedListModal()"><i class="fa-solid fa-plus me-1"></i> เพิ่มรายการ</button>
+                        <div class="row g-4 mb-4">
+                            <div class="col-xl-6">
+                                <div class="modern-panel p-4 h-100" style="border-top: 4px solid #8b5cf6; border-radius: 16px;">
+                                    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                                        <div><h5 class="fw-bold mb-1" style="color: #8b5cf6 !important;"><i class="fa-solid fa-syringe me-2"></i> 2. ยาฉีด/เวชภัณฑ์ (Meds)</h5></div>
+                                        <button class="btn text-white fw-bold shadow-sm rounded-pill px-3" style="background:#8b5cf6;" onclick="App.pages.settings.openMedListModal()"><i class="fa-solid fa-plus me-1"></i> เพิ่มรายการ</button>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-2" id="meds-list-container"></div>
                                 </div>
-                                <div class="d-flex flex-wrap gap-2" id="meds-list-container"></div>
+                            </div>
+                            <div class="col-xl-6">
+                                <div class="modern-panel p-4 h-100" style="border-top: 4px solid #14b8a6; border-radius: 16px;">
+                                    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                                        <div><h5 class="fw-bold mb-1" style="color: #14b8a6 !important;"><i class="fa-solid fa-x-ray me-2"></i> 3. รายการเอ็กซเรย์ (X-Ray)</h5></div>
+                                        <button class="btn text-white fw-bold shadow-sm rounded-pill px-3" style="background:#14b8a6;" onclick="App.pages.settings.openXrayModal()"><i class="fa-solid fa-plus me-1"></i> เพิ่มรายการ</button>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-2" id="xrays-list-container"></div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-xl-6">
-                            <div class="modern-panel p-4 h-100" style="border-top: 4px solid #14b8a6; border-radius: 16px;">
-                                <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-                                    <div><h5 class="fw-bold mb-1" style="color: #14b8a6 !important;"><i class="fa-solid fa-x-ray me-2"></i> 3. รายการเอ็กซเรย์ (X-Ray)</h5></div>
-                                    <button class="btn text-white fw-bold shadow-sm rounded-pill px-3" style="background:#14b8a6;" onclick="App.pages.settings.openXrayModal()"><i class="fa-solid fa-plus me-1"></i> เพิ่มรายการ</button>
-                                </div>
-                                <div class="d-flex flex-wrap gap-2" id="xrays-list-container"></div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="modern-panel mb-4 p-4" style="border-top: 4px solid var(--warning); border-radius: 16px;">
-                        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-                            <div><h5 class="fw-bold mb-1"><i class="fa-solid fa-file-signature text-warning me-2"></i> 4. เทมเพลตบันทึกการรักษา (Progress Notes)</h5><p class="small mb-0">ข้อความมาตรฐานเพื่อช่วยให้พยาบาลบันทึกอาการได้รวดเร็ว</p></div>
-                            <button class="btn btn-outline-warning fw-bold shadow-sm rounded-pill px-4" onclick="App.pages.settings.openNoteTemplateModal()"><i class="fa-solid fa-plus me-1"></i> สร้างเทมเพลต</button>
+                        <div class="modern-panel mb-4 p-4" style="border-top: 4px solid var(--warning); border-radius: 16px;">
+                            <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                                <div><h5 class="fw-bold mb-1"><i class="fa-solid fa-file-signature text-warning me-2"></i> 4. เทมเพลตบันทึกการรักษา (Progress Notes)</h5><p class="small mb-0">ข้อความมาตรฐานเพื่อช่วยให้พยาบาลบันทึกอาการได้รวดเร็ว</p></div>
+                                <button class="btn btn-outline-warning fw-bold shadow-sm rounded-pill px-4" onclick="App.pages.settings.openNoteTemplateModal()"><i class="fa-solid fa-plus me-1"></i> สร้างเทมเพลต</button>
+                            </div>
+                            
+                            <div class="settings-note-tabs mb-4" id="note-category-tabs">
+                                <button class="settings-note-btn active text-dark" onclick="App.pages.settings.filterNotes('all')"><i class="fa-solid fa-layer-group me-1"></i> ทั้งหมด</button>
+                                <button class="settings-note-btn" onclick="App.pages.settings.filterNotes('pre')">อาการก่อนฟอก</button>
+                                <button class="settings-note-btn" onclick="App.pages.settings.filterNotes('intra')">แทรกซ้อน (Intra)</button>
+                                <button class="settings-note-btn" onclick="App.pages.settings.filterNotes('post')">สรุปหลังฟอก</button>
+                                <button class="settings-note-btn" onclick="App.pages.settings.filterNotes('doctor')"><i class="fa-solid fa-user-doctor me-1"></i> คำสั่งแพทย์</button>
+                            </div>
+                            
+                            <div class="row g-3" id="note-templates-container"></div>
                         </div>
-                        
-                        <div class="settings-note-tabs mb-4" id="note-category-tabs">
-                            <button class="settings-note-btn active text-dark" onclick="App.pages.settings.filterNotes('all')"><i class="fa-solid fa-layer-group me-1"></i> ทั้งหมด</button>
-                            <button class="settings-note-btn" onclick="App.pages.settings.filterNotes('pre')">อาการก่อนฟอก</button>
-                            <button class="settings-note-btn" onclick="App.pages.settings.filterNotes('intra')">แทรกซ้อน (Intra)</button>
-                            <button class="settings-note-btn" onclick="App.pages.settings.filterNotes('post')">สรุปหลังฟอก</button>
-                            <button class="settings-note-btn" onclick="App.pages.settings.filterNotes('doctor')"><i class="fa-solid fa-user-doctor me-1"></i> คำสั่งแพทย์</button>
-                        </div>
-                        
-                        <div class="row g-3" id="note-templates-container"></div>
                     </div>
                 </div>
 
                 <div class="st-tab-pane" id="theme-panel">
-                    ${themeUIHtml}
+                    <div class="pane-scrollable-content">
+                        ${themeUIHtml}
+                    </div>
                 </div>
 
                 <div class="st-tab-pane" id="database-panel">
-                    ${databaseUIHtml}
+                    <div class="pane-scrollable-content">
+                        ${databaseUIHtml}
+                    </div>
                 </div>
 
             </div>
@@ -589,7 +660,9 @@ class SettingsPageComponent {
         const labels = {
             'visits': 'ประวัติการฟอกเลือด (HD Flowsheet & EMR)',
             'ledger': 'บัญชีรายรับ-รายจ่าย (Department Ledger)',
-            'inventory': 'ประวัติเข้า-ออกพัสดุ (Inventory History)'
+            'inventory': 'ประวัติเข้า-ออกพัสดุ (Inventory History)',
+            'gallery_image': 'รูปภาพคนไข้ (เฉพาะไฟล์ภาพ JPG/PNG)', 
+            'gallery_pdf': 'ไฟล์เอกสารแนบ (เฉพาะไฟล์ PDF)' 
         };
         const targetLabel = labels[target];
 
@@ -604,6 +677,57 @@ class SettingsPageComponent {
         const cutoffDate = new Date();
         cutoffDate.setFullYear(cutoffDate.getFullYear() - years);
         const cutoffStr = cutoffDate.toISOString().split('T')[0];
+
+        if (target === 'gallery_image' || target === 'gallery_pdf') {
+            try {
+                const snap = await db.ref('patients_database_v2/visits').orderByChild('date').endAt(cutoffStr).once('value');
+                if (snap.exists()) {
+                    let updates = {};
+                    let fileDeletedCount = 0;
+                    
+                    snap.forEach(child => {
+                        let visit = child.val();
+                        if (visit.attachments && Array.isArray(visit.attachments)) {
+                            let originalLength = visit.attachments.length;
+                            
+                            let newAttachments = visit.attachments.filter(doc => {
+                                if (!doc) return false;
+                                
+                                let isPdf = false;
+                                if (typeof doc === 'string') {
+                                    isPdf = doc.startsWith('data:application/pdf');
+                                } else {
+                                    isPdf = doc.type === 'pdf' || (doc.dataUrl && String(doc.dataUrl).startsWith('data:application/pdf'));
+                                }
+
+                                if (target === 'gallery_pdf' && isPdf) return false; 
+                                if (target === 'gallery_image' && !isPdf) return false; 
+                                
+                                return true; 
+                            });
+                            
+                            if (newAttachments.length !== originalLength) {
+                                updates[`${child.key}/attachments`] = newAttachments.length > 0 ? newAttachments : null;
+                                fileDeletedCount += (originalLength - newAttachments.length);
+                            }
+                        }
+                    });
+                    
+                    if (fileDeletedCount > 0) {
+                        await db.ref('patients_database_v2/visits').update(updates);
+                        let typeName = target === 'gallery_pdf' ? 'ไฟล์เอกสาร PDF' : 'ไฟล์รูปภาพ';
+                        Swal.fire('ล้างไฟล์เอกสารสำเร็จ!', `ระบบทำการเคลียร์ ${typeName} ไปแล้ว ${fileDeletedCount} รายการ\nโดยที่ประวัติการรักษาและไฟล์ประเภทอื่นยังอยู่ครบถ้วน`, 'success');
+                    } else {
+                        Swal.fire('ไม่มีข้อมูล', 'ไม่พบไฟล์ประภทที่ท่านเลือกในระยะเวลาที่กำหนดครับ', 'info');
+                    }
+                } else {
+                    Swal.fire('ไม่มีข้อมูล', 'ไม่พบข้อมูลประวัติเก่าที่เข้าเงื่อนไขครับ', 'info');
+                }
+            } catch (error) {
+                Swal.fire('ข้อผิดพลาด', `เกิดข้อผิดพลาดในการคัดแยกและลบไฟล์: ${error.message}`, 'error');
+            }
+            return; 
+        }
 
         let path = '';
         let dateField = 'date'; 
@@ -634,18 +758,20 @@ class SettingsPageComponent {
 
     promptFactoryReset() {
         const wipePatients = document.getElementById('wipe-patients').checked;
+        const wipeGalleryImage = document.getElementById('wipe-gallery-image').checked; 
+        const wipeGalleryPdf = document.getElementById('wipe-gallery-pdf').checked;     
         const wipeStockHistory = document.getElementById('wipe-stock-history').checked;
         const wipeInventoryItems = document.getElementById('wipe-inventory-items').checked;
         const wipeLedger = document.getElementById('wipe-ledger').checked;
         const wipeMaster = document.getElementById('wipe-master').checked;
 
-        if (!wipePatients && !wipeStockHistory && !wipeInventoryItems && !wipeLedger && !wipeMaster) {
+        if (!wipePatients && !wipeGalleryImage && !wipeGalleryPdf && !wipeStockHistory && !wipeInventoryItems && !wipeLedger && !wipeMaster) {
             Swal.fire('แจ้งเตือน', 'กรุณาติ๊กเลือกส่วนที่ต้องการล้างข้อมูลอย่างน้อย 1 รายการครับ', 'warning');
             return;
         }
 
         this._verifyAdminPinAndExecute(`คุณกำลังจะ <span class="text-danger fw-bold">ล้างข้อมูลทั้งระบบ (Factory Reset)</span> ข้อมูลที่เลือกจะหายไปตลอดกาล!`, 'FACTORY RESET', () => {
-            this._executeFactoryReset({ wipePatients, wipeStockHistory, wipeInventoryItems, wipeLedger, wipeMaster });
+            this._executeFactoryReset({ wipePatients, wipeGalleryImage, wipeGalleryPdf, wipeStockHistory, wipeInventoryItems, wipeLedger, wipeMaster });
         });
     }
 
@@ -657,7 +783,46 @@ class SettingsPageComponent {
 
             if (targets.wipePatients) {
                 promises.push(db.ref('patients_database_v2').remove());
+            } else if (targets.wipeGalleryImage || targets.wipeGalleryPdf) {
+                const snap = await db.ref('patients_database_v2/visits').once('value');
+                if (snap.exists()) {
+                    let updates = {};
+                    
+                    if (targets.wipeGalleryImage && targets.wipeGalleryPdf) {
+                        snap.forEach(child => {
+                            if (child.hasChild('attachments')) {
+                                updates[`${child.key}/attachments`] = null;
+                            }
+                        });
+                    } else {
+                        snap.forEach(child => {
+                            let visit = child.val();
+                            if (visit.attachments && Array.isArray(visit.attachments)) {
+                                let oldLen = visit.attachments.length;
+                                let newAttachments = visit.attachments.filter(doc => {
+                                    if (!doc) return false;
+                                    let isPdf = false;
+                                    if (typeof doc === 'string') isPdf = doc.startsWith('data:application/pdf');
+                                    else isPdf = doc.type === 'pdf' || (doc.dataUrl && String(doc.dataUrl).startsWith('data:application/pdf'));
+
+                                    if (targets.wipeGalleryPdf && isPdf) return false;
+                                    if (targets.wipeGalleryImage && !isPdf) return false;
+                                    return true;
+                                });
+                                
+                                if (newAttachments.length !== oldLen) {
+                                    updates[`${child.key}/attachments`] = newAttachments.length > 0 ? newAttachments : null;
+                                }
+                            }
+                        });
+                    }
+                    
+                    if (Object.keys(updates).length > 0) {
+                        promises.push(db.ref('patients_database_v2/visits').update(updates));
+                    }
+                }
             }
+
             if (targets.wipeStockHistory) {
                 promises.push(db.ref('inventory_database_v2/transactions').remove());
             }
@@ -783,42 +948,45 @@ class SettingsPageComponent {
         Swal.fire({ title: 'ลบรูปโลโก้เตรียมพร้อม', text: 'กรุณากดปุ่ม "บันทึกข้อมูลบริษัทและคลินิก" เพื่อยืนยันการลบออกจากระบบครับ', icon: 'success', timer: 2000, showConfirmButton: false });
     }
 
-    handleLogoUpload(event, hiddenInputId, previewContainerId) {
+    async handleLogoUpload(event, hiddenInputId, previewContainerId) {
         const file = event.target.files[0];
         if(!file) return;
         
+        // ตรวจสอบชนิดไฟล์เบื้องต้น
         if(!file.type.match('image.*')) { 
             Swal.fire('ข้อผิดพลาด', 'กรุณาอัปโหลดไฟล์รูปภาพเท่านั้น (JPG, PNG)', 'error'); 
             event.target.value = ''; 
             return; 
         }
+
+        if (typeof window.AppMediaEngine === 'undefined') {
+            Swal.fire('ระบบไม่พร้อม', 'ไม่พบ Media Engine กรุณารีเฟรชหน้าเว็บ', 'error');
+            event.target.value = '';
+            return;
+        }
         
-        Swal.fire({ title: 'กำลังจัดเตรียมภาพโลโก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-        
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 400; const MAX_HEIGHT = 400;
-                let width = img.width; let height = img.height;
-                
-                if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } } 
-                else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
-                
-                canvas.width = width; canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                
-                const compressedBase64 = canvas.toDataURL('image/png');
-                
-                document.getElementById(previewContainerId).innerHTML = `<img src="${compressedBase64}">`;
-                document.getElementById(hiddenInputId).value = compressedBase64;
+        Swal.fire({ title: 'กำลังบีบอัดและปรับขนาดโลโก้...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+        try {
+            const base64Data = await window.AppMediaEngine.compressImageToBase64(file, {
+                maxSizeMB: 0.1,         // บีบให้เหลือ 100KB
+                maxWidthOrHeight: 400,  // ขนาดสูงสุด 400px (ประหยัดแรมตอน Render นามบัตร)
+                initialQuality: 0.9     // โลโก้ต้องการความคมชัดสูงกว่าปกติเล็กน้อย
+            });
+
+            if (base64Data) {
+                document.getElementById(previewContainerId).innerHTML = `<img src="${base64Data}">`;
+                document.getElementById(hiddenInputId).value = base64Data;
                 Swal.close();
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
+            } else {
+                throw new Error("ประมวลผลภาพล้มเหลว");
+            }
+        } catch (error) {
+            console.error("🔥 [Settings Logo Upload Error]:", error);
+            Swal.fire('อัปโหลดล้มเหลว', 'ไม่สามารถบีบอัดรูปภาพได้: ' + error.message, 'error');
+        } finally {
+            event.target.value = ''; 
+        }
     }
 
     generateWatermarkImage(base64) {
@@ -959,7 +1127,6 @@ class SettingsPageComponent {
                             </div>
                         </div>
                         <div class="corp-contact">
-                            <!-- 🚨 THE FIX: เอาเบอร์โทรและอีเมลออกตามที่ผู้ใช้รีเควส เหลือแค่ที่อยู่สำหรับออกบิล/ใบกำกับภาษี -->
                             <div class="contact-item"><i class="fa-solid fa-building contact-icon"></i> <span>${this._escapeHTML(cardAddress)}</span></div>
                         </div>
                     </div>

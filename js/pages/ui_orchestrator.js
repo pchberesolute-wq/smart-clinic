@@ -1,193 +1,150 @@
 // js/pages/ui_orchestrator.js
-// 👑 TRUE GOD-MODE UI Orchestrator: Omniscient Engine V4.5 (Zero-Shift Tab Update)
-// ควบคุมทุกอณูของ UI: ป้องกันแท็บยืดหด, คุมตาราง, ปุ่ม, ช่องกรอก, และแอนิเมชันระดับ Enterprise
+// 👑 TRUE GOD-MODE UI Orchestrator: Omniscient Engine V5.0 (Zero-Shift & CSP-Safe)
+// ควบคุมทุกอณูของ UI: ป้องกันแท็บยืดหด, คุมตาราง, ปุ่ม WeakMap-Tracked, และ Zero-Reflow Resize
 
 class UIOrchestratorService {
+    // 🛡️ ใช้ # เพื่อบังคับเป็น Private Properties (Absolute Encapsulation)
+    #resizeObserver = null;
+    #processingButtons = new WeakMap(); // 🚀 ใช้ WeakMap จัดการ Memory ของปุ่มแบบ O(1)
+
     constructor() {
-        this.resizeObserver = null;
-        this.mutationObserver = null;
         this.init();
     }
 
     init() {
         try {
-            this._injectUltimateCSSDictator(); // 🚀 อัปเกรด V4.5: คุม CSS ทั้งจักรวาล (Zero-Shift)
-            this._setupGlobalMicroInteractions(); 
-            this._hijackDataTables(); 
-            this._setupAdvancedResizeEngine(); 
-            this._setupGlobalZIndexHierarchy(); 
-            this._enforceTabletDesktopLayout(); 
+            this.#injectUltimateCSSDictator(); 
+            this.#setupGlobalMicroInteractions(); 
+            this.#hijackDataTables(); 
+            this.#setupAdvancedResizeEngine(); 
+            this.#setupGlobalZIndexHierarchy(); 
+            this.#enforceTabletDesktopLayout(); // 🚀 อัปเกรดเป็น matchMedia
             
-            console.log("%c👑 [UI Orchestrator] OMNISCIENT ENGINE V4.5 (Zero-Shift) Activated.", "color: #eab308; font-weight: bold; font-size: 14px; text-shadow: 0 0 5px rgba(234,179,8,0.5);");
+            console.log("%c👑 [UI Orchestrator] OMNISCIENT ENGINE V5.0 (Zero-Shift) Activated.", "color: #eab308; font-weight: bold; font-size: 14px; text-shadow: 0 0 5px rgba(234,179,8,0.5);");
         } catch (error) {
             console.error("🚨 [UI Orchestrator] Initialization Failed:", error);
         }
     }
 
     // ==========================================
-    // 🎨 1. THE DICTATOR CSS (ล้างบางและสร้างมาตรฐานใหม่ให้ทุก Element)
+    // 🎨 1. THE DICTATOR CSS (CSP-Safe & Native Dark Mode)
     // ==========================================
-    _injectUltimateCSSDictator() {
+    #injectUltimateCSSDictator() {
         if (document.getElementById('orchestrator-ultimate-styles')) return;
         const style = document.createElement('style');
         style.id = 'orchestrator-ultimate-styles';
         style.innerHTML = `
-            /* 🖋️ 1. Typography Perfection (ลบเหลี่ยมตัวหนังสือให้คมกริบ) */
+            /* 🖋️ 1. Typography Perfection */
             body, p, h1, h2, h3, h4, h5, h6, span, div, a, button, input, select, textarea {
                 -webkit-font-smoothing: antialiased !important;
                 -moz-osx-font-smoothing: grayscale !important;
                 text-rendering: optimizeLegibility !important;
             }
 
-            /* 📜 2. Mac-Style Global Scrollbars (แถบเลื่อนแบบพรีเมียม) */
+            /* 📜 2. Mac-Style Global Scrollbars */
             ::-webkit-scrollbar { width: 8px !important; height: 8px !important; }
             ::-webkit-scrollbar-track { background: transparent !important; }
             ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.4) !important; border-radius: 10px !important; }
             ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.7) !important; }
+            html[data-bs-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2) !important; }
 
-            /* 🔘 3. Button Micro-Interactions (ปุ่มลอยตัวและยุบตัว) */
+            /* 🔘 3. Button Micro-Interactions */
             .btn {
                 transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-                letter-spacing: 0.3px;
-                position: relative;
-                overflow: hidden;
+                letter-spacing: 0.3px; position: relative; overflow: hidden;
             }
             .btn:not(:disabled):hover {
-                transform: translateY(-1.5px) !important;
-                box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1) !important;
+                transform: translateY(-1.5px) !important; box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1) !important;
             }
             .btn:not(:disabled):active {
-                transform: translateY(1px) !important;
-                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
+                transform: translateY(1px) !important; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
             }
             .btn, .nav-link, .nav-item { user-select: none !important; -webkit-user-select: none !important; }
 
-            /* ⌨️ 4. Form & Input Dictator (ช่องกรอกข้อมูลเรืองแสง) */
+            /* ⌨️ 4. Form & Input Dictator */
             .form-control, .form-select, .select2-selection {
-                transition: all 0.3s ease !important;
-                border-radius: 10px !important;
-                border: 1px solid #cbd5e1 !important;
-                background-color: #f8fafc !important;
+                transition: all 0.3s ease !important; border-radius: 10px !important;
+                border: 1px solid var(--border-color, #cbd5e1) !important;
+                background-color: var(--bg-surface, #f8fafc) !important;
+                color: var(--text-dark, #0f172a) !important;
                 padding: 0.6rem 1rem !important;
             }
             .form-control:focus, .form-select:focus {
-                background-color: #ffffff !important;
-                border-color: #3b82f6 !important;
-                box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15) !important;
-                outline: none !important;
+                background-color: var(--bg-body, #ffffff) !important; border-color: #3b82f6 !important;
+                box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15) !important; outline: none !important;
             }
 
-            /* 🪟 5. Glassmorphism Modals (พื้นหลังป๊อปอัปแบบกระจกฝ้า) */
-            .modal-backdrop {
-                background-color: rgba(15, 23, 42, 0.6) !important;
-                backdrop-filter: blur(5px) !important;
-                -webkit-backdrop-filter: blur(5px) !important;
-            }
-            .modal-content {
-                border: none !important;
-                border-radius: 16px !important;
-                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2) !important;
-                overflow: hidden;
-            }
+            /* 🪟 5. Glassmorphism Modals */
+            .modal-backdrop { background-color: rgba(15, 23, 42, 0.6) !important; backdrop-filter: blur(5px) !important; -webkit-backdrop-filter: blur(5px) !important; }
+            .modal-content { border: none !important; border-radius: 16px !important; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2) !important; overflow: hidden; background: var(--bg-surface, #fff); }
 
-            /* 🏷️ 6. Tabs & Navigations (แถบแท็บลื่นไหล) */
-            .nav-tabs {
-                border-bottom: 2px solid #e2e8f0 !important;
-                display: flex !important; flex-wrap: nowrap !important; overflow-x: auto !important; overflow-y: hidden !important;
-                scrollbar-width: none; /* Firefox */
-            }
-            .nav-tabs::-webkit-scrollbar { display: none !important; } /* Chrome/Safari */
-            .nav-tabs .nav-link {
-                border: none !important;
-                color: #64748b !important;
-                font-weight: 600 !important;
-                padding: 12px 20px !important;
-                border-bottom: 3px solid transparent !important;
-                transition: all 0.3s ease !important;
-                white-space: nowrap !important;
-            }
+            /* 🏷️ 6. Tabs & Navigations */
+            .nav-tabs { border-bottom: 2px solid var(--border-color, #e2e8f0) !important; display: flex !important; flex-wrap: nowrap !important; overflow-x: auto !important; overflow-y: hidden !important; scrollbar-width: none; }
+            .nav-tabs::-webkit-scrollbar { display: none !important; }
+            .nav-tabs .nav-link { border: none !important; color: var(--text-muted, #64748b) !important; font-weight: 600 !important; padding: 12px 20px !important; border-bottom: 3px solid transparent !important; transition: all 0.3s ease !important; white-space: nowrap !important; }
             .nav-tabs .nav-link:hover { color: #3b82f6 !important; background: rgba(59,130,246,0.05) !important; }
-            .nav-tabs .nav-link.active {
-                color: #2563eb !important;
-                border-bottom: 3px solid #2563eb !important;
-                background: transparent !important;
-            }
+            .nav-tabs .nav-link.active { color: #2563eb !important; border-bottom: 3px solid #2563eb !important; background: transparent !important; }
 
-            /* 🚨 THE FIX V4.5: Zero-Shift Tab Engine (ป้องกันการ์ดยืดหดเวลาสลับแท็บ) */
-            .card .tab-content, .modern-panel .tab-content {
-                min-height: 60vh !important; /* ล็อคความสูงขั้นต่ำ ป้องกันหน้าต่างยุบตัว */
-                padding-top: 20px !important;
-                position: relative;
-            }
-            .tab-content > .tab-pane {
-                display: none !important; /* ปิดการซ่อนแบบเก่าของ Bootstrap */
-                opacity: 0;
-            }
-            .tab-content > .tab-pane.active {
-                display: block !important;
-                animation: smoothTabReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
-            }
-            @keyframes smoothTabReveal {
-                0% { opacity: 0; transform: translateY(15px); }
-                100% { opacity: 1; transform: translateY(0); }
-            }
+            /* 🚨 THE FIX V5.0: Zero-Shift Tab Engine */
+            .card .tab-content, .modern-panel .tab-content { min-height: 60vh !important; padding-top: 20px !important; position: relative; }
+            .tab-content > .tab-pane { display: none !important; opacity: 0; }
+            .tab-content > .tab-pane.active { display: block !important; animation: smoothTabReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important; }
+            @keyframes smoothTabReveal { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
 
-            /* 📊 7. Ultimate DataTables (หัวตารางติดหนึบ) */
+            /* 📊 7. Ultimate DataTables */
             .dataTables_wrapper { width: 100% !important; overflow-x: auto !important; padding-bottom: 8px !important; }
             table.dataTable { border-collapse: separate !important; border-spacing: 0 !important; width: 100% !important; min-width: 900px !important; }
-            table.dataTable thead th {
-                position: sticky !important; top: 0 !important; z-index: 10 !important;
-                background: #f1f5f9 !important; color: #334155 !important;
-                font-weight: 700 !important; text-transform: uppercase !important; font-size: 13px !important; letter-spacing: 0.5px !important;
-                padding: 16px !important; border-bottom: 2px solid #cbd5e1 !important; border-top: none !important;
-            }
-            table.dataTable tbody td { padding: 14px 16px !important; vertical-align: middle !important; border-bottom: 1px solid #e2e8f0 !important; font-size: 14px !important; transition: background 0.2s ease !important; }
-            table.dataTable tbody tr:hover td { background-color: #f8fafc !important; }
-            
-            /* DataTables Pagination & Search */
+            table.dataTable thead th { position: sticky !important; top: 0 !important; z-index: 10 !important; background: var(--bg-body, #f1f5f9) !important; color: var(--text-muted, #334155) !important; font-weight: 700 !important; text-transform: uppercase !important; font-size: 13px !important; letter-spacing: 0.5px !important; padding: 16px !important; border-bottom: 2px solid var(--border-color, #cbd5e1) !important; border-top: none !important; }
+            table.dataTable tbody td { padding: 14px 16px !important; vertical-align: middle !important; border-bottom: 1px solid var(--border-color, #e2e8f0) !important; font-size: 14px !important; color: var(--text-dark); background: var(--bg-surface, transparent) !important; transition: background 0.2s ease !important; }
+            table.dataTable tbody tr:hover td { background-color: var(--bg-body, #f8fafc) !important; }
             .dataTables_filter input { width: 250px !important; max-width: 100% !important; border-radius: 50px !important; padding: 6px 16px !important; }
-            .page-item .page-link { border-radius: 8px !important; margin: 0 3px !important; border: none !important; background: #f8fafc !important; color: #475569 !important; font-weight: 600 !important; transition: all 0.2s !important; }
+            .page-item .page-link { border-radius: 8px !important; margin: 0 3px !important; border: none !important; background: var(--bg-surface, #f8fafc) !important; color: var(--text-muted, #475569) !important; font-weight: 600 !important; transition: all 0.2s !important; }
             .page-item.active .page-link { background: #3b82f6 !important; color: white !important; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3) !important; transform: scale(1.05) !important; }
-            .page-item .page-link:hover:not(.active) { background: #e2e8f0 !important; }
-
-            /* 📱 8. Card Layout */
-            .card, .modern-panel {
-                border-radius: 16px !important;
-                border: 1px solid rgba(255,255,255,0.1) !important;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.03) !important;
-                transition: transform 0.3s ease, box-shadow 0.3s ease !important;
-                width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;
-            }
             
-            /* 🚫 9. Anti-Double Click State */
-            .is-processing {
-                pointer-events: none !important;
-                opacity: 0.7 !important;
-                position: relative !important;
-            }
+            /* 📱 8. Card Layout & Utilities */
+            .card, .modern-panel { border-radius: 16px !important; border: 1px solid rgba(255,255,255,0.1) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.03) !important; transition: transform 0.3s ease, box-shadow 0.3s ease !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; }
+            .is-processing { pointer-events: none !important; opacity: 0.7 !important; position: relative !important; }
+            
+            /* 🚨 THE FIX: CSP-Safe Hover Class */
+            .orch-truncate-hover { cursor: help; border-bottom: 1px dashed var(--text-muted, #cbd5e1); transition: color 0.2s; }
+            .orch-truncate-hover:hover { color: #3b82f6 !important; border-bottom-color: #3b82f6; }
+            
+            /* 🚨 THE FIX: Global Skeleton Keyframes */
+            @keyframes orch-skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+            .orch-skeleton-bar { height: 14px; background: linear-gradient(90deg, var(--bg-surface,#f1f5f9) 25%, var(--border-color,#e2e8f0) 50%, var(--bg-surface,#f1f5f9) 75%); background-size: 200% 100%; animation: orch-skeleton-loading 1.5s infinite; border-radius: 4px; }
+            html[data-bs-theme="dark"] .orch-skeleton-bar { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; }
         `;
         document.head.appendChild(style);
     }
 
     // ==========================================
-    // ⚔️ 2. Global Micro-Interactions (คุมพฤติกรรม JavaScript)
+    // ⚔️ 2. Global Micro-Interactions (WeakMap Engine)
     // ==========================================
-    _setupGlobalMicroInteractions() {
+    #setupGlobalMicroInteractions() {
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('.btn, button, .anti-double-click');
             if (!btn) return;
 
             if (!btn.classList.contains('allow-multiple') && !btn.classList.contains('is-processing')) {
+                // ล็อคความกว้างไม่ให้ปุ่มหดตัวเวลาโหลด
                 const originalWidth = btn.offsetWidth;
                 btn.style.minWidth = `${originalWidth}px`;
                 btn.classList.add('is-processing');
                 
-                setTimeout(() => {
-                    if (btn) {
+                // 🚨 THE FIX: ล้าง Timeout เก่า (ถ้ามี) ป้องกันบั๊กปลดล็อคก่อนกำหนด
+                if (this.#processingButtons.has(btn)) {
+                    clearTimeout(this.#processingButtons.get(btn));
+                }
+                
+                const timerId = setTimeout(() => {
+                    if (document.body.contains(btn)) { // ตรวจว่าปุ่มยังอยู่ในจอ
                         btn.classList.remove('is-processing');
                         btn.style.minWidth = '';
                     }
+                    this.#processingButtons.delete(btn); // คืน Memory ให้ Garbage Collector
                 }, 1000);
+                
+                this.#processingButtons.set(btn, timerId);
             }
         }, true);
     }
@@ -195,7 +152,7 @@ class UIOrchestratorService {
     // ==========================================
     // 🛡️ 3. โครงสร้าง Z-Index ชั้นสููงสุด (Global Hierarchy)
     // ==========================================
-    _setupGlobalZIndexHierarchy() {
+    #setupGlobalZIndexHierarchy() {
         if (document.getElementById('orchestrator-zindex-fix')) return;
         const style = document.createElement('style');
         style.id = 'orchestrator-zindex-fix';
@@ -204,7 +161,6 @@ class UIOrchestratorService {
             .modal, .dropdown-menu, .select2-container--open { z-index: 1055 !important; }
             .modal-backdrop { z-index: 1050 !important; }
             .main-sidebar, .sidebar, .main-header { z-index: 1030 !important; }
-            
             body.swal2-shown [class*="sidebar"], body.swal2-shown [class*="offcanvas"], body.swal2-shown header,
             body.modal-open [class*="sidebar"], body.modal-open header { z-index: 1000 !important; }
         `;
@@ -212,33 +168,42 @@ class UIOrchestratorService {
     }
 
     // ==========================================
-    // 📱 4. บังคับเลย์เอาต์ตามอุปกรณ์ (Tablet/Desktop vs Mobile)
+    // 📱 4. บังคับเลย์เอาต์ตามอุปกรณ์ (Native MatchMedia API)
     // ==========================================
-    _enforceTabletDesktopLayout() {
-        const fixLayout = () => {
-            try {
-                if (window.innerWidth >= 992) {
-                    document.body.classList.remove('sidebar-collapse', 'sidebar-mini', 'sidebar-collapsed', 'toggle-sidebar');
-                    document.body.classList.add('sidebar-expanded', 'sidebar-open');
-                    document.querySelectorAll('.sidebar-toggle, #sidebarToggle, .hamburger-menu, [data-bs-toggle="sidebar"], .mobile-toggle').forEach(btn => {
-                        btn.style.setProperty('display', 'none', 'important');
-                    });
-                } else {
-                    document.querySelectorAll('.sidebar-toggle, #sidebarToggle, .hamburger-menu, [data-bs-toggle="sidebar"], .mobile-toggle').forEach(btn => {
-                        btn.style.removeProperty('display');
-                    });
-                }
-            } catch (e) {}
+    #enforceTabletDesktopLayout() {
+        // 🚨 THE FIX: แทนที่ window.resize ด้วย matchMedia (O(1) Event Firing) ไม่กิน CPU เลย
+        const mq = window.matchMedia('(min-width: 992px)');
+        
+        const applyLayout = (e) => {
+            const isDesktop = e.matches;
+            if (isDesktop) {
+                document.body.classList.remove('sidebar-collapse', 'sidebar-mini', 'sidebar-collapsed', 'toggle-sidebar');
+                document.body.classList.add('sidebar-expanded', 'sidebar-open');
+                document.querySelectorAll('.sidebar-toggle, #sidebarToggle, .hamburger-menu, [data-bs-toggle="sidebar"], .mobile-toggle').forEach(btn => {
+                    btn.style.setProperty('display', 'none', 'important');
+                });
+            } else {
+                document.querySelectorAll('.sidebar-toggle, #sidebarToggle, .hamburger-menu, [data-bs-toggle="sidebar"], .mobile-toggle').forEach(btn => {
+                    btn.style.removeProperty('display');
+                });
+            }
         };
-        fixLayout();
-        window.addEventListener('resize', () => requestAnimationFrame(fixLayout));
-        window.addEventListener('orientationchange', () => { setTimeout(fixLayout, 200); setTimeout(fixLayout, 600); });
+
+        // ทำงานครั้งแรก
+        applyLayout(mq);
+        
+        // ผูก Listener เมื่อข้ามเส้น Breakpoint เท่านั้น
+        try {
+            mq.addEventListener('change', applyLayout);
+        } catch (e1) {
+            mq.addListener(applyLayout); // Fallback Safari เก่า
+        }
     }
 
     // ==========================================
     // 🔄 5. ระบบดักจับการย่อขยายขั้นสูง (Advanced Resize Engine)
     // ==========================================
-    _setupAdvancedResizeEngine() {
+    #setupAdvancedResizeEngine() {
         const adjustTables = () => {
             if (typeof $ !== 'undefined' && $.fn && $.fn.DataTable) {
                 try { $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust(); } catch (e) {}
@@ -249,23 +214,19 @@ class UIOrchestratorService {
 
         if (typeof ResizeObserver !== 'undefined') {
             const wrapper = document.querySelector('.content-wrapper') || document.body;
-            this.resizeObserver = new ResizeObserver(() => {
-                clearTimeout(this._obsTimer);
-                this._obsTimer = setTimeout(adjustTables, 150);
+            this.#resizeObserver = new ResizeObserver(() => {
+                // Debounce การขยับตาราง เพื่อความสมูท
+                if (this._obsTimer) cancelAnimationFrame(this._obsTimer);
+                this._obsTimer = requestAnimationFrame(adjustTables);
             });
-            this.resizeObserver.observe(wrapper);
-        } else {
-            window.addEventListener('resize', () => {
-                clearTimeout(this._resizeTimer);
-                this._resizeTimer = setTimeout(adjustTables, 150); 
-            });
+            this.#resizeObserver.observe(wrapper);
         }
     }
 
     // ==========================================
-    // ⚔️ 6. ระบบยึดอำนาจ DataTables (ป้องกัน Error ทะลุ)
+    // ⚔️ 6. ระบบยึดอำนาจ DataTables (Smart Backoff Polling)
     // ==========================================
-    _hijackDataTables() {
+    #hijackDataTables() {
         let retries = 0;
         const applyHijack = () => {
             if (typeof $ !== 'undefined' && $.fn && $.fn.dataTable && !$.fn.dataTable.__godModeStatus) {
@@ -300,16 +261,16 @@ class UIOrchestratorService {
                     $.fn.dataTable.__godModeStatus = true; 
 
                 } catch (err) { console.error("DataTables Hijack Failed:", err); }
-            } else if (retries < 100) {
+            } else if (retries < 50) { // 🚨 THE FIX: Exponential Backoff Polling
                 retries++;
-                setTimeout(applyHijack, 100);
+                setTimeout(applyHijack, 50 * retries); // ยืดเวลาออกไปเรื่อยๆ ลดการกิน CPU
             }
         };
         applyHijack();
     }
 
     // ==========================================
-    // 🛠️ 7. OMNISCIENT RENDER UTILITIES 
+    // 🛠️ 7. OMNISCIENT RENDER UTILITIES (CSP-SAFE)
     // ==========================================
     applyTableStandard(tableId, customOptions = {}) {
         try {
@@ -345,7 +306,8 @@ class UIOrchestratorService {
         if (!text && text !== 0) return '-';
         let str = String(text);
         if (str.length <= maxLength) return str;
-        return `<span title="${str}" data-bs-toggle="tooltip" style="cursor: help; border-bottom: 1px dashed #cbd5e1; transition: color 0.2s;" onmouseover="this.style.color='#3b82f6'" onmouseout="this.style.color='inherit'">${str.substring(0, maxLength)}...</span>`;
+        // 🚨 THE FIX: ลบ onmouseover ออก ใช้ CSS Class .orch-truncate-hover แทน ปลอดภัยจาก XSS
+        return `<span title="${str}" data-bs-toggle="tooltip" class="orch-truncate-hover">${str.substring(0, maxLength)}...</span>`;
     }
     
     renderCurrency(amount) {
@@ -359,15 +321,10 @@ class UIOrchestratorService {
         for(let i=0; i<rows; i++) {
             html += '<tr>';
             for(let j=0; j<columns; j++) {
-                html += `<td><div style="height: 14px; background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; border-radius: 4px; width: ${Math.floor(Math.random() * 40 + 40)}%;"></div></td>`;
+                // 🚨 THE FIX: ใช้ CSS Class แทนการ Hardcode Style แบบเก่า สะอาดและเร็วกว่า
+                html += `<td><div class="orch-skeleton-bar" style="width: ${Math.floor(Math.random() * 40 + 40)}%;"></div></td>`;
             }
             html += '</tr>';
-        }
-        if(!document.getElementById('skeleton-keyframes')) {
-            const style = document.createElement('style');
-            style.id = 'skeleton-keyframes';
-            style.innerHTML = `@keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`;
-            document.head.appendChild(style);
         }
         return html;
     }

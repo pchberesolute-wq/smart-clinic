@@ -1,5 +1,5 @@
 // js/pages/patient_status.js
-// 🚀 โมดูลทะเบียนผู้ป่วยส่งต่อ/จำหน่าย (Ultra-Clean Line Tabs + Zero-Shift)
+// 🚀 โมดูลทะเบียนผู้ป่วยส่งต่อ/จำหน่าย (Surgical Purge Engine + Zero-Overflow Table)
 
 class PatientStatusPageComponent {
     constructor() {
@@ -14,9 +14,9 @@ class PatientStatusPageComponent {
                 /* 🚨 ULTRA-CLEAN TABS: ล้างเงา ล้างขอบ ล้างพื้นหลังให้สะอาดหมดจด 🚨 */
                 .ps-tabs-wrapper {
                     display: flex;
-                    gap: 28px; /* เว้นระยะห่างให้ดูโปร่งสบายตา */
+                    gap: 28px; 
                     margin-bottom: 24px;
-                    border-bottom: 2px solid var(--border-color); /* เส้นแกนหลัก */
+                    border-bottom: 2px solid var(--border-color); 
                     overflow-x: auto;
                     -webkit-overflow-scrolling: touch;
                     scrollbar-width: none;
@@ -30,11 +30,11 @@ class PatientStatusPageComponent {
                     display: inline-flex;
                     align-items: center;
                     justify-content: center;
-                    padding: 12px 4px; /* ลด Padding ซ้ายขวา เพื่อให้เส้นใต้พอดีกับตัวอักษร */
-                    background: transparent !important; /* ล้างพื้นหลัง 100% */
-                    border: none !important; /* ล้างเส้นขอบบนซ้ายขวา 100% */
-                    border-bottom: 3px solid transparent !important; /* ซ่อนเส้นใต้รอไว้ */
-                    border-radius: 0 !important; /* ไม่ต้องโค้งมน เพราะเป็นแค่เส้น */
+                    padding: 12px 4px; 
+                    background: transparent !important; 
+                    border: none !important; 
+                    border-bottom: 3px solid transparent !important; 
+                    border-radius: 0 !important; 
                     font-family: 'Prompt', sans-serif;
                     font-size: 15px;
                     font-weight: 600;
@@ -43,9 +43,9 @@ class PatientStatusPageComponent {
                     transition: color 0.2s ease, border-color 0.2s ease !important;
                     position: relative;
                     white-space: nowrap;
-                    margin-bottom: -2px; /* 🎯 ดึงเส้นใต้ลงมาทับเส้นแกนหลักให้สนิทเป๊ะ */
+                    margin-bottom: -2px; 
                     box-sizing: border-box;
-                    box-shadow: none !important; /* 🎯 ฆ่าเงาทุกชนิดทิ้ง! */
+                    box-shadow: none !important; 
                 }
                 
                 .ps-tab-btn:hover { 
@@ -54,7 +54,7 @@ class PatientStatusPageComponent {
                 .ps-tab-btn i { transition: transform 0.2s ease; }
                 .ps-tab-btn:hover i { transform: scale(1.15); }
 
-                /* 🌟 สถานะ Active ของแต่ละแท็บ (สะอาด เน้นสีอักษรและเส้นใต้หนาๆ) */
+                /* 🌟 สถานะ Active ของแต่ละแท็บ */
                 .ps-tab-btn.tab-admit-active {
                     color: #ef4444 !important;
                     border-bottom-color: #ef4444 !important;
@@ -71,7 +71,10 @@ class PatientStatusPageComponent {
                     font-weight: 800;
                 }
 
-                /* 🪟 พาเนลเนื้อหาหลัก */
+                /* ========================================================
+                   🚨 THE ULTIMATE FIX: FLUID SCROLL GRID ENGINE 
+                   ======================================================== */
+                /* 🪟 พาเนลเนื้อหาหลัก ให้มันขยายตัวตามจอที่เหลือ แต่ไม่ทะลุขอบล่าง */
                 #ps-main-panel {
                     border-top-width: 4px !important;
                     border-top-style: solid !important;
@@ -81,12 +84,43 @@ class PatientStatusPageComponent {
                     border-left: 1px solid var(--border-color);
                     border-right: 1px solid var(--border-color);
                     border-bottom: 1px solid var(--border-color);
+                    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05) !important; 
+                    
+                    /* 🚨 จำกัดความสูงอ้างอิงกับจอภาพ กันทะลุ (Viewport Height Calculation) */
+                    display: flex;
+                    flex-direction: column;
+                    height: calc(100vh - 290px); /* สำรองที่ให้ Header และ Tabs ด้านบน */
                     min-height: 400px;
-                    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05) !important; /* เงาบางๆ แค่ใต้กล่องตาราง */
+                    margin-bottom: 20px;
                 }
+                
                 #ps-main-panel.panel-admit-active { border-top-color: #ef4444 !important; }
                 #ps-main-panel.panel-transfer-active { border-top-color: #0ea5e9 !important; }
                 #ps-main-panel.panel-deceased-active { border-top-color: var(--text-dark, #334155) !important; }
+
+                /* 🚨 กระบอกสูบของตาราง (Scrollable Wrapper) */
+                .locked-table-wrapper {
+                    flex-grow: 1; /* ขยายกินพื้นที่ของ ps-main-panel ทั้งหมดที่เหลือ */
+                    min-height: 0; /* 🚨 สำคัญมาก: បังคับให้ตารางหดตัวอยู่ในกล่องได้ ไม่ทะลุ */
+                    overflow-y: auto;
+                    overflow-x: auto;
+                    border-radius: 12px;
+                    border: 1px solid var(--border-color);
+                    background-color: var(--bg-surface);
+                }
+                .locked-table-wrapper::-webkit-scrollbar { width: 8px; height: 8px; }
+                .locked-table-wrapper::-webkit-scrollbar-track { background: transparent; }
+                .locked-table-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+                .locked-table-wrapper::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+                /* 🚨 ล็อกหัวตารางให้อยู่กับที่เวลาเลื่อน (Sticky Header) */
+                .table-premium th {
+                    position: sticky;
+                    top: 0;
+                    background-color: var(--bg-body); /* ใช้สีพื้นหลังป้องกันข้อมูลทะลุ */
+                    z-index: 10;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* เงาบางๆ แยก Header กับ Content */
+                }
 
                 .safe-icon { font-family: 'Font Awesome 6 Free', 'FontAwesome', sans-serif !important; font-weight: 900 !important; font-style: normal !important; }
             </style>
@@ -127,7 +161,8 @@ class PatientStatusPageComponent {
             <div class="modern-panel p-4 position-relative overflow-hidden panel-admit-active fade-in-up" id="ps-main-panel" style="animation-delay: 0.1s;">
                 <div style="position: absolute; top: -30px; right: -30px; opacity: 0.03; font-size: 300px; pointer-events: none; color: var(--text-dark); transform: rotate(-10deg);"><i class="fa-solid fa-folder-tree safe-icon"></i></div>
                 
-                <div class="table-responsive rounded-4 border position-relative z-1 shadow-sm pb-2" style="background-color: var(--bg-surface); border-color: var(--border-color) !important;">
+                <!-- 🚨 นำตารางใส่เข้าไปในกระบอกสูบ (Wrapper) ป้องกันทะลุขอบ 100% -->
+                <div class="locked-table-wrapper position-relative z-1 shadow-sm">
                     <table class="table table-premium w-100 mb-0">
                         <thead>
                             <tr>
@@ -186,6 +221,7 @@ class PatientStatusPageComponent {
         db.ref('patients_database_v2/patients').off('value');
     }
 
+    // 🚨 THE FIX: Surgical Purge Engine (ป้องกันการลบมั่ว & ป้องกัน Database พัง)
     autoCleanUpOldArchives() {
         this.hasCleanedUp = true; 
         const cutoffDate = new Date();
@@ -193,22 +229,46 @@ class PatientStatusPageComponent {
 
         db.ref('patients_database_v2/patients').once('value').then(snap => {
             let data = snap.val();
-            if (!data) return;
-            let rawPatients = Array.isArray(data) ? data : Object.keys(data).map(k => data[k]);
-            let originalLength = rawPatients.length;
+            if (!data || typeof data !== 'object') return;
             
-            let updatedPatients = rawPatients.filter(p => {
-                if (!p) return false;
-                if ((p.status || 'ปกติ') === 'ปกติ') return true;
+            let updates = {};
+            let deletedCount = 0;
+
+            // วนลูปเช็คทีละ Record โดยอ้างอิงผ่าน Firebase Key แท้จริง
+            Object.keys(data).forEach(key => {
+                let p = data[key];
+                if (!p) return;
                 
-                let recordDate = new Date(p.last_updated || p.register_date || "2000-01-01");
-                if (recordDate < cutoffDate) return false; 
-                return true; 
+                // คัดกรองเฉพาะคนที่ "ไม่ปกติ" (Archive)
+                if ((p.status || 'ปกติ') !== 'ปกติ') {
+                    let dateStr = p.last_updated || p.register_date || p.created_at;
+                    
+                    // 🛡️ Zero-Trust: ถ้าไม่มีวันที่ระบุไว้ ให้ "อนุโลมไม่ลบ" เพื่อความปลอดภัยของข้อมูล
+                    if (dateStr) {
+                        let recordDate = new Date(dateStr);
+                        
+                        // 🛠️ Edge Case: จัดการวันที่แบบไทย (DD/MM/YYYY หรือ DD/MM/2569)
+                        if (dateStr.includes('/')) {
+                            let parts = dateStr.split('/');
+                            if (parts.length === 3) {
+                                let year = parseInt(parts[2]);
+                                if (year > 2500) year -= 543; // แปลง พ.ศ. เป็น ค.ศ.
+                                recordDate = new Date(`${year}-${parts[1]}-${parts[0]}`);
+                            }
+                        }
+
+                        // ตรวจสอบขั้นสุดท้าย: วันที่ Valid และ เก่ากว่า 5 ปีจริงๆ เท่านั้น
+                        if (!isNaN(recordDate.getTime()) && recordDate < cutoffDate) {
+                            updates[key] = null; // มาร์คคีย์นี้เป็น null เพื่อสั่ง Firebase ลบเฉพาะเจาะจง
+                            deletedCount++;
+                        }
+                    }
+                }
             });
 
-            let deletedCount = originalLength - updatedPatients.length;
+            // ทำการยิงอัปเดตเฉพาะจุด (Atomic Update) ป้องกันคีย์ข้อมูลคนไข้คนอื่นหาย
             if (deletedCount > 0) {
-                db.ref('patients_database_v2/patients').set(updatedPatients).then(() => {
+                db.ref('patients_database_v2/patients').update(updates).then(() => {
                     const Toast = Swal.mixin({ 
                         toast: true, position: 'bottom-end', showConfirmButton: false, timer: 6000,
                         didOpen: (toast) => {
@@ -372,7 +432,7 @@ class PatientStatusPageComponent {
             <tr class="align-middle card-hover-float" style="cursor: default;">
                 <td>
                     <div class="d-flex align-items-center">
-                        <img src="${imgSrc}" class="me-3 shadow-sm border border-3 border-light" style="width: 55px; height: 55px; border-radius: 14px; object-fit: cover; filter: grayscale(15%); transition: all 0.3s;" onmouseover="this.style.filter='grayscale(0%)'" onmouseout="this.style.filter='grayscale(15%)'">
+                        <img src="${imgSrc}" loading="lazy" decoding="async" class="me-3 shadow-sm border border-3 border-light" style="width: 55px; height: 55px; border-radius: 14px; object-fit: cover; filter: grayscale(15%); transition: all 0.3s;" onmouseover="this.style.filter='grayscale(0%)'" onmouseout="this.style.filter='grayscale(15%)'">
                         <div>
                             <div class="fw-bold text-dark" style="font-size:15.5px; font-family:'Prompt';">${fullName}</div>
                             <div class="text-muted fw-bold mt-1" style="font-size:13px;"><i class="fa-solid fa-id-card-clip me-1 safe-icon"></i> ${p.hn || '-'} <span class="ms-2 text-muted fw-normal">| อายุ: ${p.age || '-'} ปี</span></div>

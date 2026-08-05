@@ -1,121 +1,167 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" dir="ltr" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- 🛡️ ZERO-TRUST SECURITY: Modern Enterprise Headers -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f1f5f9" media="(prefers-color-scheme: light)">
+    <meta name="description" content="DIALYSIS PRO - Enterprise Cloud EMR System">
+    
+    <!-- 🌟 PWA Requirements -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="apple-touch-icon" href="./img/logo.png">
     
     <title>DIALYSIS PRO - Cloud OS</title>
 
-    <!-- 🚨 THE FIX: ระบบ Pre-Boot Cloaking ป้องกัน FOUC (จอแว็บ) อย่างเด็ดขาด -->
-    <script>
-        if (!sessionStorage.getItem('dialysis_session_active')) {
-            sessionStorage.setItem('dialysis_session_active', 'true');
-        }
-        // ถ้าไม่มี Session ถือว่ายังไม่ Login บังคับลบโครงสร้างจอหลักทิ้งให้เป็นหน้ากระดาษเปล่าทันที
-        if (!sessionStorage.getItem('dialysis_user_session')) {
-            document.documentElement.classList.add('not-logged-in');
-            const style = document.createElement('style');
-            style.innerHTML = `
-                html.not-logged-in body { background: #f8fafc !important; }
-                html.not-logged-in #sidebar, html.not-logged-in .topbar { display: none !important; }
-                html.not-logged-in .main-content { margin: 0 !important; padding: 0 !important; width: 100vw !important; height: 100vh !important; background: #f8fafc !important; }
-                html.not-logged-in #app-content { opacity: 0; }
-            `;
-            document.head.appendChild(style);
-        }
-    </script>
-    
+    <!-- ⚡ HIGH-PERFORMANCE: Resource Hints -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+
+    <!-- 🚨 ENTERPRISE FIX: Multi-Tab Safe Cloaking & Dark Mode FOUC Prevention -->
+    <script id="enterprise-boot-cloaking">
+        (function() {
+            try {
+                const isAuthenticated = localStorage.getItem('dialysis_user_session') || sessionStorage.getItem('dialysis_user_session');
+                const savedTheme = localStorage.getItem('dialysis_active_theme') === 'dark' ? 'dark' : 'light';
+                
+                document.documentElement.setAttribute('data-bs-theme', savedTheme);
+                const bgColor = savedTheme === 'dark' ? '#0f172a' : '#f8fafc';
+
+                if (!isAuthenticated) {
+                    document.documentElement.classList.add('not-logged-in');
+                    const style = document.createElement('style');
+                    style.id = 'anti-flash-style';
+                    style.innerHTML = `
+                        html.not-logged-in body { background: ${bgColor} !important; }
+                        html.not-logged-in #sidebar, html.not-logged-in .topbar { display: none !important; }
+                        html.not-logged-in .main-content { margin: 0 !important; padding: 0 !important; width: 100vw !important; height: 100vh !important; background: ${bgColor} !important; }
+                        html.not-logged-in #app-content { opacity: 0; pointer-events: none; }
+                    `;
+                    document.head.appendChild(style);
+                }
+            } catch(e) { console.warn("FOUC Cloaking Bypass:", e); }
+        })();
+    </script>
     
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <!-- 🎨 ASSETS -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     
-    <link rel="stylesheet" href="./css/style.css?v=9999">
+    <link rel="stylesheet" href="./css/style.css">
 
     <style id="modern-ui-core">
         :root {
             --sidebar-width: 300px; --bg-main: #f1f5f9; --color-primary: #3b82f6; --color-primary-dark: #2563eb;
             --color-surface: #ffffff; --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.08); --shadow-hover: 0 20px 40px -10px rgba(37,99,235,0.15);
         }
+        body { background-color: var(--bg-main) !important; overflow-x: hidden; font-family: 'Sarabun', sans-serif; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
 
-        body { background-color: var(--bg-main) !important; overflow-x: hidden; font-family: 'Sarabun', sans-serif; }
-
+        /* 🚨 THE FIX: CSS Containment (Zero-Reflow Engine) */
         .sidebar {
             width: var(--sidebar-width); position: fixed; top: 20px; bottom: 20px; left: 20px;
             background: var(--color-surface); border-radius: 28px; box-shadow: var(--shadow-soft);
             display: flex; flex-direction: column; z-index: 1050;
             transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s;
             border: 1px solid rgba(255,255,255,0.8);
+            will-change: transform;
+            contain: strict; 
         }
 
         .sidebar-brand { padding: 28px 24px 20px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid rgba(226, 232, 240, 0.6); }
         .sidebar-logo-img { width: 54px; height: 54px; border-radius: 16px; object-fit: cover; box-shadow: 0 8px 16px rgba(0,0,0,0.1); border: 2px solid #fff; }
-        .brand-text h3 { font-family: 'Prompt', sans-serif; font-size: 16.5px; font-weight: 800; margin: 0; color: #0f172a; line-height: 1.3; }
+        .brand-text h3 { font-family: 'Prompt', sans-serif; font-size: 16.5px; font-weight: 800; margin: 0; color: var(--text-dark, #0f172a); line-height: 1.3; }
         .brand-text p { font-family: 'Prompt', sans-serif; font-size: 11px; font-weight: 700; color: var(--color-primary); margin: 0; letter-spacing: 0.5px; }
 
-        .sidebar-menu-container { flex: 1; overflow-y: auto; padding: 24px 16px; }
+        .sidebar-menu-container { flex: 1; overflow-y: auto; padding: 24px 16px; overscroll-behavior: contain; }
         .sidebar-menu-container::-webkit-scrollbar { width: 4px; }
         .sidebar-menu-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
         .nav-menu { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
         .nav-section { font-family: 'Prompt', sans-serif; font-size: 11.5px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0 8px 12px; }
         
-        .nav-item { display: flex; align-items: center; padding: 13px 18px; border-radius: 16px; color: #475569; font-weight: 600; font-size: 14.5px; cursor: pointer; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); position: relative; overflow: hidden; border: 1px solid transparent; }
+        .nav-item { display: flex; align-items: center; padding: 13px 18px; border-radius: 16px; color: var(--text-muted, #475569); font-weight: 600; font-size: 14.5px; cursor: pointer; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); position: relative; overflow: hidden; border: 1px solid transparent; user-select: none; }
         .nav-item i { width: 26px; font-size: 18px; display: flex; justify-content: center; margin-right: 14px; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .nav-item span { font-family: 'Prompt', sans-serif; }
-        .nav-item:hover { background: #f8fafc; color: #0f172a; transform: translateX(6px); border-color: #e2e8f0; }
-        .nav-item:hover i { transform: scale(1.15); color: var(--color-primary); }
+        
+        /* ☀️ Light Mode Hover */
+        .nav-item:hover, .nav-item:focus-visible { background: #f8fafc; color: #0f172a; transform: translateX(6px); border-color: #e2e8f0; outline: none; }
+        .nav-item:hover i, .nav-item:focus-visible i { transform: scale(1.15); color: var(--color-primary); }
+        
+        /* 🌙 Dark Mode Hover */
+        html[data-bs-theme="dark"] .nav-item { color: #94a3b8; }
+        html[data-bs-theme="dark"] .nav-item:hover, 
+        html[data-bs-theme="dark"] .nav-item:focus-visible { 
+            background: rgba(255, 255, 255, 0.05) !important; 
+            color: #f8fafc !important; 
+            border-color: rgba(255, 255, 255, 0.1) !important; 
+        }
+        
+        /* Active State */
         .nav-item.active { background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%); color: #ffffff; box-shadow: 0 10px 20px -6px rgba(37, 99, 235, 0.5); border-color: transparent; font-weight: 700; }
         .nav-item.active i { color: #ffffff; transform: scale(1.1); }
 
         .sidebar-footer { padding: 20px 16px; border-top: 1px solid rgba(226, 232, 240, 0.6); }
-        .user-card-wrapper { cursor: pointer; border-radius: 18px; transition: all 0.3s; padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; }
-        .user-card-wrapper:hover { background: #fef2f2; border-color: #fca5a5; box-shadow: 0 8px 16px rgba(239, 68, 68, 0.1); transform: translateY(-2px); }
+        html[data-bs-theme="dark"] .sidebar-footer { border-top-color: rgba(255,255,255,0.05); }
+
+        .user-card-wrapper { cursor: pointer; border-radius: 18px; transition: all 0.3s; padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; user-select: none; }
+        .user-card-wrapper:hover, .user-card-wrapper:focus-visible { background: #fef2f2; border-color: #fca5a5; box-shadow: 0 8px 16px rgba(239, 68, 68, 0.1); transform: translateY(-2px); outline: none; }
         .user-card-wrapper:hover .user-info p { color: #ef4444 !important; }
         .user-card-wrapper:hover .user-avatar { background: #ef4444; }
+        
+        /* 🌙 Dark Mode Logout Hover */
+        html[data-bs-theme="dark"] .user-card-wrapper { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.05); }
+        html[data-bs-theme="dark"] .user-card-wrapper:hover { background: rgba(239, 68, 68, 0.15) !important; border-color: rgba(239, 68, 68, 0.3) !important; }
+        html[data-bs-theme="dark"] .user-card-wrapper:hover h4 { color: #f8fafc !important; }
+        
         .user-card { display: flex; align-items: center; gap: 14px; }
         .user-avatar { width: 44px; height: 44px; background: var(--color-primary); color: #fff; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-family: 'Prompt', sans-serif; font-weight: 800; font-size: 16px; transition: 0.3s; }
         .user-info h4 { font-family: 'Prompt', sans-serif; font-size: 14.5px; font-weight: 700; color: #0f172a; margin: 0; }
         .user-info p { font-size: 12px; font-weight: 600; color: #64748b; margin: 0; transition: color 0.3s; }
 
+        /* CSS Containment for Main Content */
         .main-content { 
             margin-left: calc(var(--sidebar-width) + 20px); 
             padding: 20px 30px 40px 30px; 
             min-height: 100vh; display: flex; flex-direction: column; transition: margin 0.4s; 
+            contain: layout style; 
         }
         
         .topbar {
-            background: #ffffff; border-radius: 24px; padding: 12px 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; margin-bottom: 30px;
+            background: var(--color-surface); border-radius: 24px; padding: 12px 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid var(--border-color, #e2e8f0); margin-bottom: 30px;
             position: sticky; top: 20px; z-index: 900;
         }
 
-        .search-box-modern { background: #f1f5f9; border-radius: 50px; padding: 12px 24px; display: flex; align-items: center; transition: all 0.3s; border: 1px solid transparent; cursor: pointer; }
+        .search-box-modern { background: var(--bg-main); border-radius: 50px; padding: 12px 24px; display: flex; align-items: center; transition: all 0.3s; border: 1px solid transparent; cursor: pointer; }
         .search-box-modern:hover { background: #e2e8f0; }
-        .search-box-modern:focus-within { background: #ffffff; border-color: var(--color-primary); box-shadow: 0 0 0 4px rgba(37,99,235,0.1); cursor: text; }
-        .search-box-modern input { font-family: 'Prompt', sans-serif; font-size: 14.5px; font-weight: 600; color: #475569 !important; }
+        .search-box-modern:focus-within { background: var(--bg-surface); border-color: var(--color-primary); box-shadow: 0 0 0 4px rgba(37,99,235,0.1); cursor: text; }
+        .search-box-modern input { font-family: 'Prompt', sans-serif; font-size: 14.5px; font-weight: 600; color: var(--text-dark, #475569) !important; }
         .search-box-modern input::placeholder { color: #94a3b8; font-weight: 500; }
         .search-box-modern i { font-size: 18px; color: var(--color-primary); }
         
         .topbar-left-section { flex: 1 1 auto; min-width: 0; margin-right: clamp(10px, 2vw, 30px); }
 
-        .mobile-menu-btn { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 50px; padding: 10px 16px; flex-shrink: 0; transition: all 0.3s ease; }
+        .mobile-menu-btn { background: var(--bg-main); border: 1px solid var(--border-color, #e2e8f0); border-radius: 50px; padding: 10px 16px; flex-shrink: 0; transition: all 0.3s ease; }
         .mobile-menu-btn i { color: var(--color-primary); transition: all 0.3s ease; }
         
-        html[data-bs-theme="dark"] .mobile-menu-btn { background-color: rgba(255,255,255,0.05) !important; border-color: rgba(255,255,255,0.1) !important; }
-        html[data-bs-theme="dark"] .mobile-menu-btn i { color: #f8fafc !important; }
-        html[data-bs-theme="dark"] .mobile-menu-btn:hover { background-color: rgba(255,255,255,0.15) !important; }
-
         .topbar-actions { flex: 0 1 auto; display: flex !important; flex-wrap: wrap !important; justify-content: flex-end !important; align-items: center !important; gap: clamp(6px, 1vw, 15px) !important; }
 
-        .sync-widget-topbar, .time-widget { background: #ffffff; border-radius: 50px; padding: clamp(6px, 1vh, 8px) clamp(10px, 1vw, 16px); border: 1px solid #e2e8f0; font-family: 'Prompt', sans-serif; font-weight: 600; display: flex !important; align-items: center !important; white-space: nowrap !important; font-size: clamp(11px, 1vw + 5px, 13px) !important; }
+        .sync-widget-topbar, .time-widget { background: var(--color-surface); border-radius: 50px; padding: clamp(6px, 1vh, 8px) clamp(10px, 1vw, 16px); border: 1px solid var(--border-color, #e2e8f0); font-family: 'Prompt', sans-serif; font-weight: 600; display: flex !important; align-items: center !important; white-space: nowrap !important; font-size: clamp(11px, 1vw + 5px, 13px) !important; }
         #clockDisplay { font-size: clamp(11.5px, 1vw + 6px, 14px) !important; }
         .sync-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
-        .sync-dot.active { background-color: #10b981; }
+        .sync-dot.active { background-color: #10b981; box-shadow: 0 0 8px rgba(16,185,129,0.5); }
+        .sync-dot.offline { background-color: #ef4444; }
 
+        /* Media Queries */
         @media (max-width: 1024px) {
             .sidebar { transform: translateX(-120%); box-shadow: 20px 0 50px rgba(0,0,0,0.15); border-radius: 0 28px 28px 0; top: 0; bottom: 0; left: 0; width: 300px !important; }
             .sidebar.active { transform: translateX(0); }
@@ -140,37 +186,31 @@
             .time-widget i { margin-right: 4px !important; }
             .sync-ping { display: none !important; } 
         }
-
-        table.dataTable, .table { font-size: 14px !important; color: #334155 !important; }
-        table.dataTable th, table.dataTable td, .table th, .table td { padding: 12px 18px !important; vertical-align: middle !important; white-space: nowrap; }
-        table.dataTable thead th, .table thead th { background-color: #f8fafc !important; color: #475569 !important; font-weight: 700 !important; border-bottom: 2px solid #e2e8f0 !important; letter-spacing: 0.5px; }
-        .dataTables_wrapper .d-flex.flex-nowrap { flex-wrap: wrap !important; gap: 15px; }
-        .dataTables_wrapper .dataTables_filter input { padding: 6px 12px !important; border-radius: 8px !important; border: 1px solid #cbd5e1 !important; width: 100% !important; max-width: 250px; }
-        .dataTables_wrapper .dataTables_paginate .paginate_button { padding: 4px 10px !important; border-radius: 6px !important; font-size: 13px !important; }
-        .dataTables_wrapper { min-width: 0 !important; width: 100% !important; overflow-x: auto !important; }
     </style>
 
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js" defer></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+    <!-- 📦 SCRIPT BUNDLING -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous" defer></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js" defer crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js" defer crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js" defer crossorigin="anonymous"></script> 
     
-    <!-- 🚨 THE BULLETPROOF FIX: เปลี่ยนไลบรารี SheetJS เป็นเวอร์ชันปลดล็อกสี (xlsx-js-style) -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js" defer></script> 
+    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js" defer crossorigin="anonymous"></script>
+    <script src="./js/services/media_engine.js" defer></script>
     
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js" defer></script>
     
     <script src="./js/firebase-config.js" defer></script>
-
     <script src="./js/pages/security_shield.js" defer></script>
     <script src="./js/pages/performance_engine.js" defer></script>
     <script src="./js/pages/realtime_sync_engine.js" defer></script>
     <script src="./js/pages/responsive_engine.js" defer></script>
     <script src="./js/pages/auto_purge_service.js" defer></script> 
+    <script src="./js/pages/ui_orchestrator.js" defer></script>
     
     <script src="./js/pages/login.js" defer></script>
     <script src="./js/pages/dashboard.js" defer></script>
@@ -192,106 +232,198 @@
     <script src="./js/pages/search_copy.js" defer></script>
     <script src="./js/pages/settings.js" defer></script>
     <script src="./js/pages/about.js" defer></script>
-    
     <script src="./js/pages/shift_schedule.js" defer></script> 
+    <script src="./js/theme_engine.js" defer></script>
     
-    <script src="./js/theme_engine.js?v=9999" defer></script>
+    <script src="./js/main.js" defer></script> 
 
-    <script src="./js/main.js?v=40" defer></script> 
+    <!-- 🌐 OFFLINE-FIRST: Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(err => {
+                    console.error('[PWA] ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
 </head>
 
 <body>
-    <aside class="sidebar" id="sidebar">
+    <aside class="sidebar" id="sidebar" aria-label="Main Navigation">
         <div class="sidebar-brand">
-            <img src="./img/logo.png" alt="DIALYSIS PRO Logo" class="sidebar-logo-img" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=100&auto=format&fit=crop';">
+            <img src="./img/logo.png" alt="DIALYSIS PRO Logo" width="54" height="54" loading="lazy" decoding="async" class="sidebar-logo-img" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=100&auto=format&fit=crop';">
             <div class="brand-text">
                 <h3>หน่วยไตเทียม โรงพยาบาล<br>คริสเตียน แพร่</h3>
                 <p>CLOUD EMR SYSTEM</p>
             </div>
         </div>
         
-        <div class="sidebar-menu-container">
-            <ul class="nav-menu" id="mainNavigation">
-                <li class="nav-section">🏥 งานบริการและรักษา</li>
-                <li class="nav-item active" data-page="dashboard" onclick="App.switchPage('dashboard', this)"><i class="fa-solid fa-chart-pie"></i> <span>แดชบอร์ดภาพรวม (Overview)</span></li>
-                <li class="nav-item" data-page="visits" onclick="App.switchPage('visits', this)"><i class="fa-solid fa-bed-pulse"></i> <span>คิวฟอกไตประจำวัน (Daily Visits)</span></li>
-                <li class="nav-item" data-page="visit_detail" onclick="App.switchPage('visit_detail', this)"><i class="fa-solid fa-file-medical"></i> <span>บันทึกข้อมูลฟอกเลือด (HD Flowsheet)</span></li>
-                <li class="nav-item" data-page="patients" onclick="App.switchPage('patients', this)"><i class="fa-solid fa-hospital-user"></i> <span>ทะเบียนผู้ป่วย (Patient Mgt.)</span></li>
-                <li class="nav-item" data-page="patient_history" onclick="App.switchPage('patient_history', this)"><i class="fa-solid fa-folder-open"></i> <span>แฟ้มประวัติผู้ป่วย (EMR)</span></li>
-                <li class="nav-item" data-page="document_center" onclick="App.switchPage('document_center', this)"><i class="fa-solid fa-file-image"></i> <span>ศูนย์รวมเอกสาร (Gallery)</span></li>
-                <li class="nav-item" data-page="patient_status" onclick="App.switchPage('patient_status', this)"><i class="fa-solid fa-truck-medical"></i> <span>ผู้ป่วยส่งต่อ/จำหน่าย</span></li>
+        <nav class="sidebar-menu-container" aria-label="Sidebar Menu">
+            <ul class="nav-menu" id="mainNavigation" role="menu">
+                <li class="nav-section" role="presentation">🏥 งานบริการและรักษา</li>
+                <li class="nav-item active" data-page="dashboard" data-route="dashboard" tabindex="0" role="menuitem" aria-current="page"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i> <span>แดชบอร์ดภาพรวม (Overview)</span></li>
+                <li class="nav-item" data-page="visits" data-route="visits" tabindex="0" role="menuitem"><i class="fa-solid fa-bed-pulse" aria-hidden="true"></i> <span>คิวฟอกไตประจำวัน (Daily Visits)</span></li>
+                <li class="nav-item" data-page="visit_detail" data-route="visit_detail" tabindex="0" role="menuitem"><i class="fa-solid fa-file-medical" aria-hidden="true"></i> <span>บันทึกข้อมูลฟอกเลือด (HD Flowsheet)</span></li>
+                <li class="nav-item" data-page="patients" data-route="patients" tabindex="0" role="menuitem"><i class="fa-solid fa-hospital-user" aria-hidden="true"></i> <span>ทะเบียนผู้ป่วย (Patient Mgt.)</span></li>
+                <li class="nav-item" data-page="patient_history" data-route="patient_history" tabindex="0" role="menuitem"><i class="fa-solid fa-folder-open" aria-hidden="true"></i> <span>แฟ้มประวัติผู้ป่วย (EMR)</span></li>
+                <li class="nav-item" data-page="document_center" data-route="document_center" tabindex="0" role="menuitem"><i class="fa-solid fa-file-image" aria-hidden="true"></i> <span>ศูนย์รวมเอกสาร (Gallery)</span></li>
+                <li class="nav-item" data-page="patient_status" data-route="patient_status" tabindex="0" role="menuitem"><i class="fa-solid fa-truck-medical" aria-hidden="true"></i> <span>ผู้ป่วยส่งต่อ/จำหน่าย</span></li>
 
-                <li class="nav-section mt-4">📦 บริหารจัดการพัสดุ</li>
-                <li class="nav-item" data-page="inventory" onclick="App.switchPage('inventory', this)"><i class="fa-solid fa-boxes-packing"></i> <span>คลังน้ำยาและพัสดุ</span></li>
-                <li class="nav-item" data-page="stock_manage" onclick="App.switchPage('stock_manage', this)"><i class="fa-solid fa-clipboard-check"></i> <span>เบิกจ่ายและนับสต๊อก</span></li>
-                <li class="nav-item" data-page="stock_history" onclick="App.switchPage('stock_history', this)"><i class="fa-solid fa-clock-rotate-left"></i> <span>ประวัติเข้า-ออก สต๊อก</span></li>
-                <li class="nav-item" data-page="monthly_requisition" onclick="App.switchPage('monthly_requisition', this)"><i class="fa-solid fa-file-excel"></i> <span>ฟอร์มเบิกของประจำเดือน</span></li>
-                <li class="nav-item" data-page="stock_forecast" onclick="App.switchPage('stock_forecast', this)"><i class="fa-solid fa-robot"></i> <span>คำนวณยอดเบิก</span></li>
-                <li class="nav-item" data-page="usage_statistics" onclick="App.switchPage('usage_statistics', this)"><i class="fa-solid fa-chart-line"></i> <span>สถิติการใช้พัสดุและยาฉีด</span></li>
+                <li class="nav-section mt-4" role="presentation">📦 บริหารจัดการพัสดุ</li>
+                <li class="nav-item" data-page="inventory" data-route="inventory" tabindex="0" role="menuitem"><i class="fa-solid fa-boxes-packing" aria-hidden="true"></i> <span>คลังน้ำยาและพัสดุ</span></li>
+                <li class="nav-item" data-page="stock_manage" data-route="stock_manage" tabindex="0" role="menuitem"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i> <span>เบิกจ่ายและนับสต๊อก</span></li>
+                <li class="nav-item" data-page="stock_history" data-route="stock_history" tabindex="0" role="menuitem"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> <span>ประวัติเข้า-ออก สต๊อก</span></li>
+                <li class="nav-item" data-page="monthly_requisition" data-route="monthly_requisition" tabindex="0" role="menuitem"><i class="fa-solid fa-file-excel" aria-hidden="true"></i> <span>ฟอร์มเบิกของประจำเดือน</span></li>
+                <li class="nav-item" data-page="stock_forecast" data-route="stock_forecast" tabindex="0" role="menuitem"><i class="fa-solid fa-robot" aria-hidden="true"></i> <span>คำนวณยอดเบิก</span></li>
+                <li class="nav-item" data-page="usage_statistics" data-route="usage_statistics" tabindex="0" role="menuitem"><i class="fa-solid fa-chart-line" aria-hidden="true"></i> <span>สถิติการใช้พัสดุและยาฉีด</span></li>
                 
-                <li class="nav-section mt-4">📊 สรุปผลและตั้งค่า</li>
-                <li class="nav-item" data-page="finance" onclick="App.switchPage('finance', this)"><i class="fa-solid fa-file-invoice-dollar"></i> <span>รายได้และเบิกจ่าย</span></li>
-                <li class="nav-item" data-page="department_ledger" onclick="App.switchPage('department_ledger', this)"><i class="fa-solid fa-wallet"></i> <span>บัญชีภายในหน่วยงาน</span></li>
+                <li class="nav-section mt-4" role="presentation">📊 สรุปผลและตั้งค่า</li>
+                <li class="nav-item" data-page="finance" data-route="finance" tabindex="0" role="menuitem"><i class="fa-solid fa-file-invoice-dollar" aria-hidden="true"></i> <span>รายได้และเบิกจ่าย</span></li>
+                <li class="nav-item" data-page="department_ledger" data-route="department_ledger" tabindex="0" role="menuitem"><i class="fa-solid fa-wallet" aria-hidden="true"></i> <span>บัญชีภายในหน่วยงาน</span></li>
                 
-                <li class="nav-item" data-page="shift_schedule" onclick="App.switchPage('shift_schedule', this)">
-                    <i class="fa-solid fa-calendar-check text-indigo"></i> <span>จัดตารางเวรพนักงาน</span>
+                <li class="nav-item" data-page="shift_schedule" data-route="shift_schedule" tabindex="0" role="menuitem">
+                    <i class="fa-solid fa-calendar-check text-indigo" aria-hidden="true"></i> <span>จัดตารางเวรพนักงาน</span>
                 </li>
                 
-                <li class="nav-item" data-page="search_copy" onclick="App.switchPage('search_copy', this)"><i class="fa-solid fa-copy"></i> <span>ค้นหาและคัดลอกด่วน</span></li>
-                <li class="nav-item" data-page="settings" onclick="App.switchPage('settings', this)"><i class="fa-solid fa-sliders"></i> <span>ตั้งค่าคลินิก</span></li>
-                <li class="nav-item" data-page="about" onclick="App.switchPage('about', this)"><i class="fa-solid fa-circle-info"></i> <span>เกี่ยวกับระบบ (About)</span></li>
+                <li class="nav-item" data-page="search_copy" data-route="search_copy" tabindex="0" role="menuitem"><i class="fa-solid fa-copy" aria-hidden="true"></i> <span>ค้นหาและคัดลอกด่วน</span></li>
+                <li class="nav-item" data-page="settings" data-route="settings" tabindex="0" role="menuitem"><i class="fa-solid fa-sliders" aria-hidden="true"></i> <span>ตั้งค่าคลินิก</span></li>
+                <li class="nav-item" data-page="about" data-route="about" tabindex="0" role="menuitem"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> <span>เกี่ยวกับระบบ (About)</span></li>
             </ul>
-        </div>
+        </nav>
 
         <div class="sidebar-footer">
-            <div class="user-card-wrapper" id="btnLogout" onclick="App.logout()">
+            <div class="user-card-wrapper" id="btnLogout" tabindex="0" role="button" aria-label="ออกจากระบบ" data-route="logout">
                 <div class="user-card">
-                    <div class="user-avatar shadow-sm">AD</div>
+                    <div class="user-avatar shadow-sm" aria-hidden="true" id="shell-user-avatar">AD</div>
                     <div class="user-info">
-                        <h4>ผู้ดูแลระบบ</h4>
-                        <p>ออกจากระบบ <i class="fa-solid fa-arrow-right-from-bracket ms-1"></i></p>
+                        <!-- 🚨 THE FIX: ปรับเปลี่ยนโครงสร้างให้แสดงจุดโหลดอย่างชัดเจน กันชื่อยาวล้นกรอบ -->
+                        <h4 id="shell-user-name" class="text-truncate" style="max-width: 140px;">
+                            <i class="fas fa-circle-notch fa-spin me-1 text-muted" style="font-size: 13px;"></i>กำลังตรวจสอบ...
+                        </h4>
+                        <p id="shell-logout-text">ออกจากระบบ <i class="fa-solid fa-arrow-right-from-bracket ms-1" aria-hidden="true"></i></p>
                     </div>
                 </div>
             </div>
         </div>
     </aside> 
     
-    <main class="main-content">
-        <nav class="topbar d-flex justify-content-between align-items-center w-100 gap-3">
+    <!-- Main Content Area -->
+    <main class="main-content" id="main-content" role="main">
+        <header class="topbar d-flex justify-content-between align-items-center w-100 gap-3">
             
             <div class="topbar-left-section d-flex align-items-center gap-3">
-                <button class="btn d-xl-none shadow-sm mobile-menu-btn" id="btnToggleSidebar" aria-label="Toggle Menu">
-                    <i class="fa-solid fa-bars fs-5"></i>
+                <button class="btn d-xl-none shadow-sm mobile-menu-btn" id="btnToggleSidebar" aria-label="Toggle Navigation Menu" aria-expanded="false" aria-controls="sidebar">
+                    <i class="fa-solid fa-bars fs-5" aria-hidden="true"></i>
                 </button>
-                <div class="search-box-modern w-100 shadow-sm" onclick="App.switchPage('search_copy')">
-                    <i class="fa-solid fa-magnifying-glass text-primary me-2"></i>
-                    <input type="text" id="globalTopSearch" class="border-0 bg-transparent w-100 text-truncate" placeholder="ค้นหาคนไข้ด่วน (Ctrl+K)..." readonly style="outline:none;">
+                <div class="search-box-modern w-100 shadow-sm" role="search" aria-label="ค้นหาข้อมูลคนไข้" data-route="search_copy">
+                    <i class="fa-solid fa-magnifying-glass text-primary me-2" aria-hidden="true"></i>
+                    <input type="text" id="globalTopSearch" class="border-0 bg-transparent w-100 text-truncate" placeholder="ค้นหาคนไข้ด่วน (Ctrl+K)..." readonly aria-readonly="true" style="outline:none;">
                 </div>
             </div>
             
             <div class="topbar-actions">
-                
-                <div class="sync-widget-topbar shadow-sm" id="firebase-status-widget">
+                <div class="sync-widget-topbar shadow-sm" id="firebase-active-badge" aria-live="polite">
                     <span class="badge rounded-pill px-2 py-1 d-flex align-items-center" style="background: linear-gradient(135deg, #10b981, #059669); border: 1px solid #047857; color: white;">
-                        <i class="fa-solid fa-database me-1"></i> Firebase Active
+                        <i class="fa-solid fa-database me-1" aria-hidden="true"></i> Firebase Active
                     </span>
                 </div>
 
-                <div class="sync-widget-topbar shadow-sm" id="topbar-sync-widget">
-                    <span class="sync-dot offline" id="sync-dot-indicator"></span>
+                <div class="sync-widget-topbar shadow-sm" id="topbar-sync-widget" aria-live="polite">
+                    <span class="sync-dot offline" id="sync-dot-indicator" aria-hidden="true"></span>
                     <span class="sync-text text-dark fw-bold" id="sync-text-indicator">Offline</span>
                     <span class="sync-ping text-muted ms-1" id="sync-ping-indicator">Wait</span>
                 </div>
                 
-                <div class="time-widget shadow-sm" id="clockDisplay">
-                    <i class="fas fa-spinner fa-spin text-primary"></i>
+                <div class="time-widget shadow-sm" id="clockDisplay" aria-live="off">
+                    <i class="fas fa-spinner fa-spin text-primary" aria-hidden="true"></i>
                 </div>
-
             </div>
             
-        </nav>
+        </header>
 
-        <div id="app-content" style="transition: opacity 0.3s ease-in-out; width: 100%; min-height: 80vh;"></div>
+        <div id="app-content" aria-live="polite" style="transition: opacity 0.3s ease-in-out; width: 100%; min-height: 80vh;"></div>
     </main>
+
+    <!-- 🚨 THE ULTIMATE FIX: Auth Guardian Engine & Global Event Delegator -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // 🛡️ 1. ระบบ Auth Guardian: ป้องกัน UI ค้างกรณี Firebase ตอบสนองช้า หรือตัวแปรพัง
+            const userNameEl = document.getElementById('shell-user-name');
+            const userAvatarEl = document.getElementById('shell-user-avatar');
+            
+            // Fallback Timeout: ถ้า 4 วินาทีแล้วชื่อยังไม่โชว์ ให้แสดงชื่อฉุกเฉิน (กันค้าง)
+            const authTimeout = setTimeout(() => {
+                if (userNameEl && userNameEl.innerHTML.includes('fa-circle-notch')) {
+                    userNameEl.innerText = 'ผู้ปฏิบัติงาน (Offline)';
+                    userAvatarEl.innerText = 'U';
+                }
+            }, 4000);
+
+            // วนเช็คว่า Firebase โหลดเสร็จหรือยัง แบบ Independent ไม่พึ่งพาไฟล์อื่น
+            const authGuardianInterval = setInterval(() => {
+                if (typeof firebase !== 'undefined' && firebase.auth) {
+                    clearInterval(authGuardianInterval);
+                    firebase.auth().onAuthStateChanged((user) => {
+                        clearTimeout(authTimeout); // ยกเลิก Fallback
+                        if (user) {
+                            const name = user.displayName || user.email?.split('@')[0] || 'Admin';
+                            if (userNameEl) userNameEl.innerText = name;
+                            if (userAvatarEl) userAvatarEl.innerText = name.charAt(0).toUpperCase();
+                        } else {
+                            if (userNameEl) userNameEl.innerText = 'กรุณาล็อกอิน';
+                            if (userAvatarEl) userAvatarEl.innerText = '?';
+                        }
+                    });
+                }
+            }, 500);
+
+            // 🖱️ 2. Global Event Delegator 
+            document.body.addEventListener('click', (e) => {
+                const navItem = e.target.closest('[data-route]');
+                if (!navItem) return;
+
+                const route = navItem.getAttribute('data-route');
+
+                // จัดการคลิกปุ่ม Logout ให้มี UI อัปเดตทันที
+                if (route === 'logout') {
+                    e.preventDefault();
+                    const logoutText = document.getElementById('shell-logout-text');
+                    if (logoutText) logoutText.innerHTML = '<i class="fas fa-spinner fa-spin me-1 text-danger"></i> <span class="text-danger fw-bold">กำลังออกจากระบบ...</span>';
+                    
+                    if (window.App && typeof window.App.logout === 'function') {
+                        window.App.logout();
+                    } else if (typeof firebase !== 'undefined' && firebase.auth) {
+                        // Fallback Logout เผื่อ App object พัง
+                        firebase.auth().signOut().then(() => window.location.reload());
+                    }
+                    return;
+                }
+
+                // สลับหน้าปกติ
+                if (window.App && typeof window.App.switchPage === 'function') {
+                    window.App.switchPage(route, navItem.classList.contains('nav-item') ? navItem : null);
+                }
+            });
+
+            // รองรับการใช้คีย์บอร์ด (Accessibility)
+            document.body.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const navItem = e.target.closest('[data-route]');
+                    if (navItem && window.App && typeof window.App.switchPage === 'function') {
+                        const route = navItem.getAttribute('data-route');
+                        if (route === 'logout') {
+                            const logoutText = document.getElementById('shell-logout-text');
+                            if (logoutText) logoutText.innerHTML = '<i class="fas fa-spinner fa-spin me-1 text-danger"></i> กำลังออกจากระบบ...';
+                            window.App.logout();
+                        } else if (route) {
+                            window.App.switchPage(route, navItem);
+                        }
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>

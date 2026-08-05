@@ -1,5 +1,5 @@
 // js/pages/shift_schedule.js
-// 🚀 Enterprise HR & Timesheet Matrix Module (v104.0 - Dual-Timeframe Leave Aggregation & Unified Selector)
+// 🚀 Enterprise HR & Timesheet Matrix Module (v105.0 - Absolute Full Build, Split-Pane & Micro-Pills)
 
 class ShiftSchedulePageComponent {
     constructor() {
@@ -26,11 +26,12 @@ class ShiftSchedulePageComponent {
                 }
 
                 .timesheet-wrapper { overflow-x: auto; overflow-y: auto; max-height: 68vh; border-radius: 16px; border: 1px solid var(--border-color); background-color: var(--bg-surface); position: relative; z-index: 1; }
-                .ts-table { border-collapse: separate; border-spacing: 0; min-width: 100%; margin: 0; background-color: transparent !important; table-layout: auto; }
+                .ts-table { border-collapse: separate; border-spacing: 0; min-width: 100%; margin: 0; background-color: transparent !important; table-layout: auto; position: relative; z-index: 2; }
                 
                 .ts-table th, .ts-table td { border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); padding: 8px; text-align: center; vertical-align: middle; transition: background-color 0.2s ease; font-weight: 500; }
                 .ts-table th { font-family: 'Prompt', sans-serif; font-size: 13px; position: sticky; top: 0; z-index: 10; background: var(--bg-surface); color: var(--text-dark); box-shadow: 0 2px 5px rgba(0,0,0,0.02); border-top: none; white-space: nowrap; font-weight: 700; }
-                .ts-table td { font-size: 13px; cursor: pointer; background: var(--bg-surface); color: var(--text-dark); }
+                
+                .ts-table td { font-size: 13px; cursor: pointer; background: var(--bg-surface); color: var(--text-dark); position: relative; z-index: 5; pointer-events: auto !important; }
                 .ts-table tbody tr:hover td { background-color: var(--bg-body); }
                 
                 .sticky-col { position: sticky !important; left: 0 !important; z-index: 20 !important; min-width: 315px; max-width: 315px; text-align: left !important; border-right: 1px solid var(--border-color) !important; background: var(--bg-surface) !important; }
@@ -90,20 +91,20 @@ class ShiftSchedulePageComponent {
                 
                 .empty-cell { color: var(--text-muted); font-size: 16px; opacity: 0.25; }
                 
-                .date-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 8px; max-height: 150px; overflow-y: auto; padding-right: 5px; }
-                .custom-date-btn { display: flex; align-items: center; justify-content: center; width: 100%; aspect-ratio: 1; border-radius: 10px; font-weight: 800; cursor: pointer; border: 2px solid var(--primary); color: var(--primary); background: transparent; transition: all 0.2s; margin: 0; font-size: 14px; font-family: 'Prompt'; }
-                .btn-check:checked + .custom-date-btn { background: var(--primary); color: #fff; transform: scale(1.05); }
+                /* 🚨 THE FIX: อัปเกรดระบบสีของ Native Calendar Picker ให้สว่างวาบในโหมดมืด */
+                input[type="month"] { color-scheme: light dark; }
+                input[type="month"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.5; transition: all 0.2s ease; }
+                input[type="month"]::-webkit-calendar-picker-indicator:hover { opacity: 1; transform: scale(1.1); }
                 
-                .dynamic-modal-btn { background: var(--bg-surface); border: 1px solid color-mix(in srgb, var(--badge-color) 40%, transparent); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; border-radius: 12px; cursor: pointer; }
-                .dynamic-modal-btn, .dynamic-modal-btn span, .dynamic-modal-btn i { color: var(--badge-color) !important; -webkit-text-fill-color: var(--badge-color) !important;}
-                
-                .btn-check:checked + .dynamic-modal-btn { background-color: var(--badge-color) !important; border-color: var(--badge-color) !important; transform: scale(1.03); }
-                .btn-check:checked + .dynamic-modal-btn, .btn-check:checked + .dynamic-modal-btn span, .btn-check:checked + .dynamic-modal-btn i { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important;}
-                
-                .shift-row-card { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 14px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-                .shift-radio-group .btn { border-radius: 8px !important; font-weight: 700 !important; font-family: 'Prompt'; padding: 6px 16px; border: 1px solid var(--border-color); }
-                .shift-radio-group .btn-check:checked + .btn-outline-primary { background: var(--primary) !important; color: #ffffff !important; border-color: var(--primary) !important; }
-                
+                html[data-bs-theme="dark"] input[type="month"]::-webkit-calendar-picker-indicator {
+                    filter: invert(1) brightness(200%);
+                    opacity: 0.7;
+                }
+                html[data-bs-theme="dark"] input[type="month"]::-webkit-calendar-picker-indicator:hover {
+                    opacity: 1;
+                    filter: invert(1) brightness(250%);
+                }
+
                 @media screen { .print-only-zone { display: none !important; } }
             </style>
 
@@ -134,7 +135,8 @@ class ShiftSchedulePageComponent {
                     
                     <div class="px-3 py-2 rounded-pill shadow-sm border border-2 border-primary-subtle d-flex align-items-center ms-2" style="background: var(--bg-surface);">
                         <i class="fa-regular fa-calendar text-primary me-2 safe-icon"></i>
-                        <input type="month" id="timesheet-month-picker" class="border-0 fw-bold text-primary" style="outline: none; background: transparent; font-size: 15px; color-scheme: var(--color-scheme, light);" onchange="window.ShiftSchedulePage.changeMonth(this.value)">
+                        <!-- 🚨 THE FIX: เอา inline color-scheme ออก เพื่อให้ CSS Engine ควบคุมแทน 100% -->
+                        <input type="month" id="timesheet-month-picker" class="border-0 fw-bold text-primary" style="outline: none; background: transparent; font-size: 15px;" onchange="window.ShiftSchedulePage.changeMonth(this.value)">
                     </div>
 
                     <div class="d-flex gap-1 ms-2">
@@ -452,7 +454,6 @@ class ShiftSchedulePageComponent {
         container.innerHTML = html;
     }
 
-    // 🚨 THE FIX: นำยอดหยุด "เฉพาะเดือนนี้" เข้าไปโชว์ในตารางหลัก
     renderGrid() {
         const thead = document.getElementById('ts-head');
         const tbody = document.getElementById('ts-body');
@@ -570,15 +571,14 @@ class ShiftSchedulePageComponent {
                         cellContent = `<i class="fa-solid fa-plus empty-cell mt-1"></i>`;
                     }
 
-                    rowHtml += `<td onclick="window.ShiftSchedulePage.openBatchModal('${staffUname}', '${dateStr}')">${cellContent}</td>`;
+                    const safeUname = staffUname.replace(/'/g, "\\'");
+                    rowHtml += `<td class="shift-cell" onclick="window.ShiftSchedulePage.openBatchModal('${safeUname}', '${dateStr}')">${cellContent}</td>`;
                 }
 
                 let summaryHtml = `<div class="d-flex flex-column gap-1">`;
                 
-                // สรุปกะทำงานเดือนนี้
                 summaryHtml += `<div class="quota-box dynamic-badge" style="--badge-bg:var(--primary); --badge-color:#fff;" title="นับเฉพาะการลงเวรในเดือนนี้"><span>เข้ากะ (เดือนนี้)</span> <span>${workRoundsCount} รอบ</span></div>`;
                 
-                // 🌟 ใหม่: สรุปวันหยุดเดือนนี้
                 if (monthTotalLeaves > 0) {
                     let monthLeaveHtml = '';
                     this.leaveTypes.forEach(l => {
@@ -594,10 +594,8 @@ class ShiftSchedulePageComponent {
                     summaryHtml += `<div class="quota-box dynamic-badge" style="--badge-bg:#f8fafc; --badge-color:#64748b; border:1px dashed #cbd5e1;" title="รวมวันหยุดเฉพาะเดือนนี้"><span>หยุด (เดือนนี้)</span> <span>0 วัน</span></div>`;
                 }
 
-                // เส้นแบ่งขอบเขต (Divider)
                 summaryHtml += `<div class="text-center mt-1 mb-1 fw-bold text-muted" style="font-size:9.5px; border-bottom:1px solid var(--border-color); padding-bottom:4px;"><i class="fa-solid fa-clock-rotate-left me-1"></i> โควตาและสะสมทั้งปี ${this.currentYear}</div>`;
 
-                // สรุปโควตาปี
                 this.leaveTypes.forEach(l => {
                     let limit = this.getStaffQuotaLimit(staffUname, l.id);
                     if (limit > 0 || ['OFF', 'HOL', 'SUB'].includes(l.id)) {
@@ -630,6 +628,388 @@ class ShiftSchedulePageComponent {
         }
     }
 
+    openBatchModal(staffUsername, clickedDateStr) {
+        const daysInMonth = this.getDaysInMonth(this.currentMonth);
+        const [year, month] = this.currentMonth.split('-'); 
+        
+        let staff = this.staffList.find(s => (s.username || s.firebaseKey) === staffUsername);
+        let staffName = staff ? (staff.name || staff.username) : staffUsername;
+        let rawStatusStr = this.timesheetData[staffUsername]?.[clickedDateStr] || '';
+        
+        let activeStatuses = [];
+
+        if (rawStatusStr) {
+            String(rawStatusStr).split(',').forEach(item => { 
+                if (String(item).includes('|')) activeStatuses.push(String(item).split('|')[0] + '_W');
+                else if (!String(item).includes('_')) {
+                    if (this.shiftTypes.some(s => s.id === item)) activeStatuses.push(item + '_W');
+                    else activeStatuses.push(item);
+                }
+                else activeStatuses.push(item); 
+            });
+        }
+
+        // 🚨 สถาปัตยกรรม CSS ภายใน Modal (รองรับ Dark Mode 100%)
+        let modalCss = `
+            <style>
+                .modern-date-cb:checked + .modern-date-lbl { background-color: var(--primary) !important; color: #ffffff !important; border-color: var(--primary) !important; transform: scale(1.05); box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+                
+                .modern-date-lbl { width: 48px; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px solid var(--border-color); color: var(--text-dark); border-radius: 10px; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); background: var(--bg-surface); margin: 0; padding: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+                .modern-date-lbl:hover { border-color: var(--primary); background-color: color-mix(in srgb, var(--primary) 10%, transparent); }
+                
+                .date-day-num { font-weight: 800; font-family: 'Prompt'; font-size: 15px; line-height: 1; margin-bottom: 3px; }
+                
+                .date-indicator-wrapper { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; width: 100%; min-height: 12px; align-items: center; }
+                .mini-shift-badge { font-size: 8px; padding: 1px 4px; border-radius: 4px; font-weight: 700; line-height: 1.1; font-family: 'Prompt'; color: #ffffff !important; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+                
+                .modern-date-cb:checked + .modern-date-lbl .mini-shift-badge { box-shadow: 0 0 0 1px rgba(255,255,255,0.6); }
+                .modern-date-cb:checked + .modern-date-lbl .date-day-num { color: #ffffff !important; }
+
+                /* 🚨 วันอาทิตย์ (ปรับให้รองรับ Dark Mode) */
+                .modern-date-lbl.sunday-lbl { border-color: rgba(239,68,68,0.4); color: #ef4444; background: rgba(239,68,68,0.05); }
+                .modern-date-lbl.sunday-lbl:hover { background-color: rgba(239,68,68,0.15); border-color: #ef4444; }
+                html[data-bs-theme="dark"] .modern-date-lbl.sunday-lbl { border-color: rgba(239,68,68,0.5); color: #f87171; background: rgba(239,68,68,0.1); }
+                html[data-bs-theme="dark"] .modern-date-lbl.sunday-lbl:hover { background-color: rgba(239,68,68,0.2); }
+                .modern-date-cb:checked + .modern-date-lbl.sunday-lbl { background-color: #ef4444 !important; border-color: #ef4444 !important; color: #ffffff !important; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3); }
+
+                .modern-shift-card { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+                .shift-action-lbl { padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; font-family: 'Prompt'; cursor: pointer; transition: all 0.2s; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-muted); margin: 0; display: inline-flex; align-items: center; justify-content: center; }
+                .shift-action-lbl:hover { background: var(--bg-surface); filter: brightness(0.95); }
+                html[data-bs-theme="dark"] .shift-action-lbl:hover { filter: brightness(1.2); }
+                
+                .shift-work-cb:checked + .shift-action-lbl { background-color: var(--primary) !important; color: #ffffff !important; border-color: var(--primary) !important; box-shadow: 0 4px 10px rgba(37,99,235,0.2); }
+                .shift-off-cb:checked + .shift-action-lbl { background-color: var(--bg-surface) !important; color: var(--text-dark) !important; border-color: var(--border-color) !important; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+
+                .leave-card-lbl { border: 1px solid var(--border-color); border-radius: 12px; padding: 10px 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; background: var(--bg-surface); color: var(--text-dark); height: 100%; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+                .leave-card-lbl:hover { filter: brightness(0.95); transform: translateY(-2px); }
+                html[data-bs-theme="dark"] .leave-card-lbl:hover { filter: brightness(1.2); }
+                
+                .leave-card-cb:checked + .leave-card-lbl { background-color: var(--leave-color) !important; color: #ffffff !important; border-color: var(--leave-color) !important; transform: scale(1.03); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+                .leave-card-cb:checked + .leave-card-lbl * { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
+
+                .split-pane-scroll { max-height: 58vh; overflow-y: auto; overflow-x: hidden; padding-right: 5px; }
+                .split-pane-scroll::-webkit-scrollbar { width: 5px; }
+                .split-pane-scroll::-webkit-scrollbar-track { background: transparent; }
+                .split-pane-scroll::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+            </style>
+        `;
+        
+        let leftPaneHtml = `
+            <div class="split-pane-scroll border-lg-end" style="border-color: var(--border-color) !important;">
+                <div class="p-3 border rounded-4 shadow-sm mb-2" style="background: var(--bg-surface); border-color: var(--border-color) !important;">
+                    <label class="form-label fw-bold mb-3 d-block text-center text-primary" style="font-size: 15px;">
+                        <i class="fa-solid fa-calendar-day me-1"></i> เลือกวันที่ (แสดงเวรปัจจุบัน)
+                    </label>
+                    <div class="d-flex flex-wrap gap-2 justify-content-center px-1 py-1">`;
+            
+        for(let d = 1; d <= daysInMonth; d++) {
+            let dStr = `${this.currentMonth}-${String(d).padStart(2,'0')}`;
+            let isChecked = dStr === clickedDateStr ? 'checked' : '';
+            
+            let dateObj = new Date(parseInt(year), parseInt(month) - 1, d);
+            let isSunday = dateObj.getDay() === 0;
+            let sundayClass = isSunday ? 'sunday-lbl' : '';
+
+            let existingDataStr = this.timesheetData[staffUsername]?.[dStr] || '';
+            let indicatorsHtml = '<div class="date-indicator-wrapper"></div>'; 
+            
+            if (existingDataStr) {
+                let items = String(existingDataStr).split(',');
+                let shortLabels = [];
+                items.forEach(item => {
+                    let isRoundOff = String(item).endsWith('_O');
+                    let cleanId = String(item).includes('_') ? String(item).split('_')[0] : (String(item).includes('|') ? String(item).split('|')[0] : String(item));
+                    let confShift = this.shiftTypes.find(s => s.id === cleanId);
+                    let confLeave = this.leaveTypes.find(l => l.id === cleanId);
+                    
+                    if (confShift && !isRoundOff) {
+                        shortLabels.push(`<span class="mini-shift-badge" style="background-color:${confShift.color};" title="${this.escapeHTML(confShift.label)}">${this.escapeHTML(cleanId)}</span>`);
+                    } else if (confLeave) {
+                        shortLabels.push(`<span class="mini-shift-badge" style="background-color:${confLeave.color};" title="${this.escapeHTML(confLeave.label)}">${this.escapeHTML(cleanId)}</span>`);
+                    }
+                });
+                if (shortLabels.length > 0) {
+                    indicatorsHtml = `<div class="date-indicator-wrapper">${shortLabels.join('')}</div>`;
+                }
+            }
+
+            leftPaneHtml += `
+                <div class="form-check p-0 m-0" title="${isSunday ? 'วันอาทิตย์' : ''}">
+                    <input type="checkbox" class="btn-check date-batch-cb modern-date-cb" id="batch_${d}" value="${dStr}" ${isChecked} autocomplete="off" onchange="window.ShiftSchedulePage.syncRightPane('${staffUsername}', '${dStr}')">
+                    <label class="modern-date-lbl ${sundayClass} shadow-sm" for="batch_${d}">
+                        <div class="date-day-num">${d}</div>
+                        ${indicatorsHtml}
+                    </label>
+                </div>`;
+        }
+        
+        leftPaneHtml += `
+                    </div>
+                    <div class="mt-4 d-flex justify-content-center gap-2 border-top pt-3" style="border-color: var(--border-color) !important;">
+                        <button class="btn btn-sm fw-bold px-3 rounded-pill shadow-sm w-50" style="color: var(--primary); border: 1px solid rgba(59,130,246,0.3); background: rgba(59,130,246,0.1);" onclick="document.querySelectorAll('.date-batch-cb').forEach(cb => cb.checked = true); window.ShiftSchedulePage.syncRightPane('${staffUsername}');">เลือกทั้งหมด</button>
+                        <button class="btn btn-sm fw-bold px-3 rounded-pill shadow-sm w-50" style="color: var(--danger); border: 1px solid rgba(239,68,68,0.3); background: rgba(239,68,68,0.1);" onclick="document.querySelectorAll('.date-batch-cb').forEach(cb => cb.checked = false); window.ShiftSchedulePage.syncRightPane('${staffUsername}');">ล้างการเลือก</button>
+                    </div>
+                </div>
+            </div>`;
+
+        let rightPaneHtml = `<div class="split-pane-scroll ps-lg-3 mt-4 mt-lg-0"><div class="row g-2">`;
+        
+        rightPaneHtml += `<input type="hidden" id="modal-staff-username" value="${staffUsername}">`;
+
+        rightPaneHtml += `
+            <div class="col-12 mb-1">
+                <button class="btn w-100 fw-bold rounded-pill py-2 shadow-sm" style="color: var(--danger); border: 1px solid var(--danger); background: var(--bg-surface); transition: 0.2s;" onclick="window.ShiftSchedulePage.autoSaveBulkStatus('${staffUsername}', true)">
+                    <i class="fa-solid fa-trash-can me-2"></i> ลบข้อมูลออกจากตารางในวันที่เลือก
+                </button>
+            </div>`;
+
+        rightPaneHtml += `<div class="col-12 text-start fw-bold text-primary small mt-3 mb-1"><i class="fa-solid fa-bed-pulse me-1"></i> เลือกรอบฟอกไต (อิสระแต่ละรอบ)</div>`;
+        
+        const toggleScript = `if(this.getAttribute('data-checked')==='true'){this.checked=false;this.setAttribute('data-checked','false');}else{document.getElementsByName(this.name).forEach(r=>r.setAttribute('data-checked','false'));this.setAttribute('data-checked','true');} window.ShiftSchedulePage.autoSaveBulkStatus('${staffUsername}');`;
+
+        this.shiftTypes.forEach(s => {
+            let activeVal = '';
+            let found = activeStatuses.find(st => st.startsWith(s.id + '_'));
+            if(found) activeVal = found.split('_')[1];
+
+            let activeW = activeVal === 'W' ? 'checked data-checked="true"' : 'data-checked="false"';
+            let activeO = activeVal === 'O' ? 'checked data-checked="true"' : 'data-checked="false"';
+
+            rightPaneHtml += `
+                <div class="col-12">
+                    <div class="modern-shift-card">
+                        <div class="fw-bold" style="color: ${s.color}; font-size:14.5px; font-family:'Prompt';">
+                            <i class="fa-solid fa-clock me-2"></i> ${this.escapeHTML(s.label)} 
+                            <span class="text-muted fw-normal ms-1" style="font-size:11px;">${s.time ? `(${s.time})` : ''}</span>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <div class="form-check p-0 m-0">
+                                <input type="radio" class="btn-check shift-radio shift-work-cb" name="shift_${s.id}" id="shift_${s.id}_w" value="${s.id}_W" ${activeW} onclick="${toggleScript}">
+                                <label class="shift-action-lbl" for="shift_${s.id}_w"><i class="fa-solid fa-check me-1"></i> ขึ้นเวร</label>
+                            </div>
+                            <div class="form-check p-0 m-0">
+                                <input type="radio" class="btn-check shift-radio shift-off-cb" name="shift_${s.id}" id="shift_${s.id}_o" value="${s.id}_O" ${activeO} onclick="${toggleScript}">
+                                <label class="shift-action-lbl" for="shift_${s.id}_o"><i class="fa-solid fa-bed me-1"></i> ลงเวร</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        });
+
+        rightPaneHtml += `<div class="col-12 text-start fw-bold text-danger small mt-3 border-bottom pb-2" style="border-color: var(--border-color) !important;"><i class="fa-solid fa-lock me-1"></i> สถานะพิเศษ / วันหยุดทั้งวัน (คลุมทุกกะ)</div>`;
+        rightPaneHtml += `<div class="col-12"><div class="row g-2 mt-1">`;
+        
+        this.leaveTypes.forEach(l => {
+            let isChecked = activeStatuses.includes(l.id) ? 'checked' : '';
+            let limit = this.getStaffQuotaLimit(staffUsername, l.id);
+            let used = (this.yearlyLeaveUsage[staffUsername] && this.yearlyLeaveUsage[staffUsername][l.id]) ? Number(this.yearlyLeaveUsage[staffUsername][l.id]) : 0;
+            let isQuotaFull = limit > 0 && used >= limit && !activeStatuses.includes(l.id);
+            
+            let extraProps = isQuotaFull ? 'disabled' : '';
+            let opacityStyle = isQuotaFull ? 'opacity:0.4; filter:grayscale(1); cursor:not-allowed;' : '';
+            let quotaBadge = limit > 0 ? `<div class="mt-1" style="font-size:10px;">${isQuotaFull ? '(โควตาเต็ม)' : `(เหลือ ${limit - used})`}</div>` : `<div class="mt-1" style="font-size:10px; opacity:0;">(ไม่มี)</div>`;
+
+            rightPaneHtml += `
+                <div class="col-4">
+                    <input type="checkbox" class="btn-check leave-cb leave-card-cb" id="leave_${l.id}" value="${l.id}" ${isChecked} ${extraProps} onchange="if(this.checked) document.querySelectorAll('.leave-cb').forEach(cb => { if(cb.id !== this.id) cb.checked=false }); window.ShiftSchedulePage.autoSaveBulkStatus('${staffUsername}');">
+                    <label class="leave-card-lbl shadow-sm" for="leave_${l.id}" style="--leave-color: ${l.color}; ${opacityStyle}">
+                        <div class="fw-bold" style="font-family:'Prompt'; font-size:12.5px;"><i class="fa-solid fa-circle me-1" style="color: ${l.color}; font-size:8px;"></i> ${this.escapeHTML(l.label)}</div>
+                        ${quotaBadge}
+                    </label>
+                </div>`;
+        });
+        
+        rightPaneHtml += `</div></div>`;
+        
+        rightPaneHtml += `
+            <div class="col-12 mt-3 pt-3 border-top" style="border-color: var(--border-color) !important;">
+                <button class="btn btn-sm btn-light w-100 fw-bold text-muted shadow-sm rounded-pill py-2" style="background: var(--bg-body); border: 1px solid var(--border-color);" onclick="window.ShiftSchedulePage.resetModalForm()">
+                    <i class="fa-solid fa-rotate-left me-1"></i> ล้างตัวเลือกฝั่งขวาทั้งหมด
+                </button>
+            </div>
+        </div></div>`;
+
+        let finalHtml = `
+            ${modalCss}
+            <div class="row g-0">
+                <div class="col-lg-5">${leftPaneHtml}</div>
+                <div class="col-lg-7">${rightPaneHtml}</div>
+            </div>
+        `;
+
+        // 🚨 THE FIX: ใช้ var(--bg-surface) เป็นพื้นหลังหลักของ SweetAlert เพื่อให้รองรับ Dark Mode เต็มรูปแบบ
+        Swal.fire({
+            title: `<div class="border-bottom pb-3 mb-3" style="border-color: var(--border-color) !important;"><h3 class="fw-bold mb-0 text-dark" style="font-family:'Prompt';">ลงเวลาปฏิบัติงาน</h3><p class="text-muted fs-6 mt-1 mb-0">พนักงาน: ${this.escapeHTML(staffName)}</p></div>`,
+            html: finalHtml,
+            background: 'var(--bg-surface)', 
+            showConfirmButton: true, confirmButtonText: '<i class="fa-solid fa-check me-1"></i> เสร็จสิ้น', confirmButtonColor: '#10b981',
+            showCloseButton: true, 
+            width: '950px',
+            customClass: { popup: 'premium-alert' }
+        });
+    }
+
+    syncRightPane(staffUsername) {
+        const checkedBoxes = document.querySelectorAll('.date-batch-cb:checked');
+        if (checkedBoxes.length === 1) {
+            const dateStr = checkedBoxes[0].value;
+            let rawStatusStr = this.timesheetData[staffUsername]?.[dateStr] || '';
+            let activeStatuses = [];
+
+            if (rawStatusStr) {
+                String(rawStatusStr).split(',').forEach(item => { 
+                    if (String(item).includes('|')) activeStatuses.push(String(item).split('|')[0] + '_W');
+                    else if (!String(item).includes('_')) {
+                        if (this.shiftTypes.some(s => s.id === item)) activeStatuses.push(item + '_W');
+                        else activeStatuses.push(item);
+                    }
+                    else activeStatuses.push(item); 
+                });
+            }
+
+            this.shiftTypes.forEach(s => {
+                let found = activeStatuses.find(st => st.startsWith(s.id + '_'));
+                let activeVal = found ? found.split('_')[1] : '';
+                
+                let workCb = document.getElementById(`shift_${s.id}_w`);
+                let offCb = document.getElementById(`shift_${s.id}_o`);
+                if(workCb) {
+                    workCb.checked = (activeVal === 'W');
+                    workCb.setAttribute('data-checked', activeVal === 'W' ? 'true' : 'false');
+                }
+                if(offCb) {
+                    offCb.checked = (activeVal === 'O');
+                    offCb.setAttribute('data-checked', activeVal === 'O' ? 'true' : 'false');
+                }
+            });
+
+            this.leaveTypes.forEach(l => {
+                let leaveCb = document.getElementById(`leave_${l.id}`);
+                if(leaveCb) leaveCb.checked = activeStatuses.includes(l.id);
+            });
+        }
+    }
+
+    async autoSaveBulkStatus(staffUsername, isClear = false) {
+        let selectedDates = Array.from(document.querySelectorAll('.date-batch-cb:checked')).map(el => el.value);
+        if (selectedDates.length === 0) return; 
+
+        let newStatusArray = [];
+        if (!isClear) {
+            let shifts = Array.from(document.querySelectorAll('.shift-radio:checked')).map(cb => cb.value);
+            let leaveNode = document.querySelector('.leave-cb:checked');
+            
+            newStatusArray = [...shifts];
+            if (leaveNode) newStatusArray.push(leaveNode.value);
+        }
+
+        try {
+            const updates = {};
+            let quotaDiffs = {}; 
+
+            selectedDates.forEach(dateStr => {
+                const tsPath = `clinic_timesheet_v2/${this.currentMonth}/${staffUsername}/${dateStr}`;
+                let oldRawData = (this.timesheetData[staffUsername] && this.timesheetData[staffUsername][dateStr]) ? this.timesheetData[staffUsername][dateStr] : null;
+                
+                let oldLeaveIds = [];
+                if (oldRawData) {
+                    String(oldRawData).split(',').forEach(item => {
+                        let cleanId = String(item).includes('_') ? String(item).split('_')[0] : (String(item).includes('|') ? String(item).split('|')[0] : String(item));
+                        if (this.leaveTypes.some(l => l.id === cleanId)) oldLeaveIds.push(cleanId);
+                    });
+                }
+
+                if (isClear || newStatusArray.length === 0) {
+                    updates[tsPath] = null;
+                } else {
+                    updates[tsPath] = newStatusArray.join(',');
+                }
+
+                let newLeaveIds = newStatusArray.filter(id => this.leaveTypes.some(l => l.id === id));
+                
+                oldLeaveIds.forEach(oldId => {
+                    if (!newLeaveIds.includes(oldId)) {
+                        let oldLeave = this.leaveTypes.find(l => l.id === oldId && this.getStaffQuotaLimit(staffUsername, l.id) > 0);
+                        if (oldLeave) quotaDiffs[oldLeave.id] = (quotaDiffs[oldLeave.id] || 0) - 1; 
+                    }
+                });
+
+                newLeaveIds.forEach(newId => {
+                    if (!oldLeaveIds.includes(newId)) {
+                        let newLeave = this.leaveTypes.find(l => l.id === newId && this.getStaffQuotaLimit(staffUsername, l.id) > 0);
+                        if (newLeave) quotaDiffs[newLeave.id] = (quotaDiffs[newLeave.id] || 0) + 1; 
+                    }
+                });
+                
+                if (!this.timesheetData[staffUsername]) this.timesheetData[staffUsername] = {};
+                if (isClear || newStatusArray.length === 0) {
+                    delete this.timesheetData[staffUsername][dateStr];
+                } else {
+                    this.timesheetData[staffUsername][dateStr] = newStatusArray.join(',');
+                }
+            });
+
+            for (const [leaveId, diff] of Object.entries(quotaDiffs)) {
+                let currentUsed = (this.yearlyLeaveUsage[staffUsername] && this.yearlyLeaveUsage[staffUsername][leaveId]) ? Number(this.yearlyLeaveUsage[staffUsername][leaveId]) : 0;
+                let newUsed = Math.max(0, currentUsed + diff);
+                updates[`clinic_leave_usage_v2/${this.currentYear}/${staffUsername}/${leaveId}`] = newUsed;
+                
+                if (!this.yearlyLeaveUsage[staffUsername]) this.yearlyLeaveUsage[staffUsername] = {};
+                this.yearlyLeaveUsage[staffUsername][leaveId] = newUsed;
+            }
+
+            if (Object.keys(updates).length > 0 || isClear || newStatusArray.length === 0) {
+                db.ref().update(updates).catch(e => console.error("AutoSave Error:", e));
+                
+                selectedDates.forEach(dateStr => {
+                    let day = parseInt(dateStr.split('-')[2]);
+                    let label = document.querySelector(`label[for="batch_${day}"]`);
+                    if (label) {
+                        let indicatorDiv = label.querySelector('.date-indicator-wrapper');
+                        if (!indicatorDiv) {
+                            indicatorDiv = document.createElement('div');
+                            indicatorDiv.className = 'date-indicator-wrapper';
+                            label.appendChild(indicatorDiv);
+                        }
+                        
+                        if (isClear || newStatusArray.length === 0) {
+                            indicatorDiv.innerHTML = '';
+                        } else {
+                            let shortLabels = [];
+                            newStatusArray.forEach(item => {
+                                let isRoundOff = String(item).endsWith('_O');
+                                let cleanId = String(item).includes('_') ? String(item).split('_')[0] : (String(item).includes('|') ? String(item).split('|')[0] : String(item));
+                                let confShift = this.shiftTypes.find(s => s.id === cleanId);
+                                let confLeave = this.leaveTypes.find(l => l.id === cleanId);
+                                
+                                if (confShift && !isRoundOff) {
+                                    shortLabels.push(`<span class="mini-shift-badge" style="background-color:${confShift.color};" title="${this.escapeHTML(confShift.label)}">${this.escapeHTML(cleanId)}</span>`);
+                                } else if (confLeave) {
+                                    shortLabels.push(`<span class="mini-shift-badge" style="background-color:${confLeave.color};" title="${this.escapeHTML(confLeave.label)}">${this.escapeHTML(cleanId)}</span>`);
+                                }
+                            });
+                            indicatorDiv.innerHTML = shortLabels.join('');
+                        }
+                    }
+                });
+
+                if (isClear) {
+                    this.resetModalForm(true);
+                }
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    resetModalForm(silent = false) {
+        document.querySelectorAll('.shift-radio').forEach(cb => { cb.checked = false; cb.setAttribute('data-checked', 'false'); });
+        document.querySelectorAll('.leave-cb').forEach(cb => { cb.checked = false; });
+        if (!silent) {
+            let staffUsername = document.getElementById('modal-staff-username')?.value;
+            if(staffUsername) this.autoSaveBulkStatus(staffUsername, true);
+        }
+    }
+
+    // ฟังก์ชันช่วยเหลือต่างๆ ที่เคยมีอยู่
     openExportOptionsModal(mode) {  
         let roleCheckboxes = ``;
         this.customRoles.forEach(r => {
@@ -703,17 +1083,25 @@ class ShiftSchedulePageComponent {
             try {
                 let chunks = this.getExportHTMLChunks(selectedRoles, false, lastColType);
                 
-                let contentHtml = chunks.map(chunk => `
-                    <div style="background: #ffffff; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 15px -3px rgba(0,0,0,0.1); border-radius: 8px; min-width: 1000px; text-align: left; overflow: hidden; border: 1px solid #e2e8f0;">
-                        ${chunk.replace('height: 98vh;', '')}
-                    </div>
-                `).join('');
+                let contentHtml = chunks.map(chunk => {
+                    // 🚨 THE FIX 1: กระชาก height: 98vh ที่ใช้ล็อกกระดาษ A4 ออก และบังคับให้ยืดตามเนื้อหาอัตโนมัติ
+                    let cleanChunk = chunk.replace(/height:\s*98vh;/g, 'height: auto !important; min-height: 100%;');
+                    
+                    return `
+                        <!-- 🚨 THE FIX 2: ปลดล็อก overflow: hidden และตั้ง height เป็น auto -->
+                        <div style="background: #ffffff; padding: 25px; margin-bottom: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); border-radius: 12px; min-width: 1050px; text-align: left; overflow: visible; border: 1px solid #e2e8f0; height: auto;">
+                            ${cleanChunk}
+                        </div>
+                    `;
+                }).join('');
 
                 Swal.fire({
-                    title: '<div class="text-start"><h4 class="fw-bold mb-0 text-dark" style="font-family:\'Prompt\';"><i class="fa-solid fa-table-cells text-primary me-2"></i> ตารางปฏิบัติงานภาพรวม (Master Roster Preview)</h4></div>',
-                    html: `<div style="overflow-x: auto; overflow-y: auto; max-height: 75vh; background: #f1f5f9; padding: 20px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; border: 1px inset var(--border-color);">
-                                ${contentHtml}
-                           </div>`,
+                    title: '<div class="text-start border-bottom pb-3 mb-3"><h4 class="fw-bold mb-0 text-dark" style="font-family:\'Prompt\';"><i class="fa-solid fa-table-cells text-primary me-2"></i> ตารางปฏิบัติงานภาพรวม (Master Roster Preview)</h4></div>',
+                    // 🚨 THE FIX 3: ปรับแต่ง Container หลักของ Modal ให้เลื่อน Scrollbar ได้สุดขอบโดยไม่กินพื้นที่ UI หลัก
+                    html: `
+                        <div style="overflow-x: auto; overflow-y: auto; max-height: 72vh; background: #f1f5f9; padding: 20px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; border: 1px inset var(--border-color);">
+                            ${contentHtml}
+                        </div>`,
                     width: '96%',
                     background: 'var(--bg-surface)',
                     showCloseButton: true,
@@ -1589,180 +1977,6 @@ class ShiftSchedulePageComponent {
         });
     }
 
-    openBatchModal(staffUsername, clickedDateStr) {
-        const daysInMonth = this.getDaysInMonth(this.currentMonth);
-        let staff = this.staffList.find(s => (s.username || s.firebaseKey) === staffUsername);
-        let staffName = staff ? (staff.name || staff.username) : staffUsername;
-        let rawStatusStr = this.timesheetData[staffUsername]?.[clickedDateStr] || '';
-        
-        let activeStatuses = [];
-
-        if (rawStatusStr) {
-            String(rawStatusStr).split(',').forEach(item => { 
-                if (String(item).includes('|')) activeStatuses.push(String(item).split('|')[0] + '_W');
-                else if (!String(item).includes('_')) {
-                    if (this.shiftTypes.some(s => s.id === item)) activeStatuses.push(item + '_W');
-                    else activeStatuses.push(item);
-                }
-                else activeStatuses.push(item); 
-            });
-        }
-        
-        let dateCheckboxes = `<div class="p-3 border rounded-4 shadow-sm mb-3" style="background: var(--bg-surface); border-color: var(--border-color) !important;">
-            <label class="form-label fw-bold small mb-3" style="color: var(--text-dark);"><i class="fa-solid fa-calendar-check text-primary me-1"></i> เลือกวันที่ต้องการลงเวลา (เลือกได้หลายวัน)</label>
-            <div class="date-grid">`;
-            
-        for(let d = 1; d <= daysInMonth; d++) {
-            let dStr = `${this.currentMonth}-${String(d).padStart(2,'0')}`;
-            let isChecked = dStr === clickedDateStr ? 'checked' : '';
-            dateCheckboxes += `
-                <div class="form-check p-0 m-0">
-                    <input type="checkbox" class="btn-check date-batch-cb" id="batch_${d}" value="${dStr}" ${isChecked} autocomplete="off">
-                    <label class="custom-date-btn shadow-sm" for="batch_${d}">${d}</label>
-                </div>`;
-        }
-        dateCheckboxes += `</div>
-            <div class="mt-3 text-center border-top pt-3" style="border-color: var(--border-color) !important;">
-                <button class="btn btn-sm fw-bold px-3 rounded-pill shadow-sm border border-primary-subtle" style="background: var(--bg-surface); color: var(--primary);" onclick="document.querySelectorAll('.date-batch-cb').forEach(cb => cb.checked = true)">เลือกทั้งหมด</button>
-                <button class="btn btn-sm fw-bold px-3 rounded-pill shadow-sm border border-danger-subtle ms-2" style="background: var(--bg-surface); color: var(--bs-danger);" onclick="document.querySelectorAll('.date-batch-cb').forEach(cb => cb.checked = false)">ล้างการเลือก</button>
-            </div>
-        </div>`;
-
-        let actionHtml = `<div class="row g-2 mt-3">`;
-        actionHtml += `<div class="col-12 mb-2"><button class="btn btn-outline-danger w-100 fw-bold border-2 border-danger-subtle rounded-pill py-2 shadow-sm" style="background: var(--bg-surface);" onclick="Swal.close(); setTimeout(()=>window.ShiftSchedulePage.applyBulkStatus('${staffUsername}', true), 100)"><i class="fa-solid fa-trash-can me-1"></i> ลบข้อมูลออกจากตารางในวันที่เลือก</button></div>`;
-
-        actionHtml += `<div class="col-12 text-start fw-bold text-primary small mt-2 border-bottom pb-1" style="border-color: var(--border-color) !important;"><i class="fa-solid fa-bed-pulse me-1"></i> เลือกรอบฟอกไต (อิสระแต่ละรอบ)</div>`;
-        this.shiftTypes.forEach(s => {
-            let activeVal = '';
-            let found = activeStatuses.find(st => st.startsWith(s.id + '_'));
-            if(found) activeVal = found.split('_')[1];
-
-            actionHtml += `
-                <div class="col-12">
-                    <div class="shift-row-card shadow-sm">
-                        <div class="fw-bold" style="color: ${s.color}; font-size:14px;"><i class="fa-solid fa-clock me-1"></i> ${this.escapeHTML(s.label)} <small class="text-muted ms-1" style="font-size:10px;">${s.time ? `(${s.time})` : ''}</small></div>
-                        <div class="btn-group shift-radio-group" role="group">
-                            <input type="radio" class="btn-check shift-radio" name="shift_${s.id}" id="shift_${s.id}_w" value="${s.id}_W" ${activeVal === 'W' ? 'checked' : ''}>
-                            <label class="btn btn-outline-primary btn-sm fw-bold" for="shift_${s.id}_w"><i class="fa-solid fa-check me-1"></i> ขึ้นเวร</label>
-
-                            <input type="radio" class="btn-check shift-radio" name="shift_${s.id}" id="shift_${s.id}_o" value="${s.id}_O" ${activeVal === 'O' ? 'checked' : ''}>
-                            <label class="btn btn-outline-secondary btn-sm fw-bold" for="shift_${s.id}_o"><i class="fa-solid fa-bed me-1"></i> ลงเวร</label>
-                        </div>
-                    </div>
-                </div>`;
-        });
-
-        actionHtml += `<div class="col-12 text-start fw-bold text-danger small mt-3 border-bottom pb-1" style="border-color: var(--border-color) !important;"><i class="fa-solid fa-suitcase-rolling me-1"></i> สถานะพิเศษ / วันหยุดทั้งวัน (คลุมทุกกะ)</div>`;
-        this.leaveTypes.forEach(l => {
-            let isChecked = activeStatuses.includes(l.id) ? 'checked' : '';
-            
-            let limit = this.getStaffQuotaLimit(staffUsername, l.id);
-            let used = (this.yearlyLeaveUsage[staffUsername] && this.yearlyLeaveUsage[staffUsername][l.id]) ? Number(this.yearlyLeaveUsage[staffUsername][l.id]) : 0;
-            let isQuotaFull = limit > 0 && used >= limit && !activeStatuses.includes(l.id);
-            
-            let extraProps = isQuotaFull ? 'disabled' : '';
-            let opacityStyle = isQuotaFull ? 'opacity:0.4; filter:grayscale(1);' : '';
-            let quotaBadge = limit > 0 ? `<div class="mt-1 quota-text-modal" style="font-size:10px;">${isQuotaFull ? '(โควตาเต็ม)' : `(เหลือ ${limit - used})`}</div>` : '';
-
-            actionHtml += `
-                <div class="col-6 col-md-4 mt-2">
-                    <input type="checkbox" class="btn-check leave-cb" id="leave_${l.id}" value="${l.id}" ${isChecked} ${extraProps} onchange="if(this.checked) document.querySelectorAll('.leave-cb').forEach(cb => { if(cb.id !== this.id) cb.checked=false })">
-                    <label class="dynamic-modal-btn w-100 shadow-sm" for="leave_${l.id}" style="--badge-bg:${l.bg}; --badge-color:${l.color}; ${opacityStyle}">
-                        <span class="fw-bold" style="font-family:'Prompt'; font-size:14px;"><i class="fa-solid fa-circle me-1" style="font-size:10px;"></i> ${this.escapeHTML(l.label)}</span>
-                        ${quotaBadge}
-                    </label>
-                </div>`;
-        });
-        
-        actionHtml += `
-            <div class="col-12 mt-4">
-                <button class="btn btn-sm btn-light w-100 fw-bold text-muted border-secondary shadow-sm rounded-pill py-2" style="background: var(--bg-surface);" onclick="window.ShiftSchedulePage.resetModalForm()">
-                    <i class="fa-solid fa-rotate-left me-1"></i> รีเซ็ตตัวเลือกหน้าต่างนี้ (Clear Form)
-                </button>
-            </div>
-        </div>`;
-
-        Swal.fire({
-            title: `<h4 class="fw-bold mb-0 text-dark" style="font-family:'Prompt';">ลงเวลาปฏิบัติงาน</h4><p class="text-muted fs-6 mt-1 mb-0">${this.escapeHTML(staffName)}</p>`,
-            html: dateCheckboxes + actionHtml,
-            background: 'var(--bg-surface)',
-            showConfirmButton: true, confirmButtonText: '<i class="fa-solid fa-save me-1"></i> บันทึกตามที่เลือก', confirmButtonColor: '#2563eb',
-            showCloseButton: true, width: '580px', customClass: { popup: 'premium-alert' }
-        }).then((res) => {
-            if (res.isConfirmed) { window.ShiftSchedulePage.applyBulkStatus(staffUsername, false); }
-        });
-    }
-
-    async applyBulkStatus(staffUsername, isClear) {
-        let selectedDates = Array.from(document.querySelectorAll('.date-batch-cb:checked')).map(el => el.value);
-
-        if (selectedDates.length === 0) { Swal.fire({title:'แจ้งเตือน', text:'กรุณาเลือกวันที่อย่างน้อย 1 วัน', icon:'warning', background: 'var(--bg-surface)', customClass:{popup:'premium-alert'}}); return; }
-
-        let newStatusArray = [];
-        if (!isClear) {
-            let shifts = Array.from(document.querySelectorAll('.shift-radio:checked')).map(cb => cb.value);
-            let leaveNode = document.querySelector('.leave-cb:checked');
-            
-            newStatusArray = [...shifts];
-            if (leaveNode) newStatusArray.push(leaveNode.value);
-            
-            if(newStatusArray.length === 0) { Swal.fire({title:'แจ้งเตือน', text:'กรุณาเลือกรอบทำงาน หรือ สถานะพิเศษ', icon:'warning', background: 'var(--bg-surface)', customClass:{popup:'premium-alert'}}); return; }
-        }
-
-        Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: 'var(--bg-surface)', customClass: { popup: 'premium-alert' } });
-
-        try {
-            const updates = {};
-            let quotaDiffs = {}; 
-
-            selectedDates.forEach(dateStr => {
-                const tsPath = `clinic_timesheet_v2/${this.currentMonth}/${staffUsername}/${dateStr}`;
-                let oldRawData = (this.timesheetData[staffUsername] && this.timesheetData[staffUsername][dateStr]) ? this.timesheetData[staffUsername][dateStr] : null;
-                
-                let oldLeaveIds = [];
-                if (oldRawData) {
-                    String(oldRawData).split(',').forEach(item => {
-                        let cleanId = String(item).includes('_') ? String(item).split('_')[0] : (String(item).includes('|') ? String(item).split('|')[0] : String(item));
-                        if (this.leaveTypes.some(l => l.id === cleanId)) oldLeaveIds.push(cleanId);
-                    });
-                }
-
-                if (isClear) {
-                    updates[tsPath] = null;
-                } else {
-                    updates[tsPath] = newStatusArray.join(',');
-                }
-
-                let newLeaveIds = newStatusArray.filter(id => this.leaveTypes.some(l => l.id === id));
-                
-                oldLeaveIds.forEach(oldId => {
-                    if (!newLeaveIds.includes(oldId)) {
-                        let oldLeave = this.leaveTypes.find(l => l.id === oldId && this.getStaffQuotaLimit(staffUsername, l.id) > 0);
-                        if (oldLeave) quotaDiffs[oldLeave.id] = (quotaDiffs[oldLeave.id] || 0) - 1; 
-                    }
-                });
-
-                newLeaveIds.forEach(newId => {
-                    if (!oldLeaveIds.includes(newId)) {
-                        let newLeave = this.leaveTypes.find(l => l.id === newId && this.getStaffQuotaLimit(staffUsername, l.id) > 0);
-                        if (newLeave) quotaDiffs[newLeave.id] = (quotaDiffs[newLeave.id] || 0) + 1; 
-                    }
-                });
-            });
-
-            for (const [leaveId, diff] of Object.entries(quotaDiffs)) {
-                let currentUsed = (this.yearlyLeaveUsage[staffUsername] && this.yearlyLeaveUsage[staffUsername][leaveId]) ? Number(this.yearlyLeaveUsage[staffUsername][leaveId]) : 0;
-                updates[`clinic_leave_usage_v2/${this.currentYear}/${staffUsername}/${leaveId}`] = Math.max(0, currentUsed + diff);
-            }
-
-            if (Object.keys(updates).length > 0) {
-                await db.ref().update(updates);
-            }
-            
-            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: `บันทึกเวลา ${selectedDates.length} วันสำเร็จ`, showConfirmButton: false, timer: 1200 });
-        } catch(e) { Swal.fire({title: 'ข้อผิดพลาด', text: e.message, icon: 'error', background: 'var(--bg-surface)', customClass: { popup: 'premium-alert' }}); }
-    }
-
     openSettingsModal() {
         let roleHtml = this.customRoles.map((r, i) => `
             <div class="config-item shadow-sm">
@@ -1939,12 +2153,6 @@ class ShiftSchedulePageComponent {
         });
     }
 
-    resetModalForm() {
-        document.querySelectorAll('.date-batch-cb').forEach(cb => cb.checked = false);
-        document.querySelectorAll('.shift-radio').forEach(cb => cb.checked = false);
-        document.querySelectorAll('.leave-cb').forEach(cb => cb.checked = false);
-    }
-    
     escapeHTML(str) {
         if (!str && str !== 0) return '';
         return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));

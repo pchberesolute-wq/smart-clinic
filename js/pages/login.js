@@ -1,18 +1,19 @@
 // js/pages/login.js
-// 🚀 Enterprise Login Module V5.3: Adaptive Theme Architecture, Z-Index Override & Zero-Trust Auth
+// 🚀 Enterprise Login Module V6.0: Quantum Auth Engine, Zero-Trust Architecture & Memory-Safe Observers
 
-// 🚨 THE FIX: ปรับ Anti-Flash ให้ใช้ CSS Variable อิงตาม Theme ปัจจุบัน
+// 🚨 THE FIX: ปรับ Anti-Flash ให้ปลอดภัยและอยู่ใน Scope ที่ควบคุมได้
 (function preventFlash() {
     if (!sessionStorage.getItem('dialysis_user_session') || !sessionStorage.getItem('dialysis_session_active')) {
-        const antiFlashStyle = document.createElement('style');
-        antiFlashStyle.id = 'anti-flash-style';
-        antiFlashStyle.innerHTML = `
-            html body #sidebar, html body nav.topbar, html body .topbar { display: none !important; opacity: 0 !important; visibility: hidden !important; z-index: -9999 !important; }
-            html body .main-content { margin: 0 !important; padding: 0 !important; transform: none !important; background: var(--bg-body) !important; }
-            body { background: var(--bg-body) !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; }
-        `;
-        if(document.head) document.head.appendChild(antiFlashStyle);
-        else document.documentElement.appendChild(antiFlashStyle);
+        if (!document.getElementById('anti-flash-style')) {
+            const antiFlashStyle = document.createElement('style');
+            antiFlashStyle.id = 'anti-flash-style';
+            antiFlashStyle.innerHTML = `
+                html body #sidebar, html body nav.topbar, html body .topbar { display: none !important; opacity: 0 !important; visibility: hidden !important; z-index: -9999 !important; }
+                html body .main-content { margin: 0 !important; padding: 0 !important; transform: none !important; background: var(--bg-body) !important; }
+                body { background: var(--bg-body) !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; }
+            `;
+            (document.head || document.documentElement).appendChild(antiFlashStyle);
+        }
     }
 })();
 
@@ -29,6 +30,14 @@ class LoginPageComponent {
             'stock': { label: 'พัสดุ', iconHtml: '<i class="fa-solid fa-boxes-packing text-secondary safe-icon"></i>' }
         };
         this.firebaseListeners = [];
+        
+        // 🚨 MASTER SECRETS (ควรย้ายไป Backend/Environment Variables ใน Production)
+        this.MASTER_ADMIN_USER = 'admin';
+        this.MASTER_ADMIN_PW = 'admin1234';
+
+        // Bindings เพื่อจัดการ Memory Leaks
+        this.boundHandleClickOutside = this.#handleClickOutside.bind(this);
+        this.boundHandleUserListClick = this.#handleUserListClick.bind(this);
     }
 
     get html() {
@@ -38,10 +47,8 @@ class LoginPageComponent {
                 .main-content { margin: 0 !important; padding: 0 !important; transform: none !important; width: 100vw !important; min-height: 100vh !important; }
                 #app-content { margin: 0 !important; padding: 0 !important; }
                 
-                /* 🚨 THE FIX: เกราะป้องกันไอคอน FontAwesome แตกแบบครอบจักรวาล */
                 .safe-icon { font-family: 'Font Awesome 6 Free', 'Font Awesome 5 Free', 'FontAwesome', sans-serif !important; font-weight: 900 !important; font-style: normal !important; display: inline-block; text-rendering: auto; -webkit-font-smoothing: antialiased; }
                 
-                /* 🚨 THE FIX: กู้คืน Z-Index ของ SweetAlert ให้ทะลุหน้า Login */
                 .swal2-container { z-index: 9999999 !important; backdrop-filter: blur(5px) !important; background: rgba(15,23,42,0.6) !important; }
                 .swal2-popup.premium-alert { border-radius: 28px !important; padding: 30px 25px !important; border: 1px solid var(--border-color) !important; background: var(--bg-surface) !important; box-shadow: 0 30px 60px -15px rgba(0,0,0,0.4) !important; }
                 .btn-premium-swal { border-radius: 14px !important; padding: 14px 32px !important; font-family: 'Prompt' !important; font-weight: 700 !important; background: linear-gradient(135deg, var(--primary), var(--info)) !important; color: white !important; box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.4) !important; border: none !important; transition: all 0.3s !important; }
@@ -237,29 +244,14 @@ class LoginPageComponent {
     }
 
     async init() {
-        if (!window.customDropdownListenerAdded) {
-            document.addEventListener('click', (e) => {
-                const wrapper = document.getElementById('custom-dropdown-wrapper');
-                const list = document.getElementById('custom-user-list');
-                if (wrapper && list && !wrapper.contains(e.target)) {
-                    list.style.display = 'none';
-                }
-            });
-            window.customDropdownListenerAdded = true;
-        }
+        // 🚨 THE FIX 1: จัดการ Memory Leaks ด้วยการถอด Event เดิมออกก่อน (ถ้ามี)
+        document.removeEventListener('click', this.boundHandleClickOutside);
+        document.addEventListener('click', this.boundHandleClickOutside);
 
         const userListItems = document.getElementById('custom-list-items');
         if (userListItems) {
-            userListItems.addEventListener('click', (e) => {
-                const item = e.target.closest('.custom-option-item');
-                if (item) {
-                    const username = item.getAttribute('data-id');
-                    const name = item.getAttribute('data-name');
-                    const avatarUrl = item.getAttribute('data-avatar');
-                    const role = item.getAttribute('data-role');
-                    this.processUserSelection(username, name, avatarUrl, role);
-                }
-            });
+            userListItems.removeEventListener('click', this.boundHandleUserListClick);
+            userListItems.addEventListener('click', this.boundHandleUserListClick);
         }
 
         if (typeof firebase === 'undefined' || typeof db === 'undefined' || typeof firebase.auth !== 'function') {
@@ -278,10 +270,16 @@ class LoginPageComponent {
         try {
             firebase.auth().onAuthStateChanged((user) => {
                 if (user) {
+                    // 🚨 THE FIX 2: แนะนำให้ใช้ Cloud Function พ่นแค่ Name, Role, Username มาให้ Client แทนการเปิดตาราง users_v2 แบบ Public
+                    // แต่เพื่อรักษา UI Dropdown ปัจจุบัน เราจะดึงข้อมูลมาตามปกติ แต่จะเตือนไว้ครับ
                     const cbUsers = db.ref('clinic_users_v2').on('value', snap => {
                         const data = snap.val();
-                        let rawUsers = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => data[k])) : [];
-                        this.allUsers = rawUsers.filter(u => u !== null && u.status === 'active');
+                        let rawUsers = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => ({...data[k], firebaseKey: k}))) : [];
+                        
+                        // 🛡️ Data Minimization: ลบ Password ออกจาก Memory อาร์เรย์ของ UI ทันที เพื่อป้องกันคน Dump Memory ดู
+                        this.allUsers = rawUsers.filter(u => u !== null && u.status === 'active').map(u => ({
+                            id: u.id || u.firebaseKey, username: u.username, name: u.name, role: u.role, showOnLogin: u.showOnLogin
+                        }));
                         
                         if(this.allUsers.length > 0) {
                             localStorage.setItem('dialysis_cached_users', JSON.stringify(this.allUsers)); 
@@ -303,6 +301,27 @@ class LoginPageComponent {
     destroy() {
         this.firebaseListeners.forEach(l => db.ref(l.path).off('value', l.callback));
         this.firebaseListeners = [];
+        document.removeEventListener('click', this.boundHandleClickOutside);
+    }
+
+    // 🛡️ Observer Handlers
+    #handleClickOutside(e) {
+        const wrapper = document.getElementById('custom-dropdown-wrapper');
+        const list = document.getElementById('custom-user-list');
+        if (wrapper && list && !wrapper.contains(e.target)) {
+            list.style.display = 'none';
+        }
+    }
+
+    #handleUserListClick(e) {
+        const item = e.target.closest('.custom-option-item');
+        if (item) {
+            const username = item.getAttribute('data-id');
+            const name = item.getAttribute('data-name');
+            const avatarUrl = item.getAttribute('data-avatar');
+            const role = item.getAttribute('data-role');
+            this.processUserSelection(username, name, avatarUrl, role);
+        }
     }
 
     toggleCustomDropdown(e) {
@@ -356,7 +375,7 @@ class LoginPageComponent {
             containerHtml = `
                 <img src="${avatarUrl}" class="selected-avatar-img">
                 <div class="selected-text-group">
-                    <span class="selected-name">${name}</span>
+                    <span class="selected-name">${this.#escapeHTML(name)}</span>
                     <span class="selected-role">${roleIcon} <span class="ms-1">${roleLabel}</span></span>
                 </div>
             `;
@@ -364,7 +383,7 @@ class LoginPageComponent {
             containerHtml = `
                 <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 46px; height: 46px; border: 2px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.1);"><i class="fa-solid fa-keyboard fs-5 safe-icon"></i></div>
                 <div class="selected-text-group">
-                    <span class="selected-name text-primary">${name}</span>
+                    <span class="selected-name text-primary">${this.#escapeHTML(name)}</span>
                     <span class="selected-role">${roleIcon} <span class="ms-1">${roleLabel}</span></span>
                 </div>
             `;
@@ -375,7 +394,6 @@ class LoginPageComponent {
         this.onUserSelectChange(username);
     }
 
-    // 🚨 THE FIX: กรองรายชื่อ (Filter) เพื่อวาด UI เฉพาะคนที่เปิดสวิตช์ ShowOnLogin หรือเป็น Admin เท่านั้น!
     renderUserDropdown() {
         const listItemsContainer = document.getElementById('custom-list-items');
         if(!listItemsContainer) return;
@@ -386,8 +404,6 @@ class LoginPageComponent {
         `;
         
         let html = '';
-        
-        // 🚨 กรองข้อมูล: โชว์เฉพาะคนที่ showOnLogin ไม่ใช่ false หรือเป็น admin
         const visibleUsers = this.allUsers.filter(user => user.showOnLogin !== false || user.role === 'admin');
 
         visibleUsers.forEach(user => {
@@ -395,10 +411,10 @@ class LoginPageComponent {
             let avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=3b82f6&color=fff&bold=true&rounded=true`;
             
             html += `
-                <div class="custom-option-item" data-id="${user.username}" data-name="${user.name}" data-avatar="${avatarUrl}" data-role="${user.role}">
+                <div class="custom-option-item" data-id="${this.#escapeHTML(user.username)}" data-name="${this.#escapeHTML(user.name)}" data-avatar="${avatarUrl}" data-role="${this.#escapeHTML(user.role)}">
                     <img src="${avatarUrl}" class="custom-option-avatar">
                     <div class="custom-option-text">
-                        <div class="custom-option-name" style="font-weight:700; color:var(--text-dark);">${user.name}</div>
+                        <div class="custom-option-name" style="font-weight:700; color:var(--text-dark);">${this.#escapeHTML(user.name)}</div>
                         <div class="custom-option-role" style="font-size:12px; color:var(--text-muted);">${roleData.iconHtml} <span class="ms-1">${roleData.label}</span></div>
                     </div>
                 </div>
@@ -416,7 +432,6 @@ class LoginPageComponent {
         `;
         listItemsContainer.innerHTML = html;
 
-        // เช็คว่าเคยล็อคอินด้วยไอดีที่ยังมีสิทธิ์โชว์อยู่ไหม ถ้ามีให้เลือกไว้เหมือนเดิม
         const savedUser = localStorage.getItem('dialysis_remember_username');
         if(savedUser && visibleUsers.some(u => u.username === savedUser)) {
             const userObj = visibleUsers.find(u => u.username === savedUser);
@@ -424,7 +439,6 @@ class LoginPageComponent {
             this.processUserSelection(userObj.username, userObj.name, avatarUrl, userObj.role);
             document.getElementById('login-remember').checked = true;
         } else if (savedUser) {
-            // ถ้าชื่อถูกซ่อนไปแล้ว ให้ล้างความจำ
             localStorage.removeItem('dialysis_remember_username');
         }
     }
@@ -448,6 +462,7 @@ class LoginPageComponent {
         else { pwInput.type = "password"; icon.className = "fa-solid fa-eye safe-icon"; }
     }
 
+    // 🚀 THE FIX 3: O(1) Authenticate by Server Query (ป้องกัน Data Leak และแคร็กเกอร์)
     async authenticate() {
         const hiddenInput = document.getElementById('login-username-select');
         let usernameInp = hiddenInput ? hiddenInput.value : '';
@@ -460,9 +475,7 @@ class LoginPageComponent {
         if (!usernameInp || usernameInp === "" || !passwordInp) { 
             Swal.fire({ 
                 html: '<div class="mt-2"><i class="fa-solid fa-fingerprint fa-4x text-warning mb-4 safe-icon" style="animation: pulse 2s infinite;"></i><h4 class="fw-bold" style="font-family:\'Prompt\'; color: var(--text-dark);">ข้อมูลไม่ครบถ้วน</h4><p class="small" style="color: var(--text-muted);">กรุณาเลือกบัญชีผู้ใช้และระบุรหัสผ่านให้ครบถ้วนครับ</p></div>', 
-                showConfirmButton: true, confirmButtonText: 'ตกลง', buttonsStyling: false,
-                background: 'var(--bg-surface)',
-                customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal mx-2' }
+                showConfirmButton: true, confirmButtonText: 'ตกลง', buttonsStyling: false, background: 'var(--bg-surface)', customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal mx-2' }
             }); 
             return; 
         }
@@ -470,63 +483,75 @@ class LoginPageComponent {
         btnLogin.disabled = true;
         btnLoginText.innerHTML = `<i class="fas fa-spinner fa-spin me-2 safe-icon"></i> ตรวจสอบสิทธิ์ (Authenticating...)`;
 
-        await new Promise(r => setTimeout(r, 600));
-        btnLoginText.innerHTML = `<i class="fa-solid fa-shield-halved fa-beat me-2 safe-icon"></i> ถอดรหัสโปรไฟล์ (Decrypting...)`;
-        await new Promise(r => setTimeout(r, 400));
-
         try {
-            if (usernameInp === 'admin' && passwordInp === 'admin1234') {
+            // Master Admin Check (Hardcoded Bypass)
+            if (usernameInp === this.MASTER_ADMIN_USER && passwordInp === this.MASTER_ADMIN_PW) {
                 App.currentUser = { id: 'MASTER_ADMIN', name: 'Master Admin', role: 'admin', status: 'active' };
                 document.getElementById('anti-flash-style')?.remove();
                 
-                const sessionData = { id: 'MASTER_ADMIN', username: 'admin', name: 'Master Admin', role: 'admin', login_time: new Date().getTime() };
+                const sessionData = { id: 'MASTER_ADMIN', username: this.MASTER_ADMIN_USER, name: 'Master Admin', role: 'admin', login_time: new Date().getTime() };
                 sessionStorage.setItem('dialysis_user_session', JSON.stringify(sessionData));
                 
-                Swal.fire({ 
+                await Swal.fire({ 
                     html: `<div class="mt-2"><i class="fa-solid fa-check-circle fa-4x text-success mb-3 safe-icon"></i><h4 class="fw-bold" style="font-family:'Prompt'; color: var(--text-dark);">Access Granted</h4><p class="small" style="color: var(--text-muted);">ยินดีต้อนรับเข้าสู่ระบบ (Master Account)</p></div>`, 
                     timer: 1500, showConfirmButton: false, background: 'var(--bg-surface)', customClass: { popup: 'premium-alert' }
-                }).then(() => App.switchPage('dashboard'));
+                });
+                App.switchPage('dashboard');
                 return;
             }
 
-            const validUser = this.allUsers.find(u => u && u.username.toLowerCase() === usernameInp.toLowerCase() && u.password === passwordInp);
+            // 🚨 THE FIX 3: วิ่งไปถาม Server โดยตรงว่ามี Username นี้ไหม แทนการวนลูปหาใน Client Array
+            const snap = await db.ref('clinic_users_v2').orderByChild('username').equalTo(usernameInp).once('value');
+            const data = snap.val();
 
-            if (validUser) {
-                if (validUser.status !== 'active') {
-                    Swal.fire({ html: '<div class="mt-2"><i class="fa-solid fa-user-lock fa-4x text-danger mb-3 safe-icon"></i><h4 class="fw-bold" style="font-family:\'Prompt\'; color: var(--text-dark);">บัญชีถูกระงับ</h4><p class="small" style="color: var(--text-muted);">บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ</p></div>', showConfirmButton: true, confirmButtonText: 'ตกลง', buttonsStyling: false, background: 'var(--bg-surface)', customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal btn-danger-swal' } });
-                    btnLoginText.innerHTML = `<i class="fa-solid fa-shield-check me-2 safe-icon"></i> เข้าสู่ระบบ (Authenticate)`; btnLogin.disabled = false;
-                    return;
-                }
+            if (!data) throw new Error("InvalidCredentials"); // ไม่เจอ Username
+            
+            const userKey = Object.keys(data)[0];
+            const validUser = { id: userKey, ...data[userKey] };
 
-                if (document.getElementById('login-remember').checked) localStorage.setItem('dialysis_remember_username', validUser.username);
-                else localStorage.removeItem('dialysis_remember_username');
+            // ตรวจสอบ Password และ Status (Case-sensitive check)
+            if (validUser.password !== passwordInp) throw new Error("InvalidCredentials");
 
-                const sessionData = { id: validUser.id, username: validUser.username, name: validUser.name, role: validUser.role, login_time: new Date().getTime() };
-                sessionStorage.setItem('dialysis_user_session', JSON.stringify(sessionData));
-                
-                App.currentUser = validUser;
-                document.getElementById('anti-flash-style')?.remove();
-
-                Swal.fire({ 
-                    html: `<div class="mt-2"><i class="fa-solid fa-shield-check fa-4x text-success mb-3 safe-icon"></i><h4 class="fw-bold" style="font-family:'Prompt'; color: var(--text-dark);">ยินดีต้อนรับ</h4><p class="small" style="color: var(--text-muted);">เชื่อมต่อข้อมูลสำเร็จ คุณ <b>${validUser.name}</b></p></div>`, 
-                    timer: 1500, showConfirmButton: false, background: 'var(--bg-surface)', customClass: { popup: 'premium-alert' }
-                }).then(() => App.switchPage('dashboard'));
-                
-            } else {
-                Swal.fire({ html: '<div class="mt-2"><i class="fa-solid fa-fingerprint fa-4x text-danger mb-3 safe-icon"></i><h4 class="fw-bold" style="font-family:\'Prompt\'; color: var(--text-dark);">การยืนยันตัวตนล้มเหลว</h4><p class="small" style="color: var(--text-muted);">รหัสผ่านไม่ถูกต้อง หรือไม่พบไอดีนี้ในระบบ!</p></div>', showConfirmButton: true, confirmButtonText: 'ลองใหม่อีกครั้ง', buttonsStyling: false, background: 'var(--bg-surface)', customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal btn-danger-swal' } });
+            if (validUser.status !== 'active') {
+                Swal.fire({ html: '<div class="mt-2"><i class="fa-solid fa-user-lock fa-4x text-danger mb-3 safe-icon"></i><h4 class="fw-bold" style="font-family:\'Prompt\'; color: var(--text-dark);">บัญชีถูกระงับ</h4><p class="small" style="color: var(--text-muted);">บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ</p></div>', showConfirmButton: true, confirmButtonText: 'ตกลง', buttonsStyling: false, background: 'var(--bg-surface)', customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal btn-danger-swal' } });
                 btnLoginText.innerHTML = `<i class="fa-solid fa-shield-check me-2 safe-icon"></i> เข้าสู่ระบบ (Authenticate)`; btnLogin.disabled = false;
-                document.getElementById('login-password').value = '';
+                return;
             }
+
+            // Login Success
+            if (document.getElementById('login-remember').checked) localStorage.setItem('dialysis_remember_username', validUser.username);
+            else localStorage.removeItem('dialysis_remember_username');
+
+            // 🛡️ Data Minimization: ลบ Password ทิ้งก่อนเซฟลง SessionStorage! ป้องกันการถูกขโมยจาก XSS
+            const sessionData = { id: validUser.id, username: validUser.username, name: validUser.name, role: validUser.role, login_time: new Date().getTime() };
+            sessionStorage.setItem('dialysis_user_session', JSON.stringify(sessionData));
+            
+            App.currentUser = sessionData;
+            document.getElementById('anti-flash-style')?.remove();
+
+            await Swal.fire({ 
+                html: `<div class="mt-2"><i class="fa-solid fa-shield-check fa-4x text-success mb-3 safe-icon"></i><h4 class="fw-bold" style="font-family:'Prompt'; color: var(--text-dark);">ยินดีต้อนรับ</h4><p class="small" style="color: var(--text-muted);">เชื่อมต่อข้อมูลสำเร็จ คุณ <b>${this.#escapeHTML(validUser.name)}</b></p></div>`, 
+                timer: 1500, showConfirmButton: false, background: 'var(--bg-surface)', customClass: { popup: 'premium-alert' }
+            });
+            App.switchPage('dashboard');
+            
         } catch (error) { 
-            Swal.fire({ title: '<i class="fa-solid fa-wifi text-danger me-2 safe-icon"></i> เครือข่ายขัดข้อง', html: '<p class="small" style="color: var(--text-muted);">ไม่สามารถเปิดประตูฐานข้อมูลได้ กรุณาตรวจสอบอินเทอร์เน็ต</p>', showConfirmButton: true, confirmButtonText: 'ตกลง', buttonsStyling: false, background: 'var(--bg-surface)', customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal' } }); 
+            if (error.message === "InvalidCredentials") {
+                Swal.fire({ html: '<div class="mt-2"><i class="fa-solid fa-fingerprint fa-4x text-danger mb-3 safe-icon"></i><h4 class="fw-bold" style="font-family:\'Prompt\'; color: var(--text-dark);">การยืนยันตัวตนล้มเหลว</h4><p class="small" style="color: var(--text-muted);">รหัสผ่านไม่ถูกต้อง หรือไม่พบไอดีนี้ในระบบ!</p></div>', showConfirmButton: true, confirmButtonText: 'ลองใหม่อีกครั้ง', buttonsStyling: false, background: 'var(--bg-surface)', customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal btn-danger-swal' } });
+                document.getElementById('login-password').value = '';
+            } else {
+                console.error("Auth Exception:", error);
+                Swal.fire({ title: '<i class="fa-solid fa-wifi text-danger me-2 safe-icon"></i> เครือข่ายขัดข้อง', html: '<p class="small" style="color: var(--text-muted);">ไม่สามารถเปิดประตูฐานข้อมูลได้ กรุณาตรวจสอบอินเทอร์เน็ต</p>', showConfirmButton: true, confirmButtonText: 'ตกลง', buttonsStyling: false, background: 'var(--bg-surface)', customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal' } }); 
+            }
             btnLoginText.innerHTML = `<i class="fa-solid fa-shield-check me-2 safe-icon"></i> เข้าสู่ระบบ (Authenticate)`; btnLogin.disabled = false; 
         }
     }
 
+    // 🚀 THE FIX 4: O(1) Forgot Password Server Query
     forgotPassword() {
         Swal.fire({
             title: '<h4 class="fw-bold text-primary mb-0" style="font-family:\'Prompt\';"><i class="fa-solid fa-unlock-keyhole me-2 safe-icon"></i> ขอรีเซ็ตรหัสผ่าน</h4>',
-            html: '<div class="text-start mt-3" style="font-family:\'Sarabun\';"><label class="form-label fw-bold small text-secondary">กรุณาระบุ Username (ไอดี) ของคุณ</label><input type="text" id="swal-reset-username" class="form-control input-modern-login text-center fw-bold fs-5 mt-2" style="border-radius:14px;" value="admin" onfocus="this.select()" placeholder="กรอก Username"></div>',
+            html: '<div class="text-start mt-3" style="font-family:\'Sarabun\';"><label class="form-label fw-bold small text-secondary">กรุณาระบุ Username (ไอดี) ของคุณ</label><input type="text" id="swal-reset-username" class="form-control input-modern-login text-center fw-bold fs-5 mt-2" style="border-radius:14px;" value="" onfocus="this.select()" placeholder="กรอก Username"></div>',
             showCancelButton: true, 
             background: 'var(--bg-surface)',
             confirmButtonText: 'ถัดไป <i class="fa-solid fa-arrow-right ms-1 safe-icon"></i>', 
@@ -544,28 +569,29 @@ class LoginPageComponent {
                 Swal.fire({title: 'กำลังตรวจสอบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: 'var(--bg-surface)', customClass: { popup: 'premium-alert' }});
                 
                 try {
-                    if(typeof firebase !== 'undefined' && firebase.auth) { 
-                        if(firebase.auth().currentUser === null) { await firebase.auth().signInAnonymously(); } 
-                    }
-                    const [usersSnap, settingsSnap] = await Promise.all([ 
-                        db.ref('clinic_users_v2').once('value'), 
+                    if(typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser === null) { 
+                        await firebase.auth().signInAnonymously(); 
+                    } 
+                    
+                    // 🚨 THE FIX: ค้นหาเฉพาะ User ที่ต้องการ ไม่ดาวน์โหลดทั้ง DB
+                    const [userSnap, settingsSnap] = await Promise.all([ 
+                        db.ref('clinic_users_v2').orderByChild('username').equalTo(targetUsername).once('value'), 
                         db.ref('clinic_settings_v2/admin_pin').once('value') 
                     ]);
                     
-                    const usersData = usersSnap.val() || []; 
+                    const userData = userSnap.val();
                     const adminPin = settingsSnap.val();
-                    let usersArray = Array.isArray(usersData) ? usersData : Object.keys(usersData).map(k => usersData[k]);
-                    let userIndex = usersArray.findIndex(u => u && u.username.toLowerCase() === targetUsername.toLowerCase());
-                    
                     Swal.close();
                     
-                    if(userIndex === -1) { 
+                    if(!userData) { 
                         setTimeout(() => {
-                            Swal.fire({ html: `<div class="mt-2"><i class="fa-solid fa-user-xmark fa-4x text-danger mb-3 safe-icon"></i><h4 class="fw-bold" style="font-family:'Prompt'; color: var(--text-dark);">ไม่พบผู้ใช้</h4><p class="small" style="color: var(--text-muted);">ไม่มีไอดี <b>${targetUsername}</b> ในระบบ</p></div>`, showConfirmButton: true, confirmButtonText: 'ตกลง', buttonsStyling: false, background: 'var(--bg-surface)', customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal btn-danger-swal' } }); 
+                            Swal.fire({ html: `<div class="mt-2"><i class="fa-solid fa-user-xmark fa-4x text-danger mb-3 safe-icon"></i><h4 class="fw-bold" style="font-family:'Prompt'; color: var(--text-dark);">ไม่พบผู้ใช้</h4><p class="small" style="color: var(--text-muted);">ไม่มีไอดี <b>${this.#escapeHTML(targetUsername)}</b> ในระบบ</p></div>`, showConfirmButton: true, confirmButtonText: 'ตกลง', buttonsStyling: false, background: 'var(--bg-surface)', customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal btn-danger-swal' } }); 
                         }, 100);
                         return; 
                     }
                     
+                    const userKey = Object.keys(userData)[0]; // ดึง ID ของ User
+
                     if(!adminPin) { 
                         setTimeout(() => {
                             Swal.fire({ html: '<div class="mt-2"><i class="fa-solid fa-triangle-exclamation fa-4x text-warning mb-3 safe-icon"></i><h4 class="fw-bold" style="font-family:\'Prompt\'; color: var(--text-dark);">ระบบยังไม่พร้อม</h4><p class="small" style="color: var(--text-muted);">ผู้ดูแลระบบยังไม่ได้ตั้งค่า <b>Admin PIN</b><br>โปรดไปตั้งค่าที่เมนูตั้งค่าคลินิกก่อนครับ</p></div>', showConfirmButton: true, confirmButtonText: 'ตกลง', buttonsStyling: false, background: 'var(--bg-surface)', customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal' } }); 
@@ -576,12 +602,9 @@ class LoginPageComponent {
                     setTimeout(() => {
                         Swal.fire({
                             title: '<h4 class="text-danger fw-bold" style="font-family:\'Prompt\';"><i class="fa-solid fa-shield-halved me-2 safe-icon"></i> ยืนยันสิทธิ์ Admin</h4>',
-                            html: `<p class="small mb-3" style="font-family:'Sarabun'; color: var(--text-muted);">กรุณาให้ผู้ดูแลระบบกรอก <b>Admin PIN</b> เพื่ออนุมัติการรีเซ็ตรหัสผ่านให้ไอดี <b class="text-primary">${targetUsername}</b></p><input type="password" id="swal-auth-pin" class="form-control input-modern-login text-center fw-bold text-danger fs-3 tracking-widest" style="letter-spacing:10px; border-radius:14px;" placeholder="******" maxlength="6" oninput="this.value=this.value.replace(/[^0-9]/g,'')">`,
-                            showCancelButton: true, 
-                            background: 'var(--bg-surface)',
-                            confirmButtonText: '<i class="fa-solid fa-check me-1 safe-icon"></i> ยืนยัน PIN', 
-                            cancelButtonText: 'ยกเลิก', 
-                            buttonsStyling: false, 
+                            html: `<p class="small mb-3" style="font-family:'Sarabun'; color: var(--text-muted);">กรุณาให้ผู้ดูแลระบบกรอก <b>Admin PIN</b> เพื่ออนุมัติการรีเซ็ตรหัสผ่านให้ไอดี <b class="text-primary">${this.#escapeHTML(targetUsername)}</b></p><input type="password" id="swal-auth-pin" class="form-control input-modern-login text-center fw-bold text-danger fs-3 tracking-widest" style="letter-spacing:10px; border-radius:14px;" placeholder="******" maxlength="6" oninput="this.value=this.value.replace(/[^0-9]/g,'')">`,
+                            showCancelButton: true, background: 'var(--bg-surface)',
+                            confirmButtonText: '<i class="fa-solid fa-check me-1 safe-icon"></i> ยืนยัน PIN', cancelButtonText: 'ยกเลิก', buttonsStyling: false, 
                             customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal btn-danger-swal mx-2', cancelButton: 'btn-cancel-swal mx-2' },
                             preConfirm: () => { 
                                 const enteredPin = document.getElementById('swal-auth-pin').value; 
@@ -597,11 +620,7 @@ class LoginPageComponent {
                                     Swal.fire({
                                         title: '<h5 class="fw-bold text-success mb-0" style="font-family:\'Prompt\';"><i class="fa-solid fa-key me-2 safe-icon"></i> ตั้งรหัสผ่านใหม่</h5>',
                                         html: '<div class="text-start mt-3" style="font-family:\'Sarabun\';"><label class="form-label small fw-bold" style="color: var(--text-muted);">รหัสผ่านใหม่ (New Password)</label><input type="password" id="swal-new-pwd" class="form-control input-modern-login mb-3" style="border-radius:14px;"><label class="form-label small fw-bold" style="color: var(--text-muted);">ยืนยันรหัสผ่านใหม่อีกครั้ง</label><input type="password" id="swal-confirm-pwd" class="form-control input-modern-login" style="border-radius:14px;"></div>',
-                                        showCancelButton: true, 
-                                        background: 'var(--bg-surface)',
-                                        confirmButtonText: 'เปลี่ยนรหัสผ่าน', 
-                                        cancelButtonText: 'ยกเลิก', 
-                                        buttonsStyling: false, 
+                                        showCancelButton: true, background: 'var(--bg-surface)', confirmButtonText: 'เปลี่ยนรหัสผ่าน', cancelButtonText: 'ยกเลิก', buttonsStyling: false, 
                                         customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal mx-2', cancelButton: 'btn-cancel-swal mx-2' },
                                         preConfirm: () => {
                                             const p1 = document.getElementById('swal-new-pwd').value; const p2 = document.getElementById('swal-confirm-pwd').value;
@@ -612,9 +631,10 @@ class LoginPageComponent {
                                     }).then((pwdResult) => {
                                         if(pwdResult.isConfirmed) {
                                             Swal.fire({title: 'กำลังอัปเดตระบบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: 'var(--bg-surface)', customClass: { popup: 'premium-alert' }});
-                                            usersArray[userIndex].password = pwdResult.value;
-                                            db.ref('clinic_users_v2').set(usersArray).then(() => { 
-                                                Swal.fire({ html: '<div class="mt-2"><i class="fa-solid fa-check-circle fa-4x text-success mb-3 safe-icon"></i><h4 class="fw-bold" style="font-family:\'Prompt\'; color: var(--text-dark);">เปลี่ยนรหัสผ่านสำเร็จ!</h4><p class="small" style="color: var(--text-muted);">กรุณาใช้รหัสผ่านใหม่เพื่อเข้าสู่ระบบ</p></div>', showConfirmButton: true, confirmButtonText: 'กลับไปหน้าล็อคอิน', buttonsStyling: false, background: 'var(--bg-surface)', customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal' } }).then(() => { LoginPage.init(); }); 
+                                            // 🚨 อัปเดตเฉพาะ Field รหัสผ่านของ User นั้น
+                                            db.ref(`clinic_users_v2/${userKey}/password`).set(pwdResult.value).then(() => { 
+                                                Swal.fire({ html: '<div class="mt-2"><i class="fa-solid fa-check-circle fa-4x text-success mb-3 safe-icon"></i><h4 class="fw-bold" style="font-family:\'Prompt\'; color: var(--text-dark);">เปลี่ยนรหัสผ่านสำเร็จ!</h4><p class="small" style="color: var(--text-muted);">กรุณาใช้รหัสผ่านใหม่เพื่อเข้าสู่ระบบ</p></div>', showConfirmButton: true, confirmButtonText: 'กลับไปหน้าล็อคอิน', buttonsStyling: false, background: 'var(--bg-surface)', customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal' } })
+                                                .then(() => { LoginPage.init(); }); 
                                             });
                                         }
                                     });
@@ -627,6 +647,11 @@ class LoginPageComponent {
                 }
             }
         });
+    }
+
+    #escapeHTML(str) {
+        if (!str && str !== 0) return '';
+        return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
     }
 }
 

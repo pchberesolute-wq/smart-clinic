@@ -1,5 +1,5 @@
 // js/pages/department_ledger.js
-// 🚀 Enterprise Department Ledger Module: Zero-CLS Tab Stacking & PC-Optimized Print/Export Engine
+// 🚀 Enterprise Department Ledger Module: Zero-Overflow Flexbox, Fail-Safe Category & Thai Date Picker (v11.5)
 
 class DepartmentLedgerPageComponent {
     constructor() {
@@ -58,16 +58,16 @@ class DepartmentLedgerPageComponent {
                 .native-date-wrapper input[type="date"]::-webkit-datetime-edit, .native-date-wrapper input[type="date"]::-webkit-datetime-edit-text, .native-date-wrapper input[type="date"]::-webkit-datetime-edit-month-field, .native-date-wrapper input[type="date"]::-webkit-datetime-edit-day-field, .native-date-wrapper input[type="date"]::-webkit-datetime-edit-year-field { color: transparent !important; background: transparent !important; }
                 .native-date-wrapper input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; margin: 0; padding: 0; cursor: pointer; opacity: 0; }
 
+                .swal-thai-date-wrapper { position: relative; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface); overflow: hidden; cursor: pointer; display: flex; align-items: center; padding: 8px 12px; }
+                .swal-thai-date-wrapper:focus-within { border-color: var(--primary); box-shadow: 0 0 0 0.25rem rgba(37,99,235,0.25); }
+                .swal-thai-date-wrapper .display-text { font-family: 'Prompt'; font-weight: 700; color: var(--text-dark); pointer-events: none; flex-grow: 1; }
+                .swal-thai-date-wrapper i { color: var(--text-muted); pointer-events: none; }
+                .swal-thai-date-wrapper input[type="date"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; }
+
                 ul.fin-nav-tabs { 
-                    display: flex !important; 
-                    flex-direction: row !important;
-                    border-bottom: 2px solid var(--border-color) !important; 
-                    margin: 0 0 -1px 0 !important; 
-                    padding-left: 0 !important; 
-                    list-style-type: none !important; 
-                    gap: 5px !important; 
-                    overflow-x: auto !important;
-                    position: relative; z-index: 10;
+                    display: flex !important; flex-direction: row !important; border-bottom: 2px solid var(--border-color) !important; 
+                    margin: 0 0 -1px 0 !important; padding-left: 0 !important; list-style-type: none !important; 
+                    gap: 5px !important; overflow-x: auto !important; position: relative; z-index: 10;
                 }
                 ul.fin-nav-tabs::-webkit-scrollbar { height: 4px; }
                 ul.fin-nav-tabs::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
@@ -83,76 +83,49 @@ class DepartmentLedgerPageComponent {
                 .fin-nav-link.active { background: var(--bg-surface); box-shadow: 0 -4px 10px rgba(0,0,0,0.02); color: var(--primary); font-weight: 700;}
                 .fin-nav-link.active::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 3px; background: var(--primary); border-radius: 3px 3px 0 0; }
 
+                /* 🚨 THE ULTIMATE OVERFLOW FIX 🚨 */
                 #ledgerTabContent {
-                    display: grid;
-                    grid-template-columns: 1fr;
-                    grid-template-rows: 1fr;
-                    height: 650px !important;       
-                    min-height: 650px !important;
-                    max-height: 650px !important;
-                    width: 100%;
-                    margin-bottom: 2rem;
+                    display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr;
+                    width: 100%; margin-bottom: 2rem;
+                    /* จำกัดความสูงไว้ที่ 100vh ลบด้วยพื้นที่ส่วนบน (Header+Cards) เพื่อไม่ให้จอทะลุ */
+                    height: calc(100vh - 380px) !important; 
+                    min-height: 400px !important;
                 }
 
-                .custom-tab-pane {
-                    grid-area: 1 / 1;               
-                    opacity: 0;
-                    visibility: hidden;
-                    pointer-events: none;           
-                    transition: opacity 0.25s ease; 
-                    height: 100%;
-                    display: flex;
-                    flex-direction: column;
+                .custom-tab-pane { 
+                    grid-area: 1 / 1; opacity: 0; visibility: hidden; pointer-events: none; 
+                    transition: opacity 0.25s ease; height: 100%; display: flex; flex-direction: column; 
+                    min-height: 0; /* 🚨 บังคับให้ Grid ขังเนื้อหาไว้ ห้ามเบ่งตัวออก */
                 }
-
-                .custom-tab-pane.active {
-                    opacity: 1;
-                    visibility: visible;
-                    pointer-events: auto;
-                    z-index: 5;
-                }
-
-                .panel-locked {
-                    height: 100% !important;
-                    display: flex;
-                    flex-direction: column;
-                    margin-bottom: 0 !important; 
-                    border-top-left-radius: 0 !important;
+                .custom-tab-pane.active { opacity: 1; visibility: visible; pointer-events: auto; z-index: 5; }
+                
+                .panel-locked { 
+                    height: 100% !important; display: flex; flex-direction: column; 
+                    margin-bottom: 0 !important; border-top-left-radius: 0 !important; 
+                    min-height: 0; /* 🚨 บังคับให้ Flexbox ขังเนื้อหาไว้ */
                 }
 
                 .locked-table-wrapper {
-                    flex-grow: 1;
-                    min-height: 0; 
-                    overflow-y: auto;
-                    overflow-x: auto; 
-                    background-color: var(--bg-surface);
-                    border: 1px solid var(--border-color);
-                    border-radius: 16px;
-                    box-shadow: var(--shadow-sm);
+                    flex: 1 1 auto; /* ให้กล่องขยายเต็มพื้นที่ที่เหลือ แต่หดได้ */
+                    min-height: 0; /* 🚨 จุดสำคัญที่สุด! ถ้าไม่มีบรรทัดนี้ ตารางจะทะลุจอเสมอ */
+                    overflow-y: auto !important; 
+                    overflow-x: auto !important; 
+                    background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 16px; box-shadow: var(--shadow-sm);
                 }
-                .locked-table-wrapper::-webkit-scrollbar { width: 6px; height: 6px; }
+                .locked-table-wrapper::-webkit-scrollbar { width: 8px; height: 8px; }
                 .locked-table-wrapper::-webkit-scrollbar-track { background: transparent; }
                 .locked-table-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+                .locked-table-wrapper::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
                 .safe-icon { font-family: 'Font Awesome 6 Free', 'FontAwesome', sans-serif !important; font-weight: 900 !important; font-style: normal !important; }
-
                 .btn-custom-secondary { background-color: var(--bg-surface) !important; color: #64748b !important; border: 1px solid #cbd5e1 !important; transition: all 0.3s ease; }
-                .btn-custom-secondary i { color: #64748b !important; transition: all 0.3s ease; }
-                .btn-custom-secondary:hover { background-color: #64748b !important; color: #ffffff !important; border-color: #64748b !important; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-                .btn-custom-secondary:hover i { color: #ffffff !important; }
-
+                .btn-custom-secondary:hover { background-color: #64748b !important; color: #ffffff !important; }
                 .btn-custom-info { background-color: var(--bg-surface) !important; color: #0ea5e9 !important; border: 1px solid #7dd3fc !important; transition: all 0.3s ease; }
-                .btn-custom-info i { color: #0ea5e9 !important; transition: all 0.3s ease; }
-                .btn-custom-info:hover { background-color: #0ea5e9 !important; color: #ffffff !important; border-color: #0ea5e9 !important; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-                .btn-custom-info:hover i { color: #ffffff !important; }
-
+                .btn-custom-info:hover { background-color: #0ea5e9 !important; color: #ffffff !important; }
                 .btn-export-main { background-color: #1e293b !important; color: #ffffff !important; border: none !important; transition: all 0.3s ease; }
-                .btn-export-main:hover { background-color: #0f172a !important; color: #ffffff !important; box-shadow: 0 4px 8px rgba(0,0,0,0.15); transform: translateY(-1px); }
-                .btn-export-main i { color: #f59e0b !important; } 
-
+                .btn-export-main:hover { background-color: #0f172a !important; color: #ffffff !important; transform: translateY(-1px); }
                 .btn-export-summary { background-color: #2563eb !important; color: #ffffff !important; border: none !important; transition: all 0.3s ease; }
-                .btn-export-summary:hover { background-color: #1e3a8a !important; color: #ffffff !important; box-shadow: 0 4px 8px rgba(0,0,0,0.15); transform: translateY(-1px); }
-                .btn-export-summary i { color: #ffffff !important; }
+                .btn-export-summary:hover { background-color: #1e3a8a !important; color: #ffffff !important; transform: translateY(-1px); }
             </style>
 
             <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
@@ -272,7 +245,7 @@ class DepartmentLedgerPageComponent {
                         
                         <div class="locked-table-wrapper">
                             <table class="table table-ledger w-100 mb-0">
-                                <thead style="position: sticky; top: 0; z-index: 10;">
+                                <thead style="position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                                     <tr>
                                         <th style="width: 14%;"><i class="fa-regular fa-calendar me-1 safe-icon"></i> วัน/เวลาที่ทำรายการ</th>
                                         <th style="width: 10%;">ประเภท</th>
@@ -314,17 +287,22 @@ class DepartmentLedgerPageComponent {
                             <div class="col-lg-5 h-100">
                                 <div class="modern-panel shadow-sm p-4 h-100 d-flex flex-column" style="border-radius: 16px; background-color: var(--bg-body); border: 1px solid var(--border-color);">
                                     <h6 class="fw-bold mb-3" style="color: var(--text-dark);"><i class="fa-solid fa-chart-donut text-info me-2 safe-icon"></i> สัดส่วนการใช้จ่าย (Expense Breakdown)</h6>
-                                    <div class="flex-grow-1" style="position: relative; width: 100%;" id="dl-chart-container">
-                                        <canvas id="dlSummaryChart"></canvas>
+                                    
+                                    <div class="flex-grow-1" style="position: relative; width: 100%; min-height: 250px;" id="dl-chart-container">
+                                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;">
+                                            <canvas id="dlSummaryChart"></canvas>
+                                        </div>
                                     </div>
+
                                 </div>
                             </div>
                             <div class="col-lg-7 h-100">
                                 <div class="modern-panel shadow-sm p-4 h-100 d-flex flex-column" style="border-radius: 16px; background-color: var(--bg-body); border: 1px solid var(--border-color);">
                                     <h6 class="fw-bold mb-3" style="color: var(--text-dark);"><i class="fa-solid fa-list-ul text-secondary me-2 safe-icon"></i> สรุปยอดแยกตามหมวดหมู่</h6>
-                                    <div class="locked-table-wrapper" style="box-shadow: none; border-radius: 12px;">
+                                    
+                                    <div class="locked-table-wrapper" style="box-shadow: none; border-radius: 12px; flex: 1; min-height: 0; overflow-y: auto;">
                                         <table class="table table-ledger w-100 mb-0">
-                                            <thead>
+                                            <thead style="position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                                                 <tr>
                                                     <th>หมวดหมู่</th>
                                                     <th class="text-center">ประเภท</th>
@@ -427,6 +405,14 @@ class DepartmentLedgerPageComponent {
         if(!isoStr) return '-'; 
         const d = new Date(isoStr);
         return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth() + 1).padStart(2,'0')}/${d.getFullYear() + 543}`;
+    }
+
+    updateSwalDateDisplay(inputId) {
+        const inputEl = document.getElementById(inputId);
+        const displayEl = document.getElementById(`${inputId}-display`);
+        if(inputEl && displayEl && inputEl.value) {
+            displayEl.innerText = this.formatDateTh(inputEl.value);
+        }
     }
 
     updateDateDisplays() {
@@ -563,6 +549,16 @@ class DepartmentLedgerPageComponent {
         }
 
         html += `
+            <tr style="background-color: var(--bg-surface); border-top: 2px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+                <td colspan="4" class="text-end fw-bold py-3 text-dark"><i class="fa-solid fa-sigma text-muted me-2"></i> รวมรายการในรอบนี้ (Period Total):</td>
+                <td class="text-end fw-bold text-success fs-5 py-3" style="background-color: rgba(16, 185, 129, 0.05);">+ ฿${totalIn.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                <td class="text-end fw-bold text-danger fs-5 py-3" style="background-color: rgba(239, 68, 68, 0.05);">- ฿${totalOut.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                <td class="border-start"></td>
+                <td></td>
+            </tr>
+        `;
+
+        html += `
             <tr style="background-color: var(--bg-body);">
                 <td colspan="4" class="text-end fw-bold py-3" style="color: var(--text-muted);">ยอดยกไป (Carried Forward):</td>
                 <td colspan="2"></td>
@@ -613,21 +609,32 @@ class DepartmentLedgerPageComponent {
 
     renderSummaryChart() {
         if(!this.state._pendingChartData) return;
-        const ctx = document.getElementById('dlSummaryChart');
-        if(!ctx) return;
-
+        
         try {
-            if (this.state.summaryChartInstance) this.state.summaryChartInstance.destroy();
+            if (this.state.summaryChartInstance) {
+                this.state.summaryChartInstance.destroy();
+                this.state.summaryChartInstance = null;
+            }
+            
             const { labels, data, colors, totalOut } = this.state._pendingChartData;
 
             if (data.length === 0) { 
-                document.getElementById('dl-chart-container').innerHTML = `<div class="text-center" style="color: var(--text-muted);"><i class="fa-solid fa-chart-pie fa-3x mb-3 safe-icon" style="opacity:0.2;"></i><br>ไม่มีรายจ่ายให้วิเคราะห์</div>`; 
+                document.getElementById('dl-chart-container').innerHTML = `
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; color: var(--text-muted);">
+                        <i class="fa-solid fa-chart-pie fa-3x mb-3 safe-icon" style="opacity:0.2;"></i>
+                        <div>ไม่มีรายจ่ายให้วิเคราะห์</div>
+                    </div>`; 
                 return; 
             } else { 
-                document.getElementById('dl-chart-container').innerHTML = `<canvas id="dlSummaryChart"></canvas>`; 
+                document.getElementById('dl-chart-container').innerHTML = `
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;">
+                        <canvas id="dlSummaryChart"></canvas>
+                    </div>`; 
             }
 
-            const newCtx = document.getElementById('dlSummaryChart').getContext('2d');
+            const ctxEl = document.getElementById('dlSummaryChart');
+            if(!ctxEl) return;
+            const newCtx = ctxEl.getContext('2d');
             const ChartLib = window.Chart;
             if(!ChartLib) return;
 
@@ -661,7 +668,7 @@ class DepartmentLedgerPageComponent {
                         
                         var text = "฿" + totalOut.toLocaleString(undefined, {minimumFractionDigits: 2}); 
                         var textX = Math.round((width - ctx.measureText(text).width) / 2);
-                        var textY = (height / 2) - (chart.legend.height / 2); 
+                        var textY = (height / 2) - (chart.legend ? chart.legend.height / 2 : 0); 
                         
                         ctx.fillText(text, textX, textY); 
                         ctx.save(); 
@@ -699,53 +706,107 @@ class DepartmentLedgerPageComponent {
     }
 
     manageCategories() {
-        let inHtml = this.state.categoriesIn.map((c, i) => `<span class="badge bg-success-subtle text-success-emphasis m-1 fs-6 border border-success-subtle py-2 px-3 shadow-sm rounded-pill">${this._escapeHTML(c)} <i class="fa-solid fa-times ms-2 safe-icon" style="cursor:pointer;" onclick="Swal.close(); setTimeout(()=>window.DepartmentLedgerPage.removeCategory('IN', ${i}),300)"></i></span>`).join('');
-        let outHtml = this.state.categoriesOut.map((c, i) => `<span class="badge bg-danger-subtle text-danger-emphasis m-1 fs-6 border border-danger-subtle py-2 px-3 shadow-sm rounded-pill">${this._escapeHTML(c)} <i class="fa-solid fa-times ms-2 safe-icon" style="cursor:pointer;" onclick="Swal.close(); setTimeout(()=>window.DepartmentLedgerPage.removeCategory('OUT', ${i}),300)"></i></span>`).join('');
+        window.renderLedgerCategories = () => {
+            let inHtml = this.state.categoriesIn.length === 0 ? '<div class="small text-muted text-center mt-4">ยังไม่มีหมวดหมู่</div>' : 
+                this.state.categoriesIn.map((c, i) => `
+                    <span class="badge bg-success-subtle text-success-emphasis m-1 fs-6 border border-success-subtle py-2 px-3 shadow-sm rounded-pill transition-all" style="animation: fadeInUpLocal 0.3s ease forwards;">
+                        ${this._escapeHTML(c)} 
+                        <i class="fa-solid fa-times ms-2 text-danger safe-icon" style="cursor:pointer; transition: 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" onclick="window.DepartmentLedgerPage.removeCategory('IN', ${i})"></i>
+                    </span>`).join('');
+            
+            let outHtml = this.state.categoriesOut.length === 0 ? '<div class="small text-muted text-center mt-4">ยังไม่มีหมวดหมู่</div>' : 
+                this.state.categoriesOut.map((c, i) => `
+                    <span class="badge bg-danger-subtle text-danger-emphasis m-1 fs-6 border border-danger-subtle py-2 px-3 shadow-sm rounded-pill transition-all" style="animation: fadeInUpLocal 0.3s ease forwards;">
+                        ${this._escapeHTML(c)} 
+                        <i class="fa-solid fa-times ms-2 text-danger safe-icon" style="cursor:pointer; transition: 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" onclick="window.DepartmentLedgerPage.removeCategory('OUT', ${i})"></i>
+                    </span>`).join('');
+
+            const catInEl = document.getElementById('ledger-cat-in-container');
+            const catOutEl = document.getElementById('ledger-cat-out-container');
+            if (catInEl) catInEl.innerHTML = inHtml;
+            if (catOutEl) catOutEl.innerHTML = outHtml;
+        };
 
         Swal.fire({
-            title: '<h4 class="fw-bold mb-0" style="color: var(--text-dark);"><i class="fa-solid fa-tags text-secondary me-2 safe-icon"></i> จัดการหมวดหมู่รับ-จ่าย</h4>', 
+            title: '<h4 class="fw-bold mb-0" style="color: var(--text-dark);"><i class="fa-solid fa-tags text-secondary me-2 safe-icon"></i> จัดการหมวดหมู่บัญชี</h4>', 
             width: 700,
+            background: 'var(--bg-surface)',
+            customClass: { popup: 'premium-alert' },
             html: `
                 <div class="row text-start mt-3" style="font-family:'Sarabun';">
                     <div class="col-md-6 border-end" style="border-color: var(--border-color) !important;">
                         <h6 class="fw-bold text-success mb-3"><i class="fa-solid fa-arrow-turn-down me-1 safe-icon" style="transform:rotate(90deg);"></i> หมวดหมู่รายรับ</h6>
                         <div class="input-group mb-3 shadow-sm" style="border-radius:8px; overflow:hidden;">
-                            <input type="text" id="new-cat-in" class="form-control input-modern" placeholder="พิมพ์หมวดหมู่ใหม่...">
-                            <button class="btn btn-success fw-bold" onclick="Swal.close(); setTimeout(()=>window.DepartmentLedgerPage.addCategory('IN'),300)">เพิ่ม</button>
+                            <input type="text" id="new-cat-in" class="form-control input-modern fw-bold" placeholder="เพิ่มหมวดหมู่ใหม่..." onkeypress="if(event.key==='Enter') window.DepartmentLedgerPage.addCategory('IN')" style="background: var(--bg-body); border-color: var(--border-color) !important; color: var(--text-dark);">
+                            <button class="btn btn-success fw-bold px-3" onclick="window.DepartmentLedgerPage.addCategory('IN')"><i class="fa-solid fa-plus safe-icon"></i></button>
                         </div>
-                        <div class="p-3" style="background-color: var(--bg-body); border: 1px solid var(--border-color); min-height: 150px; border-radius: 12px;">${inHtml || '<div class="small" style="color: var(--text-muted);">ไม่มีข้อมูล</div>'}</div>
+                        <div id="ledger-cat-in-container" class="p-3" style="background-color: var(--bg-body); border: 1px solid var(--border-color); min-height: 180px; max-height: 250px; overflow-y: auto; border-radius: 12px;"></div>
                     </div>
                     <div class="col-md-6">
                         <h6 class="fw-bold text-danger mb-3"><i class="fa-solid fa-arrow-turn-up me-1 safe-icon" style="transform:rotate(90deg);"></i> หมวดหมู่รายจ่าย</h6>
                         <div class="input-group mb-3 shadow-sm" style="border-radius:8px; overflow:hidden;">
-                            <input type="text" id="new-cat-out" class="form-control input-modern" placeholder="พิมพ์หมวดหมู่ใหม่...">
-                            <button class="btn btn-danger fw-bold" onclick="Swal.close(); setTimeout(()=>window.DepartmentLedgerPage.addCategory('OUT'),300)">เพิ่ม</button>
+                            <input type="text" id="new-cat-out" class="form-control input-modern fw-bold" placeholder="เพิ่มหมวดหมู่ใหม่..." onkeypress="if(event.key==='Enter') window.DepartmentLedgerPage.addCategory('OUT')" style="background: var(--bg-body); border-color: var(--border-color) !important; color: var(--text-dark);">
+                            <button class="btn btn-danger fw-bold px-3" onclick="window.DepartmentLedgerPage.addCategory('OUT')"><i class="fa-solid fa-plus safe-icon"></i></button>
                         </div>
-                        <div class="p-3" style="background-color: var(--bg-body); border: 1px solid var(--border-color); min-height: 150px; border-radius: 12px;">${outHtml || '<div class="small" style="color: var(--text-muted);">ไม่มีข้อมูล</div>'}</div>
+                        <div id="ledger-cat-out-container" class="p-3" style="background-color: var(--bg-body); border: 1px solid var(--border-color); min-height: 180px; max-height: 250px; overflow-y: auto; border-radius: 12px;"></div>
                     </div>
                 </div>
             `,
-            showConfirmButton: false, showCloseButton: true
+            showConfirmButton: false, showCloseButton: true,
+            didOpen: () => { window.renderLedgerCategories(); }
         });
     }
 
     addCategory(type) {
         let inputId = type === 'IN' ? 'new-cat-in' : 'new-cat-out'; 
-        let val = document.getElementById(inputId).value.trim();
-        if(!val) { this.manageCategories(); return; }
+        let inputEl = document.getElementById(inputId);
+        let val = inputEl ? inputEl.value.trim() : '';
         
+        if (!val) return; 
+
         let targetArr = type === 'IN' ? this.state.categoriesIn : this.state.categoriesOut; 
         let dbKey = type === 'IN' ? 'categories_in' : 'categories_out';
-        if(!targetArr.includes(val)) targetArr.push(val);
         
-        db.ref('department_ledger_settings_v2/' + dbKey).set(targetArr).then(() => this.manageCategories());
+        if (!targetArr.includes(val)) {
+            targetArr.push(val);
+            if (window.renderLedgerCategories) window.renderLedgerCategories();
+            db.ref('department_ledger_settings_v2/' + dbKey).set(targetArr).catch(e => console.error("Save Category Error:", e));
+        }
+        
+        inputEl.value = '';
+        inputEl.focus();
     }
 
     removeCategory(type, index) {
         let targetArr = type === 'IN' ? this.state.categoriesIn : this.state.categoriesOut; 
         let dbKey = type === 'IN' ? 'categories_in' : 'categories_out';
-        targetArr.splice(index, 1); 
-        db.ref('department_ledger_settings_v2/' + dbKey).set(targetArr).then(() => this.manageCategories());
+        let categoryName = targetArr[index]; 
+
+        Swal.fire({
+            title: '<h4 class="fw-bold text-danger mb-0" style="font-family:\'Prompt\';"><i class="fa-solid fa-triangle-exclamation me-2"></i> ยืนยันการลบ?</h4>',
+            html: `<div class="text-start mt-3" style="font-family:'Sarabun';">
+                    คุณกำลังจะลบหมวดหมู่:<br>
+                    <b class="text-danger fs-5">"${this._escapeHTML(categoryName)}"</b><br><br>
+                    <small class="text-muted">รายการบัญชีที่เคยใช้หมวดหมู่นี้ไปแล้วจะยังคงอยู่ แต่คุณจะไม่สามารถเลือกหมวดหมู่นี้ในอนาคตได้อีก</small>
+                   </div>`,
+            icon: 'warning',
+            background: 'var(--bg-surface)',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: '<i class="fa-solid fa-trash-can me-1"></i> ยืนยันการลบ',
+            cancelButtonText: 'ยกเลิก',
+            customClass: { popup: 'premium-alert' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                targetArr.splice(index, 1); 
+                db.ref('department_ledger_settings_v2/' + dbKey).set(targetArr).then(() => {
+                    this.manageCategories();
+                }).catch(e => console.error("Remove Category Error:", e));
+            } else {
+                this.manageCategories();
+            }
+        });
     }
 
     openAddModal(type) {
@@ -765,7 +826,13 @@ class DepartmentLedgerPageComponent {
                     <div class="row g-3 mb-3">
                         <div class="col-6">
                             <label class="form-label fw-bold small" style="color: var(--text-muted);">วันที่ทำรายการ</label>
-                            <input type="date" id="swal-lg-date" class="form-control input-modern" style="border-radius:8px;" value="${todayStr}">
+                            
+                            <div class="swal-thai-date-wrapper">
+                                <span class="display-text" id="swal-lg-date-display">${this.formatDateTh(todayStr)}</span>
+                                <i class="fa-regular fa-calendar"></i>
+                                <input type="date" id="swal-lg-date" value="${todayStr}" onchange="window.DepartmentLedgerPage.updateSwalDateDisplay('swal-lg-date')">
+                            </div>
+
                         </div>
                         <div class="col-6">
                             <label class="form-label fw-bold small" style="color: var(--text-muted);">หมวดหมู่</label>
@@ -784,7 +851,7 @@ class DepartmentLedgerPageComponent {
                     <textarea id="swal-lg-remark" class="form-control input-modern" rows="2" style="border-radius:8px;" placeholder="เช่น โอนเข้าบัญชีคลินิก..."></textarea>
                 </div>
             `,
-            showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: isIncome ? '#10b981' : '#ef4444', width: 500,
+            showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: isIncome ? '#10b981' : '#ef4444', width: 500, background: 'var(--bg-surface)', customClass: { popup: 'premium-alert' },
             preConfirm: () => {
                 const date = document.getElementById('swal-lg-date').value; 
                 const category = document.getElementById('swal-lg-category').value; 
@@ -841,7 +908,13 @@ class DepartmentLedgerPageComponent {
                     <div class="row g-3 mb-3">
                         <div class="col-6">
                             <label class="form-label fw-bold small" style="color: var(--text-muted);">วันที่ทำรายการ</label>
-                            <input type="date" id="swal-lg-date" class="form-control input-modern" style="border-radius:8px;" value="${item.date}">
+                            
+                            <div class="swal-thai-date-wrapper">
+                                <span class="display-text" id="swal-lg-date-display">${this.formatDateTh(item.date)}</span>
+                                <i class="fa-regular fa-calendar"></i>
+                                <input type="date" id="swal-lg-date" value="${item.date}" onchange="window.DepartmentLedgerPage.updateSwalDateDisplay('swal-lg-date')">
+                            </div>
+
                         </div>
                         <div class="col-6">
                             <label class="form-label fw-bold small" style="color: var(--text-muted);">หมวดหมู่</label>
@@ -860,7 +933,7 @@ class DepartmentLedgerPageComponent {
                     <textarea id="swal-lg-remark" class="form-control input-modern" rows="2" style="border-radius:8px;" placeholder="เช่น โอนเข้าบัญชีคลินิก...">${this._escapeHTML(item.remark || '')}</textarea>
                 </div>
             `,
-            showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-save me-1 safe-icon"></i> บันทึกการแก้ไข', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#f59e0b', width: 500,
+            showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-save me-1 safe-icon"></i> บันทึกการแก้ไข', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#f59e0b', width: 500, background: 'var(--bg-surface)', customClass: { popup: 'premium-alert' },
             preConfirm: () => {
                 const date = document.getElementById('swal-lg-date').value; 
                 const category = document.getElementById('swal-lg-category').value; 
@@ -886,11 +959,11 @@ class DepartmentLedgerPageComponent {
             }
         }).then((result) => { 
             if (result.isConfirmed) {
-                Swal.fire({ title: 'กำลังปรับปรุงบัญชี...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                Swal.fire({ title: 'กำลังปรับปรุงบัญชี...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: 'var(--bg-surface)' });
                 db.ref('department_ledger_v2/' + item.id).update(result.value).then(() => {
-                    Swal.fire({ title: 'สำเร็จ', text: 'แก้ไขรายการบัญชีและคำนวณยอดคงเหลือใหม่เรียบร้อยแล้ว', icon: 'success', timer: 1500, showConfirmButton: false });
+                    Swal.fire({ title: 'สำเร็จ', text: 'แก้ไขรายการบัญชีและคำนวณยอดคงเหลือใหม่เรียบร้อยแล้ว', icon: 'success', timer: 1500, showConfirmButton: false, background: 'var(--bg-surface)' });
                 }).catch(err => {
-                    Swal.fire('ข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้: ' + err.message, 'error');
+                    Swal.fire({ title: 'ข้อผิดพลาด', text: 'ไม่สามารถบันทึกข้อมูลได้: ' + err.message, icon: 'error', background: 'var(--bg-surface)'});
                 });
             }
         });
@@ -901,10 +974,13 @@ class DepartmentLedgerPageComponent {
             title: 'ยืนยันการลบรายการ?', 
             html: 'การลบรายการนี้ <b class="text-danger">จะทำให้ยอดคงเหลือถูกคำนวณใหม่ทั้งหมด</b><br>คุณแน่ใจหรือไม่?',
             icon: 'warning', 
+            background: 'var(--bg-surface)',
             showCancelButton: true, 
             confirmButtonColor: '#ef4444', 
+            cancelButtonColor: '#64748b',
             confirmButtonText: '<i class="fa-solid fa-trash safe-icon"></i> ลบรายการ', 
-            cancelButtonText: 'ยกเลิก' 
+            cancelButtonText: 'ยกเลิก',
+            customClass: { popup: 'premium-alert' }
         }).then((result) => { 
             if (result.isConfirmed) {
                 db.ref('department_ledger_v2/' + id).remove(); 
@@ -914,7 +990,7 @@ class DepartmentLedgerPageComponent {
 
     exportExcel() {
         if(typeof ExcelJS === 'undefined') {
-            Swal.fire({ title: 'กำลังโหลด Excel Engine...', html: 'โปรดรอสักครู่...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: 'กำลังโหลด Excel Engine...', html: 'โปรดรอสักครู่...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: 'var(--bg-surface)' });
             const script = document.createElement('script');
             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js';
             script.onload = () => { Swal.close(); this._generateExcelJS(); };
@@ -926,7 +1002,7 @@ class DepartmentLedgerPageComponent {
     }
 
     async _generateExcelJS() {
-        Swal.fire({ title: 'กำลังประมวลผล Excel...', html: 'ระบบกำลังจัดทำตาราง .xlsx แท้ 100%', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        Swal.fire({ title: 'กำลังประมวลผล Excel...', html: 'ระบบกำลังจัดทำตาราง .xlsx แท้ 100%', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: 'var(--bg-surface)' });
         
         try {
             let filtered = this.state.allTransactions.filter(t => t.date >= this.state.startDate && t.date <= this.state.endDate); 
@@ -967,6 +1043,8 @@ class DepartmentLedgerPageComponent {
             });
 
             let currentBalance = broughtForward;
+            let totalIn = 0, totalOut = 0; 
+
             const bfRow = sheet.addRow(["", "", "", "ยอดยกมา (Brought Forward):", "", "", "", broughtForward]);
             sheet.mergeCells('A5:D5');
             sheet.getCell('A5').alignment = { horizontal: 'right', vertical: 'middle', wrapText: true };
@@ -984,7 +1062,9 @@ class DepartmentLedgerPageComponent {
                 let amt = Number(t.amount); 
                 let inAmt = t.type === 'IN' ? amt : null;
                 let outAmt = t.type === 'OUT' ? amt : null;
-                if(t.type === 'IN') currentBalance += amt; else currentBalance -= amt; 
+                
+                if(t.type === 'IN') { currentBalance += amt; totalIn += amt; } 
+                else { currentBalance -= amt; totalOut += amt; }
 
                 const row = sheet.addRow([
                     idx + 1,
@@ -1013,6 +1093,22 @@ class DepartmentLedgerPageComponent {
                     if(colNum === 7 && outAmt) cell.font = { name: 'Tahoma', bold: true, color: { argb: 'FFEF4444' } };
                     if(colNum === 8) cell.font.bold = true;
                 });
+            });
+
+            const ptRow = sheet.addRow(["", "", "", "รวมรายการในรอบนี้ (Period Total):", "", totalIn, totalOut, ""]);
+            const ptRowNum = sheet.rowCount;
+            sheet.mergeCells(`A${ptRowNum}:D${ptRowNum}`);
+            sheet.getCell(`A${ptRowNum}`).alignment = { horizontal: 'right', vertical: 'middle', wrapText: true };
+            ptRow.eachCell((cell, colNum) => {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } }; 
+                cell.font = { name: 'Tahoma', bold: true, size: 10, color: { argb: 'FF334155' } };
+                cell.border = { top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'} };
+                let align = { vertical: 'middle', wrapText: true };
+                if ([6,7].includes(colNum)) align.horizontal = 'right';
+                cell.alignment = align;
+                if([6,7].includes(colNum)) cell.numFmt = '#,##0.00';
+                if(colNum === 6) cell.font.color = { argb: 'FF10B981' };
+                if(colNum === 7) cell.font.color = { argb: 'FFEF4444' };
             });
 
             const cfRow = sheet.addRow(["", "", "", "ยอดยกไป (Carried Forward):", "", "", "", currentBalance]);
@@ -1051,7 +1147,7 @@ class DepartmentLedgerPageComponent {
 
     exportSummaryExcel() {
         if(typeof ExcelJS === 'undefined') {
-            Swal.fire({ title: 'กำลังโหลด Excel Engine...', html: 'โปรดรอสักครู่...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: 'กำลังโหลด Excel Engine...', html: 'โปรดรอสักครู่...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: 'var(--bg-surface)' });
             const script = document.createElement('script');
             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js';
             script.onload = () => { Swal.close(); this._generateSummaryExcelJS(); };
@@ -1063,25 +1159,71 @@ class DepartmentLedgerPageComponent {
 
     async _generateSummaryExcelJS() {
         if(!this.state._pendingChartData) { Swal.fire('ข้อมูลไม่พร้อม', 'ไม่พบข้อมูลสรุปเพื่อจัดพิมพ์', 'warning'); return; }
-        Swal.fire({ title: 'กำลังสร้างไฟล์ Excel...', html: 'ระบบกำลังแทรกกราฟและตารางแบบ Dashboard<br>โปรดรอสักครู่...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        Swal.fire({ title: 'กำลังสร้างไฟล์ Excel...', html: 'ระบบกำลังแทรกกราฟและตารางแบบ Dashboard<br>โปรดรอสักครู่...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: 'var(--bg-surface)' });
         
         try {
+            // 🚨 THE FIX: สร้างกราฟออฟไลน์สำหรับ Export โดยเฉพาะ บังคับตัวหนังสือสีดำเสมอ (ป้องกันบั๊ก Dark Mode)
             let chartImgUrl = null;
             let imgRatio = 1; 
-            try {
-                const existingCanvas = document.getElementById('dlSummaryChart');
-                if (existingCanvas) {
-                    imgRatio = existingCanvas.height / existingCanvas.width; 
+
+            if (window.Chart && this.state._pendingChartData) {
+                try {
+                    const tempContainer = document.createElement('div');
+                    tempContainer.style.position = 'absolute';
+                    tempContainer.style.top = '-9999px';
+                    tempContainer.style.width = '400px';
+                    tempContainer.style.height = '400px';
+                    document.body.appendChild(tempContainer);
+
                     const tempCanvas = document.createElement('canvas');
-                    tempCanvas.width = existingCanvas.width;
-                    tempCanvas.height = existingCanvas.height;
+                    tempCanvas.width = 400; 
+                    tempCanvas.height = 400;
+                    tempContainer.appendChild(tempCanvas);
+
+                    const { labels, data, colors, totalOut } = this.state._pendingChartData;
+                    const printTextColor = '#0f172a'; // บังคับตัวหนังสือเป็นสีดำเข้ม
+                    
                     const tCtx = tempCanvas.getContext('2d');
-                    tCtx.fillStyle = '#ffffff'; 
+                    tCtx.fillStyle = '#ffffff'; // บังคับพื้นหลังเป็นสีขาว
                     tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-                    tCtx.drawImage(existingCanvas, 0, 0);
+
+                    const tempChart = new window.Chart(tCtx, {
+                        type: 'doughnut',
+                        data: { 
+                            labels: labels, 
+                            datasets: [{ data: data, backgroundColor: colors.slice(0, data.length), borderWidth: 2, borderColor: '#ffffff' }] 
+                        },
+                        options: { 
+                            responsive: false, maintainAspectRatio: true, cutout: '60%', 
+                            plugins: { legend: { position: 'bottom', labels: { font: { family: 'Tahoma', size: 13 }, color: printTextColor }, padding: 15 } }, 
+                            animation: { duration: 0 } 
+                        },
+                        plugins: [{ 
+                            id: 'textCenter', 
+                            beforeDraw: function(chart) { 
+                                var width = chart.width, height = chart.height, ctx = chart.ctx; 
+                                ctx.restore(); 
+                                var fontSize = (height / 200).toFixed(2); 
+                                ctx.font = "bold " + fontSize + "em Tahoma"; 
+                                ctx.textBaseline = "middle";
+                                ctx.textAlign = "center"; 
+                                ctx.fillStyle = printTextColor; 
+                                var text = "฿" + totalOut.toLocaleString(undefined, {minimumFractionDigits: 2}); 
+                                var textX = width / 2; 
+                                var textY = (height / 2) - (chart.legend ? chart.legend.height / 2 : 0); 
+                                ctx.fillText(text, textX, textY); 
+                                ctx.save(); 
+                            } 
+                        }]
+                    });
+                    
                     chartImgUrl = tempCanvas.toDataURL('image/png');
+                    tempChart.destroy(); 
+                    tempContainer.remove();
+                } catch(err) {
+                    console.error("Off-screen chart generation failed:", err);
                 }
-            } catch(e) { console.warn("Canvas capture warning", e); }
+            }
 
             let broughtForward = this.state.initialBalance; 
             this.state.allTransactions.filter(t => t.date < this.state.startDate).forEach(t => { 
@@ -1247,7 +1389,7 @@ class DepartmentLedgerPageComponent {
 
     async _executeDirectPDF(htmlContent, filename, orientation = 'portrait') {
         if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
-            Swal.fire({ title: 'กำลังโหลด PDF Engine...', html: 'โปรดรอสักครู่...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: 'กำลังโหลด PDF Engine...', html: 'โปรดรอสักครู่...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: 'var(--bg-surface)' });
             await Promise.all([
                 new Promise((res) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'; s.onload = res; document.head.appendChild(s); }),
                 new Promise((res) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'; s.onload = res; document.head.appendChild(s); })
@@ -1255,11 +1397,11 @@ class DepartmentLedgerPageComponent {
         }
 
         const containerWidth = orientation === 'portrait' ? 794 : 1122; 
-        const currentScrollY = window.scrollY; 
 
+        // 🚨 THE FIX: กักขัง Container ให้อยู่จุดบนสุดเสมอและซ่อนไว้หลังฉาก (แก้หัว Cut-off)
         const container = document.createElement('div');
         container.style.position = 'absolute';
-        container.style.top = currentScrollY + 'px'; 
+        container.style.top = '0px'; 
         container.style.left = '0px';
         container.style.width = containerWidth + 'px';
         container.style.backgroundColor = '#ffffff';
@@ -1271,6 +1413,7 @@ class DepartmentLedgerPageComponent {
             title: 'กำลังสร้างไฟล์ PDF...', 
             html: 'ระบบกำลังประมวลผลข้อมูล...', 
             allowOutsideClick: false, 
+            background: 'var(--bg-surface)',
             didOpen: () => {
                 Swal.showLoading();
             }
@@ -1280,13 +1423,11 @@ class DepartmentLedgerPageComponent {
             await document.fonts.ready;
             await new Promise(resolve => setTimeout(resolve, 1500)); 
 
+            // 🚨 THE FIX: ลบ x, y, scrollY ออก เพื่อให้ html2canvas จับภาพจาก Element โดยตรงแบบบริสุทธิ์ 100%
             const canvas = await html2canvas(container, {
                 scale: 2,
                 useCORS: true,
                 backgroundColor: '#ffffff',
-                x: 0,
-                y: currentScrollY, 
-                scrollY: currentScrollY,
                 windowWidth: containerWidth + 50
             });
 
@@ -1338,6 +1479,7 @@ class DepartmentLedgerPageComponent {
             this.state.allTransactions.filter(t => t.date < this.state.startDate).forEach(t => { broughtForward += t.type === 'IN' ? Number(t.amount) : -Number(t.amount); });
             
             let currentBalance = broughtForward;
+            let totalIn = 0, totalOut = 0; 
             
             const inlineStyles = `
                 background-color: #ffffff !important;
@@ -1361,7 +1503,8 @@ class DepartmentLedgerPageComponent {
             
             filtered.forEach((t, idx) => { 
                 let amt = Number(t.amount); 
-                if(t.type === 'IN') currentBalance += amt; else currentBalance -= amt; 
+                if(t.type === 'IN') { currentBalance += amt; totalIn += amt; } 
+                else { currentBalance -= amt; totalOut += amt; }
                 
                 tbodyHtml += `
                 <tr>
@@ -1376,6 +1519,16 @@ class DepartmentLedgerPageComponent {
                 </tr>`; 
             });
             
+            tbodyHtml += `
+                <tr>
+                    <td colspan="4" style="background-color: #f1f5f9 !important; text-align: right !important; font-weight: bold !important; font-size: 11px !important; border: 1px solid #cbd5e1 !important; padding: 5px 4px !important; color: #334155 !important; font-family: 'Tahoma', sans-serif !important;">รวมรายการในรอบนี้ (Period Total):</td>
+                    <td style="background-color: #f1f5f9 !important; border: 1px solid #cbd5e1 !important; padding: 5px 4px !important;"></td>
+                    <td style="background-color: #f1f5f9 !important; text-align: right !important; font-weight: bold !important; font-size: 11px !important; color: #15803d !important; border: 1px solid #cbd5e1 !important; padding: 5px 4px !important; font-family: 'Tahoma', sans-serif !important;">+ ${totalIn.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    <td style="background-color: #f1f5f9 !important; text-align: right !important; font-weight: bold !important; font-size: 11px !important; color: #b91c1c !important; border: 1px solid #cbd5e1 !important; padding: 5px 4px !important; font-family: 'Tahoma', sans-serif !important;">- ${totalOut.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    <td style="background-color: #f1f5f9 !important; border: 1px solid #cbd5e1 !important; padding: 5px 4px !important;"></td>
+                </tr>
+            `;
+
             tbodyHtml += `
                 <tr>
                     <td colspan="4" style="background-color: #e2e8f0 !important; text-align: right !important; font-weight: bold !important; font-size: 13px !important; border: 1px solid #cbd5e1 !important; padding: 5px 4px !important; color: #000000 !important; font-family: 'Tahoma', sans-serif !important;">ยอดยกไป (Carried Forward):</td>
@@ -1420,46 +1573,58 @@ class DepartmentLedgerPageComponent {
             if(!this.state._pendingChartData) { resolve(null); return; }
             
             let chartImgUrl = '';
-            try {
-                const existingCanvas = document.getElementById('dlSummaryChart');
-                if (existingCanvas && existingCanvas.toDataURL) {
-                    chartImgUrl = existingCanvas.toDataURL('image/png');
-                }
-            } catch(e) { 
-                console.warn("ไม่สามารถดึงภาพ Canvas ได้", e); 
-            }
-
-            if (!chartImgUrl && window.Chart) {
+            
+            // 🚨 THE FIX: สร้างกราฟออฟไลน์สำหรับส่งออก PDF โดยเฉพาะ (ป้องกันบั๊ก Dark Mode)
+            if (window.Chart) {
                 try {
                     const tempContainer = document.createElement('div');
                     tempContainer.style.position = 'absolute';
                     tempContainer.style.top = '-9999px';
-                    tempContainer.style.width = '300px';
-                    tempContainer.style.height = '300px';
+                    tempContainer.style.width = '400px';
+                    tempContainer.style.height = '400px';
                     document.body.appendChild(tempContainer);
 
                     const tempCanvas = document.createElement('canvas');
-                    tempCanvas.width = 300; 
-                    tempCanvas.height = 300;
+                    tempCanvas.width = 400; 
+                    tempCanvas.height = 400;
                     tempContainer.appendChild(tempCanvas);
 
-                    const tempChart = new window.Chart(tempCanvas.getContext('2d'), {
+                    const { labels, data, colors, totalOut } = this.state._pendingChartData;
+                    const printTextColor = '#0f172a'; // บังคับสีดำสำหรับการพิมพ์ลงกระดาษขาว
+
+                    const tCtx = tempCanvas.getContext('2d');
+                    tCtx.fillStyle = '#ffffff'; // ถมพื้นขาวกันภาพทะลุ
+                    tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+                    const tempChart = new window.Chart(tCtx, {
                         type: 'doughnut',
                         data: { 
-                            labels: this.state._pendingChartData.labels, 
-                            datasets: [{ data: this.state._pendingChartData.data, backgroundColor: this.state._pendingChartData.colors.slice(0, this.state._pendingChartData.data.length), borderWidth: 2, borderColor: '#fff' }] 
+                            labels: labels, 
+                            datasets: [{ data: data, backgroundColor: colors.slice(0, data.length), borderWidth: 2, borderColor: '#ffffff' }] 
                         },
-                        options: { responsive: false, maintainAspectRatio: true, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { font: { family: 'Tahoma', size: 12 }, color: '#0f172a' }, padding: 10 } }, animation: { duration: 0 } }
+                        options: { 
+                            responsive: false, maintainAspectRatio: true, cutout: '60%', 
+                            plugins: { legend: { position: 'bottom', labels: { font: { family: 'Tahoma', size: 13 }, color: printTextColor }, padding: 15 } }, 
+                            animation: { duration: 0 } 
+                        },
+                        plugins: [{ 
+                            id: 'textCenter', 
+                            beforeDraw: function(chart) { 
+                                var width = chart.width, height = chart.height, ctx = chart.ctx; 
+                                ctx.restore(); 
+                                var fontSize = (height / 200).toFixed(2); 
+                                ctx.font = "bold " + fontSize + "em Tahoma"; 
+                                ctx.textAlign = "center";
+                                ctx.textBaseline = "middle"; 
+                                ctx.fillStyle = printTextColor; 
+                                var text = "฿" + totalOut.toLocaleString(undefined, {minimumFractionDigits: 2}); 
+                                var textX = width / 2; 
+                                var textY = (height / 2) - (chart.legend ? chart.legend.height / 2 : 0); 
+                                ctx.fillText(text, textX, textY);
+                                ctx.save(); 
+                            } 
+                        }]
                     });
-                    
-                    const ctx = tempCanvas.getContext('2d');
-                    ctx.font = "bold 16px Tahoma"; 
-                    ctx.textBaseline = "middle"; 
-                    ctx.fillStyle = "#334155"; 
-                    var text = "฿" + this.state._pendingChartData.totalOut.toLocaleString(undefined, {minimumFractionDigits: 2}); 
-                    var textX = Math.round((300 - ctx.measureText(text).width) / 2);
-                    var textY = 150 - 20; 
-                    ctx.fillText(text, textX, textY);
                     
                     chartImgUrl = tempCanvas.toDataURL('image/png');
                     tempChart.destroy(); 
@@ -1470,42 +1635,49 @@ class DepartmentLedgerPageComponent {
             }
 
             const chartImgHtml = chartImgUrl 
-                ? `<img src="${chartImgUrl}" style="width: 100% !important; max-width: 220px !important; height: auto !important; display: block !important; margin: 0 auto !important; object-fit: contain !important;">`
-                : `<div style="text-align:center; padding: 20px; color: #94a3b8; border: 1px dashed #cbd5e1; font-family: Tahoma, sans-serif; font-size: 11px;">(กำลังประมวลผลกราฟ)</div>`;
+                ? `<img src="${chartImgUrl}" style="width: 100% !important; max-width: 250px !important; height: auto !important; display: block !important; margin: 0 auto !important; object-fit: contain !important;">`
+                : `<div style="text-align:center; padding: 20px; color: #94a3b8; border: 1px dashed #cbd5e1; font-family: Tahoma, sans-serif; font-size: 11px;">(ไม่สามารถประมวลผลกราฟได้)</div>`;
+
+            let broughtForward = this.state.initialBalance; 
+            this.state.allTransactions.filter(t => t.date < this.state.startDate).forEach(t => { 
+                broughtForward += t.type === 'IN' ? Number(t.amount) : -Number(t.amount); 
+            });
+
+            let filtered = this.state.allTransactions.filter(t => t.date >= this.state.startDate && t.date <= this.state.endDate);
+            let totalIn = 0; let totalOut = 0;
+            let summaryIn = {}; let summaryOut = {}; 
+            
+            filtered.forEach(t => {
+                let amt = Number(t.amount);
+                if(t.type === 'IN') { totalIn += amt; summaryIn[t.category] = (summaryIn[t.category] || 0) + amt; } 
+                else { totalOut += amt; summaryOut[t.category] = (summaryOut[t.category] || 0) + amt; }
+            });
+            let netBalance = broughtForward + totalIn - totalOut;
 
             let cardsHtml = `
                 <table style="width: 100% !important; border-collapse: separate !important; border-spacing: 5px 0 !important; margin-bottom: 15px !important; border: none !important; background-color: transparent !important; table-layout: fixed !important;">
                     <tr>
                         <td style="border: 1px solid #cbd5e1 !important; border-radius: 8px !important; text-align: center !important; padding: 8px !important; background-color: #f8fafc !important; width: 25% !important; word-wrap: break-word; white-space: normal;">
                             <div style="font-size: 10px !important; font-weight: bold !important; margin-bottom: 2px !important; color: #64748b !important; font-family: 'Tahoma', sans-serif !important;">ยอดยกมา</div>
-                            <div style="font-size: 13px !important; font-weight: bold !important; color: #000000 !important; font-family: 'Tahoma', sans-serif !important;">฿${document.getElementById('dl-bf-balance') ? document.getElementById('dl-bf-balance').innerText : '0.00'}</div>
+                            <div style="font-size: 13px !important; font-weight: bold !important; color: #000000 !important; font-family: 'Tahoma', sans-serif !important;">฿${broughtForward.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
                         </td>
                         <td style="border: 1px solid #cbd5e1 !important; border-radius: 8px !important; text-align: center !important; padding: 8px !important; background-color: #f0fdf4 !important; width: 25% !important; word-wrap: break-word; white-space: normal;">
                             <div style="font-size: 10px !important; font-weight: bold !important; margin-bottom: 2px !important; color: #15803d !important; font-family: 'Tahoma', sans-serif !important;">รับเข้า</div>
-                            <div style="font-size: 13px !important; font-weight: bold !important; color: #166534 !important; font-family: 'Tahoma', sans-serif !important;">+ ฿${document.getElementById('dl-total-in') ? document.getElementById('dl-total-in').innerText : '0.00'}</div>
+                            <div style="font-size: 13px !important; font-weight: bold !important; color: #166534 !important; font-family: 'Tahoma', sans-serif !important;">+ ฿${totalIn.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
                         </td>
                         <td style="border: 1px solid #cbd5e1 !important; border-radius: 8px !important; text-align: center !important; padding: 8px !important; background-color: #fef2f2 !important; width: 25% !important; word-wrap: break-word; white-space: normal;">
                             <div style="font-size: 10px !important; font-weight: bold !important; margin-bottom: 2px !important; color: #b91c1c !important; font-family: 'Tahoma', sans-serif !important;">จ่ายออก</div>
-                            <div style="font-size: 13px !important; font-weight: bold !important; color: #991b1b !important; font-family: 'Tahoma', sans-serif !important;">- ฿${document.getElementById('dl-total-out') ? document.getElementById('dl-total-out').innerText : '0.00'}</div>
+                            <div style="font-size: 13px !important; font-weight: bold !important; color: #991b1b !important; font-family: 'Tahoma', sans-serif !important;">- ฿${totalOut.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
                         </td>
                         <td style="border: 1px solid #cbd5e1 !important; border-radius: 8px !important; text-align: center !important; padding: 8px !important; background-color: #eff6ff !important; width: 25% !important; word-wrap: break-word; white-space: normal;">
                             <div style="font-size: 10px !important; font-weight: bold !important; margin-bottom: 2px !important; color: #1d4ed8 !important; font-family: 'Tahoma', sans-serif !important;">คงเหลือสุทธิ</div>
-                            <div style="font-size: 13px !important; font-weight: bold !important; color: #1e40af !important; font-family: 'Tahoma', sans-serif !important;">฿${document.getElementById('dl-net-balance') ? document.getElementById('dl-net-balance').innerText : '0.00'}</div>
+                            <div style="font-size: 13px !important; font-weight: bold !important; color: #1e40af !important; font-family: 'Tahoma', sans-serif !important;">฿${netBalance.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
                         </td>
                     </tr>
                 </table>
             `;
 
             let tbodyHtml = '';
-            let summaryIn = {}; 
-            let summaryOut = {}; 
-            let filtered = this.state.allTransactions.filter(t => t.date >= this.state.startDate && t.date <= this.state.endDate);
-            filtered.forEach(t => {
-                let amt = Number(t.amount);
-                if(t.type === 'IN') { summaryIn[t.category] = (summaryIn[t.category] || 0) + amt; } 
-                else { summaryOut[t.category] = (summaryOut[t.category] || 0) + amt; }
-            });
-
             Object.keys(summaryIn).sort((a,b) => summaryIn[b] - summaryIn[a]).forEach(cat => { 
                 tbodyHtml += `<tr style="background-color: #ffffff !important;">
                     <td style="border: 1px solid #cbd5e1 !important; padding: 6px 4px !important; color: #000000 !important; font-weight: bold !important; font-size: 11px !important; font-family: 'Tahoma', sans-serif !important; word-wrap: break-word; white-space: normal;">${this._escapeHTML(cat)}</td>
@@ -1513,6 +1685,7 @@ class DepartmentLedgerPageComponent {
                     <td style="border: 1px solid #cbd5e1 !important; padding: 6px 4px !important; text-align: right !important; color: #10b981 !important; font-weight: bold !important; font-size: 11px !important; font-family: 'Tahoma', sans-serif !important;">+ ${summaryIn[cat].toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                 </tr>`;
             });
+
             Object.keys(summaryOut).sort((a,b) => summaryOut[b] - summaryOut[a]).forEach(cat => { 
                 tbodyHtml += `<tr style="background-color: #ffffff !important;">
                     <td style="border: 1px solid #cbd5e1 !important; padding: 6px 4px !important; color: #000000 !important; font-weight: bold !important; font-size: 11px !important; font-family: 'Tahoma', sans-serif !important; word-wrap: break-word; white-space: normal;">${this._escapeHTML(cat)}</td>
@@ -1526,7 +1699,7 @@ class DepartmentLedgerPageComponent {
                 const htmlContent = `
                     <div style="background-color: #ffffff !important; padding: 10mm !important; width: 100% !important; box-sizing: border-box !important;">
                         <h2 style="color: #1e3a8a !important; font-size: 20px !important; text-align: center !important; margin: 0 0 5px 0 !important; font-weight: bold !important; font-family: 'Tahoma', sans-serif !important;">${this._escapeHTML(settings.clinic_name)}</h2>
-                        <h3 style="color: #334155 !important; font-size: 14px !important; text-align: center !important; margin: 0 0 5px 0 !important; font-weight: normal !important; font-family: 'Tahoma', sans-serif !important;">สมุดบัญชีรายรับ-รายจ่ายภายในหน่วยงาน (Department Ledger)</h3>
+                        <h3 style="color: #334155 !important; font-size: 14px !important; text-align: center !important; margin: 0 0 5px 0 !important; font-weight: normal !important; font-family: 'Tahoma', sans-serif !important;">รายงานสรุปดุลกระแสเงินสดและโครงสร้างรายได้-ต้นทุน (Financial Breakdown)</h3>
                         <p style="text-align: center !important; color: #64748b !important; font-size: 12px !important; margin: 0 0 20px 0 !important; font-family: 'Tahoma', sans-serif !important;">ความเคลื่อนไหวตั้งแต่: ${this.formatDateTh(this.state.startDate)} ถึง ${this.formatDateTh(this.state.endDate)}</p>
                         
                         <div style="font-size: 13px !important; font-weight: bold !important; margin-bottom: 8px !important; border-left: 4px solid #0284c7 !important; padding-left: 8px !important; color: #000000 !important; font-family: 'Tahoma', sans-serif !important; background-color: transparent !important;">1. สรุปยอดดุลทางการเงิน</div>
@@ -1536,7 +1709,7 @@ class DepartmentLedgerPageComponent {
                             <tr>
                                 <td style="width: 45% !important; vertical-align: top !important; border: none !important; padding: 0 10px 0 0 !important; background-color: transparent !important;">
                                     <div style="font-size: 13px !important; font-weight: bold !important; margin-bottom: 8px !important; border-left: 4px solid #0284c7 !important; padding-left: 8px !important; color: #000000 !important; font-family: 'Tahoma', sans-serif !important; background-color: transparent !important;">2. แผนภูมิต้นทุนรายจ่าย</div>
-                                    ${chartImgHtml}
+                                    <div style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px;">${chartImgHtml}</div>
                                 </td>
                                 <td style="width: 55% !important; vertical-align: top !important; border: none !important; padding: 0 0 0 10px !important; background-color: transparent !important;">
                                     <div style="font-size: 13px !important; font-weight: bold !important; margin-bottom: 8px !important; border-left: 4px solid #0284c7 !important; padding-left: 8px !important; color: #000000 !important; font-family: 'Tahoma', sans-serif !important; background-color: transparent !important;">3. ยอดรวมสุทธิแยกตามหมวดหมู่โครงสร้าง</div>
@@ -1562,7 +1735,6 @@ class DepartmentLedgerPageComponent {
         });
     }
 
-    // 🚨 THE PC FIX: Asynchronous Iframe Processing - รอให้กระดาษสร้างเสร็จก่อนสั่งพิมพ์
     printLedger() {
         this.buildLedgerHTML().then(html => {
             this._executePrint(html);
@@ -1584,6 +1756,7 @@ class DepartmentLedgerPageComponent {
             title: 'กำลังเตรียมหน้าต่างพิมพ์...', 
             html: 'กรุณารอสักครู่ เบราว์เซอร์กำลังโหลด...', 
             allowOutsideClick: false, 
+            background: 'var(--bg-surface)',
             didOpen: () => { Swal.showLoading(); } 
         });
         
@@ -1623,7 +1796,6 @@ class DepartmentLedgerPageComponent {
         `); 
         doc.close();
 
-        // 🚨 สั่ง iframe ให้รอจนกว่าทรัพยากร (เช่น ภาพกราฟ) จะโหลดเสร็จ 100%
         iframe.onload = () => {
             Swal.close();
             try {
@@ -1634,12 +1806,11 @@ class DepartmentLedgerPageComponent {
                 Swal.fire('ข้อผิดพลาด', 'ระบบพิมพ์ถูกบล็อก กรุณากดยอมรับ Popup', 'error');
             }
             
-            // รอจนกว่าจะพิมพ์เสร็จ หรือปิดหน้าต่าง ค่อยลบ iframe ทิ้ง
             setTimeout(() => {
                 if(document.getElementById('hidden-print-frame')) {
                     document.getElementById('hidden-print-frame').remove();
                 }
-            }, 60000); // เก็บไว้ 1 นาทีเผื่อพิมพ์ช้า
+            }, 60000);
         };
     }
 
@@ -1651,3 +1822,4 @@ class DepartmentLedgerPageComponent {
 
 const DepartmentLedgerPage = new DepartmentLedgerPageComponent();
 window.DepartmentLedgerPage = DepartmentLedgerPage;
+// EOF

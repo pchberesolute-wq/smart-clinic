@@ -1,5 +1,5 @@
 // js/pages/security_shield.js
-// 🛡️ Enterprise Security Service: 8-Axis Resizable, Zero-Lag & Volatile Session OS Engine
+// 🛡️ Enterprise Security Service: Zero-Leak OS Window Manager, Hardware-Accelerated Drag & Robust Clipboard (v9.0 FULL)
 
 class SecurityShieldService {
     constructor() {
@@ -7,7 +7,13 @@ class SecurityShieldService {
         this.lastTargetInput = null; 
         this.targetPageUrl = null; 
         this.osZIndexCounter = 999000; 
-        this.MAX_WINDOWS = 8; // 🚨 ป้องกัน RAM ทะลัก
+        this.MAX_WINDOWS = 8; 
+        
+        // 🚨 เก็บ Controller สำหรับจัดการ Memory Leak ของหน้าต่าง
+        this.windowControllers = new Map();
+        
+        // 🚨 Debounce Timer สำหรับการ Save State
+        this.saveStateTimer = null;
 
         this.boundContextMenu = this.#handleContextMenu.bind(this);
         this.boundClickOutside = this.#handleClickOutside.bind(this);
@@ -25,12 +31,11 @@ class SecurityShieldService {
         this.#secureLocalStorage();
         this.#hijackConsole();
         
-        // 🚨 THE FIX 1: ตามล้างข้อมูลผีดิบจากเวอร์ชันเก่าทิ้งให้เกลี้ยง
         localStorage.removeItem('dialysis_os_windows_state');
 
         if (window.self === window.top) {
             this.#restoreWindowsState();
-            console.log("%c🛡️ [Security Shield] Volatile Session OS Activated.", "color: #10b981; font-weight: bold; font-size: 14px;");
+            console.log("%c🛡️ [Security Shield] Volatile Session OS Activated. Zero-Leak Engine Online.", "color: #10b981; font-weight: bold; font-size: 14px;");
         } else {
             console.log("%c🛡️ [Virtual Tab] Instance Activated (Shell Hidden).", "color: #3b82f6; font-weight: bold; font-size: 12px;");
         }
@@ -46,26 +51,14 @@ class SecurityShieldService {
             const style = document.createElement('style');
             style.id = 'virtual-tab-engine-style';
             style.innerHTML = `
-                /* 🚨 NUCLEAR HIDE: ระเบิดแถบเมนูด้านซ้ายและด้านบนทิ้งทั้งหมด */
                 #sidebar, .sidebar, aside { display: none !important; width: 0 !important; opacity: 0 !important; pointer-events: none !important; }
                 .topbar, #topbar, .navbar, header, nav { display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; opacity: 0 !important; pointer-events: none !important; }
-                
-                /* 🚨 EXPAND CONTENT: ขยายเนื้อหาหลักให้เต็มพื้นที่หน้าต่างซ้อน 100% */
                 body { background: var(--bg-body) !important; overflow-x: hidden !important; }
                 .main-content, #main-content, .content-wrapper, .page-wrapper, #app-content {
-                    margin-left: 0 !important;
-                    margin-top: 0 !important;
-                    padding: 15px !important;
-                    width: 100vw !important;
-                    max-width: 100% !important;
-                    height: 100vh !important;
-                    min-height: 100vh !important;
-                    position: absolute !important;
-                    top: 0 !important;
-                    left: 0 !important;
-                    background: var(--bg-body) !important;
+                    margin-left: 0 !important; margin-top: 0 !important; padding: 15px !important;
+                    width: 100vw !important; max-width: 100% !important; height: 100vh !important; min-height: 100vh !important;
+                    position: absolute !important; top: 0 !important; left: 0 !important; background: var(--bg-body) !important;
                 }
-
                 .mobile-toggle, .sidebar-toggle, .menu-toggle { display: none !important; }
             `;
             document.head.appendChild(style);
@@ -87,7 +80,10 @@ class SecurityShieldService {
     }
 
     #secureLocalStorage() {
-        try { Object.defineProperty(window, 'localStorage', { configurable: false, enumerable: false, value: window.localStorage }); } catch (e) {}
+        try { 
+            // 🚨 Defensive approach: Warn instead of locking, breaking 3rd party libs is risky
+            Object.freeze(window.localStorage.__proto__); 
+        } catch (e) {}
     }
 
     #hijackConsole() {
@@ -123,14 +119,10 @@ class SecurityShieldService {
         style.id = 'dialysis-global-toast-style';
         style.innerHTML = `
             body .dialysis-custom-toast {
-                position: fixed; top: 30px; right: 30px;
-                background: #ffffff !important; box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.15) !important;
-                border-radius: 50px !important; padding: 12px 28px !important;
-                font-family: 'Prompt', sans-serif !important; color: #0f172a !important;
-                font-weight: 700 !important; font-size: 15px !important; z-index: 99999999 !important;
-                display: flex; align-items: center; gap: 12px;
-                transform: translate3d(120%, 0, 0); opacity: 0;
-                transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15), opacity 0.3s ease; pointer-events: none;
+                position: fixed; top: 30px; right: 30px; background: #ffffff !important; box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.15) !important;
+                border-radius: 50px !important; padding: 12px 28px !important; font-family: 'Prompt', sans-serif !important; color: #0f172a !important;
+                font-weight: 700 !important; font-size: 15px !important; z-index: 99999999 !important; display: flex; align-items: center; gap: 12px;
+                transform: translate3d(120%, 0, 0); opacity: 0; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15), opacity 0.3s ease; pointer-events: none;
             }
             body .dialysis-custom-toast.show { transform: translate3d(0, 0, 0); opacity: 1; }
             body .dialysis-custom-toast.toast-success { border: 2px solid #10b981 !important; }
@@ -299,8 +291,13 @@ class SecurityShieldService {
     }
 
     // =========================================================================
-    // 🚀 VOLATILE SESSION OS ENGINE (🚨 THE FIX: เปลี่ยนเป็น SessionStorage)
+    // 🚀 VOLATILE SESSION OS ENGINE (Debounced Save)
     // =========================================================================
+    #saveWindowsStateDebounced() {
+        if (this.saveStateTimer) clearTimeout(this.saveStateTimer);
+        this.saveStateTimer = setTimeout(() => this.#saveWindowsState(), 500); // 🚨 THE FIX: ลดคอขวด CPU
+    }
+
     #saveWindowsState() {
         if (window.self !== window.top) return; 
 
@@ -349,7 +346,7 @@ class SecurityShieldService {
     }
 
     // =========================================================================
-    // 🚀 NANO WINDOW MANAGER (Drag & Omni-Resize)
+    // 🚀 NANO WINDOW MANAGER (Zero-Leak Memory Engine)
     // =========================================================================
     #spawnMultiWindow(url, titleText, savedState = null) {
         const existingWinsList = document.querySelectorAll('.os-window');
@@ -422,11 +419,16 @@ class SecurityShieldService {
         `;
         document.body.appendChild(win);
 
+        // 🚨 THE FIX 2: AbortController ควบคุม Memory Leaks จาก Event Listeners
+        const abortController = new AbortController();
+        const signal = abortController.signal;
+        this.windowControllers.set(winId, abortController);
+
         win.addEventListener('mousedown', () => {
             this.osZIndexCounter++;
             win.style.zIndex = this.osZIndexCounter;
-            this.#saveWindowsState(); 
-        });
+            this.#saveWindowsStateDebounced(); 
+        }, { signal });
 
         let dragRafId = null; 
 
@@ -455,7 +457,7 @@ class SecurityShieldService {
                 document.removeEventListener('mousemove', onDragMove);
                 document.removeEventListener('mouseup', onDragUp);
                 
-                this.#saveWindowsState(); 
+                this.#saveWindowsStateDebounced(); 
             }
         };
 
@@ -474,7 +476,7 @@ class SecurityShieldService {
                 }
                 
                 this.#reorganizeDock();
-                this.#saveWindowsState(); 
+                this.#saveWindowsStateDebounced(); 
                 return;
             }
 
@@ -489,9 +491,10 @@ class SecurityShieldService {
             win.style.transition = 'none'; 
             win.classList.add('is-dragging'); 
 
+            // ผูก Event ชั่วคราวระดับ Global เพื่อให้ลากได้ลื่นไหลแม้ออกนอกขอบเขต
             document.addEventListener('mousemove', onDragMove);
             document.addEventListener('mouseup', onDragUp);
-        });
+        }, { signal });
 
         // ================= 2. 8-AXIS OMNI-RESIZE LOGIC =================
         const resizeHandles = win.querySelectorAll('.os-resize-handle');
@@ -546,7 +549,7 @@ class SecurityShieldService {
                 document.removeEventListener('mousemove', onResizeMove);
                 document.removeEventListener('mouseup', onResizeUp);
                 
-                this.#saveWindowsState(); 
+                this.#saveWindowsStateDebounced(); 
             }
         };
 
@@ -575,28 +578,39 @@ class SecurityShieldService {
                 
                 document.addEventListener('mousemove', onResizeMove);
                 document.addEventListener('mouseup', onResizeUp);
-            });
+            }, { signal });
         });
 
         // ================= WINDOW CONTROLS =================
         let isMaximized = savedState ? savedState.isMaximized : false;
         let preMaxState = { left: '', top: '', width: '', height: '' };
 
-        // ❌ Close Button
+        // ❌ Close Button (🚨 THE FIX: Iframe Garbage Collection)
         win.querySelector('.os-close').addEventListener('click', (e) => {
             e.stopPropagation();
             win.style.transform = 'scale(0.9)';
             win.style.opacity = '0';
             
+            // ยกเลิก Event Listener ทั้งหมดของหน้าต่างนี้ป้องกัน Memory Leak
+            this.windowControllers.get(winId)?.abort();
+            this.windowControllers.delete(winId);
+            
             const iframe = win.querySelector('iframe');
-            if(iframe) iframe.src = 'about:blank'; 
+            if(iframe) {
+                // เคลียร์เมมโมรีของ Iframe ทิ้งให้หมดจด
+                iframe.src = 'about:blank';
+                try {
+                    iframe.contentWindow.document.write('');
+                    iframe.contentWindow.document.clear();
+                } catch(e) {}
+            }
             
             setTimeout(() => {
                 win.remove();
                 this.#reorganizeDock();
-                this.#saveWindowsState(); 
+                this.#saveWindowsStateDebounced(); 
             }, 200);
-        });
+        }, { signal });
 
         // 🔲 Maximize Button
         win.querySelector('.os-max').addEventListener('click', (e) => {
@@ -629,8 +643,8 @@ class SecurityShieldService {
                 win.querySelector('.os-max').innerHTML = '<i class="fa-regular fa-square"></i>';
                 isMaximized = false;
             }
-            this.#saveWindowsState(); 
-        });
+            this.#saveWindowsStateDebounced(); 
+        }, { signal });
 
         // ➖ Minimize Button
         win.querySelector('.os-min').addEventListener('click', (e) => {
@@ -650,7 +664,7 @@ class SecurityShieldService {
                 win.querySelector('.os-min').innerHTML = '<i class="fa-regular fa-window-restore"></i>'; 
                 
                 const iframe = win.querySelector('iframe');
-                if(iframe) iframe.src = 'about:blank';
+                if(iframe) iframe.src = 'about:blank'; // พัก Iframe คืน RAM
                 
                 this.#reorganizeDock();
             } else {
@@ -662,14 +676,14 @@ class SecurityShieldService {
                 win.querySelector('.os-min').innerHTML = '<i class="fa-solid fa-minus"></i>';
                 
                 const iframe = win.querySelector('iframe');
-                if(iframe) iframe.src = iframe.dataset.realSrc;
+                if(iframe) iframe.src = iframe.dataset.realSrc; // โหลด Iframe กลับมา
                 
                 this.#reorganizeDock();
             }
-            this.#saveWindowsState(); 
-        });
+            this.#saveWindowsStateDebounced(); 
+        }, { signal });
         
-        if(!savedState) this.#saveWindowsState();
+        if(!savedState) this.#saveWindowsStateDebounced();
     }
 
     #reorganizeDock() {
@@ -785,6 +799,7 @@ class SecurityShieldService {
     }
 
     #handleKeyDown(e) {
+        // Block Inspect Elements on Production
         if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j')) || (e.ctrlKey && (e.key === 'U' || e.key === 'u'))) {
             e.preventDefault(); return false;
         }
@@ -825,11 +840,8 @@ class SecurityShieldService {
         this.selectedTextToCopy = ""; this.#closeMenu();
     }
 
-    // 🟢 WAY 1: The "Permission Granted" Approach
     async handlePaste() {
         try {
-            // 🚨 บรรทัดนี้คือการล้วงกระเป๋า ซึ่งจะทำให้ Browser เด้งป๊อปอัปถามในครั้งแรกเสมอ!
-            // ต้องบอกให้ User กดปุ่ม "Allow" แล้วชีวิตจะสบายขึ้นครับ
             const text = await navigator.clipboard.readText();
             const activeEl = this.lastTargetInput || document.activeElement;
             
@@ -849,7 +861,6 @@ class SecurityShieldService {
                 this.showNativeToast("วางข้อความสำเร็จ"); 
             }
         } catch (err) { 
-            // หาก User เผลอกด "Block" หรือลืมกด Allow
             console.warn("Clipboard access denied:", err);
             if (this.lastTargetInput) this.lastTargetInput.focus();
             this.showNativeToast("⚠️ ถูกบล็อกสิทธิ์: กรุณากด 'Allow' หรือใช้ Ctrl+V เพื่อวาง", true); 

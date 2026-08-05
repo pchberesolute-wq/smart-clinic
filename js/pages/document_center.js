@@ -1,5 +1,5 @@
 // js/pages/document_center.js
-// 🚀 Enterprise Document Center: Memory-Leak Free, Safe Base64 Payload Binding & Unbreakable Rendering
+// 🚀 Enterprise Document Center: Ghost Input Date Picker, Safe Base64 & Zero-Jank UI (v14.0 THE ULTIMATE FIX)
 
 class DocumentCenterComponent {
     constructor() {
@@ -7,15 +7,16 @@ class DocumentCenterComponent {
             allDocuments: [],
             currentFilter: 'all',
             searchQuery: '',
-            specificDate: ''
+            specificDate: '',
+            isSelectMode: false,
+            selectedDocIds: new Set() 
         };
         this.firebaseListeners = [];
-        this.documentCache = new Map(); // 🚨 โกดังเก็บ Base64 ป้องกันเบราว์เซอร์ช็อค!
+        this.documentCache = new Map(); 
         
         this.boundHandleGlobalClick = this.handleGlobalClick.bind(this);
     }
 
-    // 🚨 THE FIX 1: เพิ่มฟังก์ชันจัดระเบียบข้อมูล ป้องกัน Firebase แปลง Array เป็น Object
     parseFBArray(data) {
         if (!data) return [];
         if (Array.isArray(data)) return data.filter(item => item !== null && item !== undefined);
@@ -23,43 +24,117 @@ class DocumentCenterComponent {
         return []; 
     }
 
-    // 🚨 THE FIX 2: กู้คืนฟังก์ชัน EscapeHTML กลับมา เพื่อป้องกันระบบช็อคค้าง!
     escapeHTML(str) {
         if (!str && str !== 0) return '';
         return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
     }
 
+    // เพิ่มฟังก์ชันจัดฟอร์แมตวันที่แบบไทย
+    formatDateTh(isoStr) {
+        if(!isoStr) return '-'; 
+        const d = new Date(isoStr);
+        return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth() + 1).padStart(2,'0')}/${d.getFullYear() + 543}`;
+    }
+
     get html() {
         return `
             <style>
-                .filter-btn { transition: all 0.2s; border: none; }
+                .filter-btn { transition: all 0.2s; border: none; flex-shrink: 0; }
                 .filter-btn.active { background-color: var(--primary) !important; color: white !important; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3) !important; }
                 html[data-bs-theme="dark"] .filter-btn { color: #cbd5e1 !important; background: rgba(255,255,255,0.05) !important; }
                 html[data-bs-theme="dark"] .filter-btn.active { background-color: var(--primary) !important; color: #fff !important; }
                 
-                .doc-preview-card { transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); cursor: pointer; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); background: var(--bg-surface); }
+                .doc-preview-card { transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s; cursor: pointer; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); background: var(--bg-surface); position: relative; will-change: transform; }
                 .doc-preview-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1); border-color: var(--primary); }
-                .doc-img-wrapper { height: 140px; background: rgba(0,0,0,0.02); display: flex; align-items: center; justify-content: center; overflow: hidden; border-bottom: 1px solid var(--border-color); }
+                .doc-img-wrapper { height: 140px; background: rgba(0,0,0,0.02); display: flex; align-items: center; justify-content: center; overflow: hidden; border-bottom: 1px solid var(--border-color); position: relative; }
                 .doc-img-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+                
+                /* Checkbox Styles */
+                .doc-checkbox-overlay { position: absolute; top: 8px; left: 8px; z-index: 10; display: none; background: rgba(255,255,255,0.9); border-radius: 8px; padding: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+                .select-mode-active .doc-checkbox-overlay { display: block; }
+                .doc-checkbox-overlay input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary); }
+                
+                .doc-preview-card.selected { border: 3px solid var(--primary) !important; transform: scale(0.98); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
+                .doc-preview-card.selected .doc-img-wrapper::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(37,99,235,0.1); pointer-events: none; }
+
+                /* Floating Action Bar (FAB) */
+                #dc-action-bar {
+                    position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
+                    background: var(--color-surface); border: 1px solid var(--border-color);
+                    box-shadow: 0 15px 35px rgba(0,0,0,0.15); border-radius: 50px;
+                    padding: 10px 20px; z-index: 9999; display: flex; align-items: center; gap: 15px;
+                    transition: bottom 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+                }
+                #dc-action-bar.visible { bottom: 30px; }
+
+                .btn-fixed-width {
+                    width: 175px !important; min-width: 175px !important; max-width: 175px !important;
+                    flex-shrink: 0 !important; flex-grow: 0 !important; display: inline-flex !important;
+                    justify-content: center !important; align-items: center !important; white-space: nowrap !important;
+                    overflow: hidden !important; box-sizing: border-box !important;
+                    transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out !important;
+                }
+
+                /* =========================================================
+                   🚨 THE ULTIMATE FIX: GHOST INPUT DATE PICKER 
+                   ========================================================= */
+                .filter-bar-capsule {
+                    display: flex; align-items: center; background: var(--color-surface, #ffffff);
+                    padding: 4px 6px; border-radius: 50px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+                    border: 1px solid var(--border-color, #e2e8f0); gap: 4px; flex-wrap: wrap; 
+                }
+                .filter-divider { width: 2px; height: 24px; background-color: #e2e8f0; margin: 0 4px; }
+                html[data-bs-theme="dark"] .filter-divider { background-color: #334155; }
+                
+                .dc-date-wrapper {
+                    position: relative; display: flex; align-items: center; background: transparent;
+                    padding: 6px 14px; cursor: pointer; overflow: hidden; border-radius: 20px;
+                    transition: background 0.2s;
+                }
+                .dc-date-wrapper:hover { background: rgba(0,0,0,0.03); }
+                html[data-bs-theme="dark"] .dc-date-wrapper:hover { background: rgba(255,255,255,0.05); }
+                
+                /* ป้ายข้อความที่แสดงแทน Input */
+                .dc-date-wrapper .thai-text { font-family: 'Prompt', sans-serif; font-weight: 700; color: var(--text-dark); font-size: 14.5px; pointer-events: none; }
+                .dc-date-wrapper i { font-size: 16px; color: var(--primary); pointer-events: none; margin-right: 8px; }
+                
+                /* ซ่อน Input แบบโปร่งใส 100% ให้ทะลุไปถึงป้ายข้อความด้านล่าง */
+                .dc-date-wrapper input[type="date"] { 
+                    position: absolute; top: 0; left: 0; right: 0; bottom: 0; 
+                    width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; 
+                    border: none; background: transparent; color: transparent; 
+                }
+                .dc-date-wrapper input[type="date"]::-webkit-datetime-edit, 
+                .dc-date-wrapper input[type="date"]::-webkit-datetime-edit-text, 
+                .dc-date-wrapper input[type="date"]::-webkit-datetime-edit-month-field, 
+                .dc-date-wrapper input[type="date"]::-webkit-datetime-edit-day-field, 
+                .dc-date-wrapper input[type="date"]::-webkit-datetime-edit-year-field { 
+                    color: transparent !important; background: transparent !important; 
+                }
+                .dc-date-wrapper input[type="date"]::-webkit-calendar-picker-indicator { 
+                    position: absolute; top: 0; left: 0; right: 0; bottom: 0; 
+                    width: 100%; height: 100%; margin: 0; padding: 0; cursor: pointer; opacity: 0; 
+                }
             </style>
             
-            <div class="page-header mb-4 d-flex justify-content-between align-items-end flex-wrap gap-3">
+            <div class="page-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
                 <div>
                     <h2 class="page-title text-primary"><i class="fa-solid fa-folder-tree me-2"></i> ศูนย์รวมเอกสารและไฟล์แนบ</h2>
                     <p class="text-muted mt-1 mb-0 fw-bold">จัดการแฟ้มเอกสารคนไข้แบบรวมศูนย์ (Patient-Centric View)</p>
                 </div>
                 
-                <div class="d-flex gap-2 flex-wrap align-items-center bg-white p-1 rounded-pill shadow-sm border px-2">
+                <div class="filter-bar-capsule bg-white">
                     <button class="btn btn-sm rounded-pill px-3 fw-bold filter-btn active" data-filter="all">ทั้งหมด</button>
                     <button class="btn btn-sm rounded-pill px-3 fw-bold filter-btn" data-filter="today">วันนี้</button>
                     <button class="btn btn-sm rounded-pill px-3 fw-bold filter-btn" data-filter="month">เดือนนี้</button>
                     <button class="btn btn-sm rounded-pill px-3 fw-bold filter-btn" data-filter="year">ปีนี้</button>
                     
-                    <div style="border-left: 2px solid #e2e8f0; height: 24px; margin: 0 5px;"></div>
+                    <div class="filter-divider"></div>
                     
-                    <div class="d-flex align-items-center px-2">
-                        <i class="fa-solid fa-calendar-day text-primary me-2"></i>
-                        <input type="date" id="dc-specific-date" class="form-control form-control-sm border-0 bg-transparent fw-bold text-dark p-0" style="width: 110px; outline: none; box-shadow: none;">
+                    <div class="dc-date-wrapper">
+                        <i class="fa-solid fa-calendar-day text-primary"></i>
+                        <span class="thai-text" id="dc-date-display">ระบุวันที่...</span>
+                        <input type="date" id="dc-specific-date">
                     </div>
                 </div>
             </div>
@@ -72,22 +147,47 @@ class DocumentCenterComponent {
                             <input type="text" id="dc-search-input" class="border-0 bg-transparent w-100 fw-bold text-dark py-2" placeholder="ค้นหาชื่อคนไข้, HN หรือ ชื่อเอกสาร...">
                         </div>
                     </div>
-                    <div class="col-md-8 text-md-end">
+                    <div class="col-md-8 text-md-end d-flex justify-content-md-end align-items-center gap-3">
                         <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fs-6 shadow-sm" id="dc-count-badge">
                             <i class="fa-solid fa-users me-1"></i> กำลังโหลดแฟ้มประวัติ...
                         </span>
+                        
+                        <button id="btn-toggle-select" class="btn btn-primary text-white fw-bold rounded-pill shadow-sm px-4 btn-fixed-width" onclick="DocumentCenterPage.toggleSelectMode()">
+                            <i class="fa-solid fa-check-double me-1"></i> เลือกเอกสาร
+                        </button>
                     </div>
                 </div>
             </div>
 
             <div id="dc-loading" class="text-center py-5 text-primary"><i class="fas fa-spinner fa-spin fa-3x mb-3"></i><br>กำลังประมวลผลเอกสาร...</div>
+            
             <div id="dc-gallery-container" style="display: none; padding-bottom: 50px;"></div>
+
+            <div id="dc-action-bar">
+                <div class="d-flex align-items-center me-3">
+                    <span class="badge bg-primary rounded-circle p-2 shadow-sm d-flex align-items-center justify-content-center" style="width: 35px; height: 35px; font-size: 16px;" id="dc-selected-count">0</span>
+                    <span class="fw-bold text-dark ms-2">ไฟล์ที่เลือก</span>
+                </div>
+                <button class="btn btn-light border fw-bold text-dark rounded-pill px-3 shadow-sm" onclick="DocumentCenterPage.selectAllDocs()">
+                    <i class="fa-solid fa-check-square me-1 text-primary"></i> เลือกทั้งหมด
+                </button>
+                <button class="btn btn-success fw-bold rounded-pill px-4 shadow-sm" onclick="DocumentCenterPage.downloadSelectedDocs()">
+                    <i class="fa-solid fa-download me-2"></i> ดาวน์โหลด (.ZIP)
+                </button>
+                <button class="btn btn-danger rounded-circle shadow-sm ms-2" style="width: 38px; height: 38px; padding: 0;" onclick="DocumentCenterPage.toggleSelectMode()" title="ยกเลิก">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
         `;
     }
 
     init() {
         if (typeof db === 'undefined') return;
+        
+        this.state.isSelectMode = false;
+        this.state.selectedDocIds.clear();
         this.documentCache.clear();
+        
         this.bindEvents();
         this.loadDocumentsFromDB();
     }
@@ -100,12 +200,16 @@ class DocumentCenterComponent {
     }
 
     bindEvents() {
-        // ล้าง Event เก่าป้องกันซ้ำซ้อน
         document.removeEventListener('click', this.boundHandleGlobalClick);
         document.addEventListener('click', this.boundHandleGlobalClick);
 
         document.getElementById('dc-specific-date')?.addEventListener('change', (e) => {
             this.state.specificDate = e.target.value;
+            // เปลี่ยนข้อความบนหน้าจอเมื่อเลือกวันที่เสร็จ
+            const display = document.getElementById('dc-date-display');
+            if(display) {
+                display.innerText = e.target.value ? this.formatDateTh(e.target.value) : 'ระบุวันที่...';
+            }
             this.applyFilter('specific');
         });
 
@@ -115,7 +219,6 @@ class DocumentCenterComponent {
         });
     }
 
-    // ระบบดักจับการคลิกเปิดรูป (Global Click Listener) ป้องกันเอา Base64 ยัดใน HTML
     handleGlobalClick(e) {
         if (e.target.classList.contains('filter-btn')) {
             const filter = e.target.getAttribute('data-filter');
@@ -126,7 +229,161 @@ class DocumentCenterComponent {
         if (docCard) {
             const docId = docCard.getAttribute('data-doc-id');
             const isPdf = docCard.getAttribute('data-is-pdf');
-            if (docId) this.viewDoc(docId, isPdf);
+            
+            if (e.target.classList.contains('doc-checkbox') || e.target.closest('.doc-checkbox-overlay')) {
+                this.toggleDocSelection(docId, docCard);
+                return;
+            }
+
+            if (this.state.isSelectMode) {
+                this.toggleDocSelection(docId, docCard);
+            } 
+            else if (docId) {
+                this.viewDoc(docId, isPdf);
+            }
+        }
+    }
+
+    toggleSelectMode() {
+        this.state.isSelectMode = !this.state.isSelectMode;
+        const container = document.getElementById('dc-gallery-container');
+        const btnToggle = document.getElementById('btn-toggle-select');
+        const actionBar = document.getElementById('dc-action-bar');
+
+        if (this.state.isSelectMode) {
+            container.classList.add('select-mode-active');
+            
+            btnToggle.className = 'btn btn-danger text-white fw-bold rounded-pill shadow-sm px-4 btn-fixed-width';
+            btnToggle.innerHTML = '<i class="fa-solid fa-times me-1"></i> ยกเลิกเลือก';
+            
+            actionBar.classList.add('visible');
+        } else {
+            container.classList.remove('select-mode-active');
+            
+            btnToggle.className = 'btn btn-primary text-white fw-bold rounded-pill shadow-sm px-4 btn-fixed-width';
+            btnToggle.innerHTML = '<i class="fa-solid fa-check-double me-1"></i> เลือกเอกสาร';
+            
+            actionBar.classList.remove('visible');
+            
+            this.state.selectedDocIds.clear();
+            document.querySelectorAll('.doc-preview-card').forEach(card => card.classList.remove('selected'));
+            document.querySelectorAll('.doc-checkbox').forEach(cb => cb.checked = false);
+            this.updateSelectedCount();
+        }
+    }
+
+    toggleDocSelection(docId, cardElement) {
+        const checkbox = cardElement.querySelector('.doc-checkbox');
+        
+        if (this.state.selectedDocIds.has(docId)) {
+            this.state.selectedDocIds.delete(docId);
+            cardElement.classList.remove('selected');
+            if (checkbox) checkbox.checked = false;
+        } else {
+            this.state.selectedDocIds.add(docId);
+            cardElement.classList.add('selected');
+            if (checkbox) checkbox.checked = true;
+        }
+        
+        this.updateSelectedCount();
+    }
+
+    selectAllDocs() {
+        const currentlyVisibleCards = document.querySelectorAll('.doc-preview-card');
+        let allSelected = true;
+
+        currentlyVisibleCards.forEach(card => {
+            const docId = card.getAttribute('data-doc-id');
+            if (!this.state.selectedDocIds.has(docId)) {
+                allSelected = false; 
+            }
+        });
+
+        currentlyVisibleCards.forEach(card => {
+            const docId = card.getAttribute('data-doc-id');
+            const checkbox = card.querySelector('.doc-checkbox');
+            
+            if (allSelected) {
+                this.state.selectedDocIds.delete(docId);
+                card.classList.remove('selected');
+                if (checkbox) checkbox.checked = false;
+            } else {
+                this.state.selectedDocIds.add(docId);
+                card.classList.add('selected');
+                if (checkbox) checkbox.checked = true;
+            }
+        });
+
+        this.updateSelectedCount();
+    }
+
+    updateSelectedCount() {
+        const countEl = document.getElementById('dc-selected-count');
+        if (countEl) countEl.innerText = this.state.selectedDocIds.size;
+    }
+
+    async downloadSelectedDocs() {
+        if (this.state.selectedDocIds.size === 0) {
+            Swal.fire('ยังไม่ได้เลือกเอกสาร', 'กรุณาติ๊กเลือกไฟล์ที่ต้องการดาวน์โหลดอย่างน้อย 1 รายการ', 'warning');
+            return;
+        }
+
+        if (typeof JSZip === 'undefined' || typeof saveAs === 'undefined') {
+            Swal.fire('ระบบไม่พร้อมใช้งาน', 'กรุณาตรวจสอบว่าโหลด Library JSZip และ FileSaver.js เรียบร้อยแล้ว', 'error');
+            return;
+        }
+
+        Swal.fire({ 
+            title: 'กำลังเตรียมไฟล์ดาวน์โหลด...', 
+            html: `ระบบกำลังรวบรวมไฟล์จำนวน <b class="text-primary">${this.state.selectedDocIds.size}</b> รายการเป็นไฟล์ ZIP<br>กรุณารอสักครู่...`, 
+            allowOutsideClick: false, 
+            didOpen: () => Swal.showLoading() 
+        });
+
+        try {
+            const zip = new JSZip();
+            const rootFolder = zip.folder("Patient_Documents");
+
+            let processedCount = 0;
+
+            for (const docId of this.state.selectedDocIds) {
+                const docObj = this.state.allDocuments.find(d => d.docId === docId);
+                const base64DataUrl = this.documentCache.get(docId);
+                
+                if (docObj && base64DataUrl) {
+                    const ext = docObj.docType === 'pdf' ? 'pdf' : 'jpg'; 
+                    let safeDocName = this.escapeHTML(docObj.docName).replace(/[/\\?%*:|"<>]/g, '-');
+                    let fileName = `${safeDocName}_${docObj.visitDate}.${ext}`;
+                    
+                    let safePatientName = this.escapeHTML(docObj.patientName).replace(/[/\\?%*:|"<>]/g, '-');
+                    let patientFolder = rootFolder.folder(`${safePatientName}_${docObj.patientHn}`);
+                    
+                    const base64Data = base64DataUrl.split(',')[1];
+                    
+                    if (base64Data) {
+                        patientFolder.file(fileName, base64Data, {base64: true});
+                        processedCount++;
+                    }
+                }
+            }
+
+            if (processedCount === 0) throw new Error("ไม่สามารถดึงข้อมูลไฟล์ที่เลือกได้");
+
+            Swal.update({ html: 'กำลังแพ็กไฟล์ ZIP...' });
+            const content = await zip.generateAsync({type:"blob"});
+            
+            const now = new Date();
+            const timestamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+            const zipName = `EMR_Documents_${timestamp}.zip`;
+
+            saveAs(content, zipName);
+            
+            Swal.fire('ดาวน์โหลดสำเร็จ!', `รวบรวมไฟล์เสร็จสิ้น ${processedCount} รายการ`, 'success');
+            this.toggleSelectMode();
+
+        } catch (error) {
+            console.error("ZIP Download Error:", error);
+            Swal.fire('ข้อผิดพลาด', `การดาวน์โหลดล้มเหลว: ${error.message}`, 'error');
         }
     }
 
@@ -138,9 +395,12 @@ class DocumentCenterComponent {
             const activeBtn = document.querySelector(`.filter-btn[data-filter="${timeFilter}"]`);
             if(activeBtn) activeBtn.classList.add('active');
             
+            // ล้างหน้าจอวันที่ ถ้ากดปุ่มอื่นที่ไม่ใช่การเลือกปฏิทิน
             if (timeFilter !== 'specific') {
                 const dateInput = document.getElementById('dc-specific-date');
                 if (dateInput) dateInput.value = '';
+                const display = document.getElementById('dc-date-display');
+                if(display) display.innerText = 'ระบุวันที่...';
                 this.state.specificDate = '';
             }
         }
@@ -152,7 +412,7 @@ class DocumentCenterComponent {
 
         const filtered = this.state.allDocuments.filter(doc => {
             let passTime = true;
-            let docDateStr = String(doc.visitDate); // ป้องกันบั๊ก Undefined
+            let docDateStr = String(doc.visitDate); 
             
             if (this.state.currentFilter === 'today') passTime = (docDateStr === todayStr);
             else if (this.state.currentFilter === 'month') passTime = docDateStr.startsWith(currentMonth);
@@ -169,10 +429,22 @@ class DocumentCenterComponent {
             return passTime && passSearch;
         });
 
+        if (this.state.isSelectMode) {
+            setTimeout(() => {
+                document.querySelectorAll('.doc-preview-card').forEach(card => {
+                    const docId = card.getAttribute('data-doc-id');
+                    if (this.state.selectedDocIds.has(docId)) {
+                        card.classList.add('selected');
+                        const cb = card.querySelector('.doc-checkbox');
+                        if(cb) cb.checked = true;
+                    }
+                });
+            }, 50);
+        }
+
         this.renderGroupedGallery(filtered);
     }
 
-    // 🚨 THE FIX 3: ครอบ Try-Catch หากมีบั๊กการดึงเอกสาร หน้าจอจะไม่หมุนค้าง
     loadDocumentsFromDB() {
         const ref = db.ref('patients_database_v2/visits');
         const callback = ref.on('value', snap => {
@@ -184,11 +456,10 @@ class DocumentCenterComponent {
                 this.documentCache.clear();
 
                 visits.forEach(v => {
-                    // ใช้ฟังก์ชัน parseFBArray ป้องกัน Array กลายเป็น Object แล้วเบราว์เซอร์อ่านไม่ได้
                     let attachments = this.parseFBArray(v.attachments);
                     
                     if (attachments.length > 0) {
-                        attachments.forEach(doc => {
+                        attachments.forEach((doc, idx) => {
                             if (!doc) return;
                             
                             let docObj = {
@@ -196,7 +467,7 @@ class DocumentCenterComponent {
                                 patientName: v.name || 'ไม่ระบุชื่อ',
                                 patientHn: v.hn || 'ไม่ระบุ HN',
                                 visitDate: v.date || '1970-01-01',
-                                docId: `DOC_${v.id || Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+                                docId: `DOC_${v.id || v.hn}_${v.date}_${idx}`,
                                 docType: 'image',
                                 docName: 'เอกสารแนบ',
                                 dataUrl: ''
@@ -265,10 +536,15 @@ class DocumentCenterComponent {
                 const isPdf = doc.docType === 'pdf' || (doc.dataUrl && doc.dataUrl.startsWith('data:application/pdf'));
                 const previewContent = isPdf ? `<i class="fa-solid fa-file-pdf fa-3x text-danger drop-shadow"></i>` : `<img src="${doc.dataUrl}" alt="${this.escapeHTML(doc.docName)}" loading="lazy">`;
                 
-                // ส่งแค่ "รหัส ID" ของเอกสารไปที่ปุ่ม ป้องกัน Browser Crash จากข้อมูล Base64
+                const isSelectedClass = this.state.selectedDocIds.has(doc.docId) ? 'selected' : '';
+                const isCheckedAttr = this.state.selectedDocIds.has(doc.docId) ? 'checked' : '';
+
                 return `
                 <div class="col-sm-6 col-md-4 col-lg-3 fade-in-up" style="animation-delay: ${(idx % 10) * 0.05}s;">
-                    <div class="doc-preview-card doc-thumb-card h-100 shadow-sm" data-doc-id="${doc.docId}" data-is-pdf="${isPdf}">
+                    <div class="doc-preview-card doc-thumb-card h-100 shadow-sm ${isSelectedClass}" data-doc-id="${doc.docId}" data-is-pdf="${isPdf}">
+                        <div class="doc-checkbox-overlay">
+                            <input type="checkbox" class="doc-checkbox" ${isCheckedAttr}>
+                        </div>
                         <div class="doc-img-wrapper">${previewContent}</div>
                         <div class="p-3 text-center">
                             <div class="small fw-bold text-dark text-truncate mb-1" title="${this.escapeHTML(doc.docName)}">${this.escapeHTML(doc.docName)}</div>
@@ -294,7 +570,6 @@ class DocumentCenterComponent {
         container.innerHTML = html;
     }
 
-    // ฟังก์ชันดึงรูปจากโกดัง (Cache) แล้วเปิดโชว์แบบไม่ค้าง
     viewDoc(docId, isPdf) {
         const dataUrl = this.documentCache.get(docId);
         

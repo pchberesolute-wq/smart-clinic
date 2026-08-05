@@ -1,28 +1,28 @@
 // js/pages/performance_engine.js
-// 🚀 Enterprise Performance & Memory Optimization Engine V3.0 (Quantum Edition)
-// ขีดสุดของเทคโนโลยีเบราว์เซอร์: ควบคุม Event Loop, GPU Acceleration และ Zero-Reflow DOM
+// 🚀 Enterprise Performance & Memory Optimization Engine V3.5 (Quantum Edition - Stabilized)
+// ขีดสุดของเทคโนโลยีเบราว์เซอร์: ควบคุม Event Loop, GPU Acceleration, True LRU และ Zero-Reflow DOM
 
 class PerformanceEngineService {
     constructor() {
-        this.activeListeners = new Map(); // จดจำ Listener ทั้งระบบ
-        this.cache = new Map(); // LRU Cache สำหรับเก็บข้อมูล Firebase ชั่วคราว
+        this.activeListeners = new Map(); // จดจำ Listener อ้างอิงตาม Memory Reference (Map<PageId, Map<Path, Set<Function>>>)
+        this.cache = new Map(); // True LRU Cache สำหรับเก็บข้อมูล Firebase ชั่วคราว
         this.MAX_CACHE_SIZE = 50; // เก็บข้อมูลสูงสุด 50 ชุด ป้องกัน RAM ล้น
         
-        // กำหนดเวลาสูงสุด 8ms (เข้มงวดกว่าเดิม) เพื่อเว้นที่ว่างให้จอ 120Hz (8.3ms/frame)
+        // กำหนดเวลาสูงสุด 8ms เพื่อเว้นที่ว่างให้จอ 120Hz (8.3ms/frame) ตอบสนองได้ 60-120fps เสมอ
         this.MAX_TIME_PER_FRAME = 8; 
         
-        // ⚡ อาวุธลับ: สร้าง MessageChannel สำหรับแทรกแซง Event Loop (แบบเดียวกับ React Fiber)
+        // ⚡ อาวุธลับ: สร้าง MessageChannel สำหรับแทรกแซง Event Loop (React Fiber Architecture)
         this.channel = new MessageChannel();
         this.taskQueue = [];
         this.isFlushing = false;
         
         this.channel.port1.onmessage = () => this._flushTaskQueue();
 
-        console.log("%c🌌 [Quantum Engine] V3.0 Core Activated. Event-Loop Hijacked.", "color: #06b6d4; font-weight: bold; font-size: 14px; text-shadow: 0 0 5px #06b6d4;");
+        console.log("%c🌌 [Quantum Engine] V3.5 Core Activated. Event-Loop Secured.", "color: #06b6d4; font-weight: bold; font-size: 14px; text-shadow: 0 0 5px #06b6d4;");
     }
 
     // =========================================================================
-    // 1. 🛡️ Next-Gen Memory & Listener Manager (กวาดล้างขยะหมดจด)
+    // 1. 🛡️ Next-Gen Memory & Listener Manager (กวาดล้างขยะหมดจดด้วย Reference Check)
     // =========================================================================
     
     registerFirebaseListener(pageId, path, callback) {
@@ -30,33 +30,38 @@ class PerformanceEngineService {
             this.activeListeners.set(pageId, new Map());
         }
         const pageListeners = this.activeListeners.get(pageId);
-        const listenerKey = `${path}_${callback.name || 'anonymous'}`;
-        if (pageListeners.has(listenerKey)) return;
+        
+        if (!pageListeners.has(path)) {
+            pageListeners.set(path, new Set());
+        }
+        const pathCallbacks = pageListeners.get(path);
 
-        db.ref(path).on('value', callback);
-        pageListeners.set(listenerKey, { path, callback });
+        // 🚨 THE FIX: ใช้ Set เพื่อเก็บ Memory Reference ของ Callback โดยตรง ป้องกันปัญหา Anonymous Function
+        if (!pathCallbacks.has(callback)) {
+            db.ref(path).on('value', callback);
+            pathCallbacks.add(callback);
+        }
     }
 
     purgeListenersForPage(pageId) {
         if (this.activeListeners.has(pageId)) {
             const pageListeners = this.activeListeners.get(pageId);
-            pageListeners.forEach(l => {
-                db.ref(l.path).off('value', l.callback);
+            
+            // 🚨 THE FIX: ถอดถอน Listener ด้วย Reference ที่ถูกต้อง 100%
+            pageListeners.forEach((callbacks, path) => {
+                callbacks.forEach(cb => db.ref(path).off('value', cb));
             });
+            
             this.activeListeners.delete(pageId);
         }
-        // เรียก GC ยามว่าง
+        // เรียก Garbage Collector ยามว่าง
         this.scheduleIdleTask(() => this._cleanUpCache());
     }
 
     // =========================================================================
-    // 2. ⚡ Quantum Time-Slicing (ทำงานแบบ Micro-tasking ไร้รอยต่อ 100%)
+    // 2. ⚡ Quantum Time-Slicing (ทำงานแบบ Micro-tasking พร้อม Error Boundary)
     // =========================================================================
     
-    /**
-     * @description หั่นงานเป็นชิ้นเล็กจิ๋ว และใช้ MessageChannel ดันงานไปคิวหลังสุด 
-     * ทำให้เบราว์เซอร์มีเวลาตอบสนองเมาส์ การคลิก และ CSS Animation แบบ 120FPS
-     */
     async renderInChunks(array, renderItemCallback, onComplete = null) {
         if (!array || array.length === 0) {
             if(onComplete) onComplete();
@@ -71,13 +76,16 @@ class PerformanceEngineService {
 
             // ทำงานจนกว่าจะกินเวลา CPU เกิน 8ms
             while (index < total && (performance.now() - startTime) < this.MAX_TIME_PER_FRAME) {
-                renderItemCallback(array[index], index);
+                // 🚨 THE FIX: Error Boundary ป้องกันข้อมูลเสีย 1 ตัวทำระบบ Queue ค้างทั้งระบบ
+                try {
+                    renderItemCallback(array[index], index);
+                } catch (error) {
+                    console.error(`[Quantum Engine] Non-Fatal Error at chunk index ${index}:`, error);
+                }
                 index++;
             }
 
             if (index < total) {
-                // 🚨 THE FIX: ไม่ใช้ requestAnimationFrame แล้ว แต่ใช้ MessageChannel
-                // เพื่อหลีกเลี่ยงข้อจำกัดเวลายุบหน้าจอ (Background Tab Throttling)
                 this.taskQueue.push(processChunk);
                 this._requestFlush();
             } else {
@@ -95,7 +103,7 @@ class PerformanceEngineService {
     _requestFlush() {
         if (!this.isFlushing) {
             this.isFlushing = true;
-            this.channel.port2.postMessage(null); // สะกิด Event Loop
+            this.channel.port2.postMessage(null); // สะกิด Event Loop ท้ายคิว (Macro-task)
         }
     }
 
@@ -105,7 +113,11 @@ class PerformanceEngineService {
         
         while (this.taskQueue.length > 0 && (performance.now() - startTime) < this.MAX_TIME_PER_FRAME) {
             const task = this.taskQueue.shift();
-            task();
+            try {
+                task();
+            } catch (error) {
+                console.error("[Quantum Engine] Task Queue Execution Error:", error);
+            }
         }
 
         if (this.taskQueue.length > 0) {
@@ -117,10 +129,6 @@ class PerformanceEngineService {
     // 3. 🧩 Zero-Reflow DOM Batcher (วาด HTML ทีเดียวจบ ไม่กระตุก)
     // =========================================================================
     
-    /**
-     * @description รวบรวม HTML Elements ไปไว้ในกระดาษทด (Fragment) ก่อน 
-     * แล้วค่อยแปะลงจอทีเดียว ลดภาระการวาดหน้าจอซ้ำซ้อน (Repaint/Reflow) ถึง 90%
-     */
     batchDOMUpdate(targetContainerId, items, renderHtmlCallback) {
         return new Promise((resolve) => {
             const container = document.getElementById(targetContainerId);
@@ -130,16 +138,14 @@ class PerformanceEngineService {
             const fragment = document.createDocumentFragment();
 
             this.renderInChunks(items, (item, index) => {
-                // แปลง String เป็น Node
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = renderHtmlCallback(item, index).trim();
                 
-                // ย้าย Node ลงกระดาษทด (เร็วมาก)
                 while (tempDiv.firstChild) {
                     fragment.appendChild(tempDiv.firstChild);
                 }
             }, () => {
-                // แปะลงจอทีเดียวตู้ม!
+                // แปะลงจอทีเดียวตู้ม! กระตุ้น DOM Reflow แค่ครั้งเดียว
                 container.appendChild(fragment);
                 resolve();
             });
@@ -147,15 +153,11 @@ class PerformanceEngineService {
     }
 
     // =========================================================================
-    // 4. 🗜️ Hardware-Accelerated Image Optimizer (ดึงการ์ดจอมาช่วยบีบอัดรูป)
+    // 4. 🗜️ Hardware-Accelerated Image Optimizer (GPU Acceleration)
     // =========================================================================
     
-    /**
-     * @description ใช้ OffscreenCanvas และ createImageBitmap ถ้ามี เพื่อไม่ให้ CPU หลักสะดุด
-     */
     async compressImageAsync(file, maxWidth = 800, quality = 0.7) {
         try {
-            // ตรวจสอบเทคโนโลยีขั้นสูง
             if (window.createImageBitmap && window.OffscreenCanvas) {
                 const bitmap = await createImageBitmap(file);
                 let width = bitmap.width;
@@ -174,14 +176,13 @@ class PerformanceEngineService {
                 ctx.drawImage(bitmap, 0, 0, width, height);
                 
                 const blob = await canvas.convertToBlob({ type: "image/jpeg", quality: quality });
-                bitmap.close(); // คืน Memory ทันที
+                bitmap.close(); // คืน Memory ทันทีป้องกัน OOM
                 return await this._blobToBase64(blob);
             } else {
-                // Fallback สำหรับเบราว์เซอร์เก่า
                 return this._traditionalCompress(file, maxWidth, quality);
             }
         } catch (error) {
-            console.warn("GPU Acceleration failed, using fallback.", error);
+            console.warn("[Quantum Engine] GPU Acceleration failed, using fallback.", error);
             return this._traditionalCompress(file, maxWidth, quality);
         }
     }
@@ -215,6 +216,7 @@ class PerformanceEngineService {
                     ctx.imageSmoothingEnabled = true;
                     ctx.imageSmoothingQuality = "high";
                     ctx.drawImage(img, 0, 0, width, height);
+                    
                     const b64 = canvas.toDataURL('image/jpeg', quality);
                     
                     // Force GC
@@ -231,16 +233,19 @@ class PerformanceEngineService {
     }
 
     // =========================================================================
-    // 5. 🧠 LRU Smart Query Cache (โหลดแสง 0 วินาที)
+    // 5. 🧠 True LRU Smart Query Cache (โหลดไวแสง พร้อมเรียงลำดับการใช้)
     // =========================================================================
     
     async fetchVisitsByHN(hn, limit = 50) {
         const cacheKey = `visits_${hn}_${limit}`;
         
-        // ถ้ามีใน Cache และยังไม่หมดอายุ (เช่นตั้งไว้ 10 นาที) ให้คืนค่าจาก RAM เลย!
+        // 🚨 THE FIX: True LRU Logic - ถ้านำข้อมูลเก่ามาใช้ ต้องดึงมาต่อคิวหน้าสุดเสมอ!
         if (this.cache.has(cacheKey)) {
+            const cachedValue = this.cache.get(cacheKey);
+            this.cache.delete(cacheKey);
+            this.cache.set(cacheKey, cachedValue); // ย้ายไปลำดับล่าสุด
             console.log(`⚡ [Cache Hit] 0ms load for HN: ${hn}`);
-            return this.cache.get(cacheKey);
+            return cachedValue;
         }
 
         try {
@@ -257,17 +262,16 @@ class PerformanceEngineService {
             
             const result = visits.reverse();
 
-            // บันทึกลง Cache
+            // ลบแคชที่เก่าที่สุด (อยู่ที่ Index 0 ของ Map เสมอ) ทิ้งเมื่อล้น
             if (this.cache.size >= this.MAX_CACHE_SIZE) {
-                // ลบตัวแรกสุด (เก่าสุด) ทิ้งเพื่อเว้นที่
-                const firstKey = this.cache.keys().next().value;
-                this.cache.delete(firstKey);
+                const oldestKey = this.cache.keys().next().value;
+                this.cache.delete(oldestKey);
             }
             this.cache.set(cacheKey, result);
 
             return result;
         } catch (error) {
-            console.error("Smart Query Error:", error);
+            console.error("[Quantum Engine] Smart Query Error:", error);
             return [];
         }
     }
@@ -279,20 +283,23 @@ class PerformanceEngineService {
     scheduleIdleTask(task) {
         if ('requestIdleCallback' in window) {
             requestIdleCallback((deadline) => {
-                // ทำงานก็ต่อเมื่อมีเวลาเหลือเกิน 2ms
                 if (deadline.timeRemaining() > 2) task();
             });
         } else {
-            setTimeout(task, 2000); // Fallback
+            setTimeout(task, 2000); 
         }
     }
 
     _cleanUpCache() {
-        // แอบล้างข้อมูลเก่าตอนผู้ใช้ไม่ได้ขยับเมาส์
         if (this.cache.size > this.MAX_CACHE_SIZE / 2) {
-            console.log("🧹 [Idle] Auto-cleaning cache...");
-            const keysToDelete = Array.from(this.cache.keys()).slice(0, 10);
-            keysToDelete.forEach(k => this.cache.delete(k));
+            console.log("🧹 [Idle] Auto-cleaning cache for memory efficiency...");
+            let i = 0;
+            // ค่อยๆ ทยอยลบข้อมูลเก่า 10 ตัวแรก
+            for (const key of this.cache.keys()) {
+                if (i >= 10) break;
+                this.cache.delete(key);
+                i++;
+            }
         }
     }
 

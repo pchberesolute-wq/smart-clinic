@@ -1,5 +1,5 @@
 // js/pages/usage_statistics.js
-// 🚀 Enterprise Analytics Module: Ultra-Premium UI/UX, Soft Shadows & Advanced Data Visualization
+// 🚀 Enterprise Analytics Module: Deep Dark Mode Sync, Sync Gatekeeper & Zero-Jank Rendering (v12.5 FULL)
 
 class UsageStatisticsComponent {
     constructor() {
@@ -16,8 +16,19 @@ class UsageStatisticsComponent {
 
     parseFBArray(data) {
         if (!data) return [];
-        if (Array.isArray(data)) return data.filter(item => item !== null && item !== undefined);
-        if (typeof data === 'object' && data !== null) return Object.keys(data).map(k => ({ firebaseKey: k, ...data[k] })).filter(item => item !== null && item !== undefined);
+        if (Array.isArray(data)) {
+            return data.map((item, index) => {
+                if (item) {
+                    item.firebaseKey = item.firebaseKey || String(index);
+                    item.id = item.id || item.firebaseKey;
+                    return item;
+                }
+                return null;
+            }).filter(Boolean);
+        }
+        if (typeof data === 'object') {
+            return Object.keys(data).map(k => ({ firebaseKey: k, id: k, ...data[k] })).filter(item => item !== null);
+        }
         return []; 
     }
 
@@ -38,8 +49,8 @@ class UsageStatisticsComponent {
                 /* 👑 Premium Stat Cards */
                 .stat-card-v2 {
                     animation: fadeScaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-                    background: #ffffff;
-                    border: none;
+                    background: var(--bg-surface, #ffffff);
+                    border: 1px solid var(--border-color, rgba(0,0,0,0.05));
                     border-radius: 24px;
                     box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);
                     position: relative;
@@ -54,13 +65,33 @@ class UsageStatisticsComponent {
                 .stat-card-v2.primary-theme::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
                 .stat-card-v2.warning-theme::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
                 
-                .stat-card-v2:hover { transform: translateY(-8px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.12); }
+                .stat-card-v2:hover { transform: translateY(-8px); box-shadow: 0 20px 40px -10px rgba(37, 99, 235, 0.12); }
                 
-                html[data-bs-theme="dark"] .stat-card-v2 { background: #1e293b; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5); }
+                html[data-bs-theme="dark"] .stat-card-v2 { background: #1e293b; border-color: #334155; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5); }
                 
                 .stat-icon-wrapper-v2 {
                     width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 26px; color: #fff;
                     box-shadow: inset 0 -3px 0 rgba(0,0,0,0.1);
+                }
+
+                /* 🚨 THE FIX: Theme-Aware Filter Container */
+                .filter-container {
+                    background: #ffffff;
+                    border: 1px solid rgba(0,0,0,0.05);
+                }
+                html[data-bs-theme="dark"] .filter-container {
+                    background: #1e293b !important;
+                    border-color: #334155 !important;
+                }
+
+                .date-picker-wrapper {
+                    background: #f8fafc;
+                }
+                html[data-bs-theme="dark"] .date-picker-wrapper {
+                    background: rgba(255,255,255,0.05) !important;
+                }
+                html[data-bs-theme="dark"] .date-picker-wrapper input {
+                    color: #f8fafc !important;
                 }
 
                 /* 👑 Filter Buttons */
@@ -73,8 +104,8 @@ class UsageStatisticsComponent {
 
                 /* 👑 Premium Panels & Tables */
                 .modern-panel-v2 {
-                    background: #ffffff;
-                    border: 1px solid rgba(0,0,0,0.03);
+                    background: var(--bg-surface, #ffffff);
+                    border: 1px solid var(--border-color, rgba(0,0,0,0.03));
                     border-radius: 24px;
                     box-shadow: 0 15px 35px -5px rgba(0,0,0,0.04);
                     transition: all 0.3s ease;
@@ -84,23 +115,18 @@ class UsageStatisticsComponent {
                 .table-premium-v2 { border-collapse: separate; border-spacing: 0; width: 100%; margin-bottom: 0; }
                 .table-premium-v2 thead th {
                     position: sticky; top: 0; z-index: 10;
-                    background: rgba(248, 250, 252, 0.95);
+                    background: var(--bg-body, rgba(248, 250, 252, 0.95));
                     backdrop-filter: blur(8px);
-                    color: #64748b;
-                    font-size: 12px;
-                    font-weight: 800;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    padding: 16px 12px;
-                    border-bottom: 2px solid #e2e8f0;
-                    border-top: none; white-space: nowrap;
+                    color: var(--text-muted, #64748b);
+                    font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+                    padding: 16px 12px; border-bottom: 2px solid var(--border-color, #e2e8f0); border-top: none; white-space: nowrap;
                 }
                 html[data-bs-theme="dark"] .table-premium-v2 thead th { background: rgba(30, 41, 59, 0.95); color: #94a3b8; border-bottom-color: #334155; }
                 
-                .table-premium-v2 tbody tr { transition: all 0.2s; border-bottom: 1px solid #f1f5f9; }
+                .table-premium-v2 tbody tr { transition: all 0.2s; border-bottom: 1px solid var(--border-color, #f1f5f9); }
                 html[data-bs-theme="dark"] .table-premium-v2 tbody tr { border-bottom-color: #334155; }
                 
-                .table-premium-v2 tbody tr:hover { background-color: #f8fafc; }
+                .table-premium-v2 tbody tr:hover { background-color: var(--bg-body, #f8fafc); }
                 html[data-bs-theme="dark"] .table-premium-v2 tbody tr:hover { background-color: rgba(255,255,255,0.02); }
                 
                 .table-premium-v2 td { padding: 14px 12px; vertical-align: middle; border: none; }
@@ -112,11 +138,19 @@ class UsageStatisticsComponent {
                 .scroll-table-container::-webkit-scrollbar, .scroll-table-container-large::-webkit-scrollbar { width: 6px; height: 6px; }
                 .scroll-table-container::-webkit-scrollbar-track, .scroll-table-container-large::-webkit-scrollbar-track { background: transparent; }
                 .scroll-table-container::-webkit-scrollbar-thumb, .scroll-table-container-large::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-                .scroll-table-container::-webkit-scrollbar-thumb:hover, .scroll-table-container-large::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+                html[data-bs-theme="dark"] .scroll-table-container::-webkit-scrollbar-thumb { background: #475569; }
 
-                /* 👑 Badges & Accents */
+                /* 🚨 THE FIX: Dark Mode Badges Normalization */
                 .soft-badge { padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
                 
+                html[data-bs-theme="dark"] .bg-primary-subtle { background-color: rgba(59, 130, 246, 0.15) !important; color: #60a5fa !important; border: 1px solid rgba(59, 130, 246, 0.3); }
+                html[data-bs-theme="dark"] .bg-success-subtle { background-color: rgba(22, 163, 74, 0.15) !important; color: #34d399 !important; border: 1px solid rgba(22, 163, 74, 0.3); }
+                html[data-bs-theme="dark"] .bg-warning-subtle { background-color: rgba(217, 119, 6, 0.15) !important; color: #fbbf24 !important; border: 1px solid rgba(217, 119, 6, 0.3); }
+                html[data-bs-theme="dark"] .bg-danger-subtle { background-color: rgba(239, 68, 68, 0.15) !important; color: #f87171 !important; border: 1px solid rgba(239, 68, 68, 0.3); }
+                html[data-bs-theme="dark"] .bg-info-subtle { background-color: rgba(14, 165, 233, 0.15) !important; color: #38bdf8 !important; border: 1px solid rgba(14, 165, 233, 0.3); }
+                html[data-bs-theme="dark"] .text-dark { color: #f8fafc !important; }
+                html[data-bs-theme="dark"] .text-muted { color: #94a3b8 !important; }
+
                 /* Chart */
                 .chart-container { position: relative; height: 320px; width: 100%; margin-top: 10px; }
             </style>
@@ -127,17 +161,18 @@ class UsageStatisticsComponent {
                     <p class="text-muted mt-1 mb-0 fw-bold" style="font-size:15px;">ระบบวิเคราะห์ข้อมูลและสรุปยอดค่าใช้จ่ายแบบเรียลไทม์ (Analytics Dashboard)</p>
                 </div>
                 
-                <div class="d-flex gap-2 flex-wrap align-items-center bg-white p-2 rounded-pill shadow-sm" style="border: 1px solid rgba(0,0,0,0.05);">
+                <!-- 🚨 THE FIX: เปลี่ยนคลาสพื้นหลังให้รองรับ Dark Mode -->
+                <div class="filter-container d-flex gap-2 flex-wrap align-items-center p-2 rounded-pill shadow-sm">
                     <button class="btn btn-sm rounded-pill px-4 filter-btn" data-filter="today" onclick="App.pages.usage_statistics.applyFilter('today')">วันนี้</button>
                     <button class="btn btn-sm rounded-pill px-4 filter-btn active" data-filter="month" onclick="App.pages.usage_statistics.applyFilter('month')">เดือนนี้</button>
                     <button class="btn btn-sm rounded-pill px-4 filter-btn" data-filter="year" onclick="App.pages.usage_statistics.applyFilter('year')">ปีนี้</button>
                     <button class="btn btn-sm rounded-pill px-4 filter-btn" data-filter="all" onclick="App.pages.usage_statistics.applyFilter('all')">ทั้งหมด</button>
                     
-                    <div style="border-left: 2px solid #e2e8f0; height: 24px; margin: 0 5px;"></div>
+                    <div style="border-left: 2px solid var(--border-color, #e2e8f0); height: 24px; margin: 0 5px;"></div>
                     
-                    <div class="d-flex align-items-center px-2 bg-light rounded-pill p-1">
+                    <div class="date-picker-wrapper d-flex align-items-center px-2 rounded-pill p-1">
                         <i class="fa-solid fa-calendar-day text-primary ms-2 me-1"></i>
-                        <input type="date" id="us-specific-date" class="form-control form-control-sm border-0 bg-transparent fw-bold text-dark p-1" style="width: 120px; outline: none; box-shadow: none;" onchange="App.pages.usage_statistics.applySpecificDate(this.value)">
+                        <input type="date" id="us-specific-date" class="form-control form-control-sm border-0 bg-transparent fw-bold p-1" style="width: 120px; outline: none; box-shadow: none; color: var(--text-dark);" onchange="App.pages.usage_statistics.applySpecificDate(this.value)">
                     </div>
                     
                     <button class="btn btn-sm btn-success rounded-pill fw-bold shadow-sm ms-2 px-4" onclick="App.pages.usage_statistics.exportExcel()" style="padding-top: 6px; padding-bottom: 6px;"><i class="fa-solid fa-file-excel me-1"></i> ส่งออก Excel</button>
@@ -162,7 +197,7 @@ class UsageStatisticsComponent {
                     <div class="stat-card-v2 primary-theme p-4 h-100" style="animation-delay: 0.1s;">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="text-secondary fw-bold mb-1 small text-uppercase" style="letter-spacing: 0.5px;">จำนวนรอบที่สั่งเบิก (คิว)</h6>
+                                <h6 class="text-secondary fw-bold mb-1 small text-uppercase" style="letter-spacing: 0.5px;">จำนวนรอบการใช้งาน (คิว)</h6>
                                 <h2 class="fw-bold text-dark mb-0" id="us-total-transactions" style="font-family:'Prompt'; letter-spacing:-0.5px;">0</h2>
                             </div>
                             <div class="stat-icon-wrapper-v2" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
@@ -177,7 +212,7 @@ class UsageStatisticsComponent {
                             <div class="min-w-0 flex-grow-1 pe-3">
                                 <h6 class="text-secondary fw-bold mb-1 small text-uppercase" style="letter-spacing: 0.5px;">ถูกใช้มากที่สุด (Top Item)</h6>
                                 <h4 class="fw-bold text-dark mb-0 text-truncate" id="us-top-item" title="-" style="font-family:'Prompt';">กำลังคำนวณ...</h4>
-                                <div class="small fw-bold text-warning-dark mt-1" id="us-top-item-qty"><i class="fa-solid fa-arrow-trend-up me-1"></i> -</div>
+                                <div class="small fw-bold text-warning mt-1" id="us-top-item-qty"><i class="fa-solid fa-arrow-trend-up me-1"></i> -</div>
                             </div>
                             <div class="stat-icon-wrapper-v2 flex-shrink-0" style="background: linear-gradient(135deg, #f59e0b, #b45309);">
                                 <i class="fa-solid fa-crown"></i>
@@ -219,7 +254,7 @@ class UsageStatisticsComponent {
                                     </tr>
                                 </thead>
                                 <tbody id="us-meds-table-body">
-                                    <tr><td colspan="5" class="text-center py-5 text-muted"><i class="fas fa-spinner fa-spin fa-2x mb-3"></i></td></tr>
+                                    <tr><td colspan="5" class="text-center py-5 text-muted"><i class="fas fa-spinner fa-spin fa-2x mb-3"></i><br>กำลังประมวลผล...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -244,7 +279,7 @@ class UsageStatisticsComponent {
                                     </tr>
                                 </thead>
                                 <tbody id="us-inv-table-body">
-                                    <tr><td colspan="5" class="text-center py-5 text-muted"><i class="fas fa-spinner fa-spin fa-2x mb-3"></i></td></tr>
+                                    <tr><td colspan="5" class="text-center py-5 text-muted"><i class="fas fa-spinner fa-spin fa-2x mb-3"></i><br>กำลังประมวลผล...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -276,7 +311,7 @@ class UsageStatisticsComponent {
                                     </tr>
                                 </thead>
                                 <tbody id="us-detailed-table-body">
-                                    <tr><td colspan="8" class="text-center py-5 text-muted"><i class="fas fa-spinner fa-spin fa-2x mb-3"></i></td></tr>
+                                    <tr><td colspan="8" class="text-center py-5 text-muted"><i class="fas fa-spinner fa-spin fa-2x mb-3"></i><br>กำลังประมวลผล...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -324,11 +359,16 @@ class UsageStatisticsComponent {
     }
 
     setupRealtimeData() {
-        const toArray = (snapVal) => snapVal ? (Array.isArray(snapVal) ? snapVal : Object.keys(snapVal).map(k => snapVal[k])).filter(Boolean) : [];
+        let loadingState = { inv: false, med: false, xray1: false, xray2: false, visits: false };
+        const checkAndRender = () => {
+            if (loadingState.inv && loadingState.med && loadingState.xray1 && loadingState.xray2 && loadingState.visits) {
+                this.processAndRender();
+            }
+        };
 
-        const updateDict = (path, itemType) => {
+        const updateDict = (path, itemType, flagKey) => {
             const cb = db.ref(path).on('value', snap => {
-                let items = toArray(snap.val());
+                let items = this.parseFBArray(snap.val());
                 items.forEach(i => {
                     let id = typeof i === 'object' ? (i.id || i.name || i.title) : i;
                     let name = typeof i === 'object' ? (i.name || i.title || i.id) : i;
@@ -337,19 +377,22 @@ class UsageStatisticsComponent {
                     if(id) this.masterDict.set(String(id).toLowerCase().trim(), { name, price, type: itemType });
                     if(name) this.masterDict.set(String(name).toLowerCase().trim(), { name, price, type: itemType });
                 });
-                this.processAndRender();
+                
+                loadingState[flagKey] = true;
+                checkAndRender();
             });
             this.firebaseListeners.push({ path, callback: cb });
         };
 
-        updateDict('inventory_database_v2/items', 'inv');
-        updateDict('clinic_meds_list_v2', 'med');
-        updateDict('clinic_xray_list_v2', 'xray');
-        updateDict('clinic_xrays_v2', 'xray');
+        updateDict('inventory_database_v2/items', 'inv', 'inv');
+        updateDict('clinic_meds_list_v2', 'med', 'med');
+        updateDict('clinic_xray_list_v2', 'xray', 'xray1');
+        updateDict('clinic_xrays_v2', 'xray', 'xray2');
 
         const visitCb = db.ref('patients_database_v2/visits').on('value', snap => {
-            this.state.visits = toArray(snap.val());
-            this.processAndRender();
+            this.state.visits = this.parseFBArray(snap.val());
+            loadingState.visits = true;
+            checkAndRender();
         });
         this.firebaseListeners.push({ path: 'patients_database_v2/visits', callback: visitCb });
     }
@@ -387,6 +430,8 @@ class UsageStatisticsComponent {
 
         let filteredVisits = this.state.visits.filter(v => {
             if(!v.date) return false;
+            if(v.status !== 'เสร็จสิ้น') return false; 
+            
             if (this.state.currentFilter === 'today') return v.date === todayStr;
             if (this.state.currentFilter === 'month') return v.date.startsWith(currentMonth);
             if (this.state.currentFilter === 'year') return v.date.startsWith(currentYear);
@@ -413,7 +458,7 @@ class UsageStatisticsComponent {
             let dictItem = this.masterDict.get(term);
             if(dictItem) {
                 name = dictItem.name;
-                price = dictItem.price;
+                price = Number(dictItem.price) || 0; 
                 type = dictItem.type; 
             }
 
@@ -444,26 +489,26 @@ class UsageStatisticsComponent {
         };
 
         filteredVisits.forEach(v => {
-            let hasItems = false;
             let vDate = v.date || '1970-01-01';
             let vName = v.name || '';
             let vHn = v.hn || '';
             
-            if(v.hd_dialysate_item && v.hd_dialysate_qty) { addItem(vDate, vName, vHn, v.hd_dialysate_item, v.hd_dialysate_qty, 'med'); hasItems = true; }
-            if(v.hd_saline_item && v.hd_saline_qty) { addItem(vDate, vName, vHn, v.hd_saline_item, v.hd_saline_qty, 'med'); hasItems = true; }
-            if(v.hd_heparin_item && v.hd_heparin_qty) { addItem(vDate, vName, vHn, v.hd_heparin_item, v.hd_heparin_qty, 'med'); hasItems = true; }
+            if(v.hd_dialysate_item && v.hd_dialysate_qty) { addItem(vDate, vName, vHn, v.hd_dialysate_item, v.hd_dialysate_qty, 'med'); }
+            if(v.hd_dialysate_item_2 && v.hd_dialysate_qty_2) { addItem(vDate, vName, vHn, v.hd_dialysate_item_2, v.hd_dialysate_qty_2, 'med'); }
+            if(v.hd_saline_item && v.hd_saline_qty) { addItem(vDate, vName, vHn, v.hd_saline_item, v.hd_saline_qty, 'med'); }
+            if(v.hd_heparin_item && v.hd_heparin_qty) { addItem(vDate, vName, vHn, v.hd_heparin_item, v.hd_heparin_qty, 'med'); }
             
             let oMeds = this.parseFBArray(v.other_meds);
             oMeds.forEach(m => {
-                if(m && (m.id || m.name) && m.qty) { addItem(vDate, vName, vHn, m.id || m.name, m.qty, 'med'); hasItems = true; }
+                if(m && (m.id || m.name) && m.qty) { addItem(vDate, vName, vHn, m.id || m.name, m.qty, 'med'); }
             });
 
             let xRays = this.parseFBArray(v.xray_list);
             xRays.forEach(x => {
-                if(x && (x.id || x.name) && x.qty) { addItem(vDate, vName, vHn, x.id || x.name, x.qty, 'xray'); hasItems = true; }
+                if(x && (x.id || x.name) && x.qty) { addItem(vDate, vName, vHn, x.id || x.name, x.qty, 'xray'); }
             });
 
-            if(hasItems) totalTransactions++;
+            totalTransactions++;
         });
 
         let medsAggregated = Array.from(medsMap.values()).sort((a, b) => b.qty - a.qty);
@@ -489,10 +534,10 @@ class UsageStatisticsComponent {
         if (allAggregated.length > 0 && topItemEl && topItemQtyEl) {
             topItemEl.innerText = allAggregated[0].name;
             topItemEl.title = allAggregated[0].name;
-            topItemQtyEl.innerText = `จำนวน ${allAggregated[0].qty.toLocaleString()} หน่วย`;
+            topItemQtyEl.innerHTML = `<i class="fa-solid fa-arrow-trend-up me-1"></i> จำนวน ${allAggregated[0].qty.toLocaleString()} หน่วย`;
         } else if (topItemEl && topItemQtyEl) {
             topItemEl.innerText = '-';
-            topItemQtyEl.innerText = 'จำนวน 0 หน่วย';
+            topItemQtyEl.innerHTML = `<i class="fa-solid fa-arrow-trend-up me-1"></i> จำนวน 0 หน่วย`;
         }
 
         this.renderSummaryTable('us-meds-table-body', 'us-meds-total', medsAggregated, 'ยาและน้ำยา');
@@ -517,7 +562,7 @@ class UsageStatisticsComponent {
                 <tr class="fade-in-up" style="animation-delay: ${(index % 10) * 0.02}s">
                     <td class="text-center text-muted fw-bold small">${index + 1}</td>
                     <td><div class="fw-bold text-dark text-truncate" style="font-size: 14px; max-width: 200px;" title="${this.escapeHTML(item.name)}">${this.escapeHTML(item.name)}</div></td>
-                    <td class="text-end text-secondary small">฿${item.unitPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    <td class="text-end text-muted small">฿${item.unitPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                     <td class="text-center fw-bold text-primary">${item.qty.toLocaleString()}</td>
                     <td class="text-end pe-3 fw-bold text-success">฿${item.totalValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                 </tr>`;
@@ -544,11 +589,11 @@ class UsageStatisticsComponent {
             tableHtml += `
             <tr class="fade-in-up" style="animation-delay: ${(index % 15) * 0.015}s">
                 <td class="text-center text-muted fw-bold" style="font-size:13px;">${new Date(log.date).toLocaleDateString('th-TH')}</td>
-                <td class="text-center text-secondary fw-bold" style="font-size:13px;">${this.escapeHTML(log.patientHn)}</td>
+                <td class="text-center text-muted fw-bold" style="font-size:13px;">${this.escapeHTML(log.patientHn)}</td>
                 <td><div class="fw-bold text-dark text-truncate" style="font-size:14px; max-width: 180px;">${this.escapeHTML(log.patientName)}</div></td>
                 <td><div class="fw-bold text-dark text-truncate" style="font-size:14px; max-width: 220px;" title="${this.escapeHTML(log.itemName)}">${this.escapeHTML(log.itemName)}</div></td>
                 <td class="text-center"><span class="soft-badge ${badgeClass}">${log.category}</span></td>
-                <td class="text-end text-secondary small">฿${log.unitPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                <td class="text-end text-muted small">฿${log.unitPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                 <td class="text-center fw-bold text-primary">${log.qty.toLocaleString()}</td>
                 <td class="text-end pe-3 fw-bold text-success">฿${log.totalValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
             </tr>`;
@@ -574,10 +619,17 @@ class UsageStatisticsComponent {
         
         const ctx = canvas.getContext('2d');
         
-        // Gradient แบบหรูหรา
         let gradient = ctx.createLinearGradient(0, 0, 0, 400);
         gradient.addColorStop(0, 'rgba(59, 130, 246, 0.8)');
         gradient.addColorStop(1, 'rgba(37, 99, 235, 0.3)');
+
+        // 🚨 THE FIX: Dynamic CSS Variables Fetching for Dark Mode
+        let themeTextColor = getComputedStyle(document.documentElement).getPropertyValue('--text-dark').trim();
+        let themeGridColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim();
+        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        
+        if (!themeTextColor) themeTextColor = isDark ? '#f8fafc' : '#334155';
+        if (!themeGridColor) themeGridColor = isDark ? '#334155' : 'rgba(0,0,0,0.04)';
 
         this.state.chartInstance = new Chart(ctx, {
             type: 'bar',
@@ -609,8 +661,8 @@ class UsageStatisticsComponent {
                     }
                 },
                 scales: {
-                    x: { grid: { display: false }, ticks: { font: { family: 'Prompt', size: 11, weight: 'bold' }, color: '#64748b' } },
-                    y: { grid: { color: 'rgba(0,0,0,0.04)', drawBorder: false }, ticks: { font: { family: 'Prompt', weight: 'bold' }, color: '#94a3b8' } }
+                    x: { grid: { display: false }, ticks: { font: { family: 'Prompt', size: 11, weight: 'bold' }, color: themeTextColor } },
+                    y: { grid: { color: themeGridColor, drawBorder: false }, ticks: { font: { family: 'Prompt', weight: 'bold' }, color: themeTextColor } }
                 }
             }
         });
@@ -777,17 +829,14 @@ class UsageStatisticsComponent {
                 }
 
             } else {
-                // ==========================================
-                // รูปแบบที่ 2-4: แยกตาราง Aggregate ตามวัน/เดือน/ปี
-                // ==========================================
                 let flatData = [];
                 
                 this.state.visits.forEach(v => {
-                    if(!v.date) return;
+                    if(!v.date || v.status !== 'เสร็จสิ้น') return; // นับเฉพาะที่ฟอกเสร็จ
                     let timeKey = '';
-                    if(exportType === 'daily') timeKey = v.date; // 2023-10-15
-                    else if(exportType === 'monthly') timeKey = v.date.substring(0, 7); // 2023-10
-                    else if(exportType === 'yearly') timeKey = v.date.substring(0, 4); // 2023
+                    if(exportType === 'daily') timeKey = v.date; 
+                    else if(exportType === 'monthly') timeKey = v.date.substring(0, 7); 
+                    else if(exportType === 'yearly') timeKey = v.date.substring(0, 4); 
 
                     const extractItem = (idOrName, qtyStr, defType) => {
                         if(!idOrName) return;
@@ -801,7 +850,7 @@ class UsageStatisticsComponent {
                         let dictItem = this.masterDict.get(term);
                         if(dictItem) {
                             name = dictItem.name;
-                            price = dictItem.price;
+                            price = Number(dictItem.price) || 0;
                             cType = dictItem.type;
                         }
 
@@ -816,6 +865,7 @@ class UsageStatisticsComponent {
                     }
 
                     if(v.hd_dialysate_item && v.hd_dialysate_qty) extractItem(v.hd_dialysate_item, v.hd_dialysate_qty, 'med');
+                    if(v.hd_dialysate_item_2 && v.hd_dialysate_qty_2) extractItem(v.hd_dialysate_item_2, v.hd_dialysate_qty_2, 'med'); // เพิ่มน้ำยาช่อง 2
                     if(v.hd_saline_item && v.hd_saline_qty) extractItem(v.hd_saline_item, v.hd_saline_qty, 'med');
                     if(v.hd_heparin_item && v.hd_heparin_qty) extractItem(v.hd_heparin_item, v.hd_heparin_qty, 'med');
                     
@@ -826,7 +876,6 @@ class UsageStatisticsComponent {
                     xRays.forEach(x => { if(x && (x.id || x.name) && x.qty) extractItem(x.id || x.name, x.qty, 'xray'); });
                 });
 
-                // รวมยอดตาม TimeKey + ItemName
                 let aggMap = new Map();
                 flatData.forEach(d => {
                     let k = `${d.timeKey}_${d.name}`;
@@ -840,7 +889,6 @@ class UsageStatisticsComponent {
                 });
 
                 let finalAggData = Array.from(aggMap.values());
-                // Sort by timeKey descending (ใหม่ไปเก่า), then by totalValue descending
                 finalAggData.sort((a, b) => {
                     if(a.timeKey !== b.timeKey) return b.timeKey.localeCompare(a.timeKey);
                     return b.totalValue - a.totalValue;
@@ -850,12 +898,7 @@ class UsageStatisticsComponent {
                 const sheet = workbook.addWorksheet(sheetNameMap[exportType], { views: [{ showGridLines: false }] });
 
                 sheet.columns = [
-                    { width: 20 }, // A: Period
-                    { width: 15 }, // B: Category
-                    { width: 45 }, // C: Item Name
-                    { width: 18 }, // D: Unit Price
-                    { width: 15 }, // E: Qty
-                    { width: 25 }  // F: Total Value
+                    { width: 20 }, { width: 15 }, { width: 45 }, { width: 18 }, { width: 15 }, { width: 25 }  
                 ];
 
                 sheet.mergeCells('A1:F1');
@@ -892,7 +935,6 @@ class UsageStatisticsComponent {
                 }
             }
 
-            // ดาวน์โหลดไฟล์ Excel ออกมา
             const buffer = await workbook.xlsx.writeBuffer();
             const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             const link = document.createElement('a');

@@ -1,5 +1,5 @@
 // js/pages/auto_purge_service.js
-// 🚀 Enterprise FinOps Engine V4.0: Quantum Distributed Auto-Purge Service
+// 🚀 Enterprise FinOps Engine V4.1: Quantum Distributed Auto-Purge Service
 // ระบบกวาดล้างข้อมูลอัจฉริยะ (7-Year Compliance) ป้องกัน Payload ล้น, ไร้อาการค้าง, และมี Audit Trail
 
 class FinOpsPurgeEngineService {
@@ -9,22 +9,34 @@ class FinOpsPurgeEngineService {
         this.CHUNK_SIZE = 500; // 🚨 ป้องกัน Firebase แฮงก์ หั่นส่งทีละ 500 รายการ
         this.LOCK_TIMEOUT_MINUTES = 30; // ถ้า Lock นานเกิน 30 นาทีถือว่าเครื่องพัง ให้ปลด Lock อัตโนมัติ
 
-        console.log("%c🌌 [FinOps Engine] V4.0 Quantum Purge Service Standby.", "color: #a855f7; font-weight: bold; font-size: 13px; text-shadow: 0 0 5px rgba(168,85,247,0.5);");
+        console.log("%c🌌 [FinOps Engine] V4.1 Quantum Purge Service Standby.", "color: #a855f7; font-weight: bold; font-size: 13px; text-shadow: 0 0 5px rgba(168,85,247,0.5);");
     }
 
     init() {
         // หน่วงเวลา 15 วินาที รอให้หน้าจออื่นๆ (Dashboard, Tables) โหลดและวาดเสร็จก่อน 100%
         setTimeout(() => {
-            this.tryAcquireLockAndPurge();
+            this.checkConnectivityAndPurge();
         }, 15000);
+    }
+
+    // 🌐 ตรวจสอบการเชื่อมต่อก่อนเริ่มงานใหญ่ ป้องกันข้อมูลพังกลางทาง
+    checkConnectivityAndPurge() {
+        if (typeof db === 'undefined') return;
+        
+        const connectedRef = db.ref(".info/connected");
+        connectedRef.once("value", (snap) => {
+            if (snap.val() === true) {
+                this.tryAcquireLockAndPurge();
+            } else {
+                console.warn("⚠️ [FinOps] Network Offline. เลื่อนการกวาดล้างข้อมูลออกไป");
+            }
+        });
     }
 
     // ============================================================================
     // 🔒 1. Advanced Distributed Lock (กันรันซ้อน + มีระบบแก้ Deadlock)
     // ============================================================================
     async tryAcquireLockAndPurge() {
-        if (typeof db === 'undefined') return;
-
         const todayDate = new Date().toISOString().split('T')[0];
         const currentTime = new Date().getTime();
         const lockRef = db.ref('system_metadata/finops_purge_lock');
@@ -102,6 +114,7 @@ class FinOpsPurgeEngineService {
         try {
             // 🛡️ 2.1 กวาดล้างแฟ้มผู้ป่วย (Patient Records)
             const pSnap = await db.ref('patients_database_v2/patients').once('value');
+            
             if (pSnap.exists()) {
                 const patients = pSnap.val();
                 let updates = {};
@@ -110,12 +123,12 @@ class FinOpsPurgeEngineService {
                 const entries = Object.entries(patients);
                 for (let i = 0; i < entries.length; i++) {
                     const [patientId, p] = entries[i];
-                    if (!p) continue;
+                    if (!p || typeof p !== 'object') continue;
                     
                     let needsUpdate = false;
 
                     // ผู้ป่วยจำหน่าย/เสียชีวิต เกิน 7 ปี
-                    if ((p.status || 'ปกติ') !== 'ปกติ') {
+                    if (p.status && p.status !== 'ปกติ') {
                         let recordDate = new Date(p.last_updated || p.register_date || "2000-01-01").getTime();
                         if (recordDate < cutoffTime) {
                             updates[`${patientId}`] = null;
@@ -150,22 +163,24 @@ class FinOpsPurgeEngineService {
                     // 🚨 CHUNKING: ถ้าครบโควต้า ให้ส่งคำสั่งลบ แล้วล้างตะกร้า ป้องกัน Payload Too Large
                     if (updateCount >= this.CHUNK_SIZE) {
                         await db.ref('patients_database_v2/patients').update(updates);
-                        updates = {};
+                        updates = {}; // ล้าง Memory
                         updateCount = 0;
                         await this.yieldThread(); // 🌬️ ให้เบราว์เซอร์หายใจ
                     }
 
-                    // 🌬️ YIELDING: ทุกๆ 100 ลูป ให้ปล่อย Main Thread ไปวาดหน้าจอ (ป้องกันหน้าจอค้าง)
-                    if (i % 100 === 0) await this.yieldThread();
+                    // 🌬️ YIELDING: ทุกๆ 50 ลูป ให้ปล่อย Main Thread ไปวาดหน้าจอ (ป้องกันหน้าจอค้าง 60fps)
+                    if (i % 50 === 0) await this.yieldThread();
                 }
 
                 // ส่งของที่เหลือในตะกร้า
                 if (Object.keys(updates).length > 0) {
                     await db.ref('patients_database_v2/patients').update(updates);
+                    updates = null; // ช่วย Garbage Collector
                 }
             }
 
             // 🛡️ 2.2 กวาดล้างข้อมูล Transaction (Queue, Stock, Finance)
+            // Query ด้วย Firebase Engine (ทำงาน O(log N) เร็วและไม่เปลือง RAM)
             stats.visits = await this.purgeNodeChunked('patients_database_v2/visits', 'date', cutoffStrDate);
             stats.inventory = await this.purgeNodeChunked('inventory_database_v2/transactions', 'timestamp', cutoffStrISO);
             stats.expenses = await this.purgeNodeChunked('clinic_expenses_v2', 'date', cutoffStrDate);
@@ -196,7 +211,6 @@ class FinOpsPurgeEngineService {
             let count = 0;
             let totalProcessed = 0;
 
-            // ไม่ใช้ forEach ตรงๆ เพราะเราต้องการใช้ await ข้างใน
             const nodes = [];
             snap.forEach(child => { nodes.push(child.key); });
 
@@ -220,7 +234,9 @@ class FinOpsPurgeEngineService {
                 await db.ref(path).update(updates);
             }
 
-        } catch (e) { console.error(`Failed to purge ${path}:`, e); }
+        } catch (e) { 
+            console.error(`Failed to purge ${path}:`, e); 
+        }
         
         return deletedCount;
     }
@@ -268,9 +284,16 @@ class FinOpsPurgeEngineService {
         }
     }
 
-    // 🌬️ Thread Yielding: หลอกเบราว์เซอร์ให้สลับไปทำงานอื่น (เช่น วาดหน้าจอ) 0 มิลลิวินาที
+    // 🌬️ Quantum Thread Yielding: คืนลมหายใจให้ 60fps UI
     yieldThread() {
-        return new Promise(resolve => setTimeout(resolve, 0));
+        return new Promise(resolve => {
+            // ใช้ requestIdleCallback ถ้ามี (เนียนตาสุดๆ) หรือ Fallback ไป setTimeout
+            if (typeof window.requestIdleCallback === 'function') {
+                window.requestIdleCallback(() => resolve());
+            } else {
+                setTimeout(resolve, 0);
+            }
+        });
     }
 }
 

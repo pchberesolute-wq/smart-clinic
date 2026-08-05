@@ -1,10 +1,11 @@
 // js/pages/patients.js
-// 🚀 Enterprise Patients Module: Dynamic Theme Rendering, Allergy Alert & Excel Pro (v9.3 FULL)
+// 🚀 Enterprise Patients Module: Dynamic Print Engine, A-Z Sorting & Multi-Filter (v10.0 FULL)
 
 class PatientsPageComponent {
     constructor() {
         this.state = {
             allData: [], 
+            filteredData: [], // 🚨 THE FIX: จำข้อมูลที่กำลังกรองอยู่บนจอเพื่อส่งไปปรินท์
             clinicRights: [],
             isScanningModalOpen: false
         };
@@ -18,21 +19,21 @@ class PatientsPageComponent {
             <style>
                 .safe-icon { font-family: 'Font Awesome 6 Free', 'FontAwesome', sans-serif !important; font-weight: 900 !important; font-style: normal !important; }
                 
-                /* 🚨 THE FIX: สถาปัตยกรรมสี Dynamic Theme สำหรับป้าย (Badges) */
+                /* สถาปัตยกรรมสี Dynamic Theme สำหรับป้าย (Badges) */
                 .badge-status-active { background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.2); }
                 .badge-infect-safe { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
                 .badge-infect-warn { background: rgba(245,158,11,0.1); color: #d97706; border: 1px solid rgba(245,158,11,0.2); }
                 .badge-infect-danger { background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
                 .badge-allergy { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
 
-                /* 🚨 Dark Mode Badges Override */
+                /* Dark Mode Badges Override */
                 html[data-bs-theme="dark"] .badge-status-active { background: rgba(16,185,129,0.15); color: #34d399; border-color: rgba(16,185,129,0.3); }
                 html[data-bs-theme="dark"] .badge-infect-safe { background: rgba(255,255,255,0.05); color: #94a3b8; border-color: rgba(255,255,255,0.1); }
                 html[data-bs-theme="dark"] .badge-infect-warn { background: rgba(245,158,11,0.15); color: #fbbf24; border-color: rgba(245,158,11,0.3); }
                 html[data-bs-theme="dark"] .badge-infect-danger { background: rgba(239,68,68,0.15); color: #f87171; border-color: rgba(239,68,68,0.3); }
                 html[data-bs-theme="dark"] .badge-allergy { background: rgba(239,68,68,0.15); color: #fca5a5; border-color: rgba(239,68,68,0.3); }
 
-                /* 🚨 THE FIX: สถาปัตยกรรมสี Dynamic Theme สำหรับปุ่มจัดการ (Action Buttons) */
+                /* สถาปัตยกรรมสี Dynamic Theme สำหรับปุ่มจัดการ (Action Buttons) */
                 .btn-action-icon { width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; transition: all 0.2s ease; }
                 
                 .btn-action-emr { background: rgba(37,99,235,0.1); color: #2563eb; border: 1px solid rgba(37,99,235,0.2); }
@@ -53,28 +54,33 @@ class PatientsPageComponent {
                 .btn-action-icon:hover { filter: brightness(0.9); transform: translateY(-2px); }
                 html[data-bs-theme="dark"] .btn-action-icon:hover { filter: brightness(1.2); }
                 
-                /* 🚨 NEW: ล็อกความสูงตาราง ให้ Scroll ภายใน ไม่ยืดดันหน้าจอ */
+                /* ล็อกความสูงตาราง ให้ Scroll ภายใน ไม่ยืดดันหน้าจอ */
                 .pt-table-container {
-                    max-height: calc(100vh - 260px); /* คำนวณหักลบพื้นที่ส่วนหัว Header */
-                    min-height: 400px;
+                    max-height: calc(100vh - 320px); 
+                    min-height: 350px;
                     overflow-y: auto;
                     overflow-x: auto;
                 }
                 
-                /* ปรับแต่ง Scrollbar ให้ดูหรูหรา (FinOps/UX Optimization) */
                 .pt-table-container::-webkit-scrollbar { width: 6px; height: 6px; }
                 .pt-table-container::-webkit-scrollbar-track { background: transparent; }
                 .pt-table-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
                 html[data-bs-theme="dark"] .pt-table-container::-webkit-scrollbar-thumb { background: #475569; }
                 
-                /* ตรึงหัวตาราง (Sticky Header) ไม่ให้เลื่อนตามตอน Scroll ลงมา */
                 .table-premium thead th {
                     position: sticky;
                     top: 0;
                     z-index: 10;
                     background-color: var(--bg-surface) !important;
-                    box-shadow: inset 0 -2px 0 var(--border-color); /* ใช้แทน border-bottom เพื่อให้คงอยู่ตอน Scroll */
+                    box-shadow: inset 0 -2px 0 var(--border-color); 
                 }
+
+                /* Custom Checkbox สำหรับ Print Modal */
+                .print-checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+                .print-cb-card { border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 15px; display: flex; align-items: center; cursor: pointer; transition: 0.2s; background: var(--bg-surface); }
+                .print-cb-card:hover { border-color: var(--primary); background: rgba(59,130,246,0.05); }
+                .print-cb-card input { margin-right: 10px; transform: scale(1.2); cursor: pointer; }
+                .print-cb-card label { margin: 0; cursor: pointer; font-weight: bold; color: var(--text-dark); width: 100%; }
             </style>
             
             <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 fade-in-up">
@@ -88,26 +94,59 @@ class PatientsPageComponent {
                     <p class="text-muted mt-2 mb-0 fw-bold" id="pt-count-text">กำลังซิงค์ข้อมูลจากระบบคลาวด์...</p>
                 </div>
                 <div class="d-flex gap-2 align-items-center flex-wrap">
-                    <div class="search-box-modern shadow-sm" style="width: 320px; transition: all 0.3s ease; border: 2px solid transparent;">
+                    <div class="search-box-modern shadow-sm" style="width: 250px; transition: all 0.3s ease; border: 2px solid transparent;">
                         <i class="fa-solid fa-search text-primary safe-icon"></i>
                         <input type="text" id="ptSearch" class="border-0 bg-transparent ms-2 w-100 fw-bold text-dark" placeholder="ค้นหา HN, ชื่อ, เลข ปชช..." style="outline: none; font-family:'Prompt';">
                     </div>
-                    <button class="btn btn-success fw-bold shadow-sm rounded-pill px-4 text-white card-hover-float" onclick="App.pages.patients.openExportModal()" title="ส่งออกทะเบียนผู้ป่วย">
-                        <i class="fa-solid fa-file-excel fa-lg me-2 safe-icon"></i> Export Excel
+                    
+                    <!-- 🚨 THE FIX: เพิ่มปุ่ม Print ถัดจาก Export Excel -->
+                    <button class="btn fw-bold shadow-sm rounded-pill px-3 text-white card-hover-float" style="background-color: #0ea5e9;" onclick="App.pages.patients.openPrintListModal()" title="พิมพ์รายชื่อผู้ป่วย">
+                        <i class="fa-solid fa-print fa-lg me-1 safe-icon"></i> พิมพ์
                     </button>
-                    <button class="btn btn-dark fw-bold shadow-sm rounded-pill px-4 text-white card-hover-float" onclick="App.pages.patients.openScanner()" title="สแกนบัตรผู้ป่วย">
-                        <i class="fa-solid fa-barcode fa-lg me-2 text-warning safe-icon"></i> สแกนบาร์โค้ด
+
+                    <button class="btn btn-success fw-bold shadow-sm rounded-pill px-3 text-white card-hover-float" onclick="App.pages.patients.openExportModal()" title="ส่งออกทะเบียนผู้ป่วย">
+                        <i class="fa-solid fa-file-excel fa-lg me-1 safe-icon"></i> Excel
                     </button>
+
+                    <button class="btn btn-dark fw-bold shadow-sm rounded-pill px-3 text-white card-hover-float" onclick="App.pages.patients.openScanner()" title="สแกนบัตรผู้ป่วย">
+                        <i class="fa-solid fa-barcode fa-lg me-1 text-warning safe-icon"></i> สแกน
+                    </button>
+                    
                     <button class="btn btn-premium btn-premium-primary px-4 card-hover-float" onclick="App.pages.patients.openAddForm()">
                         <i class="fas fa-user-plus me-2 safe-icon"></i> ลงทะเบียนใหม่
                     </button>
                 </div>
             </div>
             
+            <div class="modern-panel shadow-sm p-3 mb-4 position-relative z-1 fade-in-up" style="border-radius: 16px; background-color: var(--bg-surface); border: 1px solid var(--border-color); animation-delay: 0.05s;">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-auto">
+                        <div class="fw-bold text-secondary small"><i class="fa-solid fa-filter me-1 safe-icon"></i> กรองข้อมูล:</div>
+                    </div>
+                    <div class="col-md">
+                        <select id="flt-shift" class="form-select form-select-sm fw-bold input-modern shadow-sm" onchange="App.pages.patients.applyFilters()">
+                            <option value="">เวรประจำ (ทั้งหมด)</option>
+                        </select>
+                    </div>
+                    <div class="col-md">
+                        <select id="flt-right" class="form-select form-select-sm fw-bold input-modern shadow-sm" onchange="App.pages.patients.applyFilters()">
+                            <option value="">สิทธิการรักษา (ทั้งหมด)</option>
+                        </select>
+                    </div>
+                    <div class="col-md">
+                        <select id="flt-infect" class="form-select form-select-sm fw-bold input-modern shadow-sm" onchange="App.pages.patients.applyFilters()">
+                            <option value="">โรคติดเชื้อ (ทั้งหมด)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-auto">
+                        <button class="btn btn-sm btn-light text-danger fw-bold rounded-pill shadow-sm px-3" onclick="App.pages.patients.resetFilters()"><i class="fa-solid fa-rotate-left me-1 safe-icon"></i> ล้างค่า</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="modern-panel shadow-sm p-4 position-relative overflow-hidden fade-in-up" style="animation-delay: 0.1s; display: flex; flex-direction: column;">
                 <div style="position: absolute; top: -30px; right: -30px; opacity: 0.02; font-size: 300px; pointer-events: none;"><i class="fa-solid fa-users-medical safe-icon"></i></div>
                 
-                <!-- 🚨 THE FIX: นำคลาส pt-table-container มาครอบตารางเพื่อจัดการ Scroll -->
                 <div class="table-responsive pt-table-container bg-white rounded-4 border position-relative z-1 shadow-sm pb-2" style="background-color: var(--bg-surface) !important; border-color: var(--border-color) !important;">
                     <table class="table table-premium w-100 mb-0">
                         <thead>
@@ -156,6 +195,210 @@ class PatientsPageComponent {
         this.firebaseListeners = [];
         this.stopCameraScanner(); 
     }
+
+    // -------------------------------------------------------------------------
+    // 🚨 THE FIX: ระบบ Dynamic Print Generator (พิมพ์แบบเลือกคอลัมน์ + เรียง ก-ฮ)
+    // -------------------------------------------------------------------------
+    openPrintListModal() {
+        // อิงข้อมูลที่พยาบาลกำลังดูอยู่ (Filtered Data)
+        if (this.state.filteredData.length === 0) {
+            Swal.fire('ตารางว่างเปล่า', 'ไม่มีข้อมูลผู้ป่วยตามเงื่อนไขที่เลือก กรุณายกเลิกตัวกรองก่อนครับ', 'warning');
+            return;
+        }
+
+        let modalHtml = `
+            <div class="text-start" style="font-family:'Sarabun';">
+                
+                <div class="mb-3 p-3 rounded-3" style="background: rgba(14,165,233,0.05); border: 1px solid rgba(14,165,233,0.2);">
+                    <label class="form-label fw-bold text-dark mb-2"><i class="fa-solid fa-arrow-down-a-z me-1 text-primary"></i> 1. การจัดเรียงรายชื่อ (Sorting):</label>
+                    <select id="swal-print-sort" class="form-select fw-bold shadow-sm" style="border-radius: 8px;">
+                        <option value="hn">เรียงตามรหัส HN (ค่าเริ่มต้น)</option>
+                        <option value="az">เรียงตามตัวอักษรชื่อ (ก-ฮ / A-Z)</option>
+                    </select>
+                </div>
+
+                <label class="form-label fw-bold text-dark mt-2"><i class="fa-solid fa-table-columns me-1 text-primary"></i> 2. เลือกคอลัมน์ที่ต้องการพิมพ์:</label>
+                <div class="print-checkbox-grid">
+                    <div class="print-cb-card" style="background: #f1f5f9; border-color: #cbd5e1; opacity: 0.8;">
+                        <input type="checkbox" value="hn" id="cb-hn" checked disabled>
+                        <label for="cb-hn" class="text-muted">รหัส HN (บังคับ)</label>
+                    </div>
+                    <div class="print-cb-card" style="background: #f1f5f9; border-color: #cbd5e1; opacity: 0.8;">
+                        <input type="checkbox" value="name" id="cb-name" checked disabled>
+                        <label for="cb-name" class="text-muted">ชื่อ-นามสกุล (บังคับ)</label>
+                    </div>
+                    
+                    <div class="print-cb-card" onclick="document.getElementById('cb-age').click()"><input type="checkbox" value="age" id="cb-age" class="print-col-cb" onclick="event.stopPropagation()"><label for="cb-age">อายุ</label></div>
+                    <div class="print-cb-card" onclick="document.getElementById('cb-right').click()"><input type="checkbox" value="right" id="cb-right" class="print-col-cb" onclick="event.stopPropagation()" checked><label for="cb-right">สิทธิการรักษา</label></div>
+                    <div class="print-cb-card" onclick="document.getElementById('cb-shift').click()"><input type="checkbox" value="shift" id="cb-shift" class="print-col-cb" onclick="event.stopPropagation()" checked><label for="cb-shift">รอบเวร</label></div>
+                    <div class="print-cb-card" onclick="document.getElementById('cb-phone').click()"><input type="checkbox" value="phone" id="cb-phone" class="print-col-cb" onclick="event.stopPropagation()" checked><label for="cb-phone">เบอร์โทรติดต่อ</label></div>
+                    <div class="print-cb-card" onclick="document.getElementById('cb-inf').click()"><input type="checkbox" value="infection" id="cb-inf" class="print-col-cb" onclick="event.stopPropagation()"><label for="cb-inf">โรคติดต่อ</label></div>
+                    <div class="print-cb-card" onclick="document.getElementById('cb-all').click()"><input type="checkbox" value="allergy" id="cb-all" class="print-col-cb" onclick="event.stopPropagation()"><label for="cb-all">ประวัติแพ้ยา</label></div>
+                    <div class="print-cb-card" onclick="document.getElementById('cb-id').click()" style="grid-column: span 2;"><input type="checkbox" value="idcard" id="cb-id" class="print-col-cb" onclick="event.stopPropagation()"><label for="cb-id">เลขประจำตัว ปชช.</label></div>
+                </div>
+            </div>
+        `;
+
+        Swal.fire({
+            title: '<h4 class="fw-bold text-info mb-0" style="font-family:\'Prompt\';"><i class="fa-solid fa-print me-2 safe-icon"></i> พิมพ์รายชื่อผู้ป่วย</h4>',
+            html: modalHtml,
+            showCancelButton: true,
+            confirmButtonText: '<i class="fa-solid fa-print me-1 safe-icon"></i> สร้างเอกสารพิมพ์',
+            cancelButtonText: 'ยกเลิก',
+            confirmButtonColor: '#0ea5e9',
+            customClass: { popup: 'premium-alert' },
+            preConfirm: () => {
+                const sortType = document.getElementById('swal-print-sort').value;
+                const checkboxes = document.querySelectorAll('.print-col-cb:checked');
+                const selectedCols = ['hn', 'name']; // บังคับ 2 อันแรกเสมอ
+                checkboxes.forEach(cb => selectedCols.push(cb.value));
+                return { sort: sortType, cols: selectedCols };
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.executePrintList(result.value);
+            }
+        });
+    }
+
+    async executePrintList(config) {
+        Swal.fire({ title: 'กำลังเตรียมหน้ากระดาษ...', text: 'ระบบกำลังจัดเรียงข้อมูลตามที่คุณเลือก', allowOutsideClick: false, didOpen: () => Swal.showLoading(), customClass: { popup: 'premium-alert' } });
+
+        // 1. เรียงลำดับข้อมูล (Sorting logic)
+        let printData = [...this.state.filteredData]; // ใช้ข้อมูลที่ Filter แล้วบนหน้าจอ
+        if (config.sort === 'az') {
+            printData.sort((a, b) => (a.name_th || '').localeCompare(b.name_th || '', 'th')); // เรียง ก-ฮ ตามหลักภาษาไทย
+        } else {
+            printData.sort((a, b) => (a.hn || '').localeCompare(b.hn || '')); // เรียงตาม HN
+        }
+
+        // 2. เตรียมโครงสร้าง Column Title
+        const colMap = {
+            'hn': { title: 'HN', width: '10%' },
+            'name': { title: 'ชื่อ - นามสกุล', width: '25%' },
+            'age': { title: 'อายุ', width: '8%' },
+            'right': { title: 'สิทธิการรักษา', width: '15%' },
+            'shift': { title: 'รอบเวร', width: '10%' },
+            'phone': { title: 'เบอร์โทรศัพท์', width: '12%' },
+            'infection': { title: 'โรคติดต่อ', width: '10%' },
+            'allergy': { title: 'ประวัติแพ้ยา', width: '15%' },
+            'idcard': { title: 'เลข ปชช.', width: '15%' }
+        };
+
+        let theadHtml = '';
+        config.cols.forEach(c => {
+            theadHtml += `<th style="width: ${colMap[c].width};">${colMap[c].title}</th>`;
+        });
+
+        // 3. เตรียมข้อมูลแต่ละแถว
+        let tbodyHtml = '';
+        printData.forEach((p, index) => {
+            tbodyHtml += '<tr>';
+            
+            // วนตามคอลัมน์ที่ติ๊กเลือก
+            config.cols.forEach(c => {
+                let val = '-';
+                if (c === 'hn') val = p.hn || '-';
+                if (c === 'name') val = `${p.title || ''}${p.name_th || '-'}`;
+                if (c === 'age') val = p.age || '-';
+                if (c === 'right') val = p.right || '-';
+                if (c === 'shift') val = p.shift || '-';
+                if (c === 'phone') val = p.phone || '-';
+                if (c === 'infection') val = (p.infection && p.infection !== 'ไม่มี') ? p.infection : '-';
+                if (c === 'allergy') val = p.allergy || '-';
+                if (c === 'idcard') val = this.#formatIdCardDisplay(p.idcard || p.cid || '');
+
+                // เติมสีให้ข้อความเพื่อความชัดเจน
+                let textColor = '#1e293b';
+                if(c === 'infection' && val !== '-') textColor = '#dc2626; font-weight:bold;';
+                if(c === 'allergy' && val !== '-') textColor = '#b91c1c; font-weight:bold;';
+                if(c === 'hn') textColor = '#2563eb; font-weight:bold;';
+
+                tbodyHtml += `<td style="color: ${textColor}">${this.#escapeHTML(val)}</td>`;
+            });
+            tbodyHtml += '</tr>';
+        });
+
+        // 4. ประกอบร่าง HTML Document สำหรับ Print
+        const htmlContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>พิมพ์รายชื่อผู้ป่วย</title>
+                <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
+                <style>
+                    /* สั่งให้เครื่องปรินท์ใช้กระดาษ A4 แนวนอน (Landscape) เพื่อให้พิมพ์คอลัมน์ได้เยอะๆ ไม่ตกขอบ */
+                    @page { size: A4 landscape; margin: 12mm; } 
+                    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; box-sizing: border-box !important; }
+                    body { background: #fff !important; margin: 0 !important; padding: 0 !important; font-family: 'Sarabun', sans-serif; color: #0f172a; }
+                    
+                    .header-title { text-align: center; font-family: 'Prompt'; font-size: 20px; font-weight: 800; color: #1e3a8a; margin: 0 0 5px 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+                    .header-meta { text-align: center; font-size: 13px; color: #64748b; margin-bottom: 20px; }
+                    
+                    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+                    th { background-color: #f1f5f9 !important; color: #334155; font-family: 'Prompt'; font-weight: 700; text-align: left; padding: 8px 10px; border: 1px solid #cbd5e1; }
+                    td { padding: 6px 10px; border: 1px solid #cbd5e1; vertical-align: top; }
+                    tbody tr:nth-child(even) td { background-color: #f8fafc !important; }
+                </style>
+            </head>
+            <body>
+                <h1 class="header-title">รายงานรายชื่อผู้ป่วย (Patient Directory)</h1>
+                <div class="header-meta">
+                    ข้อมูล ณ วันที่: ${new Date().toLocaleDateString('th-TH')} | จำนวนทั้งหมด: ${printData.length} ราย<br>
+                    การจัดเรียง: ${config.sort === 'az' ? 'ตามตัวอักษร ก-ฮ' : 'ตามเลข HN'}
+                </div>
+                
+                <table>
+                    <thead>
+                        <tr>${theadHtml}</tr>
+                    </thead>
+                    <tbody>
+                        ${tbodyHtml}
+                    </tbody>
+                </table>
+
+                <script>
+                    window.onload = function() {
+                        setTimeout(function() {
+                            window.parent.postMessage('printListReady', '*');
+                        }, 500);
+                    };
+                </script>
+            </body>
+            </html>
+        `;
+
+        // 5. ปล่อยเอกสารเข้า Iframe
+        let oldIframe = document.getElementById('print-list-iframe');
+        if (oldIframe) oldIframe.remove();
+
+        let iframe = document.createElement('iframe');
+        iframe.id = 'print-list-iframe';
+        iframe.style.cssText = 'position: absolute; width: 0; height: 0; border: 0; visibility: hidden; z-index: -1; left: -9999px;';
+        document.body.appendChild(iframe);
+
+        const handlePrintMessage = (event) => {
+            if (event.data === 'printListReady') {
+                window.removeEventListener('message', handlePrintMessage);
+                Swal.close();
+                setTimeout(() => {
+                    try {
+                        iframe.contentWindow.focus();
+                        iframe.contentWindow.print();
+                    } catch(e) { console.error("Print Failed:", e); }
+                    setTimeout(() => iframe.remove(), 60000); 
+                }, 300);
+            }
+        };
+        window.addEventListener('message', handlePrintMessage);
+
+        let doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(htmlContent);
+        doc.close();
+    }
+    // -------------------------------------------------------------------------
 
     verifyDuplicateBeforeSave(hn, idcard, fullNameTh) {
         return new Promise((resolve) => {
@@ -226,13 +469,7 @@ class PatientsPageComponent {
             searchInput.addEventListener('input', (e) => {
                 clearTimeout(this.searchTimeout);
                 this.searchTimeout = setTimeout(() => {
-                    const term = e.target.value.toLowerCase().trim();
-                    const filtered = this.state.allData.filter(p => 
-                        (p.hn || "").toLowerCase().includes(term) || 
-                        (p.name_th || "").toLowerCase().includes(term) || 
-                        (p.idcard || "").toLowerCase().includes(term)
-                    );
-                    this.#renderTable(filtered);
+                    this.applyFilters();
                 }, 300); 
             });
         }
@@ -252,15 +489,9 @@ class PatientsPageComponent {
                 
                 this.state.allData = rawPatients.filter(p => p && typeof p === 'object' && (p.status || 'ปกติ') === 'ปกติ'); 
                 
-                const countText = document.getElementById('pt-count-text');
-                if (countText) countText.innerHTML = `<i class="fa-solid fa-users me-1 text-primary safe-icon"></i> พบรายชื่อผู้ป่วยในระบบ <b>${this.state.allData.length}</b> ราย`;
-                
-                const searchBox = document.getElementById('ptSearch');
-                if(searchBox && searchBox.value) {
-                    searchBox.dispatchEvent(new Event('input'));
-                } else {
-                    this.#renderTable(this.state.allData);
-                }
+                this.populateFilterDropdowns();
+                this.applyFilters();
+
             } catch (err) {
                 this.#renderErrorState('ข้อมูลเวชระเบียนมีปัญหา: ' + err.message);
             }
@@ -268,6 +499,80 @@ class PatientsPageComponent {
             this.#renderErrorState('ฐานข้อมูลปฏิเสธการเข้าถึง (Permission Denied)');
         });
         this.firebaseListeners.push({ path: 'patients_database_v2/patients', callback: cb });
+    }
+
+    populateFilterDropdowns() {
+        const shifts = new Set();
+        const rights = new Set();
+        const infects = new Set();
+
+        this.state.allData.forEach(p => {
+            if (p.shift && p.shift !== '-') shifts.add(p.shift);
+            if (p.right && p.right !== '-') rights.add(p.right);
+            if (p.infection && p.infection !== '-' && p.infection !== 'ไม่มี') infects.add(p.infection);
+        });
+
+        const buildOptions = (set, defaultText) => {
+            let html = `<option value="">${defaultText}</option>`;
+            Array.from(set).sort().forEach(val => {
+                html += `<option value="${this.#escapeHTML(val)}">${this.#escapeHTML(val)}</option>`;
+            });
+            return html;
+        };
+
+        const shiftEl = document.getElementById('flt-shift');
+        const rightEl = document.getElementById('flt-right');
+        const infectEl = document.getElementById('flt-infect');
+
+        const currShift = shiftEl ? shiftEl.value : '';
+        const currRight = rightEl ? rightEl.value : '';
+        const currInfect = infectEl ? infectEl.value : '';
+
+        if(shiftEl) { shiftEl.innerHTML = buildOptions(shifts, 'เวรประจำ (ทั้งหมด)'); shiftEl.value = currShift; }
+        if(rightEl) { rightEl.innerHTML = buildOptions(rights, 'สิทธิการรักษา (ทั้งหมด)'); rightEl.value = currRight; }
+        if(infectEl) { infectEl.innerHTML = buildOptions(infects, 'โรคติดเชื้อ (ทั้งหมด)'); infectEl.value = currInfect; }
+    }
+
+    resetFilters() {
+        const s = document.getElementById('ptSearch'); if(s) s.value = '';
+        const shift = document.getElementById('flt-shift'); if(shift) shift.value = '';
+        const right = document.getElementById('flt-right'); if(right) right.value = '';
+        const infect = document.getElementById('flt-infect'); if(infect) infect.value = '';
+        this.applyFilters();
+    }
+
+    applyFilters() {
+        const searchInput = document.getElementById('ptSearch');
+        const term = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        
+        const fltShift = document.getElementById('flt-shift') ? document.getElementById('flt-shift').value : '';
+        const fltRight = document.getElementById('flt-right') ? document.getElementById('flt-right').value : '';
+        const fltInfect = document.getElementById('flt-infect') ? document.getElementById('flt-infect').value : '';
+
+        const filtered = this.state.allData.filter(p => {
+            let matchText = true;
+            if (term) {
+                matchText = (p.hn || "").toLowerCase().includes(term) || 
+                            (p.name_th || "").toLowerCase().includes(term) || 
+                            (p.idcard || "").toLowerCase().includes(term);
+            }
+            
+            let matchShift = fltShift ? (p.shift === fltShift) : true;
+            let matchRight = fltRight ? (p.right === fltRight) : true;
+            let matchInfect = fltInfect ? (p.infection === fltInfect) : true;
+
+            return matchText && matchShift && matchRight && matchInfect;
+        });
+
+        // 🚨 อัปเดต state ตัวใหม่ เพื่อให้รู้ว่าตอนนี้หน้าจอกำลังกรองใครอยู่ จะได้เอาไป Print ได้ถูกต้อง!
+        this.state.filteredData = filtered;
+
+        this.#renderTable(filtered);
+        
+        const countText = document.getElementById('pt-count-text');
+        if (countText) {
+            countText.innerHTML = `<i class="fa-solid fa-users me-1 text-primary safe-icon"></i> พบรายชื่อผู้ป่วยที่ตรงเงื่อนไข <b>${filtered.length}</b> จาก <b>${this.state.allData.length}</b> ราย`;
+        }
     }
 
     #renderErrorState(msg) {
@@ -280,7 +585,7 @@ class PatientsPageComponent {
         if (!tbody) return;
 
         if (dataList.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fa-regular fa-folder-open fa-3x mb-3 safe-icon" style="opacity:0.2;"></i><br><h6 class="fw-bold mt-2">ไม่พบข้อมูลผู้ป่วยในระบบ</h6></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fa-regular fa-folder-open fa-3x mb-3 safe-icon" style="opacity:0.2;"></i><br><h6 class="fw-bold mt-2">ไม่พบข้อมูลผู้ป่วยที่ตรงตามเงื่อนไข</h6></td></tr>';
             return;
         }
 
@@ -288,7 +593,6 @@ class PatientsPageComponent {
 
         let html = "";
         dataList.forEach(p => {
-            // 🚨 THE FIX: เปลี่ยนมาใช้คลาส CSS ที่เราออกแบบไว้สำหรับ Theme Switcher แทน Inline Styles
             let statusBadge = '<span class="badge badge-status-active px-3 py-2 rounded-pill shadow-sm" style="font-size:12px;"><i class="fa-solid fa-check-circle me-1 safe-icon"></i> ปกติ (Active)</span>';
             
             let infHtml = '<span class="badge badge-infect-safe px-3 py-2 rounded-pill shadow-sm" style="font-size:11px;">ปลอดภัย</span>';
@@ -297,6 +601,9 @@ class PatientsPageComponent {
             if (inf === "HCV") infHtml = '<span class="badge badge-infect-warn px-3 py-2 shadow-sm rounded-pill" style="font-size:11px;"><i class="fa-solid fa-virus me-1 safe-icon"></i> HCV +</span>';
             if (inf === "HIV") infHtml = '<span class="badge badge-infect-danger px-3 py-2 shadow-sm rounded-pill" style="font-size:11px;"><i class="fa-solid fa-virus me-1 safe-icon"></i> HIV +</span>';
             if (inf === "HBV") infHtml = '<span class="badge badge-infect-warn px-3 py-2 shadow-sm rounded-pill" style="font-size:11px;"><i class="fa-solid fa-virus me-1 safe-icon"></i> HBV +</span>';
+            if (inf !== "ไม่มี" && inf !== "-" && inf !== "HCV" && inf !== "HIV" && inf !== "HBV") {
+                infHtml = `<span class="badge badge-infect-danger px-3 py-2 shadow-sm rounded-pill" style="font-size:11px;"><i class="fa-solid fa-virus me-1 safe-icon"></i> ${this.#escapeHTML(inf)}</span>`;
+            }
 
             let allergyHtml = '';
             let allergyVal = (p.allergy || "").trim();
@@ -335,7 +642,6 @@ class PatientsPageComponent {
                 <td class="text-center" onclick="App.pages.patients.viewHistory('${p.hn}')">${statusBadge}</td>
                 <td class="text-center">
                     <div class="d-flex justify-content-center gap-2">
-                        <!-- 🚨 THE FIX: นำคลาสปุ่ม Theme Engine มาสวมให้ปุ่ม Action ทั้งหมด -->
                         <button class="btn btn-sm shadow-sm btn-action-icon btn-action-emr" onclick="event.stopPropagation(); App.pages.patients.viewHistory('${p.hn}')" title="แฟ้มประวัติ (EMR)"><i class="fa-solid fa-folder-open safe-icon"></i></button>
                         
                         <button class="btn btn-sm shadow-sm btn-action-icon btn-action-edit" onclick="event.stopPropagation(); App.pages.patients.editPatient('${p.firebaseKey}')" title="แก้ไขข้อมูล"><i class="fa-solid fa-pen safe-icon"></i></button>
@@ -501,7 +807,10 @@ class PatientsPageComponent {
     loadScannerLibrary(callback) {
         if (window.Html5Qrcode) { callback(); return; }
         const existingScript = document.querySelector('script[src*="html5-qrcode"]');
-        if (existingScript) { existingScript.addEventListener('load', () => callback()); return; }
+        if (existingScript) {
+            existingScript.addEventListener('load', () => callback());
+            return;
+        }
         Swal.showLoading();
         const script = document.createElement('script');
         script.src = 'https://unpkg.com/html5-qrcode';
@@ -978,7 +1287,6 @@ class PatientsPageComponent {
         return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
     }
 
-    // 🚨 THE FIX: ฟังก์ชันจัดฟอร์แมตเลขบัตรประชาชน (X-XXXX-XXXXX-XX-X)
     #formatIdCardDisplay(id) {
         if (!id) return '-';
         const clean = String(id).replace(/\D/g, ''); 
