@@ -1,5 +1,5 @@
 // js/pages/visits.js
-// 🚀 Enterprise Kanban Board Module: Flawless Syntax Restoration & Ultimate UX (v55.0 THE IMMORTAL)
+// 🚀 Enterprise Kanban Board Module: Native Framework Handshake & Context-Aware Delete (v62.0 THE PINNACLE)
 
 class VisitsPageComponent {
     #bindEventsHandler;
@@ -39,9 +39,15 @@ class VisitsPageComponent {
                 
                 /* Kanban Board Layout */
                 .kanban-board-container { display: flex; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 10px; gap: 1.5rem; }
-                .kanban-column { flex: 1; min-width: 320px; display: flex; flex-direction: column; background-color: var(--bg-surface); border-radius: 20px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); overflow: hidden; height: calc(100vh - 360px); min-height: 400px; }
+                .kanban-column { flex: 1; min-width: 320px; display: flex; flex-direction: column; background-color: var(--bg-surface); border-radius: 20px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); overflow: hidden; height: calc(100vh - 360px); min-height: 400px; transition: all 0.3s ease; }
                 .kanban-column-header { padding: 16px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-body); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-                .kanban-column-body { padding: 16px; flex-grow: 1; overflow-y: auto; background-color: var(--bg-surface); }
+                .kanban-column-body { padding: 16px; flex-grow: 1; overflow-y: auto; background-color: var(--bg-surface); transition: background-color 0.2s; }
+                
+                /* 🚨 CSS สำหรับ Drag & Drop */
+                .kanban-column-body.drag-over { background-color: #f1f5f9; box-shadow: inset 0 0 10px rgba(0,0,0,0.05); }
+                .visit-card { transition: transform 0.2s, box-shadow 0.2s; cursor: grab; }
+                .visit-card:active { cursor: grabbing; transform: scale(0.98); opacity: 0.8; }
+                
                 .kanban-column-body::-webkit-scrollbar { width: 6px; }
                 .kanban-column-body::-webkit-scrollbar-track { background: transparent; }
                 .kanban-column-body::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -60,11 +66,9 @@ class VisitsPageComponent {
                 
                 .shift-btn-active { background-color: #fff !important; box-shadow: 0 2px 5px rgba(0,0,0,0.15) !important; border: 1px solid #cbd5e1 !important; transform: scale(1.1); z-index: 10; }
                 
-                /* ซ่อนลูกศรขึ้นลงของ Input Number */
                 input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
                 input[type="number"] { -moz-appearance: textfield; }
                 
-                /* Custom Scrollbar for Modal Container */
                 .custom-scroll-modal::-webkit-scrollbar { height: 8px; width: 6px; }
                 .custom-scroll-modal::-webkit-scrollbar-track { background: transparent; }
                 .custom-scroll-modal::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -130,8 +134,11 @@ class VisitsPageComponent {
                             <button class="btn btn-sm btn-light border-0 p-1 text-muted btn-settings-shift bg-transparent" onclick="App.pages.visits.openShiftSettings()" title="ตั้งค่าเวลา"><i class="fa-solid fa-gear fa-lg"></i></button>
                         </div>
                     </div>
-                    <div class="kanban-column-body" id="board-morning" role="region" aria-label="คิวฟอกไตประจำวัน รอบเช้า"><div class="text-center py-5" style="color: var(--text-muted);"><i class="fas fa-spinner fa-spin fa-2x"></i></div></div>
+                    <div class="kanban-column-body" id="board-morning" role="region" aria-label="คิวฟอกไตประจำวัน รอบเช้า" ondragover="window.VisitsPage_dragOver(event)" ondragleave="window.VisitsPage_dragLeave(event)" ondrop="window.VisitsPage_drop(event, 'morning')">
+                        <div class="text-center py-5" style="color: var(--text-muted);"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+                    </div>
                 </div>
+                
                 <div class="kanban-column" style="border-top: 4px solid var(--warning);">
                     <div class="kanban-column-header">
                         <h6 class="fw-bold mb-0" style="color: var(--warning); font-family:'Prompt';"><i class="fa-solid fa-cloud-sun me-2"></i> <span id="header-afternoon-text">รอบบ่าย (10:00 - 14:00)</span></h6>
@@ -140,8 +147,9 @@ class VisitsPageComponent {
                             <button class="btn btn-sm btn-light border-0 p-1 text-muted btn-settings-shift bg-transparent" onclick="App.pages.visits.openShiftSettings()" title="ตั้งค่าเวลา"><i class="fa-solid fa-gear fa-lg"></i></button>
                         </div>
                     </div>
-                    <div class="kanban-column-body" id="board-afternoon" role="region" aria-label="คิวฟอกไตประจำวัน รอบบ่าย"></div>
+                    <div class="kanban-column-body" id="board-afternoon" role="region" aria-label="คิวฟอกไตประจำวัน รอบบ่าย" ondragover="window.VisitsPage_dragOver(event)" ondragleave="window.VisitsPage_dragLeave(event)" ondrop="window.VisitsPage_drop(event, 'afternoon')"></div>
                 </div>
+                
                 <div class="kanban-column" style="border-top: 4px solid #94a3b8;">
                     <div class="kanban-column-header">
                         <h6 class="fw-bold mb-0" style="color: #94a3b8; font-family:'Prompt';"><i class="fa-solid fa-moon me-2"></i> <span id="header-evening-text">รอบเย็น (14:00 เป็นต้นไป)</span></h6>
@@ -150,7 +158,7 @@ class VisitsPageComponent {
                             <button class="btn btn-sm btn-light border-0 p-1 text-muted btn-settings-shift bg-transparent" onclick="App.pages.visits.openShiftSettings()" title="ตั้งค่าเวลา"><i class="fa-solid fa-gear fa-lg"></i></button>
                         </div>
                     </div>
-                    <div class="kanban-column-body" id="board-evening" role="region" aria-label="คิวฟอกไตประจำวัน รอบเย็น"></div>
+                    <div class="kanban-column-body" id="board-evening" role="region" aria-label="คิวฟอกไตประจำวัน รอบเย็น" ondragover="window.VisitsPage_dragOver(event)" ondragleave="window.VisitsPage_dragLeave(event)" ondrop="window.VisitsPage_drop(event, 'evening')"></div>
                 </div>
             </div>
         `;
@@ -158,6 +166,8 @@ class VisitsPageComponent {
 
     init() {
         if (typeof db === 'undefined' || typeof firebase === 'undefined') return;
+        
+        this.#initDragAndDropLogic();
         this.#bindEvents();
         if (firebase.auth().currentUser) { this.#executeLoad(); } 
         else { const unsub = firebase.auth().onAuthStateChanged((user) => { if (user) { unsub(); this.#executeLoad(); } }); }
@@ -170,6 +180,68 @@ class VisitsPageComponent {
         if (this.liveTimerInterval) { clearInterval(this.liveTimerInterval); this.liveTimerInterval = null; }
         const searchInp = document.getElementById('visitSearch');
         if (searchInp) { searchInp.removeEventListener('input', this.#handleSearchHandler); }
+        
+        delete window.VisitsPage_dragStart;
+        delete window.VisitsPage_dragOver;
+        delete window.VisitsPage_dragLeave;
+        delete window.VisitsPage_drop;
+    }
+
+    #initDragAndDropLogic() {
+        window.VisitsPage_dragStart = (event, firebaseKey) => {
+            const card = event.target.closest('.visit-card');
+            if(card && card.innerText.includes('เสร็จสิ้น')) {
+                event.preventDefault(); return;
+            }
+            event.dataTransfer.setData('text/plain', firebaseKey);
+            event.dataTransfer.effectAllowed = 'move';
+            setTimeout(() => { event.target.style.opacity = '0.5'; }, 0);
+        };
+
+        window.VisitsPage_dragOver = (event) => {
+            event.preventDefault(); 
+            event.dataTransfer.dropEffect = 'move';
+            const column = event.target.closest('.kanban-column-body');
+            if (column && !column.classList.contains('drag-over')) {
+                column.classList.add('drag-over');
+            }
+        };
+
+        window.VisitsPage_dragLeave = (event) => {
+            const column = event.target.closest('.kanban-column-body');
+            if (column) {
+                column.classList.remove('drag-over');
+            }
+        };
+
+        window.VisitsPage_drop = (event, targetShiftKey) => {
+            event.preventDefault();
+            const column = event.target.closest('.kanban-column-body');
+            if (column) column.classList.remove('drag-over');
+
+            const firebaseKey = event.dataTransfer.getData('text/plain');
+            if (!firebaseKey) return;
+
+            const draggedEl = document.querySelector(`.visit-card[draggable="true"]`);
+            if (draggedEl) draggedEl.style.opacity = '1';
+
+            const visit = this.state.allVisits.find(v => v.firebaseKey === firebaseKey);
+            if(!visit) return;
+
+            const s = this.state.shiftSettings[targetShiftKey];
+            const newTime = s.start; 
+
+            if(visit.time === newTime) return;
+
+            Swal.fire({ title: 'กำลังย้ายคิว...', toast: true, position: 'top-end', showConfirmButton: false, timer: 1000, timerProgressBar: true });
+            
+            db.ref(`patients_database_v2/visits/${firebaseKey}`).update({
+                time: newTime,
+                last_status_updated_at: new Date().toISOString()
+            }).catch(err => {
+                Swal.fire('Error', 'ไม่สามารถย้ายคิวได้: ' + err.message, 'error');
+            });
+        };
     }
 
     #bindEvents() {
@@ -630,7 +702,7 @@ class VisitsPageComponent {
                             <div class="fw-bold ms-2" style="color: #1e40af; font-size:14px;"><i class="fa-solid fa-calendar-day me-1"></i> <span class="text-dark">${new Date(currentDate).toLocaleDateString('th-TH')}</span></div>
                             <div class="d-flex align-items-center gap-1 bg-white p-1 rounded-pill shadow-sm border border-light">
                                 <span class="small fw-bold text-secondary ms-2 border-start ps-2">เวลารวมทั้งหมด:</span>
-                                <select id="global-bulk-duration" class="form-select form-select-sm border-0 fw-bold text-primary text-center px-1" style="width: 65px; cursor:pointer; box-shadow:none; font-size:14px;" onchange="window.VisitsPage_syncGlobalTime()">
+                                <select id="global-bulk-duration" class="form-select form-select-sm border-0 fw-bold text-primary text-center px-2" style="width: 85px; cursor:pointer; box-shadow:none; font-size:14px;" onchange="window.VisitsPage_syncGlobalTime()">
                                     <option value="2">2 ชม.</option>
                                     <option value="3">3 ชม.</option>
                                     <option value="3.5">3.5 ชม.</option>
@@ -747,25 +819,24 @@ class VisitsPageComponent {
                     Swal.fire('Error', err.message, 'error');
                 }
             }
-            // Cleanup 
-            delete window.VisitsPage_generateBulkRow;
-            delete window.VisitsPage_addBulkRow;
-            delete window.VisitsPage_updateRowNumbers;
-            delete window.VisitsPage_syncGlobalTime;
-            delete window.VisitsPage_scanCardForBulk;
-            delete window.VisitsPage_togglePasteArea;
-            delete window.VisitsPage_processPastedData;
-            delete window.VisitsPage_setRowShift;
-            delete window.VisitsPage_autoSplitShifts;
-            delete window.VisitsPage_setAllShifts;
-            delete window.VisitsPage_onSplitInputChange;
         });
     }
 
+    // 🚨 THE FIX: Context-Aware Bulk Delete (ลบประวัติฟอกเสร็จได้แล้ว พร้อมระบบเลือกทั้งหมด)
     openBulkDeleteModal() {
-        const activeOnly = this.state.allVisits.filter(v => v.status !== 'เสร็จสิ้น');
-        if (activeOnly.length === 0) {
-            Swal.fire('ไม่มีคิว', 'ไม่มีคิวที่กำลังรอตรวจให้ลบในวันนี้ครับ', 'info'); return;
+        const isCompletedTab = this.state.currentTab === 'completed';
+        
+        const targetVisits = this.state.allVisits.filter(v => {
+            if (isCompletedTab) {
+                return v.status === 'เสร็จสิ้น' || v.status === 'ขาดนัด';
+            } else {
+                return v.status !== 'เสร็จสิ้น' && v.status !== 'ขาดนัด';
+            }
+        });
+
+        if (targetVisits.length === 0) {
+            Swal.fire('ไม่มีข้อมูล', `ไม่มี${isCompletedTab ? 'ประวัติฟอกเสร็จ/ขาดนัด' : 'คิวที่กำลังรอตรวจ'}ให้ลบในหน้านี้ครับ`, 'info'); 
+            return;
         }
 
         window.VisitsPage_toggleSelectAll = (masterCheckbox) => {
@@ -782,26 +853,30 @@ class VisitsPageComponent {
             }
         };
 
-        let listHtml = activeOnly.map(v => `
+        let listHtml = targetVisits.map(v => `
             <label class="list-group-item d-flex align-items-center gap-3 py-3" style="cursor: pointer; transition: 0.2s;" onmouseover="this.style.backgroundColor='#f8fafc'" onmouseout="this.style.backgroundColor='transparent'">
                 <input class="form-check-input flex-shrink-0 bulk-delete-cb shadow-sm" type="checkbox" value="${v.firebaseKey}" style="width: 22px; height: 22px; cursor: pointer;" onchange="window.VisitsPage_syncMasterCheckbox()">
                 <div class="flex-grow-1 min-w-0">
                     <div class="fw-bold text-dark text-truncate" style="font-family:'Prompt'; font-size:15px;">${this.#escapeHTML(v.name)}</div>
-                    <div class="small text-muted"><i class="fa-solid fa-bed me-1"></i>เตียง: ${v.bed} <span class="mx-2">|</span> <i class="fa-regular fa-clock ms-2 me-1"></i>${v.time} น.</div>
+                    <div class="small text-muted"><i class="fa-solid fa-bed me-1"></i>เตียง: ${v.bed} <span class="mx-2">|</span> <i class="fa-regular fa-clock ms-2 me-1"></i>${v.time} น. <span class="badge bg-secondary ms-2">${v.status}</span></div>
                 </div>
             </label>
         `).join('');
 
+        const modalTitle = isCompletedTab ? '<i class="fa-solid fa-trash-can me-2"></i> ลบประวัติฟอกเสร็จ/ขาดนัด' : '<i class="fa-solid fa-trash-can me-2"></i> ลบคิวหลายรายการ';
+        const modalDesc = isCompletedTab ? 'เลือกประวัติที่ต้องการลบทิ้งถาวรจากระบบ' : 'เลือกคิวที่ต้องการยกเลิกการฟอกเลือดในวันนี้';
+        const confirmBtnText = isCompletedTab ? '<i class="fa-solid fa-trash me-1"></i> ลบประวัติที่เลือก' : '<i class="fa-solid fa-trash me-1"></i> ลบคิวที่เลือก';
+
         Swal.fire({
-            title: `<h4 class="fw-bold mb-0 text-danger" style="font-family:'Prompt';"><i class="fa-solid fa-trash-can me-2"></i> ลบคิวหลายรายการ</h4>`,
+            title: `<h4 class="fw-bold mb-0 text-danger" style="font-family:'Prompt';">${modalTitle}</h4>`,
             html: `
                 <div class="text-start mt-3" style="font-family:'Sarabun';">
-                    <p class="small text-muted mb-3">เลือกคิวที่ต้องการยกเลิกการฟอกเลือดในวันนี้</p>
+                    <p class="small text-muted mb-3">${modalDesc}</p>
                     
                     <div class="d-flex align-items-center gap-3 p-3 mb-2 rounded-3 border" style="background-color: #fef2f2; border-color: #fecaca !important;">
                         <input class="form-check-input flex-shrink-0 shadow-sm" type="checkbox" id="master-delete-cb" style="width: 24px; height: 24px; cursor: pointer;" onchange="window.VisitsPage_toggleSelectAll(this)">
                         <label class="form-check-label fw-bold text-danger mb-0" for="master-delete-cb" style="cursor: pointer; font-family:'Prompt'; font-size:15px;">
-                            เลือกทั้งหมด (${activeOnly.length} รายการ)
+                            เลือกทั้งหมด (${targetVisits.length} รายการ)
                         </label>
                     </div>
 
@@ -810,7 +885,7 @@ class VisitsPageComponent {
                     </div>
                 </div>
             `,
-            showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-trash me-1"></i> ลบคิวที่เลือก', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#ef4444', width: 550, customClass: { popup: 'premium-alert' },
+            showCancelButton: true, confirmButtonText: confirmBtnText, cancelButtonText: 'ยกเลิก', confirmButtonColor: '#ef4444', width: 550, customClass: { popup: 'premium-alert' },
             preConfirm: () => {
                 const checked = document.querySelectorAll('.bulk-delete-cb:checked');
                 if (checked.length === 0) { Swal.showValidationMessage('กรุณาเลือกอย่างน้อย 1 รายการ'); return false; }
@@ -823,7 +898,7 @@ class VisitsPageComponent {
                     const updates = {};
                     result.value.forEach(firebaseKey => { updates[`patients_database_v2/visits/${firebaseKey}`] = null; });
                     await db.ref().update(updates);
-                    Swal.fire('ลบสำเร็จ', `ยกเลิกคิวจำนวน ${result.value.length} รายการแล้ว`, 'success');
+                    Swal.fire('ลบสำเร็จ', `ลบข้อมูลจำนวน ${result.value.length} รายการแล้ว`, 'success');
                 } catch (err) {
                     Swal.fire('Error', err.message, 'error');
                 }
@@ -915,8 +990,9 @@ class VisitsPageComponent {
             
             if (!startStr) return;
             const start = new Date(startStr).getTime();
+            
             const diffSecs = Math.floor((now - start) / 1000);
-            if (diffSecs < 0) return;
+            if (diffSecs < 0) return; 
             
             const h = String(Math.floor(diffSecs / 3600)).padStart(2, '0');
             const m = String(Math.floor((diffSecs % 3600) / 60)).padStart(2, '0');
@@ -927,7 +1003,7 @@ class VisitsPageComponent {
             el.innerHTML = `<i class="fa-solid fa-stopwatch me-1"></i> ${h}${colon}${m}${colon}${s}`;
             
             if (diffSecs >= (targetMins * 60)) {
-                el.style.color = '#dc2626';
+                el.style.color = '#dc2626'; 
                 el.style.backgroundColor = 'rgba(220, 38, 38, 0.1)';
                 el.style.borderColor = '#fca5a5';
             }
@@ -1072,7 +1148,7 @@ class VisitsPageComponent {
                     else if (currentStatus === "รอตรวจ" && diffMins >= 1) { 
                         updates[`patients_database_v2/visits/${v.firebaseKey}/status`] = "กำลังฟอกไต";
                         if (!v.dialysis_started_at) {
-                            updates[`patients_database_v2/visits/${v.firebaseKey}/dialysis_started_at`] = now.toISOString();
+                            updates[`patients_database_v2/visits/${v.firebaseKey}/dialysis_started_at`] = scheduledTime.toISOString();
                         }
                     }
                 }
@@ -1187,9 +1263,11 @@ class VisitsPageComponent {
                 const startTimeStr = v.dialysis_started_at || v.last_status_updated_at;
                 if (startTimeStr) {
                     timerHtml = `
-                        <div class="mt-1 d-flex flex-column align-items-end">
-                            <span style="font-size:10px; color: var(--text-muted); font-weight:bold;"><i class="fa-solid fa-bullseye"></i> เป้าหมาย: ${targetHoursDisplay}</span>
-                            <div class="mt-1 live-dialysis-timer fw-bold text-center shadow-sm" data-start-time="${startTimeStr}" data-target-mins="${targetMins}" style="color: #d97706; font-size:12px; font-family: 'Courier New', monospace; background: rgba(245, 158, 11, 0.1); padding: 3px 8px; border-radius: 6px; border: 1px dashed #fcd34d;"><i class="fa-solid fa-stopwatch"></i> 00:00:00</div>
+                        <div class="mt-2 d-flex flex-column align-items-end">
+                            <span style="font-size:11px; color: #64748b; font-weight:bold; margin-bottom: 2px;"><i class="fa-solid fa-bullseye me-1"></i> เป้าหมาย: ${targetHoursDisplay}</span>
+                            <div class="live-dialysis-timer fw-bold text-center shadow-sm" data-start-time="${startTimeStr}" data-target-mins="${targetMins}" style="color: #d97706; font-size:13px; font-family: 'Courier New', monospace; background: #fffbeb; padding: 4px 10px; border-radius: 6px; border: 1px dashed #f59e0b; display: inline-block;">
+                                <i class="fa-solid fa-stopwatch me-1"></i> 00:00:00
+                            </div>
                         </div>
                     `;
                 }
@@ -1204,7 +1282,7 @@ class VisitsPageComponent {
                     if (diffSecs > 0) {
                         const h = String(Math.floor(diffSecs / 3600)).padStart(2, '0');
                         const m = String(Math.floor((diffSecs % 3600) / 60)).padStart(2, '0');
-                        timerHtml = `<div class="mt-1 fw-bold text-center shadow-sm" style="color: #16a34a; font-size:10px; font-family: 'Prompt'; background: rgba(22, 163, 74, 0.1); padding: 3px 8px; border-radius: 6px; border: 1px dashed #86efac;"><i class="fa-solid fa-flag-checkered"></i> สุทธิ ${h}:${m} ชม.</div>`;
+                        timerHtml = `<div class="mt-2 fw-bold text-center shadow-sm" style="color: #16a34a; font-size:11px; font-family: 'Prompt'; background: #f0fdf4; padding: 4px 10px; border-radius: 6px; border: 1px dashed #86efac; display: inline-block;"><i class="fa-solid fa-flag-checkered me-1"></i> สุทธิ ${h}:${m} ชม.</div>`;
                     }
                 }
             } else if (status === "ขาดนัด") {
@@ -1220,7 +1298,7 @@ class VisitsPageComponent {
             const safeTime = this.#escapeHTML(v.time || '-');
 
             html += `
-            <div class="visit-card shadow-sm mb-3 p-3 border card-hover-float" style="background-color: var(--bg-surface); border-color: var(--border-color) !important; border-left: 5px solid ${bColor} !important; ${opacityStyle}" role="button" tabindex="0" onclick="App.pages.visits.manageVisit('${v.firebaseKey}')" onkeydown="if(event.key==='Enter') App.pages.visits.manageVisit('${v.firebaseKey}')" aria-label="เตียง ${safeBed} ผู้ป่วย ${safeName}">
+            <div class="visit-card shadow-sm mb-3 p-3 border card-hover-float" draggable="${status !== 'เสร็จสิ้น' && status !== 'ขาดนัด' ? 'true' : 'false'}" ondragstart="window.VisitsPage_dragStart(event, '${v.firebaseKey}')" style="background-color: var(--bg-surface); border-color: var(--border-color) !important; border-left: 5px solid ${bColor} !important; ${opacityStyle}" role="button" tabindex="0" onclick="App.pages.visits.manageVisit('${v.firebaseKey}')" onkeydown="if(event.key==='Enter') App.pages.visits.manageVisit('${v.firebaseKey}')" aria-label="เตียง ${safeBed} ผู้ป่วย ${safeName}">
                 <div class="d-flex justify-content-between align-items-start w-100 mb-2">
                     <div class="d-flex align-items-center">
                         <span class="queue-badge me-2" title="คิวที่ ${index + 1}">${index + 1}</span>
@@ -1247,8 +1325,12 @@ class VisitsPageComponent {
         if (!v) return;
         
         let isDialysisActive = v.status === 'กำลังฟอกไต' || v.status === 'เสร็จสิ้น';
-        let actualStartObj = v.dialysis_started_at ? new Date(v.dialysis_started_at) : new Date();
-        let defaultStartHHMM = String(actualStartObj.getHours()).padStart(2, '0') + ':' + String(actualStartObj.getMinutes()).padStart(2, '0');
+        let defaultStartHHMM = v.time || "06:00"; 
+        
+        if (v.dialysis_started_at) {
+            let actualStartObj = new Date(v.dialysis_started_at);
+            defaultStartHHMM = String(actualStartObj.getHours()).padStart(2, '0') + ':' + String(actualStartObj.getMinutes()).padStart(2, '0');
+        }
 
         window.VisitsPage_onStatusChange = (selectEl) => {
             const timeContainer = document.getElementById('custom-time-container');
@@ -1281,7 +1363,7 @@ class VisitsPageComponent {
                     <div id="custom-time-container" style="display: ${isDialysisActive ? 'block' : 'none'};">
                         <label class="form-label fw-bold small text-warning-dark"><i class="fa-regular fa-clock me-1"></i> เวลาเริ่มฟอกจริง (เริ่มแทงเข็ม)</label>
                         <input type="time" id="swal-actual-start" class="form-control form-control-lg fw-bold text-center text-primary input-modern shadow-sm" value="${defaultStartHHMM}">
-                        <small class="text-muted d-block mt-1">ระบบจะคำนวณกราฟเวลานับถอยหลังจากเวลานี้</small>
+                        <small class="text-muted d-block mt-1">ระบบจะดึง <b>"เวลานัดหมาย"</b> มาเป็นค่าเริ่มต้นให้เสมอ</small>
                     </div>
                 </div>
             `,
@@ -1296,7 +1378,7 @@ class VisitsPageComponent {
                     if (!timeVal) { Swal.showValidationMessage('กรุณาระบุเวลาเริ่มฟอกจริง'); return false; }
                     const [h, m] = timeVal.split(':');
                     const actualDate = new Date(v.date);
-                    actualDate.setHours(h, m, 0, 0);
+                    actualDate.setHours(parseInt(h, 10), parseInt(m, 10), 0, 0);
                     newStartTimeStr = actualDate.toISOString();
                 }
                 return { status: newStatus, startTime: newStartTimeStr };

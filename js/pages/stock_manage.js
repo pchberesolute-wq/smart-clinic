@@ -1,5 +1,5 @@
 // js/pages/stock_manage.js
-// 🚀 Enterprise Stock Management: Contextual UX Calculator (v16.0 FULL)
+// 🚀 Enterprise Stock Management: Absolute Contextual UX Calculator & Delta Translation (v17.0 APEX)
 
 class StockManagePageComponent {
     constructor() {
@@ -50,7 +50,6 @@ class StockManagePageComponent {
                 .numpad-memory:hover { background: rgba(245, 158, 11, 0.2) !important; }
                 html[data-bs-theme="dark"] .numpad-memory { color: #fbbf24 !important; border-color: rgba(245, 158, 11, 0.3) !important; }
 
-                /* 🚨 THE FIX: อัปเกรดโหมดสลับปุ่มให้มีสีแยกกันชัดเจน (Dynamic Contextual Color) */
                 .calc-toggle-btn { flex: 1; padding: 12px; border-radius: 10px; font-weight: bold; border: none; cursor: pointer; transition: 0.2s; font-family: 'Prompt'; font-size: 16px; }
                 .calc-toggle-active-add { background: #ea580c; color: white; box-shadow: 0 4px 10px rgba(234, 88, 12, 0.3); }
                 .calc-toggle-active-replace { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3); }
@@ -408,9 +407,24 @@ class StockManagePageComponent {
         }
     }
 
+    // 🚨 THE MASTERPIECE: Contextual Absolute Calculator
     openCalculator(id) {
         const item = this.cart.find(c => c.id === id);
         if (!item) return;
+
+        const sysMode = document.getElementById('sm-mode').value;
+        const latestItem = this.allItems.find(i => i.id === id);
+        
+        // 1. ดึงยอดสต๊อกอ้างอิงที่แท้จริง (Absolute Base Stock)
+        let baseStock = 0;
+        let stockLabel = "";
+        if (sysMode === 'in_main' || sysMode === 'transfer' || sysMode === 'audit_main') {
+            baseStock = latestItem.qty_main !== undefined ? Number(latestItem.qty_main) : (Number(latestItem.qty) || 0);
+            stockLabel = "สต๊อกใหญ่";
+        } else {
+            baseStock = Number(latestItem.qty_sub) || 0;
+            stockLabel = "สต๊อกเล็ก";
+        }
 
         let mathExpr = "0"; 
         let calcMode = "="; 
@@ -429,8 +443,15 @@ class StockManagePageComponent {
 
         const renderCalc = () => {
             let evaluatedVal = evaluateMath(mathExpr);
-            let finalPreview = calcMode === "+" ? (item.processQty + evaluatedVal) : evaluatedVal;
-            if (finalPreview < 0) finalPreview = 0;
+            
+            // 2. คำนวณยอดสต๊อกสุทธิ (Final Target Stock) จากการคีย์ของผู้ใช้
+            let targetStock = 0;
+            if (calcMode === '+') {
+                targetStock = baseStock + evaluatedVal; // โหมดบวกเพิ่ม: เอาสต๊อกปัจจุบัน + ยอดที่คีย์
+            } else {
+                targetStock = evaluatedVal; // โหมดแทนที่: ทับสต๊อกด้วยยอดที่คีย์เลย
+            }
+            if (targetStock < 0) targetStock = 0;
 
             let displayFormula = "";
             for (let i = 0; i < mathExpr.length; i++) {
@@ -442,19 +463,18 @@ class StockManagePageComponent {
                 else displayFormula += c;
             }
 
-            // 🚨 THE FIX: กล่องคำอธิบาย Contextual UX แบบไดนามิก
             let modeDesc = "";
             if (calcMode === '+') {
                 modeDesc = `
                 <div class="px-3 py-2 mb-3 rounded-3 small fw-bold shadow-sm d-flex align-items-start gap-2" style="background: rgba(234, 88, 12, 0.05); color: #ea580c; border: 1px dashed rgba(234, 88, 12, 0.3); text-align: left; line-height: 1.4; animation: fadeInUpLocal 0.3s ease;">
                     <i class="fa-solid fa-circle-plus mt-1"></i>
-                    <div><span class="text-dark">โหมดบวกเพิ่ม (+):</span> นำยอดที่คีย์ไป <u style="text-decoration-thickness: 2px;">บวกทบ</u> ของเดิมในตะกร้า<br><span style="font-size: 11px; opacity:0.8;">(เหมาะสำหรับ: ค่อยๆ ทยอยนับของทีละกล่อง)</span></div>
+                    <div><span class="text-dark">โหมดบวกเพิ่ม (+):</span> นำยอดที่คีย์ไป <u style="text-decoration-thickness: 2px;">บวกทบยอดสต๊อกปัจจุบัน</u><br><span style="font-size: 11px; opacity:0.8;">(เช่น มี ${baseStock} คีย์ 5 = สต๊อกใหม่ ${baseStock + 5})</span></div>
                 </div>`;
             } else {
                 modeDesc = `
                 <div class="px-3 py-2 mb-3 rounded-3 small fw-bold shadow-sm d-flex align-items-start gap-2" style="background: rgba(37, 99, 235, 0.05); color: var(--primary); border: 1px dashed rgba(37, 99, 235, 0.3); text-align: left; line-height: 1.4; animation: fadeInUpLocal 0.3s ease;">
                     <i class="fa-solid fa-right-left mt-1"></i>
-                    <div><span class="text-dark">โหมดแทนที่ (=):</span> นำยอดที่คีย์ไป <u style="text-decoration-thickness: 2px;">ทับยอดเดิม</u> ในตะกร้าทั้งหมด<br><span style="font-size: 11px; opacity:0.8;">(เหมาะสำหรับ: นับยอดรวมเสร็จแล้ว คีย์ทีเดียวจบ)</span></div>
+                    <div><span class="text-dark">โหมดแทนที่ (=):</span> นำยอดที่คีย์ไป <u style="text-decoration-thickness: 2px;">แทนที่สต๊อกทั้งหมด</u><br><span style="font-size: 11px; opacity:0.8;">(เช่น มี ${baseStock} คีย์ 5 = สต๊อกใหม่ 5)</span></div>
                 </div>`;
             }
 
@@ -465,7 +485,10 @@ class StockManagePageComponent {
                             <div class="mb-4">
                                 <h5 class="fw-bold mb-2" style="color: var(--primary); line-height: 1.4; word-break: break-word;">${this.#escapeHTML(item.name)}</h5>
                                 <div class="small mb-2" style="color: var(--text-muted);"><i class="fa-solid fa-hashtag me-1"></i> ${this.#escapeHTML(item.item_code || item.barcode)}</div>
-                                <div class="badge px-3 py-2 mt-2 fs-6 shadow-sm w-100 text-start" style="background-color: var(--bg-body); color: var(--text-dark); border: 1px solid var(--border-color); border-radius: 8px;">ในตะกร้าเดิม: <b class="fs-5 float-end">${item.processQty}</b></div>
+                                
+                                <div class="badge px-3 py-2 mt-2 fs-6 shadow-sm w-100 text-start" style="background-color: var(--bg-body); color: var(--text-dark); border: 1px solid var(--border-color); border-radius: 8px;">
+                                    สต๊อกปัจจุบัน (${stockLabel}): <b class="fs-5 float-end text-primary">${baseStock}</b>
+                                </div>
                             </div>
 
                             <div class="mt-auto p-3 rounded-4 shadow-sm" style="background: rgba(245, 158, 11, 0.05); border-left: 4px solid var(--warning);">
@@ -484,7 +507,6 @@ class StockManagePageComponent {
                                 <button type="button" class="calc-toggle-btn w-50 ${calcMode === '=' ? 'calc-toggle-active-replace' : 'calc-toggle-inactive'}" onclick="window.setCalcMode('=')">แทนที่ (=)</button>
                             </div>
 
-                            <!-- 🚨 THE FIX: กล่องคำอธิบายโหมด (Dynamic) -->
                             ${modeDesc}
 
                             <div class="p-3 mb-3 text-end position-relative" style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 16px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
@@ -493,9 +515,9 @@ class StockManagePageComponent {
                                 <div class="fw-bold" style="color: var(--text-dark); font-size: 42px; line-height: 1;">${evaluatedVal}</div>
                             </div>
 
-                            <div class="py-2 px-3 small fw-bold mb-3 d-flex justify-content-between align-items-center shadow-sm" style="background: rgba(59, 130, 246, 0.05); border: 1px dashed rgba(59, 130, 246, 0.4); border-radius: 12px; color: var(--text-dark);">
-                                <span style="color: var(--primary);"><i class="fa-solid fa-basket-shopping me-1"></i> ยอดสุทธิที่จะบันทึก:</span>
-                                <span class="fs-4" style="color: var(--primary);">${finalPreview}</span>
+                            <div class="py-2 px-3 small fw-bold mb-3 d-flex justify-content-between align-items-center shadow-sm" style="background: rgba(16, 185, 129, 0.05); border: 1px dashed rgba(16, 185, 129, 0.4); border-radius: 12px; color: var(--text-dark);">
+                                <span style="color: #10b981;"><i class="fa-solid fa-box-open me-1"></i> ยอดสต๊อกสุทธิที่จะบันทึก:</span>
+                                <span class="fs-4" style="color: #10b981;">${targetStock}</span>
                             </div>
 
                             <div class="numpad-calc-grid">
@@ -615,9 +637,22 @@ class StockManagePageComponent {
             didOpen: () => renderCalc(),
             preConfirm: () => {
                 let evaluatedVal = evaluateMath(mathExpr);
-                let finalQty = calcMode === "+" ? (item.processQty + evaluatedVal) : evaluatedVal;
-                if (finalQty < 0) finalQty = 0;
-                return finalQty;
+                let targetStock = calcMode === "+" ? (baseStock + evaluatedVal) : evaluatedVal;
+                if (targetStock < 0) targetStock = 0;
+
+                // 3. แปลง Target Stock กลับเป็นจำนวนที่ต้องไปบวกลบในตะกร้า (Translation to ProcessQty)
+                let requiredProcessQty = 0;
+                if (sysMode === 'in_main') {
+                    // รับเข้า: จำนวนทำรายการ = สต๊อกใหม่ - สต๊อกเดิม
+                    requiredProcessQty = targetStock - baseStock;
+                } else if (sysMode === 'transfer' || sysMode === 'out_sub') {
+                    // เบิกออก/ย้าย: จำนวนทำรายการ = สต๊อกเดิม - สต๊อกใหม่ (เพราะตะกร้าจะเอาไปลบออก)
+                    requiredProcessQty = baseStock - targetStock;
+                } else if (sysMode === 'audit_main' || sysMode === 'audit_sub') {
+                    // ปรับยอดทับ: โยนยอดสต๊อกใหม่เข้าไปเลย
+                    requiredProcessQty = targetStock;
+                }
+                return requiredProcessQty;
             }
         }).then((result) => {
             if (result.isConfirmed) {
@@ -906,4 +941,12 @@ class StockManagePageComponent {
 }
 
 const StockManagePage = new StockManagePageComponent();
-window.StockManagePage = StockManagePage;
+if (typeof App !== 'undefined') {
+    App.pages = App.pages || {};
+    App.pages.stock_manage = StockManagePage;
+} else if (typeof window.App !== 'undefined') {
+    window.App.pages = window.App.pages || {};
+    window.App.pages.stock_manage = StockManagePage;
+} else {
+    window.StockManagePage = StockManagePage;
+}
