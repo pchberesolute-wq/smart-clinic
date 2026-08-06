@@ -1,5 +1,5 @@
 // js/pages/login.js
-// 🚀 Enterprise Login Module V6.0: Quantum Auth Engine, Zero-Trust Architecture & Memory-Safe Observers
+// 🚀 Enterprise Login Module V6.1: Quantum Auth Engine, Zero-Trust Architecture & Self-Healing DOM
 
 // 🚨 THE FIX: ปรับ Anti-Flash ให้ปลอดภัยและอยู่ใน Scope ที่ควบคุมได้
 (function preventFlash() {
@@ -35,7 +35,7 @@ class LoginPageComponent {
         this.MASTER_ADMIN_USER = 'admin';
         this.MASTER_ADMIN_PW = 'admin1234';
 
-        // Bindings เพื่อจัดการ Memory Leaks
+        // Bindings เพื่อจัดการ Memory Leaks และทำ Event Delegation
         this.boundHandleClickOutside = this.#handleClickOutside.bind(this);
         this.boundHandleUserListClick = this.#handleUserListClick.bind(this);
     }
@@ -99,7 +99,7 @@ class LoginPageComponent {
                 }
                 .profile-selector-btn:hover { background: var(--bg-surface); border-color: var(--primary); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15); transform: translateY(-2px); }
                 
-                .selected-user-info { display: flex; align-items: center; gap: 16px; }
+                .selected-user-info { display: flex; align-items: center; gap: 16px; pointer-events: none; }
                 .selected-avatar-img { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; border: 2px solid var(--bg-surface); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
                 .selected-text-group { display: flex; flex-direction: column; align-items: flex-start; }
                 .selected-name { font-weight: 800; color: var(--text-dark); font-size: 16px; font-family: 'Prompt', sans-serif; line-height: 1.2; letter-spacing: -0.3px; }
@@ -129,8 +129,9 @@ class LoginPageComponent {
                 }
                 .custom-option-item:hover { background: var(--bg-body); border-color: var(--border-color); transform: translateX(4px); }
                 
-                .custom-option-avatar { width: 42px; height: 42px; border-radius: 50%; margin-right: 15px; object-fit: cover; border: 2px solid var(--bg-surface); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-                .custom-option-icon { width: 42px; height: 42px; border-radius: 50%; margin-right: 15px; background: var(--bg-body); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 18px; box-shadow: inset 0 0 0 1px var(--border-color); }
+                .custom-option-avatar { width: 42px; height: 42px; border-radius: 50%; margin-right: 15px; object-fit: cover; border: 2px solid var(--bg-surface); box-shadow: 0 2px 8px rgba(0,0,0,0.08); pointer-events: none; }
+                .custom-option-icon { width: 42px; height: 42px; border-radius: 50%; margin-right: 15px; background: var(--bg-body); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 18px; box-shadow: inset 0 0 0 1px var(--border-color); pointer-events: none; }
+                .custom-option-text { pointer-events: none; }
 
                 /* ⌨️ 4. Form Inputs */
                 .input-modern-login { background: var(--bg-body); border: 2px solid var(--border-color); border-radius: 16px; padding-left: 15px; font-weight: 700; color: var(--text-dark); transition: all 0.3s; height: 54px; }
@@ -176,7 +177,8 @@ class LoginPageComponent {
                     <div class="mb-4 mt-5">
                         <label class="form-label fw-bold small mb-2 ps-2" style="color: var(--text-muted);">เลือกบัญชีผู้ใช้งานระบบ (Select Identity)</label>
                         
-                        <div class="position-relative mb-3" id="custom-dropdown-wrapper">
+                        <!-- 🚨 THE FIX 1: อัปเกรด z-index ปกป้องไม่ให้ใครมาทับ Dropdown -->
+                        <div class="position-relative mb-3" id="custom-dropdown-wrapper" style="z-index: 100;">
                             <input type="hidden" id="login-username-select" value="">
                             
                             <div class="profile-selector-btn" onclick="LoginPage.toggleCustomDropdown(event)">
@@ -189,7 +191,7 @@ class LoginPageComponent {
                                         <span class="selected-role">กรุณารอสักครู่</span>
                                     </div>
                                 </div>
-                                <i class="fas fa-chevron-down text-primary ms-2 safe-icon" style="font-size: 16px;"></i>
+                                <i class="fas fa-chevron-down text-primary ms-2 safe-icon" style="font-size: 16px; pointer-events: none;"></i>
                             </div>
 
                             <div id="custom-user-list" class="custom-options-panel">
@@ -244,20 +246,20 @@ class LoginPageComponent {
     }
 
     async init() {
-        // 🚨 THE FIX 1: จัดการ Memory Leaks ด้วยการถอด Event เดิมออกก่อน (ถ้ามี)
+        // 🚨 THE FIX 2: ใช้ Event Delegation ป้องกันบั๊ก Ghost DOM (HTML ยังไม่ทัน Render)
         document.removeEventListener('click', this.boundHandleClickOutside);
         document.addEventListener('click', this.boundHandleClickOutside);
 
-        const userListItems = document.getElementById('custom-list-items');
-        if (userListItems) {
-            userListItems.removeEventListener('click', this.boundHandleUserListClick);
-            userListItems.addEventListener('click', this.boundHandleUserListClick);
-        }
+        document.removeEventListener('click', this.boundHandleUserListClick);
+        document.addEventListener('click', this.boundHandleUserListClick);
 
         if (typeof firebase === 'undefined' || typeof db === 'undefined' || typeof firebase.auth !== 'function') {
-            document.getElementById('display-user-container').innerHTML = `
+            const displayContainer = document.getElementById('display-user-container');
+            if (displayContainer) {
+                displayContainer.innerHTML = `
                 <div class="rounded-circle bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center" style="width: 46px; height: 46px;"><i class="fa-solid fa-triangle-exclamation safe-icon"></i></div>
                 <div class="selected-text-group"><span class="selected-name text-danger">การเชื่อมต่อล้มเหลว</span><span class="selected-role" style="color: var(--text-muted);">กรุณารีเฟรชหน้าเว็บ</span></div>`;
+            }
             return;
         }
 
@@ -270,13 +272,11 @@ class LoginPageComponent {
         try {
             firebase.auth().onAuthStateChanged((user) => {
                 if (user) {
-                    // 🚨 THE FIX 2: แนะนำให้ใช้ Cloud Function พ่นแค่ Name, Role, Username มาให้ Client แทนการเปิดตาราง users_v2 แบบ Public
-                    // แต่เพื่อรักษา UI Dropdown ปัจจุบัน เราจะดึงข้อมูลมาตามปกติ แต่จะเตือนไว้ครับ
                     const cbUsers = db.ref('clinic_users_v2').on('value', snap => {
                         const data = snap.val();
                         let rawUsers = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => ({...data[k], firebaseKey: k}))) : [];
                         
-                        // 🛡️ Data Minimization: ลบ Password ออกจาก Memory อาร์เรย์ของ UI ทันที เพื่อป้องกันคน Dump Memory ดู
+                        // 🛡️ Data Minimization: ลบ Password ออกจาก Memory
                         this.allUsers = rawUsers.filter(u => u !== null && u.status === 'active').map(u => ({
                             id: u.id || u.firebaseKey, username: u.username, name: u.name, role: u.role, showOnLogin: u.showOnLogin
                         }));
@@ -284,9 +284,12 @@ class LoginPageComponent {
                         if(this.allUsers.length > 0) {
                             localStorage.setItem('dialysis_cached_users', JSON.stringify(this.allUsers)); 
                         } else {
-                            document.getElementById('display-user-container').innerHTML = `
+                            const displayContainer = document.getElementById('display-user-container');
+                            if (displayContainer) {
+                                displayContainer.innerHTML = `
                                 <div class="rounded-circle bg-warning bg-opacity-10 text-warning d-flex align-items-center justify-content-center" style="width: 46px; height: 46px;"><i class="fa-solid fa-database safe-icon"></i></div>
                                 <div class="selected-text-group"><span class="selected-name text-warning">ฐานข้อมูลว่างเปล่า</span></div>`;
+                            }
                         }
                         this.renderUserDropdown();
                     });
@@ -302,20 +305,23 @@ class LoginPageComponent {
         this.firebaseListeners.forEach(l => db.ref(l.path).off('value', l.callback));
         this.firebaseListeners = [];
         document.removeEventListener('click', this.boundHandleClickOutside);
+        document.removeEventListener('click', this.boundHandleUserListClick);
     }
 
-    // 🛡️ Observer Handlers
+    // 🛡️ Observer Handlers (Global Delegation)
     #handleClickOutside(e) {
         const wrapper = document.getElementById('custom-dropdown-wrapper');
         const list = document.getElementById('custom-user-list');
+        // ถ้าคลิกข้างนอก dropdown ให้ปิด
         if (wrapper && list && !wrapper.contains(e.target)) {
             list.style.display = 'none';
         }
     }
 
+    // 🚨 THE FIX 3: Event Delegation รองรับการคลิกแม้ DOM จะมาช้า
     #handleUserListClick(e) {
         const item = e.target.closest('.custom-option-item');
-        if (item) {
+        if (item && item.closest('#custom-user-list')) {
             const username = item.getAttribute('data-id');
             const name = item.getAttribute('data-name');
             const avatarUrl = item.getAttribute('data-avatar');
@@ -394,11 +400,18 @@ class LoginPageComponent {
         this.onUserSelectChange(username);
     }
 
+    // 🚨 THE FIX 4: Self-Healing DOM Polling (รอจนกว่า HTML จะ Inject เสร็จค่อยทำงาน)
     renderUserDropdown() {
         const listItemsContainer = document.getElementById('custom-list-items');
-        if(!listItemsContainer) return;
+        const displayUserContainer = document.getElementById('display-user-container');
+        
+        // ถ้าระบบ Router ยังแทรก HTML ไม่เสร็จ ให้ดึงเวลาหน่วง 50ms แล้วลองใหม่
+        if (!listItemsContainer || !displayUserContainer) {
+            setTimeout(() => this.renderUserDropdown(), 50);
+            return;
+        }
 
-        document.getElementById('display-user-container').innerHTML = `
+        displayUserContainer.innerHTML = `
             <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 46px; height: 46px; border: 2px solid var(--border-color); background: var(--bg-body);"><i class="fa-solid fa-user-shield text-muted fs-5 safe-icon"></i></div>
             <div class="selected-text-group"><span class="selected-name" style="color: var(--text-muted);">คลิกเพื่อเลือกบัญชีผู้ใช้</span><span class="selected-role">พนักงาน / ผู้ดูแลระบบ</span></div>
         `;
@@ -462,7 +475,6 @@ class LoginPageComponent {
         else { pwInput.type = "password"; icon.className = "fa-solid fa-eye safe-icon"; }
     }
 
-    // 🚀 THE FIX 3: O(1) Authenticate by Server Query (ป้องกัน Data Leak และแคร็กเกอร์)
     async authenticate() {
         const hiddenInput = document.getElementById('login-username-select');
         let usernameInp = hiddenInput ? hiddenInput.value : '';
@@ -500,7 +512,6 @@ class LoginPageComponent {
                 return;
             }
 
-            // 🚨 THE FIX 3: วิ่งไปถาม Server โดยตรงว่ามี Username นี้ไหม แทนการวนลูปหาใน Client Array
             const snap = await db.ref('clinic_users_v2').orderByChild('username').equalTo(usernameInp).once('value');
             const data = snap.val();
 
@@ -509,7 +520,6 @@ class LoginPageComponent {
             const userKey = Object.keys(data)[0];
             const validUser = { id: userKey, ...data[userKey] };
 
-            // ตรวจสอบ Password และ Status (Case-sensitive check)
             if (validUser.password !== passwordInp) throw new Error("InvalidCredentials");
 
             if (validUser.status !== 'active') {
@@ -522,7 +532,6 @@ class LoginPageComponent {
             if (document.getElementById('login-remember').checked) localStorage.setItem('dialysis_remember_username', validUser.username);
             else localStorage.removeItem('dialysis_remember_username');
 
-            // 🛡️ Data Minimization: ลบ Password ทิ้งก่อนเซฟลง SessionStorage! ป้องกันการถูกขโมยจาก XSS
             const sessionData = { id: validUser.id, username: validUser.username, name: validUser.name, role: validUser.role, login_time: new Date().getTime() };
             sessionStorage.setItem('dialysis_user_session', JSON.stringify(sessionData));
             
@@ -547,7 +556,6 @@ class LoginPageComponent {
         }
     }
 
-    // 🚀 THE FIX 4: O(1) Forgot Password Server Query
     forgotPassword() {
         Swal.fire({
             title: '<h4 class="fw-bold text-primary mb-0" style="font-family:\'Prompt\';"><i class="fa-solid fa-unlock-keyhole me-2 safe-icon"></i> ขอรีเซ็ตรหัสผ่าน</h4>',
@@ -573,7 +581,6 @@ class LoginPageComponent {
                         await firebase.auth().signInAnonymously(); 
                     } 
                     
-                    // 🚨 THE FIX: ค้นหาเฉพาะ User ที่ต้องการ ไม่ดาวน์โหลดทั้ง DB
                     const [userSnap, settingsSnap] = await Promise.all([ 
                         db.ref('clinic_users_v2').orderByChild('username').equalTo(targetUsername).once('value'), 
                         db.ref('clinic_settings_v2/admin_pin').once('value') 
@@ -590,7 +597,7 @@ class LoginPageComponent {
                         return; 
                     }
                     
-                    const userKey = Object.keys(userData)[0]; // ดึง ID ของ User
+                    const userKey = Object.keys(userData)[0];
 
                     if(!adminPin) { 
                         setTimeout(() => {
@@ -631,7 +638,6 @@ class LoginPageComponent {
                                     }).then((pwdResult) => {
                                         if(pwdResult.isConfirmed) {
                                             Swal.fire({title: 'กำลังอัปเดตระบบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: 'var(--bg-surface)', customClass: { popup: 'premium-alert' }});
-                                            // 🚨 อัปเดตเฉพาะ Field รหัสผ่านของ User นั้น
                                             db.ref(`clinic_users_v2/${userKey}/password`).set(pwdResult.value).then(() => { 
                                                 Swal.fire({ html: '<div class="mt-2"><i class="fa-solid fa-check-circle fa-4x text-success mb-3 safe-icon"></i><h4 class="fw-bold" style="font-family:\'Prompt\'; color: var(--text-dark);">เปลี่ยนรหัสผ่านสำเร็จ!</h4><p class="small" style="color: var(--text-muted);">กรุณาใช้รหัสผ่านใหม่เพื่อเข้าสู่ระบบ</p></div>', showConfirmButton: true, confirmButtonText: 'กลับไปหน้าล็อคอิน', buttonsStyling: false, background: 'var(--bg-surface)', customClass: { popup: 'premium-alert', confirmButton: 'btn-premium-swal' } })
                                                 .then(() => { LoginPage.init(); }); 
@@ -655,6 +661,13 @@ class LoginPageComponent {
     }
 }
 
-// 🌐 Expose Component สู่ระบบ Router
+// 🌐 5. OMNI-BINDING: รับประกันการเข้าถึงฟังก์ชันจาก DOM 100%
 const LoginPage = new LoginPageComponent();
 window.LoginPage = LoginPage;
+if (typeof App !== 'undefined') {
+    App.pages = App.pages || {};
+    App.pages.login = LoginPage;
+} else if (typeof window.App !== 'undefined') {
+    window.App.pages = window.App.pages || {};
+    window.App.pages.login = LoginPage;
+}
