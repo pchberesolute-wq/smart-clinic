@@ -1,7 +1,7 @@
 // js/pages/login.js
-// 🚀 Enterprise Login Module V6.1: Quantum Auth Engine, Zero-Trust Architecture & Self-Healing DOM
+// 🚀 Enterprise Login Module V6.2: Quantum Auth Engine, Invisible Shield Breaker & Absolute Binding
 
-// 🚨 THE FIX: ปรับ Anti-Flash ให้ปลอดภัยและอยู่ใน Scope ที่ควบคุมได้
+// 🚨 THE FIX: ปรับ Anti-Flash ให้ปลอดภัย ไม่กิน Pointer-Events
 (function preventFlash() {
     if (!sessionStorage.getItem('dialysis_user_session') || !sessionStorage.getItem('dialysis_session_active')) {
         if (!document.getElementById('anti-flash-style')) {
@@ -19,6 +19,9 @@
 
 class LoginPageComponent {
     constructor() {
+        // 🚨 OMNI-BINDING: รับประกันการผูก Component ทันทีที่คลาสถูกเรียก ป้องกันบั๊ก onclick หาฟังก์ชันไม่เจอ
+        window.LoginPage = this;
+
         this.allUsers = [];
         this.roleConfig = {
             'admin': { label: 'ผู้ดูแลระบบ', iconHtml: '<i class="fa-solid fa-shield-halved text-danger safe-icon"></i>' },
@@ -49,7 +52,8 @@ class LoginPageComponent {
                 
                 .safe-icon { font-family: 'Font Awesome 6 Free', 'Font Awesome 5 Free', 'FontAwesome', sans-serif !important; font-weight: 900 !important; font-style: normal !important; display: inline-block; text-rendering: auto; -webkit-font-smoothing: antialiased; }
                 
-                .swal2-container { z-index: 9999999 !important; backdrop-filter: blur(5px) !important; background: rgba(15,23,42,0.6) !important; }
+                /* 🚨 Z-INDEX SUPREME: ยกระดับ SweetAlert ให้ทะลุทุกมิติ */
+                .swal2-container { z-index: 2147483647 !important; backdrop-filter: blur(5px) !important; background: rgba(15,23,42,0.6) !important; pointer-events: auto !important; }
                 .swal2-popup.premium-alert { border-radius: 28px !important; padding: 30px 25px !important; border: 1px solid var(--border-color) !important; background: var(--bg-surface) !important; box-shadow: 0 30px 60px -15px rgba(0,0,0,0.4) !important; }
                 .btn-premium-swal { border-radius: 14px !important; padding: 14px 32px !important; font-family: 'Prompt' !important; font-weight: 700 !important; background: linear-gradient(135deg, var(--primary), var(--info)) !important; color: white !important; box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.4) !important; border: none !important; transition: all 0.3s !important; }
                 .btn-premium-swal:hover { transform: translateY(-2px); box-shadow: 0 15px 25px -5px rgba(37, 99, 235, 0.5) !important; }
@@ -57,16 +61,18 @@ class LoginPageComponent {
                 .btn-cancel-swal:hover { background: var(--border-color) !important; transform: translateY(-2px); }
                 .btn-danger-swal { background: linear-gradient(135deg, #ef4444, #dc2626) !important; box-shadow: 0 10px 20px -5px rgba(239, 68, 68, 0.4) !important; color: white !important; }
 
-                /* 🌌 1. Adaptive Aurora Background */
+                /* 🌌 1. Adaptive Aurora Background - บังคับทำลายเกราะล่องหน */
                 .login-container { 
                     position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
                     width: 100vw !important; height: 100vh !important; margin: 0 !important; padding: 0 !important;
-                    background-color: var(--bg-body);
+                    background-color: var(--bg-body) !important;
                     display: flex; align-items: center; justify-content: center; 
-                    z-index: 999999 !important; overflow: hidden; font-family: 'Prompt', sans-serif; 
+                    z-index: 2147483640 !important; /* 🔥 Maximum Z-Index */
+                    overflow: hidden !important; font-family: 'Prompt', sans-serif !important; 
+                    pointer-events: auto !important; /* 🔥 ทุบเกราะห้ามคลิก */
                 }
 
-                .aurora-blob { position: absolute; filter: blur(80px); opacity: 0.25; animation: floatBlob 15s infinite alternate ease-in-out; pointer-events: none; border-radius: 50%; }
+                .aurora-blob { position: absolute; filter: blur(80px); opacity: 0.25; animation: floatBlob 15s infinite alternate ease-in-out; pointer-events: none !important; border-radius: 50%; }
                 .blob-1 { width: 600px; height: 600px; background: var(--primary); top: -150px; left: -150px; }
                 .blob-2 { width: 700px; height: 700px; background: var(--info); bottom: -200px; right: -200px; animation-delay: -5s; }
                 .blob-3 { width: 500px; height: 500px; background: var(--success); top: 40%; left: 30%; animation-delay: -10s; }
@@ -74,13 +80,14 @@ class LoginPageComponent {
                 
                 /* 🪟 2. Adaptive Acrylic Glass Card */
                 .login-card {
-                    position: relative; z-index: 10; width: 100%; max-width: 500px; 
+                    position: relative; z-index: 2147483641 !important; width: 100%; max-width: 500px; 
                     background: var(--bg-surface); 
                     border: 1px solid var(--border-color); 
                     border-radius: 36px; padding: 45px 40px;
                     box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.3);
                     animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
                     margin: 20px; 
+                    pointer-events: auto !important; /* 🔥 บังคับคลิกได้ */
                 }
                 @keyframes slideUpFade { from { opacity: 0; transform: translateY(50px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
@@ -96,10 +103,11 @@ class LoginPageComponent {
                     background: var(--bg-body); border: 2px solid var(--border-color); border-radius: 18px;
                     padding: 12px 18px; display: flex; align-items: center; justify-content: space-between;
                     cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+                    pointer-events: auto !important;
                 }
                 .profile-selector-btn:hover { background: var(--bg-surface); border-color: var(--primary); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15); transform: translateY(-2px); }
                 
-                .selected-user-info { display: flex; align-items: center; gap: 16px; pointer-events: none; }
+                .selected-user-info { display: flex; align-items: center; gap: 16px; pointer-events: none !important; }
                 .selected-avatar-img { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; border: 2px solid var(--bg-surface); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
                 .selected-text-group { display: flex; flex-direction: column; align-items: flex-start; }
                 .selected-name { font-weight: 800; color: var(--text-dark); font-size: 16px; font-family: 'Prompt', sans-serif; line-height: 1.2; letter-spacing: -0.3px; }
@@ -110,31 +118,34 @@ class LoginPageComponent {
                     display: none; position: absolute; width: 100%; top: calc(100% + 12px); left: 0;
                     background: var(--bg-surface); 
                     border: 1px solid var(--border-color); border-radius: 20px;
-                    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3); z-index: 9999;
+                    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3); 
+                    z-index: 2147483645 !important; /* 🔥 ดันให้สูงสุด */
                     overflow: hidden; animation: scaleDownFade 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; transform-origin: top center;
+                    pointer-events: auto !important;
                 }
                 @keyframes scaleDownFade { from { opacity: 0; transform: scaleY(0.95) translateY(-10px); } to { opacity: 1; transform: scaleY(1) translateY(0); } }
                 
                 .dropdown-search-box { padding: 12px 15px; background: var(--bg-surface); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 2; }
-                .dropdown-search-box input { border-radius: 12px !important; border: 1px solid var(--border-color) !important; background: var(--bg-body) !important; padding: 10px 15px !important; font-size: 14px; color: var(--text-dark) !important; }
+                .dropdown-search-box input { border-radius: 12px !important; border: 1px solid var(--border-color) !important; background: var(--bg-body) !important; padding: 10px 15px !important; font-size: 14px; color: var(--text-dark) !important; pointer-events: auto !important; }
                 .dropdown-search-box input:focus { border-color: var(--primary) !important; box-shadow: 0 0 0 4px rgba(59,130,246,0.15) !important; outline: none; }
                 
-                .custom-list-scroll { max-height: 250px; overflow-y: auto; padding: 8px; }
+                .custom-list-scroll { max-height: 250px; overflow-y: auto; padding: 8px; pointer-events: auto !important; }
                 .custom-list-scroll::-webkit-scrollbar { width: 6px; }
                 .custom-list-scroll::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
                 
                 .custom-option-item {
                     display: flex; align-items: center; padding: 12px 15px;
                     border-radius: 14px; cursor: pointer; transition: all 0.2s; margin-bottom: 4px; border: 1px solid transparent;
+                    pointer-events: auto !important;
                 }
                 .custom-option-item:hover { background: var(--bg-body); border-color: var(--border-color); transform: translateX(4px); }
                 
-                .custom-option-avatar { width: 42px; height: 42px; border-radius: 50%; margin-right: 15px; object-fit: cover; border: 2px solid var(--bg-surface); box-shadow: 0 2px 8px rgba(0,0,0,0.08); pointer-events: none; }
-                .custom-option-icon { width: 42px; height: 42px; border-radius: 50%; margin-right: 15px; background: var(--bg-body); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 18px; box-shadow: inset 0 0 0 1px var(--border-color); pointer-events: none; }
-                .custom-option-text { pointer-events: none; }
+                .custom-option-avatar { width: 42px; height: 42px; border-radius: 50%; margin-right: 15px; object-fit: cover; border: 2px solid var(--bg-surface); box-shadow: 0 2px 8px rgba(0,0,0,0.08); pointer-events: none !important; }
+                .custom-option-icon { width: 42px; height: 42px; border-radius: 50%; margin-right: 15px; background: var(--bg-body); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 18px; box-shadow: inset 0 0 0 1px var(--border-color); pointer-events: none !important; }
+                .custom-option-text { pointer-events: none !important; }
 
                 /* ⌨️ 4. Form Inputs */
-                .input-modern-login { background: var(--bg-body); border: 2px solid var(--border-color); border-radius: 16px; padding-left: 15px; font-weight: 700; color: var(--text-dark); transition: all 0.3s; height: 54px; }
+                .input-modern-login { background: var(--bg-body); border: 2px solid var(--border-color); border-radius: 16px; padding-left: 15px; font-weight: 700; color: var(--text-dark); transition: all 0.3s; height: 54px; pointer-events: auto !important; }
                 .input-modern-login:focus { background: var(--bg-surface); border-color: var(--primary); box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.15); color: var(--text-dark); }
                 .modern-icon-login { background: var(--bg-body); border: 2px solid var(--border-color); border-right: none; border-radius: 16px 0 0 16px; color: var(--text-muted); transition: all 0.3s; }
                 .input-group:focus-within .modern-icon-login { background: var(--bg-surface); border-color: var(--primary); color: var(--primary); }
@@ -147,6 +158,7 @@ class LoginPageComponent {
                     box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.4);
                     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
                     position: relative; overflow: hidden;
+                    pointer-events: auto !important;
                 }
                 .btn-quantum::before { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); transform: skewX(-20deg); transition: 0.5s; }
                 .btn-quantum:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 15px 35px -5px rgba(79, 70, 229, 0.5); }
@@ -154,7 +166,7 @@ class LoginPageComponent {
                 .btn-quantum:active { transform: translateY(1px) scale(0.98); box-shadow: 0 5px 15px rgba(79, 70, 229, 0.4); }
 
                 /* Security Badge */
-                .security-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 50px; font-size: 11px; font-weight: 800; color: var(--text-muted); letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); transition: all 0.3s; }
+                .security-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 50px; font-size: 11px; font-weight: 800; color: var(--text-muted); letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); transition: all 0.3s; pointer-events: auto !important; }
                 .security-badge:hover { background: var(--bg-surface); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.05); }
                 .status-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; animation: pulse 2s infinite; }
                 @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.5; } }
@@ -177,11 +189,10 @@ class LoginPageComponent {
                     <div class="mb-4 mt-5">
                         <label class="form-label fw-bold small mb-2 ps-2" style="color: var(--text-muted);">เลือกบัญชีผู้ใช้งานระบบ (Select Identity)</label>
                         
-                        <!-- 🚨 THE FIX 1: อัปเกรด z-index ปกป้องไม่ให้ใครมาทับ Dropdown -->
-                        <div class="position-relative mb-3" id="custom-dropdown-wrapper" style="z-index: 100;">
+                        <div class="position-relative mb-3" id="custom-dropdown-wrapper">
                             <input type="hidden" id="login-username-select" value="">
                             
-                            <div class="profile-selector-btn" onclick="LoginPage.toggleCustomDropdown(event)">
+                            <div class="profile-selector-btn" onclick="window.LoginPage.toggleCustomDropdown(event)">
                                 <div class="selected-user-info" id="display-user-container">
                                     <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 46px; height: 46px; border: 2px solid var(--border-color); background: var(--bg-body);">
                                         <i class="fas fa-spinner fa-spin text-primary safe-icon"></i>
@@ -196,7 +207,7 @@ class LoginPageComponent {
 
                             <div id="custom-user-list" class="custom-options-panel">
                                 <div class="dropdown-search-box">
-                                    <input type="text" class="form-control" id="user-search-input" placeholder="🔍 พิมพ์ชื่อพนักงานเพื่อค้นหา..." oninput="LoginPage.filterUsers(this.value)">
+                                    <input type="text" class="form-control" id="user-search-input" placeholder="🔍 พิมพ์ชื่อพนักงานเพื่อค้นหา..." oninput="window.LoginPage.filterUsers(this.value)">
                                 </div>
                                 <div class="custom-list-scroll" id="custom-list-items"></div>
                             </div>
@@ -212,12 +223,12 @@ class LoginPageComponent {
 
                         <div class="d-flex justify-content-between align-items-center mb-2 ps-2 pe-1 position-relative" style="z-index: 50;">
                             <label class="form-label fw-bold small mb-0" style="color: var(--text-muted);">รหัสผ่าน (Secure Password)</label>
-                            <a href="javascript:void(0)" onclick="LoginPage.forgotPassword(); return false;" class="text-primary small fw-bold text-decoration-none" style="transition: all 0.2s; position: relative; z-index: 60;"><i class="fa-solid fa-fingerprint me-1 safe-icon"></i> ลืมรหัสผ่าน?</a>
+                            <a href="javascript:void(0)" onclick="window.LoginPage.forgotPassword(); return false;" class="text-primary small fw-bold text-decoration-none" style="transition: all 0.2s; position: relative; z-index: 60;"><i class="fa-solid fa-fingerprint me-1 safe-icon"></i> ลืมรหัสผ่าน?</a>
                         </div>
                         <div class="input-group mb-3 position-relative" style="z-index: 40;">
                             <span class="input-group-text modern-icon-login px-3"><i class="fa-solid fa-lock text-primary safe-icon"></i></span>
-                            <input type="password" id="login-password" class="form-control input-modern-login border-start-0 border-end-0" placeholder="••••••••" onkeypress="if(event.key === 'Enter') LoginPage.authenticate()">
-                            <button class="btn input-modern-login border-start-0 text-muted px-3" type="button" onclick="LoginPage.togglePassword()" style="border-radius: 0 16px 16px 0; z-index: 45;">
+                            <input type="password" id="login-password" class="form-control input-modern-login border-start-0 border-end-0" placeholder="••••••••" onkeypress="if(event.key === 'Enter') window.LoginPage.authenticate()">
+                            <button class="btn input-modern-login border-start-0 text-muted px-3" type="button" onclick="window.LoginPage.togglePassword()" style="border-radius: 0 16px 16px 0; z-index: 45;">
                                 <i class="fa-solid fa-eye safe-icon" id="toggle-pw-icon"></i>
                             </button>
                         </div>
@@ -229,7 +240,7 @@ class LoginPageComponent {
                             </div>
                         </div>
 
-                        <button class="btn-quantum w-100 py-3 mt-2" id="btn-login" onclick="LoginPage.authenticate()" style="font-size: 18px; position: relative; z-index: 30;">
+                        <button class="btn-quantum w-100 py-3 mt-2" id="btn-login" onclick="window.LoginPage.authenticate()" style="font-size: 18px; position: relative; z-index: 30;">
                             <span id="btn-login-text"><i class="fa-solid fa-shield-check me-2 safe-icon"></i> เข้าสู่ระบบ (Authenticate)</span>
                         </button>
                     </div>
@@ -246,7 +257,13 @@ class LoginPageComponent {
     }
 
     async init() {
-        // 🚨 THE FIX 2: ใช้ Event Delegation ป้องกันบั๊ก Ghost DOM (HTML ยังไม่ทัน Render)
+        // 🚨 THE FIX 1: ปลดล็อกเกราะห้ามคลิก (Invisible Shield) ที่อาจตกค้างจากระบบ Router
+        setTimeout(() => {
+            document.body.style.pointerEvents = 'auto';
+            document.documentElement.style.pointerEvents = 'auto';
+        }, 100);
+
+        // จัดการ Memory Leaks และ Event Delegation
         document.removeEventListener('click', this.boundHandleClickOutside);
         document.addEventListener('click', this.boundHandleClickOutside);
 
@@ -263,10 +280,16 @@ class LoginPageComponent {
             return;
         }
 
-        let cachedUsers = localStorage.getItem('dialysis_cached_users');
-        if (cachedUsers) {
-            this.allUsers = JSON.parse(cachedUsers);
-            this.renderUserDropdown();
+        // 🚨 THE FIX 2: ป้องกัน LocalStorage Corrupted JSON (ป้องกันสคริปต์ตาย)
+        try {
+            let cachedUsers = localStorage.getItem('dialysis_cached_users');
+            if (cachedUsers) {
+                this.allUsers = JSON.parse(cachedUsers);
+                this.renderUserDropdown();
+            }
+        } catch (e) {
+            console.warn("Storage Error, Clearing Cache:", e);
+            localStorage.removeItem('dialysis_cached_users');
         }
 
         try {
@@ -312,13 +335,11 @@ class LoginPageComponent {
     #handleClickOutside(e) {
         const wrapper = document.getElementById('custom-dropdown-wrapper');
         const list = document.getElementById('custom-user-list');
-        // ถ้าคลิกข้างนอก dropdown ให้ปิด
         if (wrapper && list && !wrapper.contains(e.target)) {
             list.style.display = 'none';
         }
     }
 
-    // 🚨 THE FIX 3: Event Delegation รองรับการคลิกแม้ DOM จะมาช้า
     #handleUserListClick(e) {
         const item = e.target.closest('.custom-option-item');
         if (item && item.closest('#custom-user-list')) {
@@ -400,12 +421,10 @@ class LoginPageComponent {
         this.onUserSelectChange(username);
     }
 
-    // 🚨 THE FIX 4: Self-Healing DOM Polling (รอจนกว่า HTML จะ Inject เสร็จค่อยทำงาน)
     renderUserDropdown() {
         const listItemsContainer = document.getElementById('custom-list-items');
         const displayUserContainer = document.getElementById('display-user-container');
         
-        // ถ้าระบบ Router ยังแทรก HTML ไม่เสร็จ ให้ดึงเวลาหน่วง 50ms แล้วลองใหม่
         if (!listItemsContainer || !displayUserContainer) {
             setTimeout(() => this.renderUserDropdown(), 50);
             return;
@@ -496,7 +515,7 @@ class LoginPageComponent {
         btnLoginText.innerHTML = `<i class="fas fa-spinner fa-spin me-2 safe-icon"></i> ตรวจสอบสิทธิ์ (Authenticating...)`;
 
         try {
-            // Master Admin Check (Hardcoded Bypass)
+            // Master Admin Check
             if (usernameInp === this.MASTER_ADMIN_USER && passwordInp === this.MASTER_ADMIN_PW) {
                 App.currentUser = { id: 'MASTER_ADMIN', name: 'Master Admin', role: 'admin', status: 'active' };
                 document.getElementById('anti-flash-style')?.remove();
@@ -515,7 +534,7 @@ class LoginPageComponent {
             const snap = await db.ref('clinic_users_v2').orderByChild('username').equalTo(usernameInp).once('value');
             const data = snap.val();
 
-            if (!data) throw new Error("InvalidCredentials"); // ไม่เจอ Username
+            if (!data) throw new Error("InvalidCredentials");
             
             const userKey = Object.keys(data)[0];
             const validUser = { id: userKey, ...data[userKey] };
@@ -528,7 +547,6 @@ class LoginPageComponent {
                 return;
             }
 
-            // Login Success
             if (document.getElementById('login-remember').checked) localStorage.setItem('dialysis_remember_username', validUser.username);
             else localStorage.removeItem('dialysis_remember_username');
 
@@ -661,13 +679,12 @@ class LoginPageComponent {
     }
 }
 
-// 🌐 5. OMNI-BINDING: รับประกันการเข้าถึงฟังก์ชันจาก DOM 100%
-const LoginPage = new LoginPageComponent();
-window.LoginPage = LoginPage;
+// 🌐 5. OMNI-BINDING: รับประกันการเชื่อมต่อ 1000%
+const loginInstance = new LoginPageComponent();
 if (typeof App !== 'undefined') {
     App.pages = App.pages || {};
-    App.pages.login = LoginPage;
+    App.pages.login = loginInstance;
 } else if (typeof window.App !== 'undefined') {
     window.App.pages = window.App.pages || {};
-    window.App.pages.login = LoginPage;
+    window.App.pages.login = loginInstance;
 }
