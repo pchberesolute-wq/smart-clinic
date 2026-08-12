@@ -1,5 +1,5 @@
 // js/main.js
-// 🚀 Enterprise Core Router: ES6 Class Architecture, O(1) Auth Query, Smart Sync & Zero-Leak Engine (v13.0)
+// 🚀 Enterprise Core Router: ES6 Class Architecture, O(1) Auth Query, Smart Sync & Zero-Leak Engine (v13.1)
 
 // 🚨 Global Iframe Clickjacking Protection
 document.addEventListener('click', function(e) {
@@ -42,14 +42,14 @@ class CoreApplicationRouter {
         
         this.pages = {};
         
-        // 🔒 RBAC Definitions
+        // 🔒 RBAC Definitions (🚨 THE FIX: เพิ่ม 'salary' เข้าไปในสิทธิ์ของ finance)
         this.defaultRolePermissions = {
             'admin': ['*'],
             'doctor': ['dashboard', 'visits', 'visit_detail', 'patients', 'patient_history', 'document_center', 'search_copy', 'about'],
             'head_nurse': ['dashboard', 'visits', 'visit_detail', 'patients', 'patient_history', 'document_center', 'patient_status', 'inventory', 'stock_manage', 'stock_history', 'monthly_requisition', 'stock_forecast', 'usage_statistics', 'search_copy', 'about'],
             'nurse': ['dashboard', 'visits', 'visit_detail', 'patients', 'patient_history', 'document_center', 'patient_status', 'monthly_requisition', 'search_copy', 'about'],
             'assistant': ['dashboard', 'visits', 'patient_history', 'document_center', 'search_copy', 'about'],
-            'finance': ['dashboard', 'finance', 'department_ledger', 'search_copy', 'about'],
+            'finance': ['dashboard', 'finance', 'department_ledger', 'salary', 'search_copy', 'about'], // ✅ เพิ่มหน้า salary ให้แผนกการเงิน
             'stock': ['dashboard', 'inventory', 'stock_manage', 'stock_history', 'monthly_requisition', 'stock_forecast', 'usage_statistics', 'search_copy', 'about']
         };
         this.rolePermissions = {};
@@ -64,7 +64,7 @@ class CoreApplicationRouter {
     }
 
     initPages() {
-        // ใช้ Optional Chaining ป้องกัน ReferenceError
+        // 🚨 THE FIX: ลงทะเบียนหน้า Salary เข้าระบบ Router
         this.pages = {
             login: window.LoginPage || null,
             dashboard: window.DashboardPage || null,
@@ -86,6 +86,7 @@ class CoreApplicationRouter {
             usage_statistics: window.UsageStatisticsPage || null,
             finance: window.FinancePage || null,
             department_ledger: window.DepartmentLedgerPage || null,
+            salary: window.SalaryPage || null, // ✅ ผูก Component เข้ากับ Route
             document_center: window.DocumentCenterPage || null
         };
     }
@@ -104,7 +105,7 @@ class CoreApplicationRouter {
         if (!this.mobileBackdrop) {
             this.mobileBackdrop = document.createElement('div');
             this.mobileBackdrop.id = 'app-mobile-backdrop';
-            this.mobileBackdrop.className = 'mobile-sidebar-overlay'; // ย้าย Style ไปไว้ใน CSS
+            this.mobileBackdrop.className = 'mobile-sidebar-overlay'; 
             this.mobileBackdrop.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.6); z-index:990; opacity:0; visibility:hidden; transition:opacity 0.3s ease, visibility 0.3s ease; backdrop-filter:blur(3px);';
             document.body.appendChild(this.mobileBackdrop);
             
@@ -112,7 +113,6 @@ class CoreApplicationRouter {
         }
 
         if (btnToggle) {
-            // Clean old event listeners gracefully
             const newBtnToggle = btnToggle.cloneNode(true);
             btnToggle.parentNode.replaceChild(newBtnToggle, btnToggle);
             
@@ -125,7 +125,6 @@ class CoreApplicationRouter {
             });
         }
 
-        // ใช้ ResizeObserver หรือ MediaQuery แทน Event Resize ปกติ (ถ้า ResponsiveEngine ทำแล้ว อันนี้อาจจะซ้ำซ้อน แต่คงไว้เพื่อความชัวร์)
         window.matchMedia('(min-width: 1025px)').addEventListener('change', (e) => {
             if (e.matches && this.mobileBackdrop?.style.visibility === 'visible') {
                 this.toggleSidebar(false);
@@ -188,7 +187,6 @@ class CoreApplicationRouter {
             const monthNames = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
             const dateStr = `${now.getDate()} ${monthNames[now.getMonth()]} ${(now.getFullYear() + 543).toString().slice(-2)}`;
             
-            // DOM Update แบบ O(1) Zero-Reflow (เปลี่ยนแค่ TextNode)
             if(!this._clockStructBuilt) {
                 clockEl.innerHTML = `
                     <div style="display: flex; align-items: center; white-space: nowrap;">
@@ -235,7 +233,6 @@ class CoreApplicationRouter {
             }
         });
 
-        // ซ่อนหมวดหมู่ (Section) ถ้าลูกข้างในโดนซ่อนหมด
         let currentSection = null;
         let visibleCount = 0;
         
@@ -251,7 +248,6 @@ class CoreApplicationRouter {
         });
         if (currentSection && visibleCount === 0) currentSection.style.display = 'none';
 
-        // Auto-Kick if on unauthorized page
         const currentPageEl = document.querySelector('.nav-item.active');
         if (currentPageEl) {
             const currentPage = currentPageEl.getAttribute('data-page');
@@ -274,7 +270,6 @@ class CoreApplicationRouter {
         const mainContent = document.querySelector('.main-content');
         let appContent = document.getElementById('app-content');
 
-        // RBAC Verification
         if (pageName !== 'login' && this.currentUser) {
             const role = this.currentUser.role || 'nurse';
             const permissionsSrc = Object.keys(this.rolePermissions).length > 0 ? this.rolePermissions : this.defaultRolePermissions;
@@ -286,7 +281,6 @@ class CoreApplicationRouter {
             }
         }
 
-        // Layout Bootstrapping
         if (!appContent && mainContent) {
             appContent = document.createElement('div');
             appContent.id = 'app-content';
@@ -296,7 +290,6 @@ class CoreApplicationRouter {
 
         this.toggleSidebar(false);
 
-        // UI Context Switching
         if (pageName !== 'login') {
             document.documentElement.classList.remove('not-logged-in');
             document.getElementById('anti-flash-style')?.remove();
@@ -306,7 +299,6 @@ class CoreApplicationRouter {
             if(mainContent) { mainContent.style.marginLeft = ''; mainContent.style.background = ''; }
             if(appContent) { appContent.style.padding = ''; appContent.style.opacity = '1'; }
             
-            // Re-verify auth context
             if (!this.currentUser && sessionStorage.getItem('dialysis_user_session')) {
                 this.checkAuth();
             }
@@ -317,14 +309,13 @@ class CoreApplicationRouter {
             if(appContent) appContent.style.padding = '0';
         }
 
-        // Active State Management
         if (element) {
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             element.classList.add('active');
         } else {
             document.querySelectorAll('.nav-item').forEach(el => {
                 el.classList.remove('active');
-                if (el.getAttribute('onclick')?.includes(`'${pageName}'`)) {
+                if (el.getAttribute('onclick')?.includes(`'${pageName}'`) || el.getAttribute('data-page') === pageName) {
                     el.classList.add('active');
                 }
             });
@@ -334,7 +325,6 @@ class CoreApplicationRouter {
         
         this.clearAllOverlays();
         
-        // Page Lifecycle: Destroy
         if (this.activePageModule && typeof this.activePageModule.destroy === 'function') {
             try { this.activePageModule.destroy(); } 
             catch (e) { console.warn(`[Router] Cleanup error on previous page:`, e); }
@@ -342,7 +332,6 @@ class CoreApplicationRouter {
         
         appContent.style.opacity = 0; 
 
-        // Page Lifecycle: Render & Init
         setTimeout(() => {
             try {
                 const availablePages = this.getPages();
@@ -408,7 +397,7 @@ class CoreApplicationRouter {
                     try { this.activePageModule.destroy(); } catch (e) {}
                 }
 
-                sessionStorage.clear(); // Clear all traces
+                sessionStorage.clear(); 
                 window.location.reload(); 
             }
         });
@@ -426,7 +415,6 @@ class CoreApplicationRouter {
     setupIdleTimer() {
         if (!this.currentUser) return;
         const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
-        // Use passive listeners to avoid blocking Main Thread
         events.forEach(event => window.addEventListener(event, () => this.resetIdleTimer(), { passive: true }));
         this.resetIdleTimer(); 
     }
@@ -474,7 +462,6 @@ class CoreApplicationRouter {
             </div>
         `;
         
-        // Add Event Listeners natively instead of inline HTML for better CSP compliance
         document.getElementById('btn-unlock').addEventListener('click', () => this.unlockScreen());
         document.getElementById('unlock-password').addEventListener('keypress', (e) => { if(e.key === 'Enter') this.unlockScreen(); });
         document.getElementById('btn-force-logout').addEventListener('click', () => this.logout());
@@ -511,7 +498,6 @@ class CoreApplicationRouter {
             return; 
         }
 
-        // 🚨 THE FIX: O(1) Auth Validation (ป้องกัน Data Leak ดึงมาทั้งคลินิก)
         if (this.currentUser && this.currentUser.id === this.MASTER_ADMIN_ID && pw === this.MASTER_ADMIN_PW) {
             this._processUnlockSuccess();
             return;
@@ -525,7 +511,6 @@ class CoreApplicationRouter {
             const data = snap.val();
             if (!data) throw new Error("User Not Found");
 
-            // Extract the first (and should be only) matching user
             const userKey = Object.keys(data)[0];
             const user = data[userKey];
 
@@ -612,7 +597,7 @@ class CoreApplicationRouter {
     }
 
     // ==========================================
-    // 🌐 AGENT SYNC (Smart Polling with Exponential Backoff)
+    // 🌐 AGENT SYNC
     // ==========================================
     _startAgentSyncPolling() {
         if (this.agentSyncTimer) clearTimeout(this.agentSyncTimer);
@@ -626,12 +611,10 @@ class CoreApplicationRouter {
         fetch(`http://127.0.0.1:8000/health?v=${encodeURIComponent(currentVersion)}`, { method: 'GET', mode: 'cors' })
             .then(res => res.json())
             .then(() => {
-                // อัปเดตสำเร็จ รีเซ็ต Retry และเช็คใหม่ตามปกติทุก 10 วิ
                 this.agentRetryCount = 0;
                 this.agentSyncTimer = setTimeout(() => this._syncAgentVersion(), 10000);
             })
             .catch(() => {
-                // 🚨 THE FIX: Exponential Backoff (ถ้ายิงไม่ติด ยืดเวลารอออกไปเรื่อยๆ สูงสุด 1 นาที) ป้องกัน CPU พัง
                 this.agentRetryCount++;
                 const delay = Math.min(1000 * Math.pow(2, this.agentRetryCount), 60000);
                 this.agentSyncTimer = setTimeout(() => this._syncAgentVersion(), delay);
@@ -691,7 +674,7 @@ window.addEventListener('DOMContentLoaded', () => {
             const data = snap.val();
             if (data?.clinic_name) {
                 const brandText = document.querySelector('.brand-text h3');
-                if (brandText) brandText.textContent = data.clinic_name; // Security: Use textContent
+                if (brandText) brandText.textContent = data.clinic_name;
             }
         });
     }

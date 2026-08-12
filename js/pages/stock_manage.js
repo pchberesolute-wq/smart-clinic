@@ -1,5 +1,5 @@
 // js/pages/stock_manage.js
-// 🚀 Enterprise Stock Management: Absolute Contextual UX Calculator & Delta Translation (v17.0 APEX)
+// 🚀 Enterprise Stock Management: Unified State Engine & Conflict-Free Calculator (v20.0 APEX)
 
 class StockManagePageComponent {
     constructor() {
@@ -15,8 +15,6 @@ class StockManagePageComponent {
             <style>
                 .table-premium th { color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px; padding: 14px 10px; border-bottom: 2px solid var(--border-color); }
                 .table-premium td { padding: 14px 10px; vertical-align: middle; border-bottom: 1px solid var(--border-color); transition: background 0.2s; }
-                .btn-action-icon { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.2s ease; }
-                .btn-action-icon:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
                 
                 .btn-manual-search { border: 2px dashed var(--primary) !important; background-color: var(--bg-surface) !important; color: var(--primary) !important; transition: all 0.3s ease; }
                 .btn-manual-search:hover { background-color: var(--primary) !important; color: #ffffff !important; border-style: solid !important; box-shadow: 0 4px 12px rgba(37,99,235,0.2) !important; }
@@ -28,8 +26,9 @@ class StockManagePageComponent {
                     background: var(--bg-body); border: 2px solid var(--border-color); border-radius: 8px; 
                     font-size: 18px; font-weight: 700; color: var(--text-dark); padding: 5px 15px; cursor: pointer; transition: all 0.2s; width: 100%; text-align: center;
                 }
-                .qty-calculator-btn:hover { border-color: var(--primary); color: var(--primary); background: rgba(59,130,246,0.05); }
+                .qty-calculator-btn:hover { border-color: var(--primary); color: var(--primary); background: rgba(59,130,246,0.05); box-shadow: 0 4px 10px rgba(59,130,246,0.1); }
 
+                /* Numpad Styles */
                 .numpad-calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 15px; }
                 .numpad-btn { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 12px; font-size: 22px; font-weight: 700; color: var(--text-dark); padding: 12px 0; transition: all 0.1s; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); font-family: 'Prompt', sans-serif;}
                 .numpad-btn:active { transform: scale(0.95); background: var(--bg-body); }
@@ -41,20 +40,15 @@ class StockManagePageComponent {
 
                 .numpad-danger { background: rgba(239, 68, 68, 0.1) !important; color: #ef4444 !important; border-color: rgba(239, 68, 68, 0.2) !important; }
                 .numpad-danger:hover { background: rgba(239, 68, 68, 0.2) !important; }
-                html[data-bs-theme="dark"] .numpad-danger { color: #f87171 !important; border-color: rgba(239, 68, 68, 0.3) !important; }
 
                 .numpad-success { background: var(--primary) !important; color: white !important; border-color: var(--primary) !important; font-size: 26px; box-shadow: 0 4px 10px rgba(59,130,246,0.3);}
-                .numpad-success:hover { filter: brightness(0.9); background: var(--primary) !important; color: white !important; }
+                .numpad-success:hover { filter: brightness(0.9); }
 
                 .numpad-memory { background: rgba(245, 158, 11, 0.1) !important; color: #d97706 !important; border-color: rgba(245, 158, 11, 0.2) !important; font-size: 16px; font-family: 'Sarabun'; }
                 .numpad-memory:hover { background: rgba(245, 158, 11, 0.2) !important; }
-                html[data-bs-theme="dark"] .numpad-memory { color: #fbbf24 !important; border-color: rgba(245, 158, 11, 0.3) !important; }
-
-                .calc-toggle-btn { flex: 1; padding: 12px; border-radius: 10px; font-weight: bold; border: none; cursor: pointer; transition: 0.2s; font-family: 'Prompt'; font-size: 16px; }
-                .calc-toggle-active-add { background: #ea580c; color: white; box-shadow: 0 4px 10px rgba(234, 88, 12, 0.3); }
-                .calc-toggle-active-replace { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3); }
-                .calc-toggle-inactive { background: transparent; color: var(--text-muted); }
-                .calc-toggle-inactive:hover { background: var(--border-color); }
+                
+                select option { padding: 10px; font-weight: 600; }
+                optgroup { font-weight: 800; color: var(--primary); font-family: 'Prompt', sans-serif; }
             </style>
 
             <div class="page-header mb-4">
@@ -76,16 +70,27 @@ class StockManagePageComponent {
                         
                         <div class="position-relative z-1">
                             <h5 class="fw-bold mb-3" style="color: var(--text-dark);"><i class="fa-solid fa-filter me-2 text-primary"></i> 1. เลือกประเภททำรายการ <span class="text-danger">*</span></h5>
-                            <select id="sm-mode" class="form-select form-select-lg fw-bold mb-3 input-modern" onchange="App.pages.stock_manage.changeMode()" style="background-color: var(--bg-body); color: var(--text-dark); border-color: var(--border-color) !important;">
-                                <option value="transfer">🚚 เบิกโอน (สต๊อกใหญ่ ➡️ สต๊อกเล็ก)</option>
-                                <option value="out_sub">📤 เบิกใช้งาน / ตัดทิ้ง (จากสต๊อกเล็ก)</option>
-                                <option value="in_main">📥 รับของล็อตใหม่เข้า (สต๊อกใหญ่)</option>
-                                <option value="audit_main">📋 ตรวจนับปรับยอดจริง (สต๊อกใหญ่)</option>
-                                <option value="audit_sub">📋 ตรวจนับปรับยอดจริง (สต๊อกเล็ก)</option>
-                            </select>
                             
-                            <div id="sm-mode-desc" class="alert py-2 px-3 small mb-4 shadow-sm border" style="border-radius: 12px; background: var(--bg-body); border-color: var(--info) !important;">
-                                <i class="fa-solid fa-circle-info me-1 text-info"></i> <span id="sm-mode-text" class="text-info"><b>สต๊อกใหญ่ลดลง / สต๊อกเล็กเพิ่มขึ้น:</b> ใช้เมื่อเข็นของจากห้องเก็บของใหญ่ มาเติมไว้ที่หน้าเคาน์เตอร์/รถเข็นพยาบาล</span>
+                            <div class="position-relative mb-3">
+                                <select id="sm-mode" class="form-select form-select-lg fw-bold input-modern shadow-sm" onchange="App.pages.stock_manage.changeMode()" style="background-color: var(--bg-body); color: var(--text-dark); border: 2px solid var(--border-color) !important; border-radius: 12px; cursor: pointer; padding: 12px 15px;">
+                                    <option value="transfer" selected>🚚 เบิกโอน (สต๊อกใหญ่ ➡️ สต๊อกเล็ก)</option>
+                                    <option value="out_sub">📤 เบิกใช้งาน / ตัดทิ้ง (จากสต๊อกเล็ก)</option>
+                                    <option value="in_main">📥 รับของล็อตใหม่เข้า (สต๊อกใหญ่)</option>
+                                    
+                                    <optgroup label="📋 หมวดตรวจนับ (สต๊อกใหญ่)">
+                                        <option value="audit_main_add">➕ ตรวจนับปรับยอดจริง (สต๊อกใหญ่) - บวกทบเดิม</option>
+                                        <option value="audit_main_replace">🔄 ตรวจนับปรับยอดจริง (สต๊อกใหญ่) - แทนที่ยอด</option>
+                                    </optgroup>
+
+                                    <optgroup label="📋 หมวดตรวจนับ (สต๊อกเล็ก)">
+                                        <option value="audit_sub_add">➕ ตรวจนับปรับยอดจริง (สต๊อกเล็ก) - บวกทบเดิม</option>
+                                        <option value="audit_sub_replace">🔄 ตรวจนับปรับยอดจริง (สต๊อกเล็ก) - แทนที่ยอด</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            
+                            <div id="sm-mode-desc" class="alert py-2 px-3 small mb-4 shadow-sm border" style="border-radius: 12px; background: rgba(59,130,246,0.05); border-color: rgba(59,130,246,0.2) !important;">
+                                <i class="fa-solid fa-circle-info me-1 text-primary"></i> <span id="sm-mode-text" class="text-primary"><b>ย้ายของหน้าเคาน์เตอร์:</b> ดึงของจากสต๊อกใหญ่ (-) ไปเพิ่มที่สต๊อกเล็ก (+) แบบบัญชีคู่ (Double-Entry)</span>
                             </div>
 
                             <h5 class="fw-bold mb-3" style="color: var(--text-dark);"><i class="fa-solid fa-expand me-2 text-primary"></i> 2. สแกน หรือ เลือกพัสดุ</h5>
@@ -102,7 +107,7 @@ class StockManagePageComponent {
                             <button class="btn btn-manual-search w-100 fw-bold shadow-sm mb-2" style="border-radius:12px; padding: 14px;" onclick="App.pages.stock_manage.openManualSelect()">
                                 <i class="fa-solid fa-hand-pointer me-2"></i> หรือ กดเพื่อค้นหาและเลือกพัสดุด้วยมือ
                             </button>
-                            <small class="text-muted"><i class="fa-solid fa-circle-info text-primary"></i> สแกนบาร์โค้ด = เพิ่มทีละ 1 / ค้นหาด้วยมือ = พิมพ์ยอดเอง</small>
+                            <small class="text-muted"><i class="fa-solid fa-circle-info text-primary"></i> สแกนบาร์โค้ด = เพิ่มจำนวนทีละ 1 / ค้นหาด้วยมือ = พิมพ์ตัวเลขเองได้เลย</small>
                         </div>
                     </div>
                 </div>
@@ -132,14 +137,13 @@ class StockManagePageComponent {
                                             <th class="text-center text-primary" style="width: 8%;">ลำดับ</th>
                                             <th class="text-center" style="width: 14%;">รหัสสินค้า</th>
                                             <th>ชื่อพัสดุ</th>
-                                            <th class="text-center">สต๊อกอ้างอิง</th>
-                                            <th class="text-center" style="width: 140px;">จำนวนทำรายการ</th>
-                                            <th class="text-center text-primary">ยอดใหม่</th>
-                                            <th></th>
+                                            <th class="text-center" style="min-width: 130px;">สถานะสต๊อก (เดิม ➡️ ใหม่)</th>
+                                            <th class="text-center" style="width: 120px;">จำนวนรายการ</th>
+                                            <th class="text-center" style="width: 50px;"></th>
                                         </tr>
                                     </thead>
                                     <tbody id="sm-cart-body">
-                                        <tr><td colspan="7" class="text-center text-muted py-5"><i class="fa-solid fa-basket-shopping fa-3x mb-3" style="opacity:0.2;"></i><br>ตะกร้าว่างเปล่า<br><small>เริ่มสแกนบาร์โค้ดเพื่อนำสินค้าลงตะกร้า</small></td></tr>
+                                        <tr><td colspan="6" class="text-center text-muted py-5"><i class="fa-solid fa-basket-shopping fa-3x mb-3" style="opacity:0.2;"></i><br>ตะกร้าว่างเปล่า<br><small>เริ่มสแกนบาร์โค้ดเพื่อนำสินค้าลงตะกร้า</small></td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -167,6 +171,7 @@ class StockManagePageComponent {
         this.#fetchItemsFromDB();
         this.#bindEvents();
         this.updateUndoButton();
+        this.changeMode(); // Initialize description
     }
 
     destroy() {
@@ -206,19 +211,14 @@ class StockManagePageComponent {
     safeClearCart() {
         if (this.cart.length === 0) return;
         Swal.fire({
-            title: 'ล้างตะกร้า?',
-            text: 'คุณต้องการลบรายการทั้งหมดที่สแกนมาทิ้งใช่หรือไม่?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ef4444',
-            confirmButtonText: '<i class="fa-solid fa-trash me-1"></i> ลบทิ้งทั้งหมด',
-            cancelButtonText: 'ยกเลิก',
-            customClass: { popup: 'premium-alert' }
+            title: 'ล้างตะกร้า?', text: 'คุณต้องการลบรายการทั้งหมดที่สแกนมาทิ้งใช่หรือไม่?', icon: 'warning',
+            showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: '<i class="fa-solid fa-trash me-1"></i> ลบทิ้งทั้งหมด', cancelButtonText: 'ยกเลิก', customClass: { popup: 'premium-alert' }
         }).then((res) => {
             if (res.isConfirmed) {
                 this.saveStateToHistory(); 
-                this.clearCart();
-                if(window.SecurityShield) window.SecurityShield.showNativeToast('ล้างตะกร้าแล้ว (กดย้อนกลับได้ถ้าเปลี่ยนใจ)');
+                this.cart = [];
+                this.renderCart();
+                if(window.SecurityShield) window.SecurityShield.showNativeToast('ล้างตะกร้าแล้ว');
             }
         });
     }
@@ -250,7 +250,6 @@ class StockManagePageComponent {
                 return orderA - orderB;
             });
             this.allItems = itemsList;
-
             this.renderCart(); 
         });
         
@@ -259,19 +258,22 @@ class StockManagePageComponent {
 
     changeMode() {
         const mode = document.getElementById('sm-mode').value;
-        let desc = ""; let alertClass = "border-info"; let textColor = "text-info";
+        let desc = ""; let alertClass = "border-primary"; let textColor = "text-primary";
         
-        if(mode === 'transfer') { desc = "<b>สต๊อกใหญ่ลดลง / สต๊อกเล็กเพิ่มขึ้น:</b> ใช้เมื่อเข็นของจากห้องเก็บของใหญ่ มาเติมไว้ที่หน้าเคาน์เตอร์/รถเข็นพยาบาล"; alertClass = "border-info"; textColor = "text-info"; } 
-        else if(mode === 'out_sub') { desc = "<b>สต๊อกเล็กลดลง:</b> ใช้ตัดสต๊อกเมื่อพยาบาลนำของไปใช้จริงกับคนไข้ หรือกรณีของชำรุด/หมดอายุ"; alertClass = "border-danger"; textColor = "text-danger"; } 
-        else if(mode === 'in_main') { desc = "<b>สต๊อกใหญ่เพิ่มขึ้น:</b> ใช้เมื่อมีของล็อตใหม่มาส่งจากบริษัท รับเข้าห้องเก็บของใหญ่"; alertClass = "border-success"; textColor = "text-success"; } 
-        else if(mode === 'audit_main') { desc = "<b>ปรับตัวเลขทับของเดิม:</b> ใช้เมื่อต้องการปรับยอดสต๊อกใหญ่ให้ตรงกับที่เดินนับด้วยมือ"; alertClass = "border-warning"; textColor = "text-warning"; } 
-        else if(mode === 'audit_sub') { desc = "<b>ปรับตัวเลขทับของเดิม:</b> ใช้เมื่อต้องการปรับยอดหน้าเคาน์เตอร์ (สต๊อกเล็ก) ให้ตรงกับที่นับด้วยมือ"; alertClass = "border-warning"; textColor = "text-warning"; }
+        if(mode === 'transfer') { desc = "<b>ย้ายของไปหน้าเคาน์เตอร์:</b> สต๊อกใหญ่ ⬇️ / สต๊อกเล็ก ⬆️ (บัญชีคู่)"; alertClass = "border-primary"; textColor = "text-primary"; } 
+        else if(mode === 'out_sub') { desc = "<b>เบิกใช้/ตัดทิ้ง:</b> สต๊อกเล็กลดลง ⬇️ (ใช้เมื่อนำของไปใช้กับคนไข้ หรือหมดอายุ)"; alertClass = "border-danger"; textColor = "text-danger"; } 
+        else if(mode === 'in_main') { desc = "<b>รับของล็อตใหม่:</b> สต๊อกใหญ่เพิ่มขึ้น ⬆️ (ใช้เมื่อมีของมาส่งจากบริษัท)"; alertClass = "border-success"; textColor = "text-success"; } 
+        else if(mode === 'audit_main_add') { desc = "<b>นับบวกทบ (สต๊อกใหญ่):</b> ยอดที่คีย์ จะถูกนำไป <u>บวกเพิ่ม</u> เข้ากับสต๊อกใหญ่เดิม"; alertClass = "border-warning"; textColor = "text-warning"; } 
+        else if(mode === 'audit_main_replace') { desc = "<b>นับแทนที่ (สต๊อกใหญ่):</b> ยอดที่คีย์ จะถูกนำไป <u>ทับยอด</u> สต๊อกใหญ่ทั้งหมด (ยึดเลขใหม่เป็นหลัก)"; alertClass = "border-warning"; textColor = "text-warning"; }
+        else if(mode === 'audit_sub_add') { desc = "<b>นับบวกทบ (สต๊อกเล็ก):</b> ยอดที่คีย์ จะถูกนำไป <u>บวกเพิ่ม</u> เข้ากับสต๊อกเล็กเดิม"; alertClass = "border-warning"; textColor = "text-warning"; } 
+        else if(mode === 'audit_sub_replace') { desc = "<b>นับแทนที่ (สต๊อกเล็ก):</b> ยอดที่คีย์ จะถูกนำไป <u>ทับยอด</u> สต๊อกเล็กทั้งหมด (ยึดเลขใหม่เป็นหลัก)"; alertClass = "border-warning"; textColor = "text-warning"; }
         
         const descEl = document.getElementById('sm-mode-desc'); 
         const descText = document.getElementById('sm-mode-text');
         
         if (descEl && descText) { 
             descEl.className = `alert py-2 px-3 small mb-4 shadow-sm border ${alertClass}`; 
+            descEl.style.background = `color-mix(in srgb, var(--${alertClass.split('-')[1]}) 5%, transparent)`;
             descText.className = `${textColor}`;
             descText.innerHTML = desc; 
         }
@@ -285,7 +287,8 @@ class StockManagePageComponent {
             }).then((res) => { 
                 if(res.isConfirmed) { 
                     this.saveStateToHistory();
-                    this.clearCart(); 
+                    this.cart = [];
+                    this.renderCart(); 
                 } else { 
                     this.renderCart(); 
                 } 
@@ -363,22 +366,13 @@ class StockManagePageComponent {
     processScan(barcode, isManual = false) {
         if (!barcode) return;
         const item = this.allItems.find(i => i.barcode === barcode);
-        
-        if (!item) { 
-            Swal.fire('ไม่พบพัสดุ', `ระบบไม่รู้จักบาร์โค้ด: ${barcode}`, 'warning'); 
-            return; 
-        }
+        if (!item) { Swal.fire('ไม่พบพัสดุ', `ระบบไม่รู้จักบาร์โค้ด: ${barcode}`, 'warning'); return; }
 
         this.saveStateToHistory(); 
 
-        let qMain = item.qty_main !== undefined ? Number(item.qty_main) : (Number(item.qty) || 0);
-        let qSub = Number(item.qty_sub) || 0;
-
         const existing = this.cart.find(c => c.id === item.id);
         if (existing) { 
-            if (!isManual) {
-                existing.processQty += 1; 
-            }
+            if (!isManual) existing.processQty += 1; 
         } else { 
             this.cart.push({ 
                 firebaseKey: item.firebaseKey, 
@@ -386,8 +380,6 @@ class StockManagePageComponent {
                 item_code: item.item_code || '-', 
                 barcode: item.barcode, 
                 name: item.name, 
-                qty_main: qMain, 
-                qty_sub: qSub, 
                 processQty: isManual ? 0 : 1, 
                 order: item.order 
             }); 
@@ -396,9 +388,7 @@ class StockManagePageComponent {
         this.renderCart();
         
         if (isManual) {
-            setTimeout(() => {
-                this.openCalculator(item.id);
-            }, 100);
+            setTimeout(() => { this.openCalculator(item.id); }, 100);
         } else {
             setTimeout(() => {
                 const tableContainer = document.querySelector('#sm-cart-body').closest('.table-responsive');
@@ -407,7 +397,7 @@ class StockManagePageComponent {
         }
     }
 
-    // 🚨 THE MASTERPIECE: Contextual Absolute Calculator
+    // 🚨 THE MASTERPIECE: Conflict-Free Calculator (โหมดควบคุมจากด้านนอก)
     openCalculator(id) {
         const item = this.cart.find(c => c.id === id);
         if (!item) return;
@@ -415,19 +405,25 @@ class StockManagePageComponent {
         const sysMode = document.getElementById('sm-mode').value;
         const latestItem = this.allItems.find(i => i.id === id);
         
-        // 1. ดึงยอดสต๊อกอ้างอิงที่แท้จริง (Absolute Base Stock)
+        // 1. ดึงยอดตั้งต้น (Base)
+        let baseMainStock = latestItem.qty_main !== undefined ? Number(latestItem.qty_main) : (Number(latestItem.qty) || 0);
+        let baseSubStock = Number(latestItem.qty_sub) || 0;
+        
         let baseStock = 0;
         let stockLabel = "";
-        if (sysMode === 'in_main' || sysMode === 'transfer' || sysMode === 'audit_main') {
-            baseStock = latestItem.qty_main !== undefined ? Number(latestItem.qty_main) : (Number(latestItem.qty) || 0);
+        if (sysMode === 'in_main' || sysMode === 'transfer' || sysMode.includes('audit_main')) {
+            baseStock = baseMainStock;
             stockLabel = "สต๊อกใหญ่";
         } else {
-            baseStock = Number(latestItem.qty_sub) || 0;
+            baseStock = baseSubStock;
             stockLabel = "สต๊อกเล็ก";
         }
 
-        let mathExpr = "0"; 
-        let calcMode = "="; 
+        // 🚨 2. นิยามโหมดที่ตายตัว ป้องกัน Conflict (ลบปุ่ม Toggle ทิ้งแล้ว)
+        const isReplaceMode = sysMode.endsWith('_replace');
+        const calcMode = isReplaceMode ? "=" : "+";
+
+        let mathExpr = String(item.processQty || "0"); 
         let memoryValue = 0;
         let isEvaluated = true; 
 
@@ -442,16 +438,8 @@ class StockManagePageComponent {
         };
 
         const renderCalc = () => {
-            let evaluatedVal = evaluateMath(mathExpr);
-            
-            // 2. คำนวณยอดสต๊อกสุทธิ (Final Target Stock) จากการคีย์ของผู้ใช้
-            let targetStock = 0;
-            if (calcMode === '+') {
-                targetStock = baseStock + evaluatedVal; // โหมดบวกเพิ่ม: เอาสต๊อกปัจจุบัน + ยอดที่คีย์
-            } else {
-                targetStock = evaluatedVal; // โหมดแทนที่: ทับสต๊อกด้วยยอดที่คีย์เลย
-            }
-            if (targetStock < 0) targetStock = 0;
+            let currentInputVal = evaluateMath(mathExpr);
+            if (currentInputVal < 0) currentInputVal = 0;
 
             let displayFormula = "";
             for (let i = 0; i < mathExpr.length; i++) {
@@ -463,18 +451,59 @@ class StockManagePageComponent {
                 else displayFormula += c;
             }
 
+            // 3. จำลองผลลัพธ์ (Simulation) อิงตามตัวเลขที่คีย์บนจอตรงๆ เลย
+            let pQty = currentInputVal; // ตัวเลขที่คีย์
+            let simMain = baseMainStock;
+            let simSub = baseSubStock;
+            let simHtml = '';
+
+            if (sysMode === 'in_main' || sysMode === 'audit_main_add') {
+                simMain += pQty;
+                simHtml = `<div class="fw-bold text-success"><i class="fa-solid fa-arrow-trend-up"></i> สต๊อกใหญ่: ${baseMainStock} ➡️ บวกเป็น ${simMain}</div>`;
+            } else if (sysMode === 'audit_sub_add') {
+                simSub += pQty;
+                simHtml = `<div class="fw-bold text-success"><i class="fa-solid fa-arrow-trend-up"></i> สต๊อกเล็ก: ${baseSubStock} ➡️ บวกเป็น ${simSub}</div>`;
+            } else if (sysMode === 'transfer') {
+                simMain -= pQty;
+                simSub += pQty;
+                simHtml = `
+                    <div class="fw-bold ${simMain < 0 ? 'text-danger' : 'text-primary'}">สต๊อกใหญ่: ${baseMainStock} ➡️ หักเหลือ ${simMain}</div>
+                    <div class="fw-bold text-info mt-1">สต๊อกเล็ก: ${baseSubStock} ➡️ เติมเป็น ${simSub}</div>
+                `;
+            } else if (sysMode === 'out_sub') {
+                simSub -= pQty;
+                simHtml = `<div class="fw-bold ${simSub < 0 ? 'text-danger' : 'text-primary'}"><i class="fa-solid fa-arrow-trend-down"></i> สต๊อกเล็ก: ${baseSubStock} ➡️ ตัดเหลือ ${simSub}</div>`;
+            } else if (sysMode === 'audit_main_replace') {
+                simMain = pQty;
+                simHtml = `<div class="fw-bold text-warning"><i class="fa-solid fa-pen-to-square"></i> สต๊อกใหญ่: ${baseMainStock} ➡️ แทนที่เป็น ${simMain}</div>`;
+            } else if (sysMode === 'audit_sub_replace') {
+                simSub = pQty;
+                simHtml = `<div class="fw-bold text-warning"><i class="fa-solid fa-pen-to-square"></i> สต๊อกเล็ก: ${baseSubStock} ➡️ แทนที่เป็น ${simSub}</div>`;
+            }
+
+            // 🚨 4. ล็อกคำอธิบายโหมดตายตัว (ไม่ให้คลิกเปลี่ยน)
             let modeDesc = "";
+            let borderColor = "";
+            let modeTitle = "";
+            let modeIcon = "";
+
             if (calcMode === '+') {
+                borderColor = "#ea580c";
+                modeTitle = "ระบุจำนวนที่จะทำรายการ";
+                modeIcon = "fa-dolly";
                 modeDesc = `
-                <div class="px-3 py-2 mb-3 rounded-3 small fw-bold shadow-sm d-flex align-items-start gap-2" style="background: rgba(234, 88, 12, 0.05); color: #ea580c; border: 1px dashed rgba(234, 88, 12, 0.3); text-align: left; line-height: 1.4; animation: fadeInUpLocal 0.3s ease;">
-                    <i class="fa-solid fa-circle-plus mt-1"></i>
-                    <div><span class="text-dark">โหมดบวกเพิ่ม (+):</span> นำยอดที่คีย์ไป <u style="text-decoration-thickness: 2px;">บวกทบยอดสต๊อกปัจจุบัน</u><br><span style="font-size: 11px; opacity:0.8;">(เช่น มี ${baseStock} คีย์ 5 = สต๊อกใหม่ ${baseStock + 5})</span></div>
+                <div class="px-3 py-2 mb-3 rounded-3 small fw-bold shadow-sm d-flex align-items-start gap-2" style="background: rgba(234, 88, 12, 0.05); color: #ea580c; border: 1px dashed rgba(234, 88, 12, 0.3); text-align: left; line-height: 1.4;">
+                    <i class="fa-solid fa-calculator mt-1"></i>
+                    <div><span class="text-dark">โหมดคำนวณส่วนต่าง (+):</span><br><span style="font-size: 11px; opacity:0.8;">ตัวเลขที่คีย์คือ "จำนวนที่ขยับ" (ระบบจะนำไปบวกหรือลบให้อัตโนมัติ)</span></div>
                 </div>`;
             } else {
+                borderColor = "var(--primary)";
+                modeTitle = "ระบุยอดคงเหลือเป้าหมาย";
+                modeIcon = "fa-bullseye";
                 modeDesc = `
-                <div class="px-3 py-2 mb-3 rounded-3 small fw-bold shadow-sm d-flex align-items-start gap-2" style="background: rgba(37, 99, 235, 0.05); color: var(--primary); border: 1px dashed rgba(37, 99, 235, 0.3); text-align: left; line-height: 1.4; animation: fadeInUpLocal 0.3s ease;">
-                    <i class="fa-solid fa-right-left mt-1"></i>
-                    <div><span class="text-dark">โหมดแทนที่ (=):</span> นำยอดที่คีย์ไป <u style="text-decoration-thickness: 2px;">แทนที่สต๊อกทั้งหมด</u><br><span style="font-size: 11px; opacity:0.8;">(เช่น มี ${baseStock} คีย์ 5 = สต๊อกใหม่ 5)</span></div>
+                <div class="px-3 py-2 mb-3 rounded-3 small fw-bold shadow-sm d-flex align-items-start gap-2" style="background: rgba(37, 99, 235, 0.05); color: var(--primary); border: 1px dashed rgba(37, 99, 235, 0.3); text-align: left; line-height: 1.4;">
+                    <i class="fa-solid fa-bullseye mt-1"></i>
+                    <div><span class="text-dark">โหมดแทนที่ยอดสุทธิ (=):</span><br><span style="font-size: 11px; opacity:0.8;">ตัวเลขที่คีย์คือ "ยอดคงเหลือบนชั้นวาง" (ระบบจะปรับยอดในฐานข้อมูลให้ตรงเป๊ะ)</span></div>
                 </div>`;
             }
 
@@ -486,8 +515,9 @@ class StockManagePageComponent {
                                 <h5 class="fw-bold mb-2" style="color: var(--primary); line-height: 1.4; word-break: break-word;">${this.#escapeHTML(item.name)}</h5>
                                 <div class="small mb-2" style="color: var(--text-muted);"><i class="fa-solid fa-hashtag me-1"></i> ${this.#escapeHTML(item.item_code || item.barcode)}</div>
                                 
-                                <div class="badge px-3 py-2 mt-2 fs-6 shadow-sm w-100 text-start" style="background-color: var(--bg-body); color: var(--text-dark); border: 1px solid var(--border-color); border-radius: 8px;">
-                                    สต๊อกปัจจุบัน (${stockLabel}): <b class="fs-5 float-end text-primary">${baseStock}</b>
+                                <div class="p-3 mt-3 shadow-sm rounded-3" style="background: var(--bg-body); border: 1px solid var(--border-color);">
+                                    <div class="small text-muted mb-2 fw-bold text-uppercase">จำลองผลลัพธ์ (Simulation)</div>
+                                    ${simHtml}
                                 </div>
                             </div>
 
@@ -502,23 +532,21 @@ class StockManagePageComponent {
                         </div>
 
                         <div class="col-md-7 ps-md-2">
-                            <div class="d-flex rounded-pill p-1 mb-2 border shadow-sm w-100" style="background-color: var(--bg-body); border-color: var(--border-color) !important;">
-                                <button type="button" class="calc-toggle-btn w-50 ${calcMode === '+' ? 'calc-toggle-active-add' : 'calc-toggle-inactive'}" onclick="window.setCalcMode('+')">บวกเพิ่ม (+)</button>
-                                <button type="button" class="calc-toggle-btn w-50 ${calcMode === '=' ? 'calc-toggle-active-replace' : 'calc-toggle-inactive'}" onclick="window.setCalcMode('=')">แทนที่ (=)</button>
+                            <div class="fw-bold text-center mb-2" style="color: ${borderColor}; font-size:16px;">
+                                <i class="fa-solid ${modeIcon} me-1"></i> ${modeTitle}
                             </div>
-
+                            
+                            <!-- 🚨 ไม่มีปุ่ม Toggle สลับโหมดอีกต่อไป -->
                             ${modeDesc}
 
-                            <div class="p-3 mb-3 text-end position-relative" style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 16px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+                            <div class="p-3 mb-3 text-end position-relative" style="background: var(--bg-surface); border: 2px solid ${borderColor}; border-radius: 16px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
                                 ${memoryValue !== 0 ? `<div class="position-absolute top-0 start-0 badge px-2 py-1 shadow-sm m-2" style="background: #f59e0b; color: #fff; font-size:11px;">M = ${memoryValue}</div>` : ''}
                                 <div style="color: var(--text-muted); min-height: 22px; font-family: monospace; font-size: 16px; letter-spacing: 1px;">${displayFormula || '0'}</div>
-                                <div class="fw-bold" style="color: var(--text-dark); font-size: 42px; line-height: 1;">${evaluatedVal}</div>
+                                <div class="fw-bold" style="color: var(--text-dark); font-size: 42px; line-height: 1;">${currentInputVal}</div>
                             </div>
 
-                            <div class="py-2 px-3 small fw-bold mb-3 d-flex justify-content-between align-items-center shadow-sm" style="background: rgba(16, 185, 129, 0.05); border: 1px dashed rgba(16, 185, 129, 0.4); border-radius: 12px; color: var(--text-dark);">
-                                <span style="color: #10b981;"><i class="fa-solid fa-box-open me-1"></i> ยอดสต๊อกสุทธิที่จะบันทึก:</span>
-                                <span class="fs-4" style="color: #10b981;">${targetStock}</span>
-                            </div>
+                            <!-- ซ่อน PQty ไว้ส่งค่า -->
+                            <input type="hidden" id="hidden-process-qty" value="${pQty}">
 
                             <div class="numpad-calc-grid">
                                 <button class="numpad-btn numpad-memory" onclick="window.pressCalc('MC')">MC</button>
@@ -552,73 +580,32 @@ class StockManagePageComponent {
             });
         };
 
-        window.setCalcMode = (mode) => { calcMode = mode; renderCalc(); };
         window.pressCalc = (key) => {
             const operators = ['+', '-', '*', '/'];
-
-            if (key === 'C') { 
-                mathExpr = "0"; 
-                isEvaluated = true;
-            }
-            else if (key === 'MC') {
-                memoryValue = 0;
-            }
+            if (key === 'C') { mathExpr = "0"; isEvaluated = true; }
+            else if (key === 'MC') { memoryValue = 0; }
             else if (key === 'MR') {
-                if (isEvaluated || mathExpr === "0" || mathExpr === "") { 
-                    mathExpr = String(memoryValue); 
-                    isEvaluated = false; 
-                } else { 
-                    const lastChar = mathExpr.slice(-1);
-                    if (/[0-9]/.test(lastChar)) {
-                        mathExpr += '+' + memoryValue; 
-                    } else {
-                        mathExpr += String(memoryValue); 
-                    }
-                }
+                if (isEvaluated || mathExpr === "0" || mathExpr === "") { mathExpr = String(memoryValue); isEvaluated = false; } 
+                else { const lastChar = mathExpr.slice(-1); if (/[0-9]/.test(lastChar)) { mathExpr += '+' + memoryValue; } else { mathExpr += String(memoryValue); } }
             }
             else if (key === 'M+') {
                 let val = evaluateMath(mathExpr);
-                memoryValue += val;
-                mathExpr = String(val); 
-                isEvaluated = true; 
-                if(window.SecurityShield) window.SecurityShield.showNativeToast('บวกค่าเข้า Memory แล้ว (กด MR เพื่อเรียกใช้)');
+                memoryValue += val; mathExpr = String(val); isEvaluated = true; 
+                if(window.SecurityShield) window.SecurityShield.showNativeToast('บวกค่าเข้า Memory แล้ว');
             }
             else if (key === '<') { 
-                if (isEvaluated) {
-                    mathExpr = "0";
-                    isEvaluated = true;
-                } else {
-                    mathExpr = mathExpr.slice(0, -1); 
-                    if (mathExpr === "") {
-                        mathExpr = "0";
-                        isEvaluated = true;
-                    }
-                }
+                if (isEvaluated) { mathExpr = "0"; isEvaluated = true; } 
+                else { mathExpr = mathExpr.slice(0, -1); if (mathExpr === "") { mathExpr = "0"; isEvaluated = true; } }
             }
             else if (operators.includes(key)) {
                 isEvaluated = false;
-                if (mathExpr === "") {
-                    mathExpr = "0" + key;
-                } else {
-                    const lastChar = mathExpr.slice(-1);
-                    if (operators.includes(lastChar)) {
-                        mathExpr = mathExpr.slice(0, -1) + key; 
-                    } else {
-                        mathExpr += key; 
-                    }
-                }
+                if (mathExpr === "") { mathExpr = "0" + key; } 
+                else { const lastChar = mathExpr.slice(-1); if (operators.includes(lastChar)) { mathExpr = mathExpr.slice(0, -1) + key; } else { mathExpr += key; } }
             }
-            else if (key === '=') {
-                mathExpr = String(evaluateMath(mathExpr)); 
-                isEvaluated = true;
-            }
+            else if (key === '=') { mathExpr = String(evaluateMath(mathExpr)); isEvaluated = true; }
             else { 
-                if (isEvaluated || mathExpr === "0") {
-                    mathExpr = key;
-                    isEvaluated = false;
-                } else {
-                    mathExpr += key; 
-                }
+                if (isEvaluated || mathExpr === "0") { mathExpr = key; isEvaluated = false; } 
+                else { mathExpr += key; }
             }
             
             if (mathExpr.length > 25) mathExpr = mathExpr.slice(0, 25);
@@ -627,40 +614,19 @@ class StockManagePageComponent {
 
         Swal.fire({
             title: `<h4 class="fw-bold mb-0" style="color: var(--text-dark);"><i class="fa-solid fa-calculator me-2" style="color: var(--primary);"></i>เครื่องคิดเลขพัสดุ</h4>`,
-            html: 'Loading...',
-            showCancelButton: true,
-            confirmButtonText: '<i class="fa-solid fa-check me-1"></i> ยืนยันยอดสุทธิ',
-            cancelButtonText: 'ยกเลิก',
-            confirmButtonColor: '#10b981',
-            width: 700, 
-            customClass: { popup: 'premium-alert' },
+            html: 'Loading...', showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-check me-1"></i> ยืนยันยอดนี้', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#10b981', width: 700, customClass: { popup: 'premium-alert' },
             didOpen: () => renderCalc(),
             preConfirm: () => {
-                let evaluatedVal = evaluateMath(mathExpr);
-                let targetStock = calcMode === "+" ? (baseStock + evaluatedVal) : evaluatedVal;
-                if (targetStock < 0) targetStock = 0;
-
-                // 3. แปลง Target Stock กลับเป็นจำนวนที่ต้องไปบวกลบในตะกร้า (Translation to ProcessQty)
-                let requiredProcessQty = 0;
-                if (sysMode === 'in_main') {
-                    // รับเข้า: จำนวนทำรายการ = สต๊อกใหม่ - สต๊อกเดิม
-                    requiredProcessQty = targetStock - baseStock;
-                } else if (sysMode === 'transfer' || sysMode === 'out_sub') {
-                    // เบิกออก/ย้าย: จำนวนทำรายการ = สต๊อกเดิม - สต๊อกใหม่ (เพราะตะกร้าจะเอาไปลบออก)
-                    requiredProcessQty = baseStock - targetStock;
-                } else if (sysMode === 'audit_main' || sysMode === 'audit_sub') {
-                    // ปรับยอดทับ: โยนยอดสต๊อกใหม่เข้าไปเลย
-                    requiredProcessQty = targetStock;
-                }
-                return requiredProcessQty;
+                // 🚨 ผลลัพธ์สุดท้ายคือ "ตัวเลขบนจอ" ไม่ต้องทด/หักลบอะไรอีก (เอาไปใส่ PQty ตรงๆ)
+                let finalPQty = Number(document.getElementById('hidden-process-qty').value) || 0;
+                return finalPQty;
             }
         }).then((result) => {
             if (result.isConfirmed) {
                 this.saveStateToHistory(); 
-                item.processQty = result.value;
+                item.processQty = result.value; 
                 this.renderCart();
             }
-            delete window.setCalcMode;
             delete window.pressCalc;
         });
     }
@@ -668,30 +634,12 @@ class StockManagePageComponent {
     removeCartItem(id) {
         const item = this.cart.find(c => c.id === id);
         if (!item) return;
-
-        Swal.fire({
-            title: 'ยืนยันการลบ?',
-            text: `ต้องการลบ "${item.name}" ออกจากตะกร้าใช่หรือไม่?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ef4444',
-            confirmButtonText: '<i class="fa-solid fa-trash me-1"></i> ลบทิ้ง',
-            cancelButtonText: 'ยกเลิก',
-            customClass: { popup: 'premium-alert' }
-        }).then((res) => {
-            if(res.isConfirmed) {
-                this.saveStateToHistory(); 
-                this.cart = this.cart.filter(c => c.id !== id);
-                this.renderCart();
-                if(window.SecurityShield) window.SecurityShield.showNativeToast('นำออกแล้ว (กดย้อนกลับได้ถ้าลบผิด)');
-            }
-        });
+        this.saveStateToHistory(); 
+        this.cart = this.cart.filter(c => c.id !== id);
+        this.renderCart();
     }
     
-    clearCart() { 
-        this.cart = []; 
-        this.renderCart(); 
-    }
+    clearCart() { this.cart = []; this.renderCart(); }
 
     renderCart() {
         const mode = document.getElementById('sm-mode').value;
@@ -699,13 +647,12 @@ class StockManagePageComponent {
         document.getElementById('cart-count').innerText = this.cart.length;
 
         if(this.cart.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-5"><i class="fa-solid fa-basket-shopping fa-3x mb-3" style="opacity:0.2;"></i><br>ตะกร้าว่างเปล่า<br><small>เริ่มสแกน หรือ ค้นหาพัสดุเพื่อลงตะกร้า</small></td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-5"><i class="fa-solid fa-basket-shopping fa-3x mb-3" style="opacity:0.2;"></i><br>ตะกร้าว่างเปล่า<br><small>เริ่มสแกน หรือ ค้นหาพัสดุเพื่อลงตะกร้า</small></td></tr>`;
             return;
         }
 
         let html = '';
         this.cart.forEach(c => {
-            let refStock = 0; let refName = ""; let newQty = 0; let textStyle = ""; let modeText = "";
             let orderVal = (c.order !== undefined && c.order !== null && c.order !== "" && c.order !== 999) ? c.order : '-';
             
             const latestItem = this.allItems.find(i => i.id === c.id);
@@ -714,11 +661,33 @@ class StockManagePageComponent {
                 c.qty_sub = Number(latestItem.qty_sub) || 0;
             }
 
-            if(mode === 'in_main') { refStock = c.qty_main; refName = "ใหญ่"; newQty = refStock + c.processQty; modeText = '<span class="text-success fw-bold">+</span>'; } 
-            else if(mode === 'transfer') { refStock = c.qty_main; refName = "ใหญ่"; newQty = refStock - c.processQty; modeText = '<span class="text-primary fw-bold">=> ย้ายไปเล็ก</span>'; if(newQty < 0) textStyle = "color: #ef4444; font-weight: bold;"; } 
-            else if(mode === 'out_sub') { refStock = c.qty_sub; refName = "เล็ก"; newQty = refStock - c.processQty; modeText = '<span class="text-danger fw-bold">-</span>'; if(newQty < 0) textStyle = "color: #ef4444; font-weight: bold;"; } 
-            else if(mode === 'audit_main') { refStock = c.qty_main; refName = "ใหญ่"; newQty = c.processQty; modeText = '<span class="text-warning fw-bold">= ปรับยอด</span>'; } 
-            else if(mode === 'audit_sub') { refStock = c.qty_sub; refName = "เล็ก"; newQty = c.processQty; modeText = '<span class="text-warning fw-bold">= ปรับยอด</span>'; }
+            let pQty = Number(c.processQty) || 0;
+            let simHtml = '';
+            
+            if(mode === 'in_main') { 
+                simHtml = `<div class="fw-bold text-success" style="font-size:13px;">สต๊อกใหญ่: ${c.qty_main} <i class="fa-solid fa-arrow-right mx-1"></i> ${c.qty_main + pQty}</div>`; 
+            } 
+            else if(mode === 'transfer') { 
+                simHtml = `
+                    <div class="fw-bold ${c.qty_main - pQty < 0 ? 'text-danger' : 'text-primary'}" style="font-size:13px;">ใหญ่: ${c.qty_main} <i class="fa-solid fa-arrow-right mx-1"></i> ${c.qty_main - pQty}</div>
+                    <div class="fw-bold text-info" style="font-size:13px; margin-top:4px;">เล็ก: ${c.qty_sub} <i class="fa-solid fa-arrow-right mx-1"></i> ${c.qty_sub + pQty}</div>
+                `; 
+            } 
+            else if(mode === 'out_sub') { 
+                simHtml = `<div class="fw-bold ${c.qty_sub - pQty < 0 ? 'text-danger' : 'text-danger'}" style="font-size:13px;">สต๊อกเล็ก: ${c.qty_sub} <i class="fa-solid fa-arrow-right mx-1"></i> ${c.qty_sub - pQty}</div>`; 
+            } 
+            else if(mode === 'audit_main_add') { 
+                simHtml = `<div class="fw-bold text-warning" style="font-size:13px;">สต๊อกใหญ่: ${c.qty_main} <i class="fa-solid fa-arrow-right mx-1"></i> ${c.qty_main + pQty} <span class="small fw-normal text-muted">(บวกเพิ่ม)</span></div>`; 
+            } 
+            else if(mode === 'audit_main_replace') { 
+                simHtml = `<div class="fw-bold text-warning" style="font-size:13px;">สต๊อกใหญ่: ${c.qty_main} <i class="fa-solid fa-arrow-right mx-1"></i> ${pQty} <span class="small fw-normal text-muted">(ทับยอด)</span></div>`; 
+            }
+            else if(mode === 'audit_sub_add') { 
+                simHtml = `<div class="fw-bold text-warning" style="font-size:13px;">สต๊อกเล็ก: ${c.qty_sub} <i class="fa-solid fa-arrow-right mx-1"></i> ${c.qty_sub + pQty} <span class="small fw-normal text-muted">(บวกเพิ่ม)</span></div>`; 
+            } 
+            else if(mode === 'audit_sub_replace') { 
+                simHtml = `<div class="fw-bold text-warning" style="font-size:13px;">สต๊อกเล็ก: ${c.qty_sub} <i class="fa-solid fa-arrow-right mx-1"></i> ${pQty} <span class="small fw-normal text-muted">(ทับยอด)</span></div>`; 
+            }
 
             const safeItemCode = this.#escapeHTML(c.item_code || '-');
             const safeName = this.#escapeHTML(c.name);
@@ -731,19 +700,16 @@ class StockManagePageComponent {
                     <div class="fw-bold" style="font-family:'Prompt'; font-size:15px; color: var(--text-dark);">${safeName}</div>
                     <div class="small text-muted"><i class="fa-solid fa-barcode"></i> ${this.#escapeHTML(c.barcode)}</div>
                 </td>
-                <td class="text-center text-muted" style="font-size: 13px; vertical-align: middle;">
-                    <div class="fw-bold" style="font-size:15px; color: var(--text-dark);">${refStock}</div>
-                    <small>ในห้อง${refName}</small>
+                <td class="text-start" style="vertical-align: middle; background: var(--bg-body); border-radius: 8px;">
+                    ${simHtml}
                 </td>
                 <td class="text-center" style="vertical-align: middle;">
-                    <div class="small text-muted mb-1">${modeText}</div>
-                    <button class="qty-calculator-btn shadow-sm" onclick="App.pages.stock_manage.openCalculator('${c.id}')" title="คลิกเพื่อใช้เครื่องคิดเลข">
-                        ${c.processQty} <i class="fa-solid fa-calculator ms-2 text-primary" style="font-size: 14px;"></i>
+                    <button class="qty-calculator-btn shadow-sm text-primary" onclick="App.pages.stock_manage.openCalculator('${c.id}')" title="คลิกเพื่อใช้เครื่องคิดเลข">
+                        ${pQty} <i class="fa-solid fa-calculator ms-1" style="font-size: 12px; opacity:0.5;"></i>
                     </button>
                 </td>
-                <td class="text-center fw-bold text-primary" style="font-size: 18px; vertical-align: middle; ${textStyle}">${newQty}</td>
                 <td class="text-center" style="vertical-align: middle;">
-                    <button class="btn btn-sm border border-danger shadow-sm text-danger" style="background: var(--bg-body);" onclick="App.pages.stock_manage.removeCartItem('${c.id}')" title="ลบออกจากตะกร้า"><i class="fa-solid fa-trash"></i></button>
+                    <button class="btn btn-sm border border-danger shadow-sm text-danger" style="background: var(--bg-surface);" onclick="App.pages.stock_manage.removeCartItem('${c.id}')" title="ลบออกจากตะกร้า"><i class="fa-solid fa-trash"></i></button>
                 </td>
             </tr>`;
         });
@@ -760,27 +726,27 @@ class StockManagePageComponent {
         const e = document.getElementById("sm-mode");
         const modeTextDisplay = e.options[e.selectedIndex].text;
         
+        // เช็คสต๊อกติดลบ (เฉพาะโอนออก หรือ เบิกออก)
         if(mode === 'transfer' || mode === 'out_sub') {
             let hasNegative = this.cart.some(c => {
-                if(mode === 'transfer') return (c.qty_main - c.processQty) < 0;
-                if(mode === 'out_sub') return (c.qty_sub - c.processQty) < 0;
+                let pQty = Number(c.processQty);
+                if(mode === 'transfer') return (c.qty_main - pQty) < 0;
+                if(mode === 'out_sub') return (c.qty_sub - pQty) < 0;
             });
             if(hasNegative) { 
-                Swal.fire('สต๊อกอ้างอิงไม่พอ!', 'มียอดเบิกมากกว่าสต๊อกปัจจุบัน กรุณาแก้ไขตัวเลขในตะกร้า', 'error'); 
+                Swal.fire('สต๊อกติดลบ!', 'มียอดเบิกออกมากกว่าสต๊อกปัจจุบัน กรุณาตรวจสอบและแก้ไขตัวเลขในตะกร้า', 'error'); 
                 return; 
             }
         }
 
         Swal.fire({
             title: `ยืนยันทำรายการ?`, 
-            html: `คุณกำลังสั่ง: <b>${modeTextDisplay}</b><br>จำนวน <b>${this.cart.length}</b> รายการ`, 
-            icon: 'question',
-            showCancelButton: true, confirmButtonColor: '#10b981', 
-            confirmButtonText: '<i class="fa-solid fa-check me-1"></i> ยืนยันและบันทึก', 
-            cancelButtonText: 'ยกเลิก'
+            html: `โหมด: <b>${modeTextDisplay}</b><br>จำนวน <b>${this.cart.length}</b> รายการ`, 
+            icon: 'question', showCancelButton: true, confirmButtonColor: '#10b981', 
+            confirmButtonText: '<i class="fa-solid fa-check me-1"></i> ยืนยันและบันทึก', cancelButtonText: 'ยกเลิก', customClass: { popup: 'premium-alert' }
         }).then(async (res) => {
             if(res.isConfirmed) {
-                Swal.fire({ title: 'กำลังบันทึกบัญชี (Atomic)...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                Swal.fire({ title: 'กำลังบันทึกบัญชี (Atomic)...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: 'var(--bg-surface)' });
                 
                 try {
                     let updates = {};
@@ -798,11 +764,13 @@ class StockManagePageComponent {
                             let qSub = Number(item.qty_sub) || 0;
                             let pQty = Number(c.processQty);
 
-                            if (mode === 'in_main') { qMain += pQty; } 
+                            // บัญชีคู่แบบสมบูรณ์ (Double-Entry Logic)
+                            if (mode === 'in_main' || mode === 'audit_main_add') { qMain += pQty; } 
+                            else if (mode === 'audit_sub_add') { qSub += pQty; }
                             else if (mode === 'transfer') { qMain -= pQty; qSub += pQty; } 
                             else if (mode === 'out_sub') { qSub -= pQty; } 
-                            else if (mode === 'audit_main') { qMain = pQty; } 
-                            else if (mode === 'audit_sub') { qSub = pQty; }
+                            else if (mode === 'audit_main_replace') { qMain = pQty; } 
+                            else if (mode === 'audit_sub_replace') { qSub = pQty; }
 
                             updates[`inventory_database_v2/items/${c.firebaseKey || c.id}/qty_main`] = qMain;
                             updates[`inventory_database_v2/items/${c.firebaseKey || c.id}/qty`] = qMain; 
@@ -812,7 +780,7 @@ class StockManagePageComponent {
                             logs.push({ 
                                 timestamp: timestamp, mode: mode, itemId: c.id, itemName: c.name, 
                                 itemCode: c.item_code || '', barcode: c.barcode || '', 
-                                qty: pQty, user: userName 
+                                qty: pQty, balance_main: qMain, balance_sub: qSub, user: userName 
                             });
                         }
                     }
@@ -821,7 +789,7 @@ class StockManagePageComponent {
                     const logPromises = logs.map(log => db.ref('inventory_database_v2/transactions').push(log));
                     await Promise.all(logPromises);
 
-                    Swal.fire('บันทึกสำเร็จ!', `อัปเดตสต๊อกและสร้างประวัติบัญชีเรียบร้อยแล้ว`, 'success');
+                    Swal.fire({ title: 'บันทึกสำเร็จ!', text: `อัปเดตสต๊อกและสร้างประวัติบัญชีเรียบร้อยแล้ว`, icon: 'success', customClass: { popup: 'premium-alert' } });
                     this.historyStack = []; 
                     this.updateUndoButton();
                     this.clearCart(); 
@@ -836,15 +804,11 @@ class StockManagePageComponent {
     loadScannerLibrary(callback) {
         if (window.Html5Qrcode) { callback(); return; }
         const existingScript = document.querySelector('script[src*="html5-qrcode"]');
-        if (existingScript) {
-            existingScript.addEventListener('load', () => callback());
-            return;
-        }
+        if (existingScript) { existingScript.addEventListener('load', () => callback()); return; }
         Swal.showLoading();
         const script = document.createElement('script');
         script.src = 'https://unpkg.com/html5-qrcode';
         script.onload = () => { Swal.hideLoading(); callback(); };
-        script.onerror = () => { Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถดาวน์โหลดซอฟต์แวร์สแกนเนอร์ได้ กรุณาตรวจสอบอินเทอร์เน็ต', 'error'); };
         document.head.appendChild(script);
     }
 
@@ -853,13 +817,9 @@ class StockManagePageComponent {
             title: '<h5 style="font-family:Prompt; font-weight:700; margin:0;"><i class="fa-solid fa-camera me-2 text-primary"></i>สแกนด้วยกล้องมือถือ</h5>', 
             html: `<div id="qr-reader-audit" class="shadow-sm mt-3 bg-dark d-flex align-items-center justify-content-center" style="width:100%; min-height:250px; border-radius: 12px; overflow: hidden; border: 2px solid var(--primary);"><i class="fa-solid fa-camera fa-2x text-secondary"></i></div><p class="text-muted small mt-3 mb-0"><i class="fa-solid fa-circle-info"></i> อนุญาตให้เว็บเข้าถึงกล้อง แล้วส่องไปที่บาร์โค้ดพัสดุ</p>`,
             showCancelButton: true, showConfirmButton: false, cancelButtonText: 'ปิดกล้อง', cancelButtonColor: '#ef4444',
-            allowOutsideClick: false,
-            didOpen: () => {
-                this.startCameraScanner();
-            },
-            willClose: () => { 
-                this.stopCameraScanner(); 
-            }
+            allowOutsideClick: false, background: 'var(--bg-surface)', customClass: { popup: 'premium-alert' },
+            didOpen: () => { this.startCameraScanner(); },
+            willClose: () => { this.stopCameraScanner(); }
         });
     }
 
@@ -867,11 +827,9 @@ class StockManagePageComponent {
         this.loadScannerLibrary(async () => {
             if (this.html5QrcodeScanner) {
                 try {
-                    if (this.html5QrcodeScanner.getState() === 2) {
-                        await this.html5QrcodeScanner.stop();
-                    }
+                    if (this.html5QrcodeScanner.getState() === 2) { await this.html5QrcodeScanner.stop(); }
                     this.html5QrcodeScanner.clear();
-                } catch(e) { console.error("Scanner release error", e); }
+                } catch(e) {}
             }
             this.#initCamera();
         });
@@ -889,23 +847,19 @@ class StockManagePageComponent {
             qrbox: function(viewfinderWidth, viewFinderHeight) {
                 let width = Math.floor(viewfinderWidth * 0.8);
                 let height = Math.floor(viewFinderHeight * 0.4);
-                if (width < 250) width = 250;
-                if (height < 120) height = 120;
-                return { width: width, height: height };
+                return { width: width < 250 ? 250 : width, height: height < 120 ? 120 : height };
             },
             aspectRatio: 1.333334
         };
         
         this.html5QrcodeScanner.start(
-            { facingMode: "environment" }, 
-            config,
+            { facingMode: "environment" }, config,
             (decodedText) => {
-                this.stopCameraScanner();
-                Swal.close();
+                this.stopCameraScanner(); Swal.close();
                 let cleanBarcode = decodedText.trim().replace(/\*/g, '');
                 this.processScan(cleanBarcode);
             }, 
-            (errorMessage) => { /* Silent check frames */ }
+            (errorMessage) => { }
         ).catch(err => {
             if (document.getElementById('qr-reader-audit')) { 
                 document.getElementById('qr-reader-audit').innerHTML = 
@@ -923,13 +877,9 @@ class StockManagePageComponent {
             try { 
                 if (this.html5QrcodeScanner.getState() === 2) { 
                     this.html5QrcodeScanner.stop().then(() => { 
-                        this.html5QrcodeScanner.clear(); 
-                        this.html5QrcodeScanner = null; 
+                        this.html5QrcodeScanner.clear(); this.html5QrcodeScanner = null; 
                     }).catch(err => { this.html5QrcodeScanner = null; }); 
-                } else { 
-                    this.html5QrcodeScanner.clear(); 
-                    this.html5QrcodeScanner = null; 
-                } 
+                } else { this.html5QrcodeScanner.clear(); this.html5QrcodeScanner = null; } 
             } catch (err) { this.html5QrcodeScanner = null; }
         }
     }

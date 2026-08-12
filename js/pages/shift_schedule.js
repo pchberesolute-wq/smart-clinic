@@ -1,10 +1,14 @@
 // js/pages/shift_schedule.js
-// 🚀 Enterprise HR & Timesheet Matrix Module (v105.0 - Absolute Full Build, Split-Pane & Micro-Pills)
+// 🚀 Enterprise HR & Timesheet Matrix Module (v110.0 - 3-Column Command Center & Prev-Month Side-by-Side)
 
 class ShiftSchedulePageComponent {
     constructor() {
         this.currentMonth = new Date().toISOString().slice(0, 7);
         this.currentYear = this.currentMonth.slice(0, 4);
+        
+        this.prevMonth = ''; 
+        this.prevTimesheetData = {}; 
+
         this.staffList = [];
         this.timesheetData = {}; 
         this.yearlyLeaveUsage = {}; 
@@ -91,19 +95,15 @@ class ShiftSchedulePageComponent {
                 
                 .empty-cell { color: var(--text-muted); font-size: 16px; opacity: 0.25; }
                 
-                /* 🚨 THE FIX: อัปเกรดระบบสีของ Native Calendar Picker ให้สว่างวาบในโหมดมืด */
+                @keyframes flashAlert { 0% { opacity: 1; color: #ef4444; } 50% { opacity: 0.2; color: #b91c1c; } 100% { opacity: 1; color: #ef4444; } }
+                .flash-anim { animation: flashAlert 1.5s infinite; }
+
                 input[type="month"] { color-scheme: light dark; }
                 input[type="month"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.5; transition: all 0.2s ease; }
                 input[type="month"]::-webkit-calendar-picker-indicator:hover { opacity: 1; transform: scale(1.1); }
                 
-                html[data-bs-theme="dark"] input[type="month"]::-webkit-calendar-picker-indicator {
-                    filter: invert(1) brightness(200%);
-                    opacity: 0.7;
-                }
-                html[data-bs-theme="dark"] input[type="month"]::-webkit-calendar-picker-indicator:hover {
-                    opacity: 1;
-                    filter: invert(1) brightness(250%);
-                }
+                html[data-bs-theme="dark"] input[type="month"]::-webkit-calendar-picker-indicator { filter: invert(1) brightness(200%); opacity: 0.7; }
+                html[data-bs-theme="dark"] input[type="month"]::-webkit-calendar-picker-indicator:hover { opacity: 1; filter: invert(1) brightness(250%); }
 
                 @media screen { .print-only-zone { display: none !important; } }
             </style>
@@ -116,7 +116,7 @@ class ShiftSchedulePageComponent {
                         </div>
                         ตารางปฏิบัติงาน <span class="text-muted fw-normal" style="font-size: 20px;">(HR Timesheet)</span>
                     </h2>
-                    <p class="text-muted mt-2 mb-0 fw-bold">บันทึกรอบฟอกไต ลงเวรย่อย และจัดการโควตาวันหยุด</p>
+                    <p class="text-muted mt-2 mb-0 fw-bold">บันทึกรอบฟอกไต ลงเวรย่อย และจัดการโควตาวันหยุด <span class="badge bg-primary ms-1" style="font-size:10px;">Smart OT รอบบิล 21-20</span></p>
                 </div>
                 <div class="d-flex gap-2 align-items-center flex-wrap">
                     <button class="btn text-white fw-bold shadow-sm rounded-pill px-3 border-0" style="background: #8b5cf6;" onclick="window.ShiftSchedulePage.openExportOptionsModal('preview')" title="ดูตาราง Master Roster สด">
@@ -135,7 +135,6 @@ class ShiftSchedulePageComponent {
                     
                     <div class="px-3 py-2 rounded-pill shadow-sm border border-2 border-primary-subtle d-flex align-items-center ms-2" style="background: var(--bg-surface);">
                         <i class="fa-regular fa-calendar text-primary me-2 safe-icon"></i>
-                        <!-- 🚨 THE FIX: เอา inline color-scheme ออก เพื่อให้ CSS Engine ควบคุมแทน 100% -->
                         <input type="month" id="timesheet-month-picker" class="border-0 fw-bold text-primary" style="outline: none; background: transparent; font-size: 15px;" onchange="window.ShiftSchedulePage.changeMonth(this.value)">
                     </div>
 
@@ -271,8 +270,32 @@ class ShiftSchedulePageComponent {
         const cbTs = db.ref(pathTs).on('value', snap => {
             this.timesheetData = snap.val() || {};
             this.renderGrid();
+            
+            let modalUsername = document.getElementById('modal-staff-username')?.value;
+            if (modalUsername) {
+                this.updateModalWorkloadWidget(modalUsername);
+                this.updateModalPrevMonthWidget(modalUsername);
+            }
         });
         this.firebaseListeners.push({ path: pathTs, callback: cbTs });
+
+        const [y, m] = this.currentMonth.split('-');
+        let prevDate = new Date(parseInt(y), parseInt(m) - 1, 1);
+        prevDate.setMonth(prevDate.getMonth() - 1);
+        this.prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+
+        const pathPrevTs = `clinic_timesheet_v2/${this.prevMonth}`;
+        const cbPrevTs = db.ref(pathPrevTs).on('value', snap => {
+            this.prevTimesheetData = snap.val() || {};
+            this.renderGrid();
+            
+            let modalUsername = document.getElementById('modal-staff-username')?.value;
+            if (modalUsername) {
+                this.updateModalWorkloadWidget(modalUsername);
+                this.updateModalPrevMonthWidget(modalUsername);
+            }
+        });
+        this.firebaseListeners.push({ path: pathPrevTs, callback: cbPrevTs });
 
         const pathUsage = `clinic_leave_usage_v2/${this.currentYear}`;
         const cbUsage = db.ref(pathUsage).on('value', snap => {
@@ -431,6 +454,67 @@ class ShiftSchedulePageComponent {
         return globalLeave ? Number(globalLeave.quota) : 0;
     }
 
+    isWorkingDay(rawStatus) {
+        if(!rawStatus) return false;
+        let isWork = false;
+        String(rawStatus).split(',').forEach(item => {
+            let isRoundOff = String(item).endsWith('_O');
+            let cleanId = String(item).includes('_') ? String(item).split('_')[0] : (String(item).includes('|') ? String(item).split('|')[0] : String(item));
+            if (this.shiftTypes.some(s => s.id === cleanId) && !isRoundOff) {
+                isWork = true;
+            }
+        });
+        return isWork;
+    }
+
+    calculatePayrollCycleWorkload(staffUname) {
+        const [y, m] = this.currentMonth.split('-');
+        let prevDate = new Date(parseInt(y), parseInt(m) - 1, 1);
+        prevDate.setMonth(prevDate.getMonth() - 1);
+        let daysInPrev = new Date(prevDate.getFullYear(), prevDate.getMonth() + 1, 0).getDate();
+
+        let workingDaysCount = 0;
+        let consecutiveCount = 0;
+        let maxConsecutive = 0;
+
+        if (this.prevTimesheetData[staffUname]) {
+            for (let d = 21; d <= daysInPrev; d++) {
+                let dStr = `${this.prevMonth}-${String(d).padStart(2, '0')}`;
+                let raw = this.prevTimesheetData[staffUname][dStr] || '';
+                if (this.isWorkingDay(raw)) {
+                    workingDaysCount++;
+                    consecutiveCount++;
+                    if(consecutiveCount > maxConsecutive) maxConsecutive = consecutiveCount;
+                } else {
+                    consecutiveCount = 0;
+                }
+            }
+        }
+
+        if (this.timesheetData[staffUname]) {
+            for (let d = 1; d <= 20; d++) {
+                let dStr = `${this.currentMonth}-${String(d).padStart(2, '0')}`;
+                let raw = this.timesheetData[staffUname][dStr] || '';
+                if (this.isWorkingDay(raw)) {
+                    workingDaysCount++;
+                    consecutiveCount++;
+                    if(consecutiveCount > maxConsecutive) maxConsecutive = consecutiveCount;
+                } else {
+                    consecutiveCount = 0;
+                }
+            }
+        }
+
+        let otDays = Math.max(0, workingDaysCount - 26);
+        let status = 'safe'; 
+        
+        if (maxConsecutive >= 7) status = 'burnout';
+        else if (otDays > 0) status = 'ot';
+        else if (workingDaysCount >= 24) status = 'warning';
+
+        return { workingDaysCount, otDays, maxConsecutive, status };
+    }
+
     renderLegend() {
         const container = document.getElementById('timesheet-legend');
         if(!container) return;
@@ -480,9 +564,17 @@ class ShiftSchedulePageComponent {
             let dayName = this.thaiFullDays[dateObj.getDay()]; 
             let isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
             
+            let isCutoffDay = day === 20;
+            let dayColorClass = isCutoffDay ? 'text-primary' : '';
+            let dayLabelHTML = isCutoffDay ? `<span class="badge bg-primary px-1 mt-1" style="font-size:7px;">ตัดยอด</span>` : '';
+
             headHtml += `
                 <th class="${isWeekend ? 'weekend-header' : ''}">
-                    <div class="day-header"><span class="day-num">${day}</span><span class="day-name">${dayName}</span></div>
+                    <div class="day-header">
+                        <span class="day-num ${dayColorClass}">${day}</span>
+                        <span class="day-name">${dayName}</span>
+                        ${dayLabelHTML}
+                    </div>
                 </th>`;
         }
         headHtml += `<th style="min-width:200px;"><i class="fa-solid fa-chart-pie text-success me-1"></i> สรุป (ทำงาน & สถานะพิเศษ)</th></tr>`;
@@ -512,6 +604,25 @@ class ShiftSchedulePageComponent {
                 let avatarStyle = `background: ${roleConf.color}; box-shadow: 0 4px 10px color-mix(in srgb, ${roleConf.color} 40%, transparent);`;
                 let staffRoleName = `<span class="role-badge dynamic-badge mt-0" style="--badge-bg:${roleConf.bg}; --badge-color:${roleConf.color};">${this.escapeHTML(roleConf.name)}</span>`;
 
+                let workloadBadge = '';
+                if (staff.role === 'admin') {
+                    let wl = this.calculatePayrollCycleWorkload(staffUname);
+                    let wlColor = wl.status === 'safe' ? '#10b981' : (wl.status === 'warning' ? '#f59e0b' : (wl.status === 'ot' ? '#8b5cf6' : '#ef4444'));
+                    let wlBg = wl.status === 'safe' ? 'rgba(16, 185, 129, 0.1)' : (wl.status === 'warning' ? 'rgba(245, 158, 11, 0.1)' : (wl.status === 'ot' ? 'rgba(139, 92, 246, 0.1)' : 'rgba(239, 68, 68, 0.1)'));
+                    let wlIcon = wl.status === 'safe' ? 'fa-battery-full' : (wl.status === 'warning' ? 'fa-battery-quarter' : (wl.status === 'ot' ? 'fa-coins' : 'fa-fire-flame-curved'));
+                    
+                    let burnAlert = wl.maxConsecutive >= 7 ? `<span class="ms-1 text-danger flash-anim" title="ลากยาว ${wl.maxConsecutive} วันติด! จัดวันพักด่วน!"><i class="fa-solid fa-triangle-exclamation"></i></span>` : '';
+                    let otAlert = wl.otDays > 0 ? `<span class="ms-1 text-white badge shadow-sm" style="font-size:9px; background:#8b5cf6; padding: 2px 5px;">+${wl.otDays} OT</span>` : '';
+
+                    workloadBadge = `
+                    <div class="mt-1 d-flex align-items-center" style="font-size:10px;">
+                        <span class="badge" style="background:${wlBg}; color:${wlColor}; border:1px solid ${wlColor}40; padding:4px 6px;" title="รอบบิล 21 เดือนก่อน - 20 เดือนนี้ (ทำเกิน 26 วันได้ OT)">
+                            <i class="fa-solid ${wlIcon} me-1"></i> ทำงาน: ${wl.workingDaysCount}/26 ${otAlert}
+                        </span>
+                        ${burnAlert}
+                    </div>`;
+                }
+
                 rowHtml += `
                     <td class="sticky-col p-2">
                         <div class="staff-card-cell">
@@ -519,6 +630,7 @@ class ShiftSchedulePageComponent {
                             <div class="staff-info-container">
                                 <div class="fw-bold text-dark mb-1" style="font-family:'Prompt'; font-size:13.5px; white-space:normal; word-break:break-word; line-height:1.2;" title="${this.escapeHTML(safeName)}">${this.escapeHTML(safeName)}</div>
                                 <div>${staffRoleName}</div>
+                                ${workloadBadge}
                             </div>
                             <button class="btn btn-sm border p-0 rounded-circle text-muted flex-shrink-0 d-flex align-items-center justify-content-center settings-btn-hover" style="width:28px; height:28px;" onclick="window.ShiftSchedulePage.openIndividualQuotaModal('${staffUname}', '${this.escapeHTML(safeName)}')"><i class="fa-solid fa-sliders" style="font-size:11px;"></i></button>
                         </div>
@@ -535,7 +647,6 @@ class ShiftSchedulePageComponent {
                     let statusIds = rawData ? String(rawData).split(',') : [];
                     let cellContent = '';
 
-                    // คำนวณวันหยุดรวมเฉพาะเดือนนี้
                     let fullDayLeaveId = statusIds.find(id => this.leaveTypes.some(l => l.id === id));
                     if (fullDayLeaveId) {
                         monthLeaveCounts[fullDayLeaveId] = (monthLeaveCounts[fullDayLeaveId] || 0) + 1;
@@ -572,12 +683,18 @@ class ShiftSchedulePageComponent {
                     }
 
                     const safeUname = staffUname.replace(/'/g, "\\'");
-                    rowHtml += `<td class="shift-cell" onclick="window.ShiftSchedulePage.openBatchModal('${safeUname}', '${dateStr}')">${cellContent}</td>`;
+                    let isCutoffBorder = day === 20 ? 'border-right: 2px dashed var(--primary) !important;' : '';
+                    rowHtml += `<td class="shift-cell" style="${isCutoffBorder}" onclick="window.ShiftSchedulePage.openBatchModal('${safeUname}', '${dateStr}')">${cellContent}</td>`;
                 }
 
                 let summaryHtml = `<div class="d-flex flex-column gap-1">`;
                 
-                summaryHtml += `<div class="quota-box dynamic-badge" style="--badge-bg:var(--primary); --badge-color:#fff;" title="นับเฉพาะการลงเวรในเดือนนี้"><span>เข้ากะ (เดือนนี้)</span> <span>${workRoundsCount} รอบ</span></div>`;
+                // 🚨 THE FIX: กล่องเข้ากะ สีจะเข้มเสมอแม้เป็น 0
+                if (workRoundsCount > 0) {
+                    summaryHtml += `<div class="quota-box" style="background-color: var(--primary); color: #ffffff !important; border: 1px solid var(--primary);" title="นับเฉพาะการลงเวรในเดือนปฏิทินนี้"><span style="color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;">เข้ากะ (เดือนนี้)</span> <span style="color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;">${workRoundsCount} รอบ</span></div>`;
+                } else {
+                    summaryHtml += `<div class="quota-box" style="background-color: #f8fafc; color: #64748b !important; border: 1px dashed #cbd5e1;" title="นับเฉพาะการลงเวรในเดือนปฏิทินนี้"><span style="color:#64748b !important;-webkit-text-fill-color:#64748b !important;">เข้ากะ (เดือนนี้)</span> <span style="color:#64748b !important;-webkit-text-fill-color:#64748b !important;">0 รอบ</span></div>`;
+                }
                 
                 if (monthTotalLeaves > 0) {
                     let monthLeaveHtml = '';
@@ -628,6 +745,7 @@ class ShiftSchedulePageComponent {
         }
     }
 
+    // 🚨 THE FIX: ปรับ Modal ให้กว้าง 1200px และสับเป็น 3 คอลัมน์
     openBatchModal(staffUsername, clickedDateStr) {
         const daysInMonth = this.getDaysInMonth(this.currentMonth);
         const [year, month] = this.currentMonth.split('-'); 
@@ -649,7 +767,6 @@ class ShiftSchedulePageComponent {
             });
         }
 
-        // 🚨 สถาปัตยกรรม CSS ภายใน Modal (รองรับ Dark Mode 100%)
         let modalCss = `
             <style>
                 .modern-date-cb:checked + .modern-date-lbl { background-color: var(--primary) !important; color: #ffffff !important; border-color: var(--primary) !important; transform: scale(1.05); box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
@@ -665,7 +782,6 @@ class ShiftSchedulePageComponent {
                 .modern-date-cb:checked + .modern-date-lbl .mini-shift-badge { box-shadow: 0 0 0 1px rgba(255,255,255,0.6); }
                 .modern-date-cb:checked + .modern-date-lbl .date-day-num { color: #ffffff !important; }
 
-                /* 🚨 วันอาทิตย์ (ปรับให้รองรับ Dark Mode) */
                 .modern-date-lbl.sunday-lbl { border-color: rgba(239,68,68,0.4); color: #ef4444; background: rgba(239,68,68,0.05); }
                 .modern-date-lbl.sunday-lbl:hover { background-color: rgba(239,68,68,0.15); border-color: #ef4444; }
                 html[data-bs-theme="dark"] .modern-date-lbl.sunday-lbl { border-color: rgba(239,68,68,0.5); color: #f87171; background: rgba(239,68,68,0.1); }
@@ -687,18 +803,75 @@ class ShiftSchedulePageComponent {
                 .leave-card-cb:checked + .leave-card-lbl { background-color: var(--leave-color) !important; color: #ffffff !important; border-color: var(--leave-color) !important; transform: scale(1.03); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
                 .leave-card-cb:checked + .leave-card-lbl * { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
 
-                .split-pane-scroll { max-height: 58vh; overflow-y: auto; overflow-x: hidden; padding-right: 5px; }
-                .split-pane-scroll::-webkit-scrollbar { width: 5px; }
+                .split-pane-scroll { max-height: 60vh; overflow-y: auto; overflow-x: hidden; padding-right: 8px; }
+                .split-pane-scroll::-webkit-scrollbar { width: 6px; }
                 .split-pane-scroll::-webkit-scrollbar-track { background: transparent; }
                 .split-pane-scroll::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
             </style>
         `;
         
-        let leftPaneHtml = `
-            <div class="split-pane-scroll border-lg-end" style="border-color: var(--border-color) !important;">
+        // -----------------------------------------------------
+        // 🚨 COL 1: อดีต (ประวัติเดือนที่แล้ว) แบบ Matrix เต็มๆ
+        // -----------------------------------------------------
+        let col1_PrevMonthHtml = `<div class="split-pane-scroll border-lg-end pe-lg-3" style="border-color: var(--border-color) !important;">`;
+
+        let prevDateObj = new Date(parseInt(year), parseInt(month) - 1, 1);
+        prevDateObj.setMonth(prevDateObj.getMonth() - 1);
+        let pYear = prevDateObj.getFullYear();
+        let pMonth = String(prevDateObj.getMonth() + 1).padStart(2, '0');
+        let prevMonthStr = `${pYear}-${pMonth}`;
+        let daysInPrevMonth = new Date(pYear, parseInt(pMonth), 0).getDate();
+        let prevMonthTh = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."][prevDateObj.getMonth()];
+
+        let prevGridHtml = `<div class="d-flex flex-wrap gap-2 justify-content-center px-1 py-1">`;
+        for(let pd = 1; pd <= daysInPrevMonth; pd++) {
+            let pdStr = `${prevMonthStr}-${String(pd).padStart(2, '0')}`;
+            let pRaw = this.prevTimesheetData[staffUsername]?.[pdStr] || '';
+            let pLabels = [];
+            
+            if (pRaw) {
+                String(pRaw).split(',').forEach(item => {
+                    let isOff = String(item).endsWith('_O');
+                    let cId = String(item).includes('_') ? String(item).split('_')[0] : (String(item).includes('|') ? String(item).split('|')[0] : String(item));
+                    let cS = this.shiftTypes.find(s => s.id === cId);
+                    let cL = this.leaveTypes.find(l => l.id === cId);
+                    
+                    if(cS && !isOff) pLabels.push(`<span class="mini-shift-badge" style="background-color:${cS.color};" title="${this.escapeHTML(cS.label)}">${this.escapeHTML(cId)}</span>`);
+                    else if(cL) pLabels.push(`<span class="mini-shift-badge" style="background-color:${cL.color};" title="${this.escapeHTML(cL.label)}">${this.escapeHTML(cId)}</span>`);
+                });
+            }
+            
+            let isSun = new Date(pYear, parseInt(pMonth)-1, pd).getDay() === 0;
+            let sundayClass = isSun ? 'sunday-lbl' : '';
+            let indicatorsHtml = pLabels.length > 0 ? `<div class="date-indicator-wrapper">${pLabels.join('')}</div>` : '<div class="date-indicator-wrapper"></div>';
+
+            prevGridHtml += `
+            <div class="modern-date-lbl ${sundayClass} shadow-sm" style="cursor: default; opacity: 0.6; background: var(--bg-body); border-style: dashed; pointer-events: none;">
+                <div class="date-day-num">${pd}</div>
+                ${indicatorsHtml}
+            </div>`;
+        }
+        prevGridHtml += `</div>`;
+
+        col1_PrevMonthHtml += `
+            <div id="modal-prev-month-widget" class="p-3 rounded-4 shadow-sm border h-100" style="background: var(--bg-surface); border-color: var(--border-color) !important;">
+                <label class="form-label fw-bold mb-3 d-block text-center text-muted" style="font-size: 15px;">
+                    <i class="fa-solid fa-clock-rotate-left me-1"></i> ประวัติเวรเดือนที่แล้ว<br><small>(${prevMonthTh} ${pYear + 543})</small>
+                </label>
+                ${prevGridHtml}
+            </div>
+        </div>`;
+
+        // -----------------------------------------------------
+        // 🚨 COL 2: ปัจจุบัน (Current Month & Smart Workload)
+        // -----------------------------------------------------
+        let col2_CurrentMonthHtml = `
+            <div class="split-pane-scroll px-lg-3 border-lg-end mt-4 mt-lg-0" style="border-color: var(--border-color) !important;">
+                <div id="modal-workload-widget" class="mb-3 p-3 rounded-4 shadow-sm border" style="background: var(--bg-surface); border-color: var(--border-color) !important; display:none;"></div>
+
                 <div class="p-3 border rounded-4 shadow-sm mb-2" style="background: var(--bg-surface); border-color: var(--border-color) !important;">
                     <label class="form-label fw-bold mb-3 d-block text-center text-primary" style="font-size: 15px;">
-                        <i class="fa-solid fa-calendar-day me-1"></i> เลือกวันที่ (แสดงเวรปัจจุบัน)
+                        <i class="fa-solid fa-calendar-day me-1"></i> เลือกวันที่<br><small>(แสดงเวรปัจจุบัน)</small>
                     </label>
                     <div class="d-flex flex-wrap gap-2 justify-content-center px-1 py-1">`;
             
@@ -733,7 +906,7 @@ class ShiftSchedulePageComponent {
                 }
             }
 
-            leftPaneHtml += `
+            col2_CurrentMonthHtml += `
                 <div class="form-check p-0 m-0" title="${isSunday ? 'วันอาทิตย์' : ''}">
                     <input type="checkbox" class="btn-check date-batch-cb modern-date-cb" id="batch_${d}" value="${dStr}" ${isChecked} autocomplete="off" onchange="window.ShiftSchedulePage.syncRightPane('${staffUsername}', '${dStr}')">
                     <label class="modern-date-lbl ${sundayClass} shadow-sm" for="batch_${d}">
@@ -743,27 +916,30 @@ class ShiftSchedulePageComponent {
                 </div>`;
         }
         
-        leftPaneHtml += `
+        col2_CurrentMonthHtml += `
                     </div>
                     <div class="mt-4 d-flex justify-content-center gap-2 border-top pt-3" style="border-color: var(--border-color) !important;">
                         <button class="btn btn-sm fw-bold px-3 rounded-pill shadow-sm w-50" style="color: var(--primary); border: 1px solid rgba(59,130,246,0.3); background: rgba(59,130,246,0.1);" onclick="document.querySelectorAll('.date-batch-cb').forEach(cb => cb.checked = true); window.ShiftSchedulePage.syncRightPane('${staffUsername}');">เลือกทั้งหมด</button>
-                        <button class="btn btn-sm fw-bold px-3 rounded-pill shadow-sm w-50" style="color: var(--danger); border: 1px solid rgba(239,68,68,0.3); background: rgba(239,68,68,0.1);" onclick="document.querySelectorAll('.date-batch-cb').forEach(cb => cb.checked = false); window.ShiftSchedulePage.syncRightPane('${staffUsername}');">ล้างการเลือก</button>
+                        <button class="btn btn-sm fw-bold px-3 rounded-pill shadow-sm w-50" style="color: var(--danger); border: 1px solid rgba(239,68,68,0.3); background: rgba(239,68,68,0.1);" onclick="document.querySelectorAll('.date-batch-cb').forEach(cb => cb.checked = false); window.ShiftSchedulePage.syncRightPane('${staffUsername}');">ล้าง</button>
                     </div>
                 </div>
             </div>`;
 
-        let rightPaneHtml = `<div class="split-pane-scroll ps-lg-3 mt-4 mt-lg-0"><div class="row g-2">`;
+        // -----------------------------------------------------
+        // 🚨 COL 3: Actions (ปุ่มคำสั่งทั้งหมด)
+        // -----------------------------------------------------
+        let col3_ActionsHtml = `<div class="split-pane-scroll ps-lg-3 mt-4 mt-lg-0"><div class="row g-2">`;
         
-        rightPaneHtml += `<input type="hidden" id="modal-staff-username" value="${staffUsername}">`;
+        col3_ActionsHtml += `<input type="hidden" id="modal-staff-username" value="${staffUsername}">`;
 
-        rightPaneHtml += `
+        col3_ActionsHtml += `
             <div class="col-12 mb-1">
                 <button class="btn w-100 fw-bold rounded-pill py-2 shadow-sm" style="color: var(--danger); border: 1px solid var(--danger); background: var(--bg-surface); transition: 0.2s;" onclick="window.ShiftSchedulePage.autoSaveBulkStatus('${staffUsername}', true)">
                     <i class="fa-solid fa-trash-can me-2"></i> ลบข้อมูลออกจากตารางในวันที่เลือก
                 </button>
             </div>`;
 
-        rightPaneHtml += `<div class="col-12 text-start fw-bold text-primary small mt-3 mb-1"><i class="fa-solid fa-bed-pulse me-1"></i> เลือกรอบฟอกไต (อิสระแต่ละรอบ)</div>`;
+        col3_ActionsHtml += `<div class="col-12 text-start fw-bold text-primary small mt-3 mb-1"><i class="fa-solid fa-bed-pulse me-1"></i> เลือกรอบฟอกไต (อิสระแต่ละรอบ)</div>`;
         
         const toggleScript = `if(this.getAttribute('data-checked')==='true'){this.checked=false;this.setAttribute('data-checked','false');}else{document.getElementsByName(this.name).forEach(r=>r.setAttribute('data-checked','false'));this.setAttribute('data-checked','true');} window.ShiftSchedulePage.autoSaveBulkStatus('${staffUsername}');`;
 
@@ -775,7 +951,7 @@ class ShiftSchedulePageComponent {
             let activeW = activeVal === 'W' ? 'checked data-checked="true"' : 'data-checked="false"';
             let activeO = activeVal === 'O' ? 'checked data-checked="true"' : 'data-checked="false"';
 
-            rightPaneHtml += `
+            col3_ActionsHtml += `
                 <div class="col-12">
                     <div class="modern-shift-card">
                         <div class="fw-bold" style="color: ${s.color}; font-size:14.5px; font-family:'Prompt';">
@@ -796,8 +972,8 @@ class ShiftSchedulePageComponent {
                 </div>`;
         });
 
-        rightPaneHtml += `<div class="col-12 text-start fw-bold text-danger small mt-3 border-bottom pb-2" style="border-color: var(--border-color) !important;"><i class="fa-solid fa-lock me-1"></i> สถานะพิเศษ / วันหยุดทั้งวัน (คลุมทุกกะ)</div>`;
-        rightPaneHtml += `<div class="col-12"><div class="row g-2 mt-1">`;
+        col3_ActionsHtml += `<div class="col-12 text-start fw-bold text-danger small mt-3 border-bottom pb-2" style="border-color: var(--border-color) !important;"><i class="fa-solid fa-lock me-1"></i> สถานะพิเศษ / วันหยุดทั้งวัน (คลุมทุกกะ)</div>`;
+        col3_ActionsHtml += `<div class="col-12"><div class="row g-2 mt-1">`;
         
         this.leaveTypes.forEach(l => {
             let isChecked = activeStatuses.includes(l.id) ? 'checked' : '';
@@ -809,7 +985,7 @@ class ShiftSchedulePageComponent {
             let opacityStyle = isQuotaFull ? 'opacity:0.4; filter:grayscale(1); cursor:not-allowed;' : '';
             let quotaBadge = limit > 0 ? `<div class="mt-1" style="font-size:10px;">${isQuotaFull ? '(โควตาเต็ม)' : `(เหลือ ${limit - used})`}</div>` : `<div class="mt-1" style="font-size:10px; opacity:0;">(ไม่มี)</div>`;
 
-            rightPaneHtml += `
+            col3_ActionsHtml += `
                 <div class="col-4">
                     <input type="checkbox" class="btn-check leave-cb leave-card-cb" id="leave_${l.id}" value="${l.id}" ${isChecked} ${extraProps} onchange="if(this.checked) document.querySelectorAll('.leave-cb').forEach(cb => { if(cb.id !== this.id) cb.checked=false }); window.ShiftSchedulePage.autoSaveBulkStatus('${staffUsername}');">
                     <label class="leave-card-lbl shadow-sm" for="leave_${l.id}" style="--leave-color: ${l.color}; ${opacityStyle}">
@@ -819,9 +995,9 @@ class ShiftSchedulePageComponent {
                 </div>`;
         });
         
-        rightPaneHtml += `</div></div>`;
+        col3_ActionsHtml += `</div></div>`;
         
-        rightPaneHtml += `
+        col3_ActionsHtml += `
             <div class="col-12 mt-3 pt-3 border-top" style="border-color: var(--border-color) !important;">
                 <button class="btn btn-sm btn-light w-100 fw-bold text-muted shadow-sm rounded-pill py-2" style="background: var(--bg-body); border: 1px solid var(--border-color);" onclick="window.ShiftSchedulePage.resetModalForm()">
                     <i class="fa-solid fa-rotate-left me-1"></i> ล้างตัวเลือกฝั่งขวาทั้งหมด
@@ -832,21 +1008,65 @@ class ShiftSchedulePageComponent {
         let finalHtml = `
             ${modalCss}
             <div class="row g-0">
-                <div class="col-lg-5">${leftPaneHtml}</div>
-                <div class="col-lg-7">${rightPaneHtml}</div>
+                <div class="col-lg-4">${col1_PrevMonthHtml}</div>
+                <div class="col-lg-4">${col2_CurrentMonthHtml}</div>
+                <div class="col-lg-4">${col3_ActionsHtml}</div>
             </div>
         `;
 
-        // 🚨 THE FIX: ใช้ var(--bg-surface) เป็นพื้นหลังหลักของ SweetAlert เพื่อให้รองรับ Dark Mode เต็มรูปแบบ
         Swal.fire({
             title: `<div class="border-bottom pb-3 mb-3" style="border-color: var(--border-color) !important;"><h3 class="fw-bold mb-0 text-dark" style="font-family:'Prompt';">ลงเวลาปฏิบัติงาน</h3><p class="text-muted fs-6 mt-1 mb-0">พนักงาน: ${this.escapeHTML(staffName)}</p></div>`,
             html: finalHtml,
             background: 'var(--bg-surface)', 
             showConfirmButton: true, confirmButtonText: '<i class="fa-solid fa-check me-1"></i> เสร็จสิ้น', confirmButtonColor: '#10b981',
             showCloseButton: true, 
-            width: '950px',
-            customClass: { popup: 'premium-alert' }
+            width: '1200px', // 🚨 ขยายขนาด Modal เพื่อรองรับ 3 คอลัมน์
+            customClass: { popup: 'premium-alert' },
+            didOpen: () => {
+                this.updateModalWorkloadWidget(staffUsername);
+            }
         });
+    }
+
+    updateModalWorkloadWidget(staffUname) {
+        const widget = document.getElementById('modal-workload-widget');
+        if(!widget) return;
+
+        const staff = this.staffList.find(s => (s.username || s.firebaseKey) === staffUname);
+        if(!staff || staff.role !== 'admin') {
+            widget.style.display = 'none';
+            return;
+        }
+
+        let wl = this.calculatePayrollCycleWorkload(staffUname);
+
+        let progressPct = Math.min((wl.workingDaysCount / 26) * 100, 100);
+        let progressColor = wl.workingDaysCount > 26 ? '#8b5cf6' : (wl.workingDaysCount >= 24 ? '#f59e0b' : '#10b981');
+
+        let burnoutHtml = wl.maxConsecutive >= 7
+            ? `<div class="mt-3 p-2 rounded-3 bg-danger bg-opacity-10 text-danger border border-danger small fw-bold flash-anim">
+                <i class="fa-solid fa-siren-on me-1"></i> แจ้งเตือนความล้า: ทำงานติดกัน ${wl.maxConsecutive} วัน! ควรให้พัก 1 วัน
+               </div>`
+            : `<div class="mt-3 text-success small fw-bold"><i class="fa-solid fa-shield-check me-1"></i> ความเหนื่อยล้าปกติ (ทำติดกันสะสม ${wl.maxConsecutive} วัน)</div>`;
+
+        let otHtml = wl.otDays > 0
+            ? `<span class="badge ms-2 shadow-sm" style="background:#8b5cf6;">+${wl.otDays} วัน (OT)</span>`
+            : '';
+
+        widget.style.display = 'block';
+        widget.innerHTML = `
+            <div class="fw-bold text-dark mb-3" style="font-size:13.5px; font-family:'Prompt';">
+                <i class="fa-solid fa-calculator text-primary me-1"></i> สรุปรอบบิล 21 - 20 (แอดมิน)
+            </div>
+            <div class="d-flex justify-content-between align-items-end mb-2">
+                <span class="small fw-bold text-muted">วันทำงานสะสม</span>
+                <span class="fw-bold fs-6" style="color:${progressColor};">${wl.workingDaysCount} / 26 วัน ${otHtml}</span>
+            </div>
+            <div class="progress shadow-sm" style="height: 10px; border-radius: 5px; background: var(--bg-body);">
+                <div class="progress-bar" role="progressbar" style="width: ${progressPct}%; background-color: ${progressColor}; transition: width 0.4s ease;"></div>
+            </div>
+            ${burnoutHtml}
+        `;
     }
 
     syncRightPane(staffUsername) {
@@ -1009,7 +1229,6 @@ class ShiftSchedulePageComponent {
         }
     }
 
-    // ฟังก์ชันช่วยเหลือต่างๆ ที่เคยมีอยู่
     openExportOptionsModal(mode) {  
         let roleCheckboxes = ``;
         this.customRoles.forEach(r => {
@@ -1084,11 +1303,8 @@ class ShiftSchedulePageComponent {
                 let chunks = this.getExportHTMLChunks(selectedRoles, false, lastColType);
                 
                 let contentHtml = chunks.map(chunk => {
-                    // 🚨 THE FIX 1: กระชาก height: 98vh ที่ใช้ล็อกกระดาษ A4 ออก และบังคับให้ยืดตามเนื้อหาอัตโนมัติ
                     let cleanChunk = chunk.replace(/height:\s*98vh;/g, 'height: auto !important; min-height: 100%;');
-                    
                     return `
-                        <!-- 🚨 THE FIX 2: ปลดล็อก overflow: hidden และตั้ง height เป็น auto -->
                         <div style="background: #ffffff; padding: 25px; margin-bottom: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); border-radius: 12px; min-width: 1050px; text-align: left; overflow: visible; border: 1px solid #e2e8f0; height: auto;">
                             ${cleanChunk}
                         </div>
@@ -1097,7 +1313,6 @@ class ShiftSchedulePageComponent {
 
                 Swal.fire({
                     title: '<div class="text-start border-bottom pb-3 mb-3"><h4 class="fw-bold mb-0 text-dark" style="font-family:\'Prompt\';"><i class="fa-solid fa-table-cells text-primary me-2"></i> ตารางปฏิบัติงานภาพรวม (Master Roster Preview)</h4></div>',
-                    // 🚨 THE FIX 3: ปรับแต่ง Container หลักของ Modal ให้เลื่อน Scrollbar ได้สุดขอบโดยไม่กินพื้นที่ UI หลัก
                     html: `
                         <div style="overflow-x: auto; overflow-y: auto; max-height: 72vh; background: #f1f5f9; padding: 20px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; border: 1px inset var(--border-color);">
                             ${contentHtml}
