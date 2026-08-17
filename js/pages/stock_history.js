@@ -1,5 +1,5 @@
 // js/pages/stock_history.js
-// 🚀 Enterprise Stock History Module: Pagination, FinOps Queries & Smart Relational Mapping (v9.5)
+// 🚀 Enterprise Stock History Module: Pagination, FinOps Queries & Smart Relational Mapping (v10.0)
 
 class StockHistoryPageComponent {
     constructor() {
@@ -330,7 +330,6 @@ class StockHistoryPageComponent {
 
             const safeItemName = this.#escapeHTML(log.itemName || 'ไม่ทราบชื่อ');
 
-            // 🚨 THE FIX: Advanced Relational Mapping (ค้นหาด้วย ID ก่อน ถ้าไม่เจอ หาด้วย Name เพื่อรองรับข้อมูลเก่า)
             let matchedItem = this.state.inventoryItems.find(i => i.id === log.itemId);
             if (!matchedItem && log.itemName) {
                 matchedItem = this.state.inventoryItems.find(i => i.name === log.itemName);
@@ -338,43 +337,63 @@ class StockHistoryPageComponent {
 
             let itemOrderVal = (matchedItem && matchedItem.order !== undefined && matchedItem.order !== null && matchedItem.order !== "" && matchedItem.order !== 999) ? matchedItem.order : '-';
             
-            // ดึงค่า Code/Barcode ทั้งจาก Log และจาก Master Data (ครอบคลุมทั้งตัวแปร .code และ .item_code)
             let rawCode = log.itemCode || log.code || (matchedItem ? (matchedItem.item_code || matchedItem.code) : null);
             let rawBarcode = log.barcode || (matchedItem ? matchedItem.barcode : null);
 
             let finalItemCode = (rawCode && String(rawCode).trim() !== '') ? rawCode : '-';
             let finalBarcode = (rawBarcode && String(rawBarcode).trim() !== '') ? rawBarcode : '-';
 
-            let modeHtml = `<span class="badge bg-secondary">ไม่ระบุ</span>`;
+            // 🚨 THE FIX: Dynamic Schema Resolver (เชื่อมตรรกะใหม่ และแสดงยอดคงเหลือสุทธิ)
+            let modeHtml = `<span class="badge bg-secondary">ไม่ระบุ (${this.#escapeHTML(log.mode)})</span>`;
             let detailHtml = ''; 
+            
+            // ดึง Running Balance (ถ้ามีบันทึกไว้ใน log, รุ่นเก่าอาจจะไม่มีจึงใช้ Optional Chaining)
+            let bMain = log.balance_main !== undefined ? log.balance_main : '?';
+            let bSub = log.balance_sub !== undefined ? log.balance_sub : '?';
 
+            // โหมดเก่า & โหมดหลัก
             if(log.mode === 'in_main') {
                 modeHtml = `<span class="badge border border-success text-success px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-arrow-down me-1 safe-icon"></i> รับของเข้า (ใหญ่)</span>`;
-                detailHtml = `บวกเพิ่ม <b>${log.qty}</b> เข้าสต๊อกใหญ่`;
+                detailHtml = `บวกเพิ่ม <b>${log.qty}</b> เข้าสต๊อกใหญ่ <br><small class="text-muted">ยอดคงเหลือ (ใหญ่): <b class="text-success">${bMain}</b></small>`;
             }
             else if(log.mode === 'transfer') {
                 modeHtml = `<span class="badge border border-primary text-primary px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-truck-ramp-box me-1 safe-icon"></i> โอนย้าย (ใหญ่ ➡️ เล็ก)</span>`;
-                detailHtml = `หัก <b>${log.qty}</b> จากสต๊อกใหญ่ ไปเพิ่มในสต๊อกเล็ก`;
+                detailHtml = `ย้าย <b>${log.qty}</b> จากสต๊อกใหญ่ไปสต๊อกเล็ก <br><small class="text-muted">คงเหลือ (ใหญ่): <b>${bMain}</b> | (เล็ก): <b class="text-primary">${bSub}</b></small>`;
             }
             else if(log.mode === 'out_sub') {
-                modeHtml = `<span class="badge border border-danger text-danger px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-arrow-up-right-from-square me-1 safe-icon"></i> เบิกใช้งานจริง (เล็ก)</span>`;
-                detailHtml = `เบิกตัดยอด <b>${log.qty}</b> จากสต๊อกหน้าเคาน์เตอร์ <br><small class="text-muted"><i class="fa-solid fa-tag safe-icon"></i> ${this.#escapeHTML(log.note || 'ไม่มีหมายเหตุ')}</small>`;
+                modeHtml = `<span class="badge border border-danger text-danger px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-arrow-up-right-from-square me-1 safe-icon"></i> เบิกใช้งาน (เล็ก)</span>`;
+                detailHtml = `เบิกตัดยอด <b>${log.qty}</b> จากสต๊อกเล็ก <br><small class="text-muted">คงเหลือ (เล็ก): <b class="text-danger">${bSub}</b> ${log.note ? `| <i class="fa-solid fa-tag"></i> ${this.#escapeHTML(log.note)}` : ''}</small>`;
             }
-            else if(log.mode === 'audit_main') {
-                modeHtml = `<span class="badge border border-warning text-warning px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-clipboard-check me-1 safe-icon"></i> ปรับยอดจริง (ใหญ่)</span>`;
-                detailHtml = `ระบบถูกบังคับอัปเดตยอดคงเหลือ <b>สต๊อกใหญ่</b> เป็น <b class="text-warning">${log.qty}</b>`;
+            // โหมดเพิ่มใหม่ (Add & Replace)
+            else if(log.mode === 'audit_main_add') {
+                modeHtml = `<span class="badge border border-warning text-warning px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-plus me-1 safe-icon"></i> ปรับบวกทบ (ใหญ่)</span>`;
+                detailHtml = `บวกเพิ่ม <b>${log.qty}</b> เข้าสต๊อกใหญ่ <br><small class="text-muted">ยอดคงเหลือ (ใหญ่): <b class="text-warning">${bMain}</b></small>`;
             }
-            else if(log.mode === 'audit_sub') {
-                modeHtml = `<span class="badge border border-warning text-warning px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-clipboard-check me-1 safe-icon"></i> ปรับยอดจริง (เล็ก)</span>`;
-                detailHtml = `ระบบถูกบังคับอัปเดตยอดคงเหลือ <b>สต๊อกหน้าเคาน์เตอร์</b> เป็น <b class="text-warning">${log.qty}</b>`;
+            else if(log.mode === 'audit_sub_add') {
+                modeHtml = `<span class="badge border border-warning text-warning px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-plus me-1 safe-icon"></i> ปรับบวกทบ (เล็ก)</span>`;
+                detailHtml = `บวกเพิ่ม <b>${log.qty}</b> เข้าสต๊อกหน้าเคาน์เตอร์ <br><small class="text-muted">ยอดคงเหลือ (เล็ก): <b class="text-warning">${bSub}</b></small>`;
             }
+            else if(log.mode === 'audit_main_replace' || log.mode === 'audit_main') {
+                modeHtml = `<span class="badge border border-warning text-warning px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-clipboard-check me-1 safe-icon"></i> ปรับยอดทับ (ใหญ่)</span>`;
+                detailHtml = `อัปเดตยอดคงเหลือ <b>สต๊อกใหญ่</b> ทับเป็น <b>${log.qty}</b> <br><small class="text-muted">ยอดคงเหลือ (ใหญ่): <b class="text-warning">${bMain !== '?' ? bMain : log.qty}</b></small>`;
+            }
+            else if(log.mode === 'audit_sub_replace' || log.mode === 'audit_sub') {
+                modeHtml = `<span class="badge border border-warning text-warning px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-clipboard-check me-1 safe-icon"></i> ปรับยอดทับ (เล็ก)</span>`;
+                detailHtml = `อัปเดตยอดคงเหลือ <b>สต๊อกเล็ก</b> ทับเป็น <b>${log.qty}</b> <br><small class="text-muted">ยอดคงเหลือ (เล็ก): <b class="text-warning">${bSub !== '?' ? bSub : log.qty}</b></small>`;
+            }
+            // Other Legacy Modes
             else if(log.mode === 'new_register') {
                 modeHtml = `<span class="badge border border-info text-info px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-plus me-1 safe-icon"></i> ลงทะเบียนพัสดุใหม่</span>`;
-                detailHtml = `สร้างพัสดุชิ้นนี้ขึ้นมาครั้งแรก โดยมียอดยกมาเริ่มต้น <b class="text-info">${log.qty}</b>`;
+                detailHtml = `สร้างพัสดุชิ้นนี้ขึ้นมาครั้งแรก มียอดยกมา <b class="text-info">${log.qty}</b>`;
             }
             else if(log.mode === 'in_sub_restore') {
                 modeHtml = `<span class="badge border border-success text-success px-3 py-1 shadow-sm rounded-pill" style="background: var(--bg-body);"><i class="fa-solid fa-rotate-left me-1 safe-icon"></i> ดึงของคืน (เล็ก)</span>`;
-                detailHtml = `ดึงของคืนกลับเข้าสต๊อกเคาน์เตอร์ <b>${log.qty}</b> หน่วย <br><small class="text-muted"><i class="fa-solid fa-tag safe-icon"></i> ${this.#escapeHTML(log.note || 'การยกเลิก Flowsheet')}</small>`;
+                detailHtml = `ดึงของคืนกลับเข้าสต๊อกเล็ก <b>${log.qty}</b> หน่วย <br><small class="text-muted"><i class="fa-solid fa-tag safe-icon"></i> ${this.#escapeHTML(log.note || 'ยกเลิกการใช้งาน')}</small>`;
+            }
+
+            // 🚨 Fallback เผื่อเจอโหมดประหลาดในอนาคต (ช่องจะได้ไม่ขาวโพลน)
+            if (!detailHtml) {
+                detailHtml = `ทำรายการ <b>${log.qty || 0}</b> หน่วย <br><small class="text-muted">โหมด: ${this.#escapeHTML(log.mode)}</small>`;
             }
 
             html += `

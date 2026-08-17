@@ -1,5 +1,5 @@
 // js/pages/stock_manage.js
-// 🚀 Enterprise Stock Management: Unified State Engine & Conflict-Free Calculator (v20.0 APEX)
+// 🚀 Enterprise Stock Management: Mobile/Tablet Touch Optimized, Zero Latency Numpad (v21.0 APEX)
 
 class StockManagePageComponent {
     constructor() {
@@ -16,39 +16,62 @@ class StockManagePageComponent {
                 .table-premium th { color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px; padding: 14px 10px; border-bottom: 2px solid var(--border-color); }
                 .table-premium td { padding: 14px 10px; vertical-align: middle; border-bottom: 1px solid var(--border-color); transition: background 0.2s; }
                 
-                .btn-manual-search { border: 2px dashed var(--primary) !important; background-color: var(--bg-surface) !important; color: var(--primary) !important; transition: all 0.3s ease; }
-                .btn-manual-search:hover { background-color: var(--primary) !important; color: #ffffff !important; border-style: solid !important; box-shadow: 0 4px 12px rgba(37,99,235,0.2) !important; }
+                /* 🚨 THE FIX: Touch Optimization for Buttons */
+                .btn, .btn-manual-search, .list-group-custom-hover, .qty-calculator-btn {
+                    touch-action: manipulation; /* ยกเลิกดีเลย์ 300ms บนมือถือ */
+                    -webkit-tap-highlight-color: transparent; /* ลบแสงสีฟ้าตอนกดบน Android */
+                    user-select: none; -webkit-user-select: none; /* ป้องกันคลุมดำตอนกดรัวๆ */
+                }
 
-                .list-group-custom-hover { transition: background-color 0.2s ease !important; }
-                .list-group-custom-hover:hover { background-color: var(--border-color) !important; }
+                .btn-manual-search { border: 2px dashed var(--primary) !important; background-color: var(--bg-surface) !important; color: var(--primary) !important; transition: all 0.2s ease; min-height: 50px; }
+                .btn-manual-search:active { transform: scale(0.98); background-color: var(--primary) !important; color: #ffffff !important; border-style: solid !important; }
+
+                .list-group-custom-hover { transition: all 0.2s ease !important; min-height: 65px; cursor: pointer; }
+                .list-group-custom-hover:active { background-color: var(--border-color) !important; transform: scale(0.98); }
 
                 .qty-calculator-btn { 
                     background: var(--bg-body); border: 2px solid var(--border-color); border-radius: 8px; 
-                    font-size: 18px; font-weight: 700; color: var(--text-dark); padding: 5px 15px; cursor: pointer; transition: all 0.2s; width: 100%; text-align: center;
+                    font-size: 18px; font-weight: 700; color: var(--text-dark); padding: 8px 15px; cursor: pointer; transition: all 0.2s; width: 100%; text-align: center;
+                    min-height: 44px; /* Apple HIG Minimum touch target */
                 }
-                .qty-calculator-btn:hover { border-color: var(--primary); color: var(--primary); background: rgba(59,130,246,0.05); box-shadow: 0 4px 10px rgba(59,130,246,0.1); }
+                .qty-calculator-btn:active { transform: scale(0.95); border-color: var(--primary); color: var(--primary); background: rgba(59,130,246,0.1); }
 
-                /* Numpad Styles */
-                .numpad-calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 15px; }
-                .numpad-btn { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 12px; font-size: 22px; font-weight: 700; color: var(--text-dark); padding: 12px 0; transition: all 0.1s; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); font-family: 'Prompt', sans-serif;}
-                .numpad-btn:active { transform: scale(0.95); background: var(--bg-body); }
-                .numpad-btn:hover { background: var(--bg-body); }
+                /* 🚨 THE FIX: Numpad Mobile Optimization */
+                .numpad-calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 15px; }
+                .numpad-btn { 
+                    background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 14px; 
+                    font-size: 24px; font-weight: 700; color: var(--text-dark); 
+                    padding: 15px 0; /* เพิ่มพื้นที่กด */
+                    min-height: 55px; /* หนาขึ้นสำหรับนิ้วคน */
+                    transition: transform 0.05s, background 0.1s; /* ตอบสนองฉับไว */
+                    cursor: pointer; display: flex; align-items: center; justify-content: center; 
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-family: 'Prompt', sans-serif;
+                    touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;
+                }
+                /* Visual Feedback แบบทันทีเมื่อนิ้วแตะ */
+                .numpad-btn:active { transform: scale(0.92); background: var(--border-color) !important; box-shadow: none; filter: brightness(0.95); }
                 
-                .numpad-op { background: rgba(59, 130, 246, 0.1) !important; color: var(--primary) !important; border-color: rgba(59, 130, 246, 0.2) !important; font-size: 26px;}
-                .numpad-op:hover { background: rgba(59, 130, 246, 0.2) !important; }
+                .numpad-op { background: rgba(59, 130, 246, 0.08) !important; color: var(--primary) !important; border-color: rgba(59, 130, 246, 0.2) !important; font-size: 28px;}
+                .numpad-op:active { background: rgba(59, 130, 246, 0.25) !important; }
                 html[data-bs-theme="dark"] .numpad-op { color: #60a5fa !important; border-color: rgba(59, 130, 246, 0.3) !important; }
 
-                .numpad-danger { background: rgba(239, 68, 68, 0.1) !important; color: #ef4444 !important; border-color: rgba(239, 68, 68, 0.2) !important; }
-                .numpad-danger:hover { background: rgba(239, 68, 68, 0.2) !important; }
+                .numpad-danger { background: rgba(239, 68, 68, 0.08) !important; color: #ef4444 !important; border-color: rgba(239, 68, 68, 0.2) !important; }
+                .numpad-danger:active { background: rgba(239, 68, 68, 0.25) !important; }
 
-                .numpad-success { background: var(--primary) !important; color: white !important; border-color: var(--primary) !important; font-size: 26px; box-shadow: 0 4px 10px rgba(59,130,246,0.3);}
-                .numpad-success:hover { filter: brightness(0.9); }
+                .numpad-success { background: var(--primary) !important; color: white !important; border-color: var(--primary) !important; font-size: 28px; box-shadow: 0 4px 10px rgba(59,130,246,0.3);}
+                .numpad-success:active { transform: scale(0.92); filter: brightness(0.85); box-shadow: none;}
 
-                .numpad-memory { background: rgba(245, 158, 11, 0.1) !important; color: #d97706 !important; border-color: rgba(245, 158, 11, 0.2) !important; font-size: 16px; font-family: 'Sarabun'; }
-                .numpad-memory:hover { background: rgba(245, 158, 11, 0.2) !important; }
+                .numpad-memory { background: rgba(245, 158, 11, 0.08) !important; color: #d97706 !important; border-color: rgba(245, 158, 11, 0.2) !important; font-size: 16px; font-family: 'Sarabun'; }
+                .numpad-memory:active { background: rgba(245, 158, 11, 0.25) !important; }
                 
                 select option { padding: 10px; font-weight: 600; }
                 optgroup { font-weight: 800; color: var(--primary); font-family: 'Prompt', sans-serif; }
+                
+                /* ปรับแต่งสำหรับมือถือจอเล็ก */
+                @media (max-width: 576px) {
+                    .numpad-btn { padding: 10px 0; min-height: 50px; font-size: 20px; border-radius: 10px; }
+                    .numpad-op, .numpad-success { font-size: 24px; }
+                }
             </style>
 
             <div class="page-header mb-4">
@@ -171,7 +194,7 @@ class StockManagePageComponent {
         this.#fetchItemsFromDB();
         this.#bindEvents();
         this.updateUndoButton();
-        this.changeMode(); // Initialize description
+        this.changeMode(); 
     }
 
     destroy() {
@@ -241,14 +264,26 @@ class StockManagePageComponent {
         const ref = db.ref('inventory_database_v2/items');
         const cbItems = ref.on('value', snap => {
             const data = snap.val();
-            let rawItems = data ? (Array.isArray(data) ? data : Object.keys(data).map(k => ({ firebaseKey: k, ...data[k] }))) : [];
-            let itemsList = rawItems.filter(item => item !== null);
+            let itemsList = [];
+            
+            if (data) {
+                if (Array.isArray(data)) {
+                    data.forEach((item, index) => {
+                        if (item) itemsList.push({ firebaseKey: String(index), ...item });
+                    });
+                } else {
+                    Object.keys(data).forEach(key => {
+                        if (data[key]) itemsList.push({ firebaseKey: key, ...data[key] });
+                    });
+                }
+            }
             
             itemsList.sort((a, b) => {
                 let orderA = a.order !== undefined && a.order !== null && a.order !== "" ? Number(a.order) : 999;
                 let orderB = b.order !== undefined && b.order !== null && b.order !== "" ? Number(b.order) : 999;
                 return orderA - orderB;
             });
+            
             this.allItems = itemsList;
             this.renderCart(); 
         });
@@ -397,7 +432,6 @@ class StockManagePageComponent {
         }
     }
 
-    // 🚨 THE MASTERPIECE: Conflict-Free Calculator (โหมดควบคุมจากด้านนอก)
     openCalculator(id) {
         const item = this.cart.find(c => c.id === id);
         if (!item) return;
@@ -405,21 +439,16 @@ class StockManagePageComponent {
         const sysMode = document.getElementById('sm-mode').value;
         const latestItem = this.allItems.find(i => i.id === id);
         
-        // 1. ดึงยอดตั้งต้น (Base)
         let baseMainStock = latestItem.qty_main !== undefined ? Number(latestItem.qty_main) : (Number(latestItem.qty) || 0);
         let baseSubStock = Number(latestItem.qty_sub) || 0;
         
         let baseStock = 0;
-        let stockLabel = "";
         if (sysMode === 'in_main' || sysMode === 'transfer' || sysMode.includes('audit_main')) {
             baseStock = baseMainStock;
-            stockLabel = "สต๊อกใหญ่";
         } else {
             baseStock = baseSubStock;
-            stockLabel = "สต๊อกเล็ก";
         }
 
-        // 🚨 2. นิยามโหมดที่ตายตัว ป้องกัน Conflict (ลบปุ่ม Toggle ทิ้งแล้ว)
         const isReplaceMode = sysMode.endsWith('_replace');
         const calcMode = isReplaceMode ? "=" : "+";
 
@@ -451,8 +480,7 @@ class StockManagePageComponent {
                 else displayFormula += c;
             }
 
-            // 3. จำลองผลลัพธ์ (Simulation) อิงตามตัวเลขที่คีย์บนจอตรงๆ เลย
-            let pQty = currentInputVal; // ตัวเลขที่คีย์
+            let pQty = currentInputVal; 
             let simMain = baseMainStock;
             let simSub = baseSubStock;
             let simHtml = '';
@@ -481,7 +509,6 @@ class StockManagePageComponent {
                 simHtml = `<div class="fw-bold text-warning"><i class="fa-solid fa-pen-to-square"></i> สต๊อกเล็ก: ${baseSubStock} ➡️ แทนที่เป็น ${simSub}</div>`;
             }
 
-            // 🚨 4. ล็อกคำอธิบายโหมดตายตัว (ไม่ให้คลิกเปลี่ยน)
             let modeDesc = "";
             let borderColor = "";
             let modeTitle = "";
@@ -536,7 +563,6 @@ class StockManagePageComponent {
                                 <i class="fa-solid ${modeIcon} me-1"></i> ${modeTitle}
                             </div>
                             
-                            <!-- 🚨 ไม่มีปุ่ม Toggle สลับโหมดอีกต่อไป -->
                             ${modeDesc}
 
                             <div class="p-3 mb-3 text-end position-relative" style="background: var(--bg-surface); border: 2px solid ${borderColor}; border-radius: 16px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
@@ -545,7 +571,6 @@ class StockManagePageComponent {
                                 <div class="fw-bold" style="color: var(--text-dark); font-size: 42px; line-height: 1;">${currentInputVal}</div>
                             </div>
 
-                            <!-- ซ่อน PQty ไว้ส่งค่า -->
                             <input type="hidden" id="hidden-process-qty" value="${pQty}">
 
                             <div class="numpad-calc-grid">
@@ -617,7 +642,6 @@ class StockManagePageComponent {
             html: 'Loading...', showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-check me-1"></i> ยืนยันยอดนี้', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#10b981', width: 700, customClass: { popup: 'premium-alert' },
             didOpen: () => renderCalc(),
             preConfirm: () => {
-                // 🚨 ผลลัพธ์สุดท้ายคือ "ตัวเลขบนจอ" ไม่ต้องทด/หักลบอะไรอีก (เอาไปใส่ PQty ตรงๆ)
                 let finalPQty = Number(document.getElementById('hidden-process-qty').value) || 0;
                 return finalPQty;
             }
@@ -726,7 +750,6 @@ class StockManagePageComponent {
         const e = document.getElementById("sm-mode");
         const modeTextDisplay = e.options[e.selectedIndex].text;
         
-        // เช็คสต๊อกติดลบ (เฉพาะโอนออก หรือ เบิกออก)
         if(mode === 'transfer' || mode === 'out_sub') {
             let hasNegative = this.cart.some(c => {
                 let pQty = Number(c.processQty);
@@ -755,7 +778,8 @@ class StockManagePageComponent {
                     const userName = App.currentUser ? App.currentUser.name : "Admin";
 
                     for (const c of this.cart) {
-                        const itemRef = db.ref(`inventory_database_v2/items/${c.firebaseKey || c.id}`);
+                        const itemPath = `inventory_database_v2/items/${c.firebaseKey || c.id}`;
+                        const itemRef = db.ref(itemPath);
                         const snap = await itemRef.once('value');
                         
                         if (snap.exists()) {
@@ -764,7 +788,6 @@ class StockManagePageComponent {
                             let qSub = Number(item.qty_sub) || 0;
                             let pQty = Number(c.processQty);
 
-                            // บัญชีคู่แบบสมบูรณ์ (Double-Entry Logic)
                             if (mode === 'in_main' || mode === 'audit_main_add') { qMain += pQty; } 
                             else if (mode === 'audit_sub_add') { qSub += pQty; }
                             else if (mode === 'transfer') { qMain -= pQty; qSub += pQty; } 
@@ -772,16 +795,18 @@ class StockManagePageComponent {
                             else if (mode === 'audit_main_replace') { qMain = pQty; } 
                             else if (mode === 'audit_sub_replace') { qSub = pQty; }
 
-                            updates[`inventory_database_v2/items/${c.firebaseKey || c.id}/qty_main`] = qMain;
-                            updates[`inventory_database_v2/items/${c.firebaseKey || c.id}/qty`] = qMain; 
-                            updates[`inventory_database_v2/items/${c.firebaseKey || c.id}/qty_sub`] = qSub;
-                            updates[`inventory_database_v2/items/${c.firebaseKey || c.id}/last_update`] = timestamp;
+                            updates[`${itemPath}/qty_main`] = qMain;
+                            updates[`${itemPath}/qty`] = qMain; 
+                            updates[`${itemPath}/qty_sub`] = qSub;
+                            updates[`${itemPath}/last_update`] = timestamp;
 
                             logs.push({ 
                                 timestamp: timestamp, mode: mode, itemId: c.id, itemName: c.name, 
                                 itemCode: c.item_code || '', barcode: c.barcode || '', 
                                 qty: pQty, balance_main: qMain, balance_sub: qSub, user: userName 
                             });
+                        } else {
+                            throw new Error(`ไม่พบพัสดุ [${c.name}] ในฐานข้อมูล (ถูกลบไปแล้ว) กรุณาลบออกจากตะกร้าและสแกนใหม่`);
                         }
                     }
 
@@ -795,7 +820,7 @@ class StockManagePageComponent {
                     this.clearCart(); 
 
                 } catch (err) {
-                    Swal.fire('ข้อผิดพลาด', err.message, 'error');
+                    Swal.fire('การบันทึกถูกยกเลิก!', err.message, 'error');
                 }
             }
         });

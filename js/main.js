@@ -1,5 +1,5 @@
 // js/main.js
-// 🚀 Enterprise Core Router: ES6 Class Architecture, O(1) Auth Query, Smart Sync & Zero-Leak Engine (v13.1)
+// 🚀 Enterprise Core Router: ES6 Class Architecture, O(1) Auth Query, Smart Sync & Zero-Leak Engine (v13.2)
 
 // 🚨 Global Iframe Clickjacking Protection
 document.addEventListener('click', function(e) {
@@ -42,14 +42,14 @@ class CoreApplicationRouter {
         
         this.pages = {};
         
-        // 🔒 RBAC Definitions (🚨 THE FIX: เพิ่ม 'salary' เข้าไปในสิทธิ์ของ finance)
+        // 🔒 RBAC Definitions (🚨 THE FIX: ลบ salary เปลี่ยนเป็น scrap_sales)
         this.defaultRolePermissions = {
             'admin': ['*'],
             'doctor': ['dashboard', 'visits', 'visit_detail', 'patients', 'patient_history', 'document_center', 'search_copy', 'about'],
-            'head_nurse': ['dashboard', 'visits', 'visit_detail', 'patients', 'patient_history', 'document_center', 'patient_status', 'inventory', 'stock_manage', 'stock_history', 'monthly_requisition', 'stock_forecast', 'usage_statistics', 'search_copy', 'about'],
+            'head_nurse': ['dashboard', 'visits', 'visit_detail', 'patients', 'patient_history', 'document_center', 'patient_status', 'inventory', 'stock_manage', 'stock_history', 'monthly_requisition', 'stock_forecast', 'usage_statistics', 'search_copy', 'about', 'scrap_sales'],
             'nurse': ['dashboard', 'visits', 'visit_detail', 'patients', 'patient_history', 'document_center', 'patient_status', 'monthly_requisition', 'search_copy', 'about'],
             'assistant': ['dashboard', 'visits', 'patient_history', 'document_center', 'search_copy', 'about'],
-            'finance': ['dashboard', 'finance', 'department_ledger', 'salary', 'search_copy', 'about'], // ✅ เพิ่มหน้า salary ให้แผนกการเงิน
+            'finance': ['dashboard', 'finance', 'department_ledger', 'scrap_sales', 'search_copy', 'about'], // ✅ เพิ่ม scrap_sales ลบ salary
             'stock': ['dashboard', 'inventory', 'stock_manage', 'stock_history', 'monthly_requisition', 'stock_forecast', 'usage_statistics', 'search_copy', 'about']
         };
         this.rolePermissions = {};
@@ -64,7 +64,7 @@ class CoreApplicationRouter {
     }
 
     initPages() {
-        // 🚨 THE FIX: ลงทะเบียนหน้า Salary เข้าระบบ Router
+        // 🚨 THE FIX: ถอด salary ออก และลงทะเบียน scrap_sales
         this.pages = {
             login: window.LoginPage || null,
             dashboard: window.DashboardPage || null,
@@ -86,7 +86,7 @@ class CoreApplicationRouter {
             usage_statistics: window.UsageStatisticsPage || null,
             finance: window.FinancePage || null,
             department_ledger: window.DepartmentLedgerPage || null,
-            salary: window.SalaryPage || null, // ✅ ผูก Component เข้ากับ Route
+            scrap_sales: window.ScrapSalesPage || null, // ✅ เพิ่ม Routing สำหรับ Scrap Sales
             document_center: window.DocumentCenterPage || null
         };
     }

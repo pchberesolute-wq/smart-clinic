@@ -66,7 +66,7 @@
         }
         body { background-color: var(--bg-main) !important; overflow-x: hidden; font-family: 'Sarabun', sans-serif; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
 
-        /* 🚨 THE FIX: CSS Containment (Zero-Reflow Engine) */
+        /* 🚨 CSS Containment (Zero-Reflow Engine) */
         .sidebar {
             width: var(--sidebar-width); position: fixed; top: 20px; bottom: 20px; left: 20px;
             background: var(--color-surface); border-radius: 28px; box-shadow: var(--shadow-soft);
@@ -229,6 +229,10 @@
     <script src="./js/pages/usage_statistics.js" defer></script>
     <script src="./js/pages/finance.js" defer></script>
     <script src="./js/pages/department_ledger.js" defer></script>
+    
+    <!-- ✅ THE FIX: เพิ่ม Scrap Sales และตัด Salary ทิ้ง -->
+    <script src="./js/pages/scrap_sales.js" defer></script>
+
     <script src="./js/pages/search_copy.js" defer></script>
     <script src="./js/pages/settings.js" defer></script>
     <script src="./js/pages/about.js" defer></script>
@@ -282,6 +286,11 @@
                 <li class="nav-item" data-page="finance" data-route="finance" tabindex="0" role="menuitem"><i class="fa-solid fa-file-invoice-dollar" aria-hidden="true"></i> <span>รายได้และเบิกจ่าย</span></li>
                 <li class="nav-item" data-page="department_ledger" data-route="department_ledger" tabindex="0" role="menuitem"><i class="fa-solid fa-wallet" aria-hidden="true"></i> <span>บัญชีภายในหน่วยงาน</span></li>
                 
+                <!-- ✅ THE FIX: เปลี่ยนเมนูเป็น สรุปขายเศษซากวัสดุ -->
+                <li class="nav-item" data-page="scrap_sales" data-route="scrap_sales" tabindex="0" role="menuitem">
+                    <i class="fa-solid fa-recycle text-success" aria-hidden="true"></i> <span>สรุปขายเศษซากวัสดุ</span>
+                </li>
+
                 <li class="nav-item" data-page="shift_schedule" data-route="shift_schedule" tabindex="0" role="menuitem">
                     <i class="fa-solid fa-calendar-check text-indigo" aria-hidden="true"></i> <span>จัดตารางเวรพนักงาน</span>
                 </li>
@@ -297,7 +306,6 @@
                 <div class="user-card">
                     <div class="user-avatar shadow-sm" aria-hidden="true" id="shell-user-avatar">AD</div>
                     <div class="user-info">
-                        <!-- 🚨 THE FIX: ปรับเปลี่ยนโครงสร้างให้แสดงจุดโหลดอย่างชัดเจน กันชื่อยาวล้นกรอบ -->
                         <h4 id="shell-user-name" class="text-truncate" style="max-width: 140px;">
                             <i class="fas fa-circle-notch fa-spin me-1 text-muted" style="font-size: 13px;"></i>กำลังตรวจสอบ...
                         </h4>
